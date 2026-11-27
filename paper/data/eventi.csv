@@ -93,3 +93,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T12:48:23Z,issue-2,esecutore-fermo,sonnet,orologio,needs-spec-update: mapa non analizza 3 JCL e non risolve le procedure; nessun codice scritto
 2026-11-27T12:48:27Z,issue-2,specifica-aggiornata,fable,orologio,voce 24 del registro
 2026-11-27T12:48:27Z,issue-2,esecutore-inizio,sonnet,orologio,ripresa dopo l'aggiornamento della specifica
+2026-11-27T12:48:32Z,issue-2,esecutore-consuntivo,sonnet,orologio,prima fase fino al fermo: durata 393 s; 36 chiamate a strumenti; contatore token 161440
