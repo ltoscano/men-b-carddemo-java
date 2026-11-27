@@ -197,3 +197,13 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T15:31:30Z,issue-26,esecutore-inizio,sonnet,orologio,ripresa dopo l'aggiornamento della specifica
 2026-11-27T15:31:52Z,processo,richiesta-autore,autore,orologio,massimo 2 validazioni avversariali per PR; tenere aggiornato il registro
 2026-11-27T15:31:52Z,issue-26,esecutore-consuntivo,sonnet,orologio,prima fase fino al fermo: durata 1349 s; 55 chiamate a strumenti; contatore token 164594
+2026-11-27T15:32:17Z,issue-24,esecutore-fine,opus,orologio,PR #39 aperta; SHA 5c63275; 7 criteri dichiarati soddisfatti; CI verde
+2026-11-27T15:32:17Z,issue-24,esecutore-consuntivo,opus,orologio,durata 1390 s; 67 chiamate a strumenti; contatore token 225553
+2026-11-27T15:32:23Z,pr-39,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T15:44:16Z,issue-26,esecutore-fine,sonnet,orologio,PR #40 aperta; SHA b6b501e; CI verde; 31 casi di regressione dichiarati
+2026-11-27T15:44:16Z,issue-26,esecutore-consuntivo,sonnet,orologio,seconda fase dopo la ripresa: durata 2118 s; 70 chiamate a strumenti; contatore token 179444
+2026-11-27T15:44:17Z,processo,risposta-consegnata,fable,orologio,PR #40 in validazione 1 di 2; in attesa di cinque verdetti Codex
+2026-11-27T15:44:23Z,pr-40,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T15:47:01Z,pr-39,codex-fine,codex,orologio,validazione 1; exit=0; token: 
+2026-11-27T15:47:39Z,pr-39,decisione,fable,orologio,validazione 1: rilievo bloccante accolto; rinvio all'Esecutore per l'unico giro di correzione
+2026-11-27T15:47:39Z,issue-24,esecutore-inizio,opus,orologio,giro di correzione unico
