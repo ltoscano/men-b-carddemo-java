@@ -64,3 +64,10 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T11:48:17Z,P10,fine,fable,orologio,11 rilievi (2 bloccanti); #14 riscritta e ready; #19 chiusa come superata
 2026-11-27T11:48:19Z,issue-14,esecutore-inizio,sonnet,orologio,worktree isolato
 2026-11-27T11:48:46Z,issue-14,nota,fable,orologio,Esecutore: Opus (non Sonnet); motivo nella voce 15 del registro
+2026-11-27T11:48:48Z,processo,risposta-consegnata,fable,orologio,Esecutori di #1 (correzione) e #14 in corso
+2026-11-27T11:52:10Z,issue-1,esecutore-fine,sonnet,orologio,giro di correzione 1 consegnato; SHA 4c3396a
+2026-11-27T11:52:13Z,issue-1,esecutore-consuntivo,sonnet,orologio,giro di correzione 1: durata riportata 485 s; 34 chiamate a strumenti; contatore token 412917 (cumulativo)
+2026-11-27T11:52:14Z,pr-18,codex-inizio,codex,orologio,validazione giro 2
+2026-11-27T12:04:31Z,pr-18,codex-fine,codex,orologio,giro 2; exit=0; token: 140.155
+2026-11-27T12:05:12Z,pr-18,validazione-fine,fable,orologio,giro 2: BOCCIATA; 1 importante e 2 minori; specifica modificata; ultimo giro di correzione
+2026-11-27T12:05:12Z,issue-1,esecutore-inizio,sonnet,orologio,giro di correzione 2
