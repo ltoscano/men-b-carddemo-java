@@ -1,0 +1,9 @@
+MEN-B — men-b-carddemo-java
+Copyright 2026 Lorenzo Toscano
+
+Distribuito con licenza Apache License, Version 2.0.
+
+Questo progetto è una migrazione derivata da AWS CardDemo
+(https://github.com/aws-samples/aws-mainframe-modernization-carddemo),
+Copyright Amazon.com, Inc. or its affiliates, licenza Apache-2.0,
+incluso come submodule Git non modificato in legacy/.
