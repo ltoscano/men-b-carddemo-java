@@ -17,7 +17,7 @@ Tre operazioni distinte:
       codifica di un valore nuovo nella rappresentazione prescritta dal profilo; CodificaErrore se il
       valore non e' rappresentabile (oltre la PICTURE, decimali oltre la scala, negativo in un campo senza
       segno, testo piu' lungo del campo, carattere non rappresentabile). Nessun troncamento silenzioso.
-Le due profili non si deducono l'uno dall'altro: ogni tabella qui sotto ha la sua fonte (codifica.md).
+I due profili non si deducono l'uno dall'altro: ogni tabella qui sotto ha la sua fonte (codifica.md).
 """
 import re
 from collections import namedtuple
@@ -271,7 +271,9 @@ def _cod_packed(g, valore):
 
 # --- COMP (binario) -----------------------------------------------------------------------------------------------
 # Big-endian, 2/4/8 byte; con segno: complemento a due. Un valore fisicamente rappresentabile ma oltre la
-# PICTURE e' "oltre-picture": oracle-gnucobol lo legge per intero (osservato), z/OS non lo determina.
+# PICTURE e' "oltre-picture" e non riceve un valore in nessuno dei due profili (voce 63 del registro):
+# GnuCOBOL gli attribuisce valori diversi secondo l'operazione (vettori/oracle-oltre-picture.tsv), z/OS non
+# lo determina (TRUNC(STD) regola i campi riceventi).
 
 ORDINE_BINARIO = "big"
 
@@ -279,8 +281,7 @@ ORDINE_BINARIO = "big"
 def _dec_binario(profilo, g, b):
     n = int.from_bytes(b, ORDINE_BINARIO, signed=g.segno)
     if abs(n) >= 10 ** (g.intere + g.decimali):
-        valore = _valore(n, g) if profilo == "oracle-gnucobol" else None
-        return Risultato("oltre-picture", valore, b)
+        return Risultato("oltre-picture", None, b)
     return Risultato("valido", _valore(n, g), b)
 
 
@@ -302,14 +303,16 @@ def decodifica(profilo, categoria, variante, record, offset=0):
     g = geometria(categoria, variante)
     b = bytes(record[offset:offset + g.lunghezza])
     if categoria == "alfanumerico":
-        return _dec_alfa(profilo, b)
-    if categoria in ("display-senza-segno", "display-con-segno"):
-        return _dec_display_oracle(g, b) if profilo == "oracle-gnucobol" else _dec_display_zos(g, b)
-    if categoria == "comp-3":
-        return _dec_packed(profilo, g, b)
-    if categoria == "comp":
-        return _dec_binario(profilo, g, b)
-    raise CodificaErrore(f"categoria senza regola: {categoria}")
+        r = _dec_alfa(profilo, b)
+    elif categoria in ("display-senza-segno", "display-con-segno"):
+        r = _dec_display_oracle(g, b) if profilo == "oracle-gnucobol" else _dec_display_zos(g, b)
+    elif categoria == "comp-3":
+        r = _dec_packed(profilo, g, b)
+    elif categoria == "comp":
+        r = _dec_binario(profilo, g, b)
+    else:
+        raise CodificaErrore(f"categoria senza regola: {categoria}")
+    return r
 
 
 def ricodifica(risultato):

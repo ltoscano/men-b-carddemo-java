@@ -1,0 +1,24 @@
+# Osservazioni del profilo oracle-gnucobol sui binari oltre la PICTURE (issue #23, voce 63 del registro).
+# Il codec non assegna un valore a questi campi (stato oltre-picture in oracle-gnucobol.tsv). Questa tabella
+# dichiara cio' che fa GnuCOBOL nell'ambiente dell'oracle, per operazione; NON e' una regola del codec.
+# Valori trascritti dall'esecuzione della sonda CODECPRB (prima esecuzione, 27 nov 2026), dopo che la previsione
+# iniziale (stesso valore intero per MOVE e ADD) era stata smentita per 9(9) COMP con FF FF FF FF. Ogni
+# esecuzione successiva della sonda deve riprodurli: il controllo li confronta con le osservazioni rigenerate.
+# Colonne:
+#   variante, ingresso     una riga oltre-picture di comp in oracle-gnucobol.tsv (stessi byte)
+#   move                   valore ottenuto con MOVE campo TO campo-largo (S9(20)V9(6) SIGN LEADING SEPARATE)
+#   add                    valore ottenuto con ADD campo TO campo-largo (inizialmente zero)
+#   riscrittura            byte prodotti da MOVE del valore di ADD in un campo con la stessa PICTURE
+#                          (-fbinary-truncate: troncamento alle cifre della PICTURE in assegnazione)
+# Causa della differenza fra MOVE e ADD in 9(9) FF FF FF FF: non verificata.
+variante	ingresso	move	add	riscrittura	nota
+9(3)	03 E8	1000	1000	00 00	2 byte: MOVE e ADD leggono il valore intero senza segno
+9(3)	FF FF	65535	65535	02 17	riscrittura: 65535 troncato a 535
+9(9)	3B 9A CA 00	1000000000	1000000000	00*4
+9(9)	FF*4	4294967295	-1	00 00 00 01	4 byte: con ADD il valore e' letto come intero con segno (-1); riscritto in un campo senza segno perde il segno
+9(11)	00 00 00 17 48 76 E8 00	100000000000	100000000000	00*8
+9(11)	FF*8	18446744073709551615	18446744073709551615	00 00 00 11 29 6E 7F FF	8 byte senza segno: letto per intero con entrambe le operazioni
+S9(10)V9(2)	00 00 00 E8 D4 A5 10 00	10000000000.00	10000000000.00	00*8
+S9(10)V9(2)	FF FF FF 17 2B 5A F0 00	-10000000000.00	-10000000000.00	00*8
+S9(10)V9(2)	7F FF FF FF FF FF FF FF	92233720368547758.07	92233720368547758.07	00 00 00 08 94 B7 3F FF
+S9(10)V9(2)	80 00*7	-92233720368547758.08	-92233720368547758.08	FF FF FF F7 6B 48 C0 00

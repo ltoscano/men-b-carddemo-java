@@ -12,6 +12,10 @@
 #                         codifica:   byte che il codec produce ("-" se errore)
 #   move                  codifica: byte prodotti da un MOVE COBOL di quel valore nel campo; decodifica: "-"
 # La ricodifica conservativa di ogni riga di decodifica deve restituire esattamente i byte d'ingresso.
+# Binari oltre la PICTURE (stato oltre-picture): nessun valore, per decisione dell'Approvatore (voce 63 del registro).
+# La previsione iniziale (il valore intero, scritta nel commit aa22593 prima di ogni sonda) e' stata smentita dalla
+# sonda per 9(9) COMP con FF FF FF FF (4294967295 con MOVE, -1 con ADD). Cio' che l'oracle fa in quei casi e' in
+# oracle-oltre-picture.tsv, verificato dalla sonda.
 categoria	variante	operazione	ingresso	stato	valore	byte	move	fonte	nota
 alfanumerico	X(1)	decodifica	41	valido	"A"	41	-	GC-SRC-ALFA
 alfanumerico	X(2)	decodifica	41 2E	valido	"A."	41 2E	-	GC-SRC-ALFA
@@ -250,22 +254,22 @@ comp-3	S9(10)V9(2)	codifica	12345678901.00	errore	-	-	02 34 56 78 90 10 0C	GC-SR
 comp	9(3)	decodifica	00 7B	valido	123	00 7B	-	GC-README-BINARI	big-endian, 2 byte
 comp	9(3)	decodifica	00 00	valido	0	00 00	-	GC-SRC-BINARY
 comp	9(3)	decodifica	03 E7	valido	999	03 E7	-	GC-SRC-BINARY	estremo della PICTURE
-comp	9(3)	decodifica	03 E8	oltre-picture	1000	-	-	GC-SRC-BINARY	rappresentabile in 2 byte ma oltre 9(3): letto per intero
-comp	9(3)	decodifica	FF FF	oltre-picture	65535	-	-	GC-SRC-BINARY	estremo fisico (senza segno)
+comp	9(3)	decodifica	03 E8	oltre-picture	-	-	-	GC-SRC-BINARY	rappresentabile in 2 byte ma oltre 9(3)
+comp	9(3)	decodifica	FF FF	oltre-picture	-	-	-	GC-SRC-BINARY	estremo fisico (senza segno)
 comp	9(3)	codifica	123	ok	-	00 7B	00 7B	GC-SRC-BINARY
 comp	9(3)	codifica	1000	errore	-	-	00 00	GC-README-BINARI	-fbinary-truncate: il MOVE tronca alle cifre della PICTURE
 comp	9(3)	codifica	-5	errore	-	-	00 05	GC-SRC-BINARY	negativo in un campo senza segno: il MOVE perde il segno
 comp	9(9)	decodifica	00 01 E2 40	valido	123456	00 01 E2 40	-	GC-README-BINARI	big-endian, 4 byte
 comp	9(9)	decodifica	00*4	valido	0	00*4	-	GC-SRC-BINARY
 comp	9(9)	decodifica	3B 9A C9 FF	valido	999999999	3B 9A C9 FF	-	GC-SRC-BINARY	estremo della PICTURE
-comp	9(9)	decodifica	3B 9A CA 00	oltre-picture	1000000000	-	-	GC-SRC-BINARY	oltre 9(9)
-comp	9(9)	decodifica	FF*4	oltre-picture	4294967295	-	-	GC-SRC-BINARY	estremo fisico (senza segno)
+comp	9(9)	decodifica	3B 9A CA 00	oltre-picture	-	-	-	GC-SRC-BINARY	oltre 9(9)
+comp	9(9)	decodifica	FF*4	oltre-picture	-	-	-	GC-SRC-BINARY	estremo fisico (senza segno)
 comp	9(9)	codifica	1234567890	errore	-	-	0D FB 38 D2	GC-README-BINARI	-fbinary-truncate: 234567890
 comp	9(11)	decodifica	00*5 01 E2 40	valido	123456	00*5 01 E2 40	-	GC-README-BINARI	big-endian, 8 byte
 comp	9(11)	decodifica	00*8	valido	0	00*8	-	GC-SRC-BINARY
 comp	9(11)	decodifica	00 00 00 17 48 76 E7 FF	valido	99999999999	00 00 00 17 48 76 E7 FF	-	GC-SRC-BINARY	estremo della PICTURE
-comp	9(11)	decodifica	00 00 00 17 48 76 E8 00	oltre-picture	100000000000	-	-	GC-SRC-BINARY	oltre 9(11)
-comp	9(11)	decodifica	FF*8	oltre-picture	18446744073709551615	-	-	GC-SRC-BINARY	estremo fisico (senza segno)
+comp	9(11)	decodifica	00 00 00 17 48 76 E8 00	oltre-picture	-	-	-	GC-SRC-BINARY	oltre 9(11)
+comp	9(11)	decodifica	FF*8	oltre-picture	-	-	-	GC-SRC-BINARY	estremo fisico (senza segno)
 comp	9(11)	codifica	123	ok	-	00*7 7B	00*7 7B	GC-SRC-BINARY
 comp	S9(10)V9(2)	decodifica	00*5 01 E2 40	valido	1234.56	00*5 01 E2 40	-	GC-README-BINARI	big-endian, 8 byte, scala 2
 comp	S9(10)V9(2)	decodifica	FF*5 FE 1D C0	valido	-1234.56	FF*5 FE 1D C0	-	GC-SRC-BINARY	complemento a due
@@ -273,10 +277,10 @@ comp	S9(10)V9(2)	decodifica	00*8	valido	0.00	00*8	-	GC-SRC-BINARY
 comp	S9(10)V9(2)	decodifica	FF*8	valido	-0.01	FF*8	-	GC-SRC-BINARY	-1 in complemento a due
 comp	S9(10)V9(2)	decodifica	00 00 00 E8 D4 A5 0F FF	valido	9999999999.99	00 00 00 E8 D4 A5 0F FF	-	GC-SRC-BINARY	estremo positivo della PICTURE
 comp	S9(10)V9(2)	decodifica	FF FF FF 17 2B 5A F0 01	valido	-9999999999.99	FF FF FF 17 2B 5A F0 01	-	GC-SRC-BINARY	estremo negativo della PICTURE
-comp	S9(10)V9(2)	decodifica	00 00 00 E8 D4 A5 10 00	oltre-picture	10000000000.00	-	-	GC-SRC-BINARY	oltre la PICTURE
-comp	S9(10)V9(2)	decodifica	FF FF FF 17 2B 5A F0 00	oltre-picture	-10000000000.00	-	-	GC-SRC-BINARY	oltre la PICTURE (negativo)
-comp	S9(10)V9(2)	decodifica	7F FF FF FF FF FF FF FF	oltre-picture	92233720368547758.07	-	-	GC-SRC-BINARY	estremo fisico positivo
-comp	S9(10)V9(2)	decodifica	80 00*7	oltre-picture	-92233720368547758.08	-	-	GC-SRC-BINARY	estremo fisico negativo
+comp	S9(10)V9(2)	decodifica	00 00 00 E8 D4 A5 10 00	oltre-picture	-	-	-	GC-SRC-BINARY	oltre la PICTURE
+comp	S9(10)V9(2)	decodifica	FF FF FF 17 2B 5A F0 00	oltre-picture	-	-	-	GC-SRC-BINARY	oltre la PICTURE (negativo)
+comp	S9(10)V9(2)	decodifica	7F FF FF FF FF FF FF FF	oltre-picture	-	-	-	GC-SRC-BINARY	estremo fisico positivo
+comp	S9(10)V9(2)	decodifica	80 00*7	oltre-picture	-	-	-	GC-SRC-BINARY	estremo fisico negativo
 comp	S9(10)V9(2)	codifica	-0.01	ok	-	FF*8	FF*8	GC-SRC-BINARY
 comp	S9(10)V9(2)	codifica	-9999999999.99	ok	-	FF FF FF 17 2B 5A F0 01	FF FF FF 17 2B 5A F0 01	GC-SRC-BINARY	estremo della PICTURE
 comp	S9(10)V9(2)	codifica	12345678901.23	errore	-	-	00 00 00 36 9D 55 F4 CB	GC-README-BINARI	-fbinary-truncate: 2345678901.23
