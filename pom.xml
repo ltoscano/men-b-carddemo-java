@@ -128,6 +128,9 @@
                     <exclude>hsqldb:*</exclude>
                     <exclude>org.apache.derby:*</exclude>
                     <exclude>derby:*</exclude>
+                    <exclude>org.apache.servicemix.bundles:org.apache.servicemix.bundles.hsqldb*</exclude>
+                    <exclude>org.apache.servicemix.bundles:org.apache.servicemix.bundles.derby*</exclude>
+                    <exclude>org.apache.servicemix.bundles:org.apache.servicemix.bundles.h2*</exclude>
                   </excludes>
                   <message>DATABASE-INCORPORATO-VIETATO</message>
                 </bannedDependencies>
@@ -151,6 +154,9 @@
                     <exclude>hsqldb:*</exclude>
                     <exclude>org.apache.derby:*</exclude>
                     <exclude>derby:*</exclude>
+                    <exclude>org.apache.servicemix.bundles:org.apache.servicemix.bundles.hsqldb*</exclude>
+                    <exclude>org.apache.servicemix.bundles:org.apache.servicemix.bundles.derby*</exclude>
+                    <exclude>org.apache.servicemix.bundles:org.apache.servicemix.bundles.h2*</exclude>
                   </excludes>
                   <message>DATABASE-INCORPORATO-VIETATO</message>
                 </bannedDependencies>

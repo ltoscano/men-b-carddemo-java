@@ -198,8 +198,15 @@ mut_java() { # modulo file-caso nome-classe-destinazione
   pkg="${1#carddemo-}"
   dest="${ROOT}/$1/src/main/java/${PKG_DIR}/${pkg}/$3.java"
   [ ! -e "${dest}" ] || { echo "ERRORE: ${dest} esiste gia'" >&2; exit 1; }
-  sed "s/class ProvaRegole/class $3/" "${CASI}/java/$2.java" > "${dest}" || { echo "ERRORE: copia del caso $2 fallita" >&2; exit 1; }
+  # La destinazione si registra per il ripristino PRIMA della prima scrittura: la redirezione
+  # crea il file anche se sed poi fallisce a meta'.
   CREATED+=("${dest}")
+  if [ -n "${MENB_REGOLE_PROVA_SCRITTURA_PARZIALE:-}" ]; then
+    : > "${dest}" || { echo "ERRORE: creazione di ${dest} fallita" >&2; exit 1; }
+    echo "ERRORE: prova di scrittura parziale: errore simulato dopo la creazione di ${dest}" >&2
+    exit 1
+  fi
+  sed "s/class ProvaRegole/class $3/" "${CASI}/java/$2.java" > "${dest}" || { echo "ERRORE: copia del caso $2 fallita" >&2; exit 1; }
   grep -q 'PROVA-REGOLE-26' "${dest}" || { echo "ERRORE: caso $2 non applicato" >&2; exit 1; }
 }
 
@@ -229,7 +236,7 @@ exit "$rc"' _ "$@" </dev/null >"${log}" 2>&1 || rc=$?
   return "${rc}"
 }
 
-ESEC_BASE=(verify -Dtest=ArchitetturaTest -Dsurefire.failIfNoSpecifiedTests=false)
+ESEC_BASE=(verify -Dtest=ArchitetturaTest,DatabaseIncorporatiTest -Dsurefire.failIfNoSpecifiedTests=false)
 
 # Controlla che la corsa di base mostri ogni controllo eseguito, con il numero atteso di volte.
 # Stampa i controlli mancanti; restituisce 0 solo se ci sono tutti.
@@ -249,6 +256,8 @@ controlla_base() { # log
   conta "checkstyle tipi vietati (4 moduli)" 4 "checkstyle:3.6.0:check (tipi-vietati)"
   conta "checkstyle senza violazioni" 4 "You have 0 Checkstyle violations"
   conta "test ArchUnit eseguiti" 1 "Running io.github.ltoscano.carddemo.parity.ArchitetturaTest"
+  conta "test sulle classi dei database eseguiti" 1 "Running io.github.ltoscano.carddemo.parity.DatabaseIncorporatiTest"
+  conta "test sulle classi dei database riusciti" 1 "Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed"
   conta "test ArchUnit riusciti" 1 "Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed"
   return "${ok}"
 }
@@ -348,6 +357,16 @@ atteso_fallimento db-hsqldb "enforcer" "${ENF} (database-incorporati)" "DATABASE
 mut_dip carddemo-parity h2-optional
 atteso_fallimento db-h2-optional "enforcer, optional" "${ENF} (database-incorporati-diretti)" "DATABASE-INCORPORATO-VIETATO" "com.h2database:h2:jar" "<--- banned via the exclude/include list" "on project carddemo-parity" -- validate
 
+mut_dip carddemo-loader servicemix-hsqldb
+atteso_fallimento db-servicemix-hsqldb "enforcer, bundle ripubblicato" "${ENF} (database-incorporati)" "DATABASE-INCORPORATO-VIETATO" "org.apache.servicemix.bundles.hsqldb" "<--- banned via the exclude/include list" "on project carddemo-loader" -- validate
+
+mut_dip carddemo-online servicemix-derby
+atteso_fallimento db-servicemix-derby "enforcer, bundle ripubblicato" "${ENF} (database-incorporati)" "DATABASE-INCORPORATO-VIETATO" "org.apache.servicemix.bundles.derby" "<--- banned via the exclude/include list" "on project carddemo-online" -- validate
+
+# controllo sulle classi: coordinata non elencata (enforcer spento da riga di comando), driver caricabile
+mut_dip carddemo-parity hsqldb-classi
+atteso_fallimento db-classi-hsqldb "test sulle classi" "DatabaseIncorporatiTest" "DATABASE-INCORPORATO-CLASSE-VIETATA" "org.hsqldb.jdbc.JDBCDriver" "on project carddemo-parity" -- verify -Denforcer.skip=true -Dtest=DatabaseIncorporatiTest -Dsurefire.failIfNoSpecifiedTests=false
+
 mut_dip carddemo-batch derby
 atteso_fallimento db-derby "enforcer" "${ENF} (database-incorporati)" "DATABASE-INCORPORATO-VIETATO" "org.apache.derby:derby" "<--- banned via the exclude/include list" "on project carddemo-batch" -- validate
 
@@ -392,6 +411,10 @@ tipo tipi-var carddemo-domain var-locale VAR-VIETATO
 tipo tipi-letterale-decimale carddemo-loader letterale-decimale FP-VIETATO
 tipo tipi-letterale-esponente carddemo-online letterale-esponente FP-VIETATO
 tipo tipi-letterale-float carddemo-batch letterale-float FP-VIETATO
+tipo tipi-unicode-primitivo carddemo-domain unicode-primitivo UNICODE-ESCAPE-VIETATO
+tipo tipi-unicode-wrapper carddemo-loader unicode-wrapper UNICODE-ESCAPE-VIETATO
+tipo tipi-unicode-array carddemo-online unicode-array UNICODE-ESCAPE-VIETATO
+tipo tipi-unicode-var carddemo-batch unicode-var UNICODE-ESCAPE-VIETATO
 
 # ---- cancello disattivato: la corsa di base deve accorgersene ----
 cancello() { # nome descrizione
@@ -418,6 +441,8 @@ mut_senza_blocco carddemo-batch plugin maven-enforcer-plugin
 cancello cancello-enforcer-archi-rimosso "enforcer archi rimosso dal modulo"
 mut_senza_file carddemo-parity/src/test/java/io/github/ltoscano/carddemo/parity/ArchitetturaTest.java
 cancello cancello-archunit-rimosso "test ArchUnit rimosso"
+mut_senza_file carddemo-parity/src/test/java/io/github/ltoscano/carddemo/parity/DatabaseIncorporatiTest.java
+cancello cancello-classi-rimosso "test sulle classi rimosso"
 
 echo
 echo "== riepilogo"

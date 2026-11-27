@@ -1,0 +1,6 @@
+    <!-- PROVA-REGOLE-26: dipendenza dichiarata e non usata nel codice -->
+    <dependency>
+      <groupId>org.apache.servicemix.bundles</groupId>
+      <artifactId>org.apache.servicemix.bundles.derby</artifactId>
+      <version>10.14.2.0_2</version>
+    </dependency>

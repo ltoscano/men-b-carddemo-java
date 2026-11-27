@@ -7,6 +7,13 @@
 <module name="Checker">
   <property name="severity" value="error"/>
   <property name="fileExtensions" value="java"/>
+  <!-- Escape Unicode vietati: \u0064ouble, java.lang.\u0044ouble, var scritto con escape
+       eludono i controlli sul testo dei token. Si guarda il testo grezzo del file. -->
+  <module name="RegexpSingleline">
+    <property name="format" value="\\u+[0-9a-fA-F]{4}"/>
+    <property name="message" value="UNICODE-ESCAPE-VIETATO: escape Unicode nel codice di produzione"/>
+    <property name="ignoreComments" value="false"/>
+  </module>
   <module name="TreeWalker">
     <!-- Parole chiave double e float in ogni posizione: campi, parametri, ritorni, locali,
          cast, array, Double.class. -->
