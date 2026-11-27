@@ -244,7 +244,8 @@ controlla_base() { # log
   }
   conta "enforcer database incorporati (padre + 5 moduli)" 6 "enforcer:3.6.3:enforce (database-incorporati)"
   conta "enforcer archi interni (4 moduli)" 4 "enforcer:3.6.3:enforce (archi-interni)"
-  conta "regole enforcer riuscite" 10 "BannedDependencies passed"
+  conta "enforcer database incorporati, dichiarazioni dirette (padre + 5 moduli)" 6 "enforcer:3.6.3:enforce (database-incorporati-diretti)"
+  conta "regole enforcer riuscite" 16 "BannedDependencies passed"
   conta "checkstyle tipi vietati (4 moduli)" 4 "checkstyle:3.6.0:check (tipi-vietati)"
   conta "checkstyle senza violazioni" 4 "You have 0 Checkstyle violations"
   conta "test ArchUnit eseguiti" 1 "Running io.github.ltoscano.carddemo.parity.ArchitetturaTest"
@@ -320,36 +321,39 @@ fi
 # ---- archi interni (enforcer) ----
 mut_senza_blocco carddemo-loader dependency carddemo-domain
 mut_dip carddemo-domain domain-loader
-atteso_fallimento archi-domain-loader "enforcer" "${ENF} (archi-interni)" "ARCO-INTERNO-VIETATO" "Found Banned Dependency: ${G}:carddemo-loader:jar" "@ carddemo-domain" -- validate
+atteso_fallimento archi-domain-loader "enforcer" "${ENF} (archi-interni)" "ARCO-INTERNO-VIETATO" "${G}:carddemo-loader:jar" "<--- banned via the exclude/include list" "on project carddemo-domain" -- validate
 
 mut_dip carddemo-loader loader-online
-atteso_fallimento archi-loader-online "enforcer" "${ENF} (archi-interni)" "ARCO-INTERNO-VIETATO" "Found Banned Dependency: ${G}:carddemo-online:jar" "@ carddemo-loader" -- validate
+atteso_fallimento archi-loader-online "enforcer" "${ENF} (archi-interni)" "ARCO-INTERNO-VIETATO" "${G}:carddemo-online:jar" "<--- banned via the exclude/include list" "on project carddemo-loader" -- validate
 
 mut_dip carddemo-online online-batch
-atteso_fallimento archi-online-batch "enforcer" "${ENF} (archi-interni)" "ARCO-INTERNO-VIETATO" "Found Banned Dependency: ${G}:carddemo-batch:jar" "@ carddemo-online" -- validate
+atteso_fallimento archi-online-batch "enforcer" "${ENF} (archi-interni)" "ARCO-INTERNO-VIETATO" "${G}:carddemo-batch:jar" "<--- banned via the exclude/include list" "on project carddemo-online" -- validate
 
 mut_dip carddemo-batch batch-online
-atteso_fallimento archi-batch-online "enforcer" "${ENF} (archi-interni)" "ARCO-INTERNO-VIETATO" "Found Banned Dependency: ${G}:carddemo-online:jar" "@ carddemo-batch" -- validate
+atteso_fallimento archi-batch-online "enforcer" "${ENF} (archi-interni)" "ARCO-INTERNO-VIETATO" "${G}:carddemo-online:jar" "<--- banned via the exclude/include list" "on project carddemo-batch" -- validate
 
 mut_dip carddemo-batch batch-loader-test
-atteso_fallimento archi-batch-loader-test "enforcer, ambito test" "${ENF} (archi-interni)" "ARCO-INTERNO-VIETATO" "Found Banned Dependency: ${G}:carddemo-loader:jar" "@ carddemo-batch" -- validate
+atteso_fallimento archi-batch-loader-test "enforcer, ambito test" "${ENF} (archi-interni)" "ARCO-INTERNO-VIETATO" "${G}:carddemo-loader:jar" "<--- banned via the exclude/include list" "on project carddemo-batch" -- validate
 
 mut_dip carddemo-online online-loader-optional
-atteso_fallimento archi-online-loader-optional "enforcer, optional" "${ENF} (archi-interni)" "ARCO-INTERNO-VIETATO" "Found Banned Dependency: ${G}:carddemo-loader:jar" "@ carddemo-online" -- validate
+atteso_fallimento archi-online-loader-optional "enforcer, optional" "${ENF} (archi-interni)" "ARCO-INTERNO-VIETATO" "${G}:carddemo-loader:jar" "<--- banned via the exclude/include list" "on project carddemo-online" -- validate
 
 # ---- database incorporati (enforcer) ----
 mut_dip carddemo-loader h2
-atteso_fallimento db-h2 "enforcer" "${ENF} (database-incorporati)" "DATABASE-INCORPORATO-VIETATO" "Found Banned Dependency: com.h2database:h2" "@ carddemo-loader" -- validate
+atteso_fallimento db-h2 "enforcer" "${ENF} (database-incorporati)" "DATABASE-INCORPORATO-VIETATO" "com.h2database:h2" "<--- banned via the exclude/include list" "on project carddemo-loader" -- validate
 
 mut_dip carddemo-online hsqldb
-atteso_fallimento db-hsqldb "enforcer" "${ENF} (database-incorporati)" "DATABASE-INCORPORATO-VIETATO" "Found Banned Dependency: org.hsqldb:hsqldb" "@ carddemo-online" -- validate
+atteso_fallimento db-hsqldb "enforcer" "${ENF} (database-incorporati)" "DATABASE-INCORPORATO-VIETATO" "org.hsqldb:hsqldb" "<--- banned via the exclude/include list" "on project carddemo-online" -- validate
+
+mut_dip carddemo-parity h2-optional
+atteso_fallimento db-h2-optional "enforcer, optional" "${ENF} (database-incorporati-diretti)" "DATABASE-INCORPORATO-VIETATO" "com.h2database:h2:jar" "<--- banned via the exclude/include list" "on project carddemo-parity" -- validate
 
 mut_dip carddemo-batch derby
-atteso_fallimento db-derby "enforcer" "${ENF} (database-incorporati)" "DATABASE-INCORPORATO-VIETATO" "Found Banned Dependency: org.apache.derby:derby" "@ carddemo-batch" -- validate
+atteso_fallimento db-derby "enforcer" "${ENF} (database-incorporati)" "DATABASE-INCORPORATO-VIETATO" "org.apache.derby:derby" "<--- banned via the exclude/include list" "on project carddemo-batch" -- validate
 
 mut_repo carddemo-domain
 mut_dip carddemo-domain transitiva
-atteso_fallimento db-hsqldb-transitivo "enforcer, via prova-transitiva" "${ENF} (database-incorporati)" "DATABASE-INCORPORATO-VIETATO" "Found Banned Dependency: org.hsqldb:hsqldb" "prova-transitiva" "@ carddemo-domain" -- validate
+atteso_fallimento db-hsqldb-transitivo "enforcer, via prova-transitiva" "${ENF} (database-incorporati)" "DATABASE-INCORPORATO-VIETATO" "org.hsqldb:hsqldb" "<--- banned via the exclude/include list" "prova-transitiva" "on project carddemo-domain" -- validate
 
 # ---- ArchUnit ----
 mut_dip carddemo-online online-batch
@@ -374,7 +378,7 @@ ripristina
 # ---- tipi in virgola mobile e var (Checkstyle) ----
 tipo() { # nome modulo file marcatore [classe]
   mut_java "$2" "$3" ProvaRegole
-  atteso_fallimento "$1" "checkstyle" "${CHK}" "$4" "ProvaRegole.java" "@ $2" -- validate
+  atteso_fallimento "$1" "checkstyle" "${CHK}" "$4" "ProvaRegole.java" "on project $2" -- validate
 }
 tipo tipi-double-campo carddemo-domain campo-double FP-VIETATO
 tipo tipi-double-parametro carddemo-loader parametro-double FP-VIETATO

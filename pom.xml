@@ -105,7 +105,8 @@
     </pluginManagement>
 
     <plugins>
-      <!-- Database incorporati vietati in ogni modulo, ambito e per via transitiva. -->
+      <!-- Database incorporati vietati in ogni modulo e ambito. Due esecuzioni: la ricerca
+           transitiva non vede le dipendenze dirette optional, quella diretta si'. -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
@@ -121,6 +122,29 @@
               <rules>
                 <bannedDependencies>
                   <searchTransitive>true</searchTransitive>
+                  <excludes>
+                    <exclude>com.h2database:*</exclude>
+                    <exclude>org.hsqldb:*</exclude>
+                    <exclude>hsqldb:*</exclude>
+                    <exclude>org.apache.derby:*</exclude>
+                    <exclude>derby:*</exclude>
+                  </excludes>
+                  <message>DATABASE-INCORPORATO-VIETATO</message>
+                </bannedDependencies>
+              </rules>
+              <fail>true</fail>
+            </configuration>
+          </execution>
+          <execution>
+            <id>database-incorporati-diretti</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <searchTransitive>false</searchTransitive>
                   <excludes>
                     <exclude>com.h2database:*</exclude>
                     <exclude>org.hsqldb:*</exclude>

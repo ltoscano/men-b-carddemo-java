@@ -40,7 +40,7 @@
             <configuration>
               <rules>
                 <bannedDependencies>
-                  <searchTransitive>true</searchTransitive>
+                  <searchTransitive>false</searchTransitive>
                   <excludes>
                     <exclude>${project.groupId}:*</exclude>
                   </excludes>
