@@ -216,3 +216,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T15:58:41Z,processo,risposta-consegnata,fable,orologio,proposte per velocizzare: tre leve; una richiede decisione dell'autore
 2026-11-27T15:59:39Z,pr-40,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
 2026-11-27T15:59:41Z,processo,richiesta-autore,autore,orologio,approvate le tre leve per velocizzare; compresa la validazione proporzionata al rischio
+2026-11-27T16:01:05Z,pr-40,decisione,fable,orologio,validazione 1: tre rilievi accolti (uno bloccante); due respinti con motivo; rinvio all'Esecutore
+2026-11-27T16:01:05Z,issue-26,esecutore-inizio,sonnet,orologio,giro di correzione unico
