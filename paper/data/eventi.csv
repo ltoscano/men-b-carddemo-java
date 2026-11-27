@@ -167,3 +167,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T14:57:05Z,pr-32,codex-fine,codex,orologio,giro 2; exit=0; token: 138.808
 2026-11-27T14:57:37Z,pr-32,validazione-fine,fable,orologio,giro 2: BOCCIATA; 1 bloccante (due trasferimenti non rilevati in CBACT04C)
 2026-11-27T14:57:37Z,issue-3,esecutore-inizio,opus,orologio,giro di correzione 2
+2026-11-27T14:58:40Z,pr-29,codex-fine,codex,orologio,giro 3; exit=0; token: 152.470
+2026-11-27T14:59:15Z,pr-29,approvazione,fable,orologio,giro 3: BOCCIATA da Codex per 1 importante e 1 minore; giri esauriti; merge con issue di seguito #35
