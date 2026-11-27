@@ -24,11 +24,29 @@
 #   difetto-<modulo>           una classe con un difetto di SpotBugs alla soglia scelta, in ciascuno
 #                              dei quattro moduli (quattro categorie diverse)
 #   spotbugs-*                 rapporto SpotBugs assente, troncato, di un'altra corsa, privo di una classe
+#   agente-scambio-*           agente spento in un modulo e, dopo Maven, il file di esecuzione di un altro
+#                              modulo della STESSA corsa al suo posto (online<-domain, domain<-loader):
+#                              la corsa coincide, il produttore no
+#   difetto-medio-online       difetto di confidenza media (EI_EXPOSE_REP, il confine della soglia Medium)
+#   spotbugs-soglia-high, -ambito-ristretto, -rilevatore-disattivato
+#                              configurazione di SpotBugs indebolita nel POM di un modulo (soglia High,
+#                              onlyAnalyze, omitVisitors) con un difetto che non vedrebbe: Maven verde,
+#                              verify.sh respinge la configurazione effettiva
+#   esclusione-*               file di esclusioni senza motivo, con motivo, senza <Match>, filtro diverso
+#                              da quello autorizzato (percorso autorizzato solo in un commento), commento
+#                              innocuo che nomina excludeFilterFile (build sana: passa)
+#   jacoco-excludes-*          includes/excludes ridefiniti per l'agente di un modulo o per l'aggregato
 #   cancello-*                 SpotBugs in skip in un modulo (loader, batch), tolto dal POM padre; il
 #                              controllo dei rapporti tolto da verify.sh: su codice sano Maven e lo
 #                              script restano verdi, quindi il caso passa solo se la corsa di base
 #                              (la verifica di completezza) si accorge che il controllo manca
 #   controprova-lecita         una classe nuova senza difetti e con un test non fa fallire nulla
+#
+# Sottoinsieme di casi: ./quality/regressioni-copertura.sh <caso> [<caso> ...] esegue solo i casi
+# nominati (la corsa di base gira sempre: senza una base verde e completa i casi negativi non
+# dimostrano nulla); ./quality/regressioni-copertura.sh --lista stampa i nomi di tutti i casi senza
+# eseguire nulla. Senza argomenti gira tutto, ed e' il criterio di accettazione. Un nome sconosciuto
+# fa fallire lo script. Alla fine stampa la durata totale.
 #
 # Prerequisiti: bash, git, Docker. Variabili opzionali: MENB_BUILD_CACHE_VOLUME (passata a
 # ./verify.sh), MENB_COPERTURA_TIMEOUT (secondi per ogni ./verify.sh, predefinito 1800),
@@ -51,6 +69,36 @@ check_seconds MENB_COPERTURA_TIMEOUT "${CASE_TIMEOUT}" || exit 1
 check_seconds MENB_COPERTURA_SHORT_TIMEOUT "${SHORT_TIMEOUT}" || exit 1
 
 CASI="${ROOT}/quality/regole/casi/java"
+T0="${SECONDS}"
+LISTA=""
+SEL=("$@")
+USATI=()
+if [ "${#SEL[@]}" -eq 1 ] && [ "${SEL[0]}" = "--lista" ]; then
+  LISTA=1
+  SEL=()
+fi
+case "${SEL[*]-}" in
+  *--*) echo "ERRORE: opzione sconosciuta in '${SEL[*]}' (solo --lista, da sola, oppure nomi di casi)" >&2; exit 1 ;;
+esac
+# selezionato <caso>: 0 se il caso va eseguito (nessun argomento, oppure nominato); con --lista
+# stampa il nome e dice di no; un caso non selezionato non applica nemmeno la sua mutazione.
+selezionato() {
+  local n="$1" r
+  if [ -n "${LISTA}" ]; then
+    echo "${n}"
+    return 1
+  fi
+  if [ "${#SEL[@]}" -eq 0 ]; then
+    return 0
+  fi
+  for r in "${SEL[@]}"; do
+    if [ "${r}" = "${n}" ]; then
+      USATI+=("${n}")
+      return 0
+    fi
+  done
+  return 1
+}
 PKG_DIR="io/github/ltoscano/carddemo"
 RAPPORTO_JACOCO="carddemo-parity/target/site/jacoco-aggregate/jacoco.xml"
 REAL_DOCKER="$(command -v docker)" || { echo "ERRORE: docker non trovato sul PATH" >&2; exit 1; }
@@ -124,7 +172,7 @@ on_exit() {
     [ "${rc}" -ne 0 ] || rc=1
   fi
   if [ "${rc}" -eq 0 ]; then
-    echo "== REGRESSIONI RIUSCITE: tutti i casi rilevati"
+    [ -n "${LISTA}" ] || echo "== REGRESSIONI RIUSCITE: tutti i casi rilevati"
   else
     echo "== REGRESSIONI FALLITE (codice ${rc})" >&2
   fi
@@ -137,11 +185,13 @@ trap 'exit 143' TERM
 
 [ -d "${LOG_DIR}" ] || { echo "ERRORE: MENB_COPERTURA_LOGS non e' una cartella esistente: '${LOG_DIR}'" >&2; exit 1; }
 limited "${SHORT_TIMEOUT}" mkdir "${WORK}/bak" </dev/null || { echo "ERRORE: creazione di ${WORK}/bak fallita" >&2; exit 1; }
-if ! git_clean; then
-  echo "ERRORE: l'albero di lavoro non e' pulito o git non risponde (vedi sopra): impossibile garantire il ripristino" >&2
-  exit 1
+if [ -z "${LISTA}" ]; then
+  if ! git_clean; then
+    echo "ERRORE: l'albero di lavoro non e' pulito o git non risponde (vedi sopra): impossibile garantire il ripristino" >&2
+    exit 1
+  fi
+  CLEANUP_ARMED=1
 fi
-CLEANUP_ARMED=1
 
 # ---- mutazioni sul working tree -----------------------------------------------------------
 
@@ -306,6 +356,9 @@ completezza() { # log
   conta "${l}" "prova dell'agente verificata da verify.sh (5 moduli)" 5 ": agente attivo in questa corsa"
   conta "${l}" "rapporto aggregato verificato da verify.sh" 1 "classi di produzione eseguibili tutte presenti"
   conta "${l}" "rapporti SpotBugs verificati da verify.sh (4 moduli)" 4 "classi analizzate, 0 difetti, 0 errori di analisi"
+  conta "${l}" "POM effettivi generati" 1 "POM effettivi (maven-help-plugin"
+  conta "${l}" "configurazione effettiva di JaCoCo verificata (5 moduli)" 5 ": configurazione effettiva uguale a quella fissata (nessun skip, includes o excludes)"
+  conta "${l}" "configurazione effettiva di SpotBugs verificata (4 moduli)" 4 ": configurazione effettiva uguale a quella fissata (effort Max"
   conta "${l}" "verifica completata" 1 "== verifica completata"
 }
 
@@ -377,6 +430,7 @@ marker_ok() { # caso
 # Caso con mutazione di un rapporto: lo shim lo altera, ./verify.sh deve fallire nel controllo
 # dei rapporti dopo un Maven riuscito.
 caso_rapporto() { # caso corpo bersaglio(JaCoCo|SpotBugs) messaggio... (ultimi: file da copiare dopo "--")
+  selezionato "$1" || return 0
   local nome="$1" corpo="$2" bersaglio="$3" msgs=() files=()
   shift 3
   while [ "$#" -gt 0 ] && [ "$1" != "--" ]; do msgs+=("$1"); shift; done
@@ -393,27 +447,31 @@ caso_rapporto() { # caso corpo bersaglio(JaCoCo|SpotBugs) messaggio... (ultimi: 
 }
 
 # ---- base -----------------------------------------------------------------------------------
+# La corsa di base gira sempre (anche con un sottoinsieme di casi): senza una base verde e completa
+# i casi negativi non dimostrano nulla. Con --lista non gira nulla.
 
-echo "== [base] ./verify.sh senza mutazioni (limite ${CASE_TIMEOUT}s)"
-run_verify base || exit 1
-expect base ok "BUILD SUCCESS" "== verifica completata"
-if [ -n "${FAILED}" ]; then
-  echo "ERRORE: la corsa di base non riesce: i casi negativi non sarebbero significativi" >&2
-  exit 1
+if [ -z "${LISTA}" ]; then
+  echo "== [base] ./verify.sh senza mutazioni (limite ${CASE_TIMEOUT}s)"
+  run_verify base || exit 1
+  expect base ok "BUILD SUCCESS" "== verifica completata"
+  if [ -n "${FAILED}" ]; then
+    echo "ERRORE: la corsa di base non riesce: i casi negativi non sarebbero significativi" >&2
+    exit 1
+  fi
+  missing_base="$(completezza "${RUN_LOG_FILE}")"
+  if [ -n "${missing_base}" ]; then
+    echo "ERRORE: la corsa di base non e' completa:" >&2
+    echo "${missing_base}" >&2
+    exit 1
+  fi
+  echo "== [base] corsa completa: ogni controllo eseguito il numero atteso di volte"
+  for f in "${RAPPORTO_JACOCO}" carddemo-online/target/jacoco.exec carddemo-domain/target/jacoco.exec carddemo-loader/target/jacoco.exec carddemo-batch/target/spotbugsXml.xml; do
+    [ -f "${ROOT}/${f}" ] || { echo "ERRORE: ${f} assente dopo la corsa di base" >&2; exit 1; }
+  done
+  limited "${SHORT_TIMEOUT}" cp "${ROOT}/${RAPPORTO_JACOCO}" "${WORK}/jacoco-base.xml" </dev/null || { echo "ERRORE: copia del rapporto di base fallita" >&2; exit 1; }
+  limited "${SHORT_TIMEOUT}" cp "${ROOT}/carddemo-online/target/jacoco.exec" "${WORK}/online-base.exec" </dev/null || { echo "ERRORE: copia del file di esecuzione di base fallita" >&2; exit 1; }
+  limited "${SHORT_TIMEOUT}" cp "${ROOT}/carddemo-batch/target/spotbugsXml.xml" "${WORK}/batch-spotbugs-base.xml" </dev/null || { echo "ERRORE: copia del rapporto SpotBugs di base fallita" >&2; exit 1; }
 fi
-missing_base="$(completezza "${RUN_LOG_FILE}")"
-if [ -n "${missing_base}" ]; then
-  echo "ERRORE: la corsa di base non e' completa:" >&2
-  echo "${missing_base}" >&2
-  exit 1
-fi
-echo "== [base] corsa completa: ogni controllo eseguito il numero atteso di volte"
-for f in "${RAPPORTO_JACOCO}" carddemo-online/target/jacoco.exec carddemo-batch/target/spotbugsXml.xml; do
-  [ -f "${ROOT}/${f}" ] || { echo "ERRORE: ${f} assente dopo la corsa di base" >&2; exit 1; }
-done
-limited "${SHORT_TIMEOUT}" cp "${ROOT}/${RAPPORTO_JACOCO}" "${WORK}/jacoco-base.xml" </dev/null || { echo "ERRORE: copia del rapporto di base fallita" >&2; exit 1; }
-limited "${SHORT_TIMEOUT}" cp "${ROOT}/carddemo-online/target/jacoco.exec" "${WORK}/online-base.exec" </dev/null || { echo "ERRORE: copia del file di esecuzione di base fallita" >&2; exit 1; }
-limited "${SHORT_TIMEOUT}" cp "${ROOT}/carddemo-batch/target/spotbugsXml.xml" "${WORK}/batch-spotbugs-base.xml" </dev/null || { echo "ERRORE: copia del rapporto SpotBugs di base fallita" >&2; exit 1; }
 
 # ---- 1. rapporto aggregato JaCoCo -----------------------------------------------------------
 
@@ -428,22 +486,28 @@ caso_rapporto rapporto-senza-classe 'cambia "$R" '"'"'s{<class name="[^"]*/batch
   "classe io.github.ltoscano.carddemo.batch.InstallationCheckJobConfig di carddemo-batch assente dal rapporto JaCoCo"
 
 # aggregato mai prodotto: esecuzione di parity in skip
-mut_dopo carddemo-parity/pom.xml '<artifactId>jacoco-maven-plugin</artifactId>' '        <configuration><skip>true</skip></configuration>'
-run_verify rapporto-aggregato-skip || exit 1
-expect rapporto-aggregato-skip ko "BUILD SUCCESS" "rapporto JaCoCo assente:" "ERRORE: rapporto di copertura JaCoCo non valido" "== VERIFICA FALLITA"
-ripristina
+if selezionato rapporto-aggregato-skip; then
+  mut_dopo carddemo-parity/pom.xml '<artifactId>jacoco-maven-plugin</artifactId>' '        <configuration><skip>true</skip></configuration>'
+  run_verify rapporto-aggregato-skip || exit 1
+  expect rapporto-aggregato-skip ko "BUILD SUCCESS" "rapporto JaCoCo assente:" "ERRORE: rapporto di copertura JaCoCo non valido" "== VERIFICA FALLITA"
+  ripristina
+fi
 
 # file di esecuzione di un modulo troncato (a 60 byte: dentro il primo blocco di dati)
-caso_shim esecuzione-troncata 'cambia carddemo-online/target/jacoco.exec '"'"'$_ = substr($_, 0, 60)'"'"
-if marker_ok esecuzione-troncata; then
-  expect esecuzione-troncata ko "BUILD SUCCESS" "file di esecuzione JaCoCo di carddemo-online non leggibile o troncato" \
-    "ERRORE: rapporto di copertura JaCoCo non valido" "== VERIFICA FALLITA"
+if selezionato esecuzione-troncata; then
+  caso_shim esecuzione-troncata 'cambia carddemo-online/target/jacoco.exec '"'"'$_ = substr($_, 0, 60)'"'"
+  if marker_ok esecuzione-troncata; then
+    expect esecuzione-troncata ko "BUILD SUCCESS" "file di esecuzione JaCoCo di carddemo-online non leggibile o troncato" \
+      "ERRORE: rapporto di copertura JaCoCo non valido" "== VERIFICA FALLITA"
+  fi
 fi
 
 # ---- 2. agente JaCoCo spento ----------------------------------------------------------------
 
+POM_JACOCO_SKIP='      <plugin><groupId>org.jacoco</groupId><artifactId>jacoco-maven-plugin</artifactId><configuration><skip>true</skip></configuration></plugin>'
 agente_spento() { # modulo
-  mut_dopo "carddemo-$1/pom.xml" '<plugins>' '      <plugin><groupId>org.jacoco</groupId><artifactId>jacoco-maven-plugin</artifactId><configuration><skip>true</skip></configuration></plugin>'
+  selezionato "agente-spento-$1" || return 0
+  mut_dopo "carddemo-$1/pom.xml" '<plugins>' "${POM_JACOCO_SKIP}"
   run_verify "agente-spento-$1" || exit 1
   expect "agente-spento-$1" ko "BUILD SUCCESS" "agente JaCoCo non attivo in carddemo-$1: file di esecuzione assente" \
     "ERRORE: rapporto di copertura JaCoCo non valido" "== VERIFICA FALLITA"
@@ -455,20 +519,39 @@ agente_spento domain
 agente_spento loader
 
 # agente spento in online, ma un file di esecuzione sano di un'altra corsa al suo posto
-mut_dopo carddemo-online/pom.xml '<plugins>' '      <plugin><groupId>org.jacoco</groupId><artifactId>jacoco-maven-plugin</artifactId><configuration><skip>true</skip></configuration></plugin>'
-caso_shim agente-residuo-online 'cp /menb-shim/online-base.exec carddemo-online/target/jacoco.exec; cmp -s /menb-shim/online-base.exec carddemo-online/target/jacoco.exec' "${WORK}/online-base.exec"
-if marker_ok agente-residuo-online; then
-  expect agente-residuo-online ko "BUILD SUCCESS" "agente JaCoCo di carddemo-online: sessione 'verify-" "non della corsa corrente" \
-    "ERRORE: rapporto di copertura JaCoCo non valido" "== VERIFICA FALLITA"
+if selezionato agente-residuo-online; then
+  mut_dopo carddemo-online/pom.xml '<plugins>' "${POM_JACOCO_SKIP}"
+  caso_shim agente-residuo-online 'cp /menb-shim/online-base.exec carddemo-online/target/jacoco.exec; cmp -s /menb-shim/online-base.exec carddemo-online/target/jacoco.exec' "${WORK}/online-base.exec"
+  if marker_ok agente-residuo-online; then
+    expect agente-residuo-online ko "BUILD SUCCESS" "agente JaCoCo di carddemo-online: sessione 'verify-" "non della corsa corrente" \
+      "ERRORE: rapporto di copertura JaCoCo non valido" "== VERIFICA FALLITA"
+  fi
+  ripristina
 fi
-ripristina
+
+# agente spento in un modulo e, dopo Maven, il file di esecuzione di un altro modulo DELLA STESSA CORSA
+# al suo posto: la corsa coincide, il produttore no
+scambio() { # caso modulo-spento modulo-donatore
+  selezionato "$1" || return 0
+  mut_dopo "carddemo-$2/pom.xml" '<plugins>' "${POM_JACOCO_SKIP}"
+  caso_shim "$1" "cp carddemo-$3/target/jacoco.exec carddemo-$2/target/jacoco.exec; cmp -s carddemo-$3/target/jacoco.exec carddemo-$2/target/jacoco.exec"
+  if marker_ok "$1"; then
+    expect "$1" ko "BUILD SUCCESS" "agente JaCoCo di carddemo-$2: sessione 'verify-" ":carddemo-$3' non della corsa corrente per questo modulo" \
+      "ERRORE: rapporto di copertura JaCoCo non valido" "== VERIFICA FALLITA"
+  fi
+  ripristina
+}
+scambio agente-scambio-online-domain online domain
+scambio agente-scambio-domain-loader domain loader
 
 # ---- 3. difetti alla soglia di SpotBugs, nei quattro moduli ------------------------------------
 
-difetto() { # modulo file-caso categoria
+difetto() { # modulo file-caso categoria [nome-caso]
+  local caso="${4:-difetto-$1}"
+  selezionato "${caso}" || return 0
   aggiungi_classe "carddemo-$1" "$2" ProvaRegole
-  run_verify "difetto-$1" || exit 1
-  expect "difetto-$1" ko "spotbugs-maven-plugin:4.10.5.0:check (analisi-difetti) on project carddemo-$1: failed with 1 bugs" \
+  run_verify "${caso}" || exit 1
+  expect "${caso}" ko "spotbugs-maven-plugin:4.10.5.0:check (analisi-difetti) on project carddemo-$1: failed with 1 bugs" \
     "$3" "ProvaRegole" "ERRORE: mvn verify fallito" "== VERIFICA FALLITA"
   ripristina
 }
@@ -476,6 +559,8 @@ difetto domain spotbugs-domain NP_ALWAYS_NULL
 difetto loader spotbugs-loader EC_UNRELATED_TYPES
 difetto online spotbugs-online RV_RETURN_VALUE_IGNORED
 difetto batch spotbugs-batch ES_COMPARING_PARAMETER_STRING_WITH_EQ
+# difetto di confidenza media (il confine della soglia Medium) con la soglia corretta: deve fallire
+difetto online spotbugs-medio EI_EXPOSE_REP difetto-medio-online
 
 # ---- 4. rapporti SpotBugs alterati ----------------------------------------------------------
 
@@ -488,55 +573,126 @@ caso_rapporto spotbugs-altra-corsa 'cp /menb-shim/batch-spotbugs-base.xml cardde
 caso_rapporto spotbugs-senza-classe 'cambia carddemo-batch/target/spotbugsXml.xml "s{<ClassStats[^>]*class=\x27io[.]github[.]ltoscano[.]carddemo[.]batch[.]InstallationCheckJobConfig\x27[^>]*></ClassStats>}{}"' SpotBugs \
   "classe io.github.ltoscano.carddemo.batch.InstallationCheckJobConfig di carddemo-batch non analizzata da SpotBugs"
 
-# ---- 4b. file di esclusioni di SpotBugs: ammesso solo con il motivo di ogni esclusione ------------
+# ---- 4a. configurazione di SpotBugs indebolita in un modulo -----------------------------------
+# Maven resta verde (il difetto c'e' ma lo strumento non lo vede): e' verify.sh a leggere la
+# configurazione effettiva di ogni modulo e a respingere ogni differenza dalla configurazione fissata.
+
+indebolito() { # caso modulo file-caso configurazione marcatore
+  selezionato "$1" || return 0
+  mut_dopo "carddemo-$2/pom.xml" '<artifactId>spotbugs-maven-plugin</artifactId>' "        <configuration>$4</configuration>"
+  aggiungi_classe "carddemo-$2" "$3" ProvaRegole
+  run_verify "$1" || exit 1
+  expect "$1" ko "BUILD SUCCESS" "configurazione effettiva di SpotBugs in carddemo-$2 diversa da quella fissata nel POM padre" "$5" \
+    "ERRORE: rapporti SpotBugs non validi" "== VERIFICA FALLITA"
+  ripristina
+}
+indebolito spotbugs-soglia-high online spotbugs-medio '<threshold>High</threshold>' "threshold"
+indebolito spotbugs-ambito-ristretto online spotbugs-medio '<onlyAnalyze>io.github.ltoscano.carddemo.online.OnlineApplication</onlyAnalyze>' "onlyAnalyze"
+indebolito spotbugs-rilevatore-disattivato domain spotbugs-domain '<omitVisitors>FindNullDeref</omitVisitors>' "omitVisitors"
+
+# ---- 4b. file di esclusioni di SpotBugs ----------------------------------------------------
 
 ESCL_FILE="quality/regole/spotbugs-esclusioni.xml"
 configura_esclusioni() {
-  mut_dopo pom.xml '<xmlOutput>true</xmlOutput>' '                <excludeFilterFile>${project.parent.basedir}/quality/regole/spotbugs-esclusioni.xml</excludeFilterFile>'
+  mut_dopo pom.xml '<xmlOutput>true</xmlOutput>' '            <excludeFilterFile>${project.parent.basedir}/quality/regole/spotbugs-esclusioni.xml</excludeFilterFile>'
   CREATED+=("${ROOT}/${ESCL_FILE}")
 }
 # senza motivo: Maven resta verde, e' verify.sh a respingere il file
-configura_esclusioni
-scrivi "${ROOT}/${ESCL_FILE}" '<FindBugsFilter>
+if selezionato esclusione-senza-motivo; then
+  configura_esclusioni
+  scrivi "${ROOT}/${ESCL_FILE}" '<FindBugsFilter>
   <Match><Class name="io.github.ltoscano.carddemo.domain.ProvaRegole"/></Match>
 </FindBugsFilter>'
-run_verify esclusione-senza-motivo || exit 1
-expect esclusione-senza-motivo ko "BUILD SUCCESS" "esclusione SpotBugs senza motivo in ${ESCL_FILE}" "ERRORE: rapporti SpotBugs non validi" "== VERIFICA FALLITA"
-ripristina
+  run_verify esclusione-senza-motivo || exit 1
+  expect esclusione-senza-motivo ko "BUILD SUCCESS" "esclusione SpotBugs senza motivo in ${ESCL_FILE}" "ERRORE: rapporti SpotBugs non validi" "== VERIFICA FALLITA"
+  ripristina
+fi
 # con motivo: l'esclusione e' applicata (il difetto di prova non fa fallire nulla) e verify.sh la riconosce
-configura_esclusioni
-scrivi "${ROOT}/${ESCL_FILE}" '<FindBugsFilter>
+if selezionato esclusione-con-motivo; then
+  configura_esclusioni
+  scrivi "${ROOT}/${ESCL_FILE}" '<FindBugsFilter>
   <!-- prova di regressione: difetto volutamente escluso -->
   <Match><Class name="io.github.ltoscano.carddemo.domain.ProvaRegole"/></Match>
 </FindBugsFilter>'
-aggiungi_classe carddemo-domain spotbugs-domain ProvaRegole
-run_verify esclusione-con-motivo || exit 1
-expect esclusione-con-motivo ok "SpotBugs esclusioni: 1 in ${ESCL_FILE}, ciascuna con il motivo" "== verifica completata"
-ripristina
+  aggiungi_classe carddemo-domain spotbugs-domain ProvaRegole
+  run_verify esclusione-con-motivo || exit 1
+  expect esclusione-con-motivo ok "SpotBugs esclusioni: 1 in ${ESCL_FILE}, ciascuna con il motivo" "== verifica completata"
+  ripristina
+fi
+# esclusione globale scritta senza <Match> (SpotBugs la accetta e sopprime tutto): respinta
+if selezionato esclusione-senza-match; then
+  configura_esclusioni
+  scrivi "${ROOT}/${ESCL_FILE}" '<FindBugsFilter><Class name="~.*"/></FindBugsFilter>'
+  aggiungi_classe carddemo-domain spotbugs-domain ProvaRegole
+  run_verify esclusione-senza-match || exit 1
+  expect esclusione-senza-match ko "BUILD SUCCESS" "struttura di esclusione non ammessa in ${ESCL_FILE}: <Class>" "ERRORE: rapporti SpotBugs non validi" "== VERIFICA FALLITA"
+  ripristina
+fi
+# filtro realmente usato da Maven diverso da quello autorizzato, con il percorso autorizzato in un commento del POM: respinto
+if selezionato esclusione-filtro-alternativo; then
+  mut_dopo pom.xml '<xmlOutput>true</xmlOutput>' '            <excludeFilterFile>${project.parent.basedir}/quality/regole/alternativa.xml</excludeFilterFile><!-- quality/regole/spotbugs-esclusioni.xml -->'
+  CREATED+=("${ROOT}/quality/regole/alternativa.xml")
+  scrivi "${ROOT}/quality/regole/alternativa.xml" '<FindBugsFilter>
+  <Match><Class name="io.github.ltoscano.carddemo.domain.ProvaRegole"/></Match>
+</FindBugsFilter>'
+  aggiungi_classe carddemo-domain spotbugs-domain ProvaRegole
+  run_verify esclusione-filtro-alternativo || exit 1
+  expect esclusione-filtro-alternativo ko "BUILD SUCCESS" "quality/regole/alternativa.xml' invece di" "ERRORE: rapporti SpotBugs non validi" "== VERIFICA FALLITA"
+  ripristina
+fi
+# commento innocuo nel POM che nomina excludeFilterFile: una build sana non deve fallire
+if selezionato esclusione-commento-innocuo; then
+  mut_dopo pom.xml '<xmlOutput>true</xmlOutput>' '            <!-- excludeFilterFile: nessun filtro configurato (quality/regole/spotbugs-esclusioni.xml) -->'
+  run_verify esclusione-commento-innocuo || exit 1
+  expect esclusione-commento-innocuo ok "== verifica completata"
+  ripristina
+fi
+
+# ---- 4c. configurazione di JaCoCo indebolita --------------------------------------------------
+
+if selezionato jacoco-excludes-agente; then
+  mut_dopo carddemo-online/pom.xml '<plugins>' '      <plugin><groupId>org.jacoco</groupId><artifactId>jacoco-maven-plugin</artifactId><configuration><excludes><exclude>**/*</exclude></excludes></configuration></plugin>'
+  run_verify jacoco-excludes-agente || exit 1
+  expect jacoco-excludes-agente ko "BUILD SUCCESS" "configurazione effettiva di JaCoCo in carddemo-online diversa da quella fissata" "excludes" \
+    "ERRORE: rapporto di copertura JaCoCo non valido" "== VERIFICA FALLITA"
+  ripristina
+fi
+if selezionato jacoco-excludes-aggregato; then
+  mut_dopo carddemo-parity/pom.xml '<outputDirectory>' '              <excludes><exclude>**/*</exclude></excludes>'
+  run_verify jacoco-excludes-aggregato || exit 1
+  expect jacoco-excludes-aggregato ko "BUILD SUCCESS" "configurazione effettiva di JaCoCo in carddemo-parity diversa da quella fissata" "excludes" \
+    "ERRORE: rapporto di copertura JaCoCo non valido" "== VERIFICA FALLITA"
+  ripristina
+fi
 
 # ---- 5. cancelli rimossi --------------------------------------------------------------------
 
 # SpotBugs in skip in un modulo di produzione senza codice (loader) e in uno con codice (batch):
 # verify.sh non trova il rapporto del modulo.
 for modulo in loader batch; do
-  mut_dopo "carddemo-${modulo}/pom.xml" '<artifactId>spotbugs-maven-plugin</artifactId>' '        <configuration><skip>true</skip></configuration>'
-  run_verify "cancello-spotbugs-skip-${modulo}" || exit 1
-  expect "cancello-spotbugs-skip-${modulo}" ko "BUILD SUCCESS" "rapporto SpotBugs assente per carddemo-${modulo}" \
-    "ERRORE: rapporti SpotBugs non validi" "== VERIFICA FALLITA"
-  ripristina
+  if selezionato "cancello-spotbugs-skip-${modulo}"; then
+    mut_dopo "carddemo-${modulo}/pom.xml" '<artifactId>spotbugs-maven-plugin</artifactId>' '        <configuration><skip>true</skip></configuration>'
+    run_verify "cancello-spotbugs-skip-${modulo}" || exit 1
+    expect "cancello-spotbugs-skip-${modulo}" ko "BUILD SUCCESS" "rapporto SpotBugs assente per carddemo-${modulo}" \
+      "ERRORE: rapporti SpotBugs non validi" "== VERIFICA FALLITA"
+    ripristina
+  fi
 done
 
 # SpotBugs tolto dal POM padre (pluginManagement): i moduli lo dichiarano senza versione ne'
 # esecuzioni, quindi Maven resta verde senza analizzare nulla.
-mut_senza_plugin pom.xml spotbugs-maven-plugin
-run_verify cancello-spotbugs-padre-rimosso || exit 1
-expect cancello-spotbugs-padre-rimosso ko "BUILD SUCCESS" "rapporto SpotBugs assente per carddemo-" \
-  "ERRORE: rapporti SpotBugs non validi" "== VERIFICA FALLITA"
-ripristina
+if selezionato cancello-spotbugs-padre-rimosso; then
+  mut_senza_plugin pom.xml spotbugs-maven-plugin
+  run_verify cancello-spotbugs-padre-rimosso || exit 1
+  expect cancello-spotbugs-padre-rimosso ko "BUILD SUCCESS" "rapporto SpotBugs assente per carddemo-" \
+    "ERRORE: rapporti SpotBugs non validi" "== VERIFICA FALLITA"
+  ripristina
+fi
 
 # Controllo dei rapporti tolto da verify.sh: su codice sano Maven e lo script restano verdi
 # (codice 0); passa solo se la verifica di completezza della corsa di base se ne accorge.
 cancello_verify() { # caso cercato descrizione-mancante
+  selezionato "$1" || return 0
   mut_verify "$2" "true"
   run_verify "$1" || exit 1
   local mancanti
@@ -567,25 +723,39 @@ cancello_verify cancello-controllo-spotbugs-rimosso 'java quality/RapportiQualit
 
 # ---- 6. controprova lecita ------------------------------------------------------------------
 
-aggiungi_classe carddemo-domain controprova-classe ProvaCopertura
-aggiungi_classe carddemo-domain controprova-test ProvaCoperturaTest src/test
-run_verify controprova-lecita || exit 1
-mancanti="$(completezza "${RUN_LOG_FILE}")"
-if [ -n "${mancanti}" ]; then
-  printf '== [controprova-lecita] controlli mancanti: %s\n' "${mancanti//$'\n'/; }"
-  FAILED="${FAILED} controprova-lecita"
-else
-  expect controprova-lecita ok "JaCoCo carddemo-domain: 1 di 1 classi eseguibili presenti nel rapporto aggregato" \
-    "SpotBugs carddemo-domain: 2 classi analizzate, 0 difetti" "== verifica completata"
+if selezionato controprova-lecita; then
+  aggiungi_classe carddemo-domain controprova-classe ProvaCopertura
+  aggiungi_classe carddemo-domain controprova-test ProvaCoperturaTest src/test
+  run_verify controprova-lecita || exit 1
+  mancanti="$(completezza "${RUN_LOG_FILE}")"
+  if [ -n "${mancanti}" ]; then
+    printf '== [controprova-lecita] controlli mancanti: %s\n' "${mancanti//$'\n'/; }"
+    FAILED="${FAILED} controprova-lecita"
+  else
+    expect controprova-lecita ok "JaCoCo carddemo-domain: 1 di 1 classi eseguibili presenti nel rapporto aggregato" \
+      "SpotBugs carddemo-domain: 2 classi analizzate, 0 difetti" "== verifica completata"
+  fi
+  ripristina
 fi
-ripristina
 
+# ---- esito -----------------------------------------------------------------------------------
+
+if [ -n "${LISTA}" ]; then
+  exit 0
+fi
+for richiesto in ${SEL[@]+"${SEL[@]}"}; do
+  case " ${USATI[*]-} " in
+    *" ${richiesto} "*) ;;
+    *) echo "ERRORE: caso richiesto sconosciuto: '${richiesto}' (elenco: ./quality/regressioni-copertura.sh --lista)" >&2; FAILED="${FAILED} ${richiesto}" ;;
+  esac
+done
 echo
 echo "== riepilogo (caso | codice di uscita di ./verify.sh | esito | motivo atteso)"
-for r in "${RESULTS[@]}"; do
+for r in ${RESULTS[@]+"${RESULTS[@]}"}; do
   IFS='|' read -r n c e m <<<"${r}"
   printf '%-40s %-4s %-28s %s\n' "${n}" "${c}" "${e}" "${m}"
 done
+echo "== durata totale: $((SECONDS - T0))s ($(( (SECONDS - T0) / 60 )) minuti), ${#RESULTS[@]} casi"
 if [ -n "${FAILED}" ]; then
   echo "ERRORE: casi non rilevati:${FAILED}" >&2
   exit 1

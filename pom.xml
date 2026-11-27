@@ -167,7 +167,7 @@
             </goals>
             <configuration>
               <destFile>${project.build.directory}/jacoco.exec</destFile>
-              <sessionId>${menb.verify.run}</sessionId>
+              <sessionId>${menb.verify.run}:${project.artifactId}</sessionId>
             </configuration>
           </execution>
         </executions>
