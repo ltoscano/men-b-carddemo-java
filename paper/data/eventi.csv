@@ -303,3 +303,7 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T18:02:49Z,issue-35,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
 2026-11-27T18:03:44Z,issue-35,ready,fable,orologio,specifica pubblicata; 7 rilievi accolti
 2026-11-27T18:03:44Z,issue-35,esecutore-inizio,opus,orologio,affidata
+2026-11-27T18:03:50Z,processo,risposta-consegnata,fable,orologio,specifica #35 affidata
+2026-11-27T18:07:19Z,pr-47,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T18:07:58Z,pr-47,decisione,fable,orologio,validazione 1: quattro rilievi accolti (due bloccanti)
+2026-11-27T18:07:58Z,issue-23,esecutore-inizio,opus,orologio,giro di correzione unico
