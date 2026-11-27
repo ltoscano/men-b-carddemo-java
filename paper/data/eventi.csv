@@ -274,3 +274,7 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T17:27:11Z,pr-30,verifica-inizio,fable,orologio,tre mutazioni di Codex e criteri su clone pulito
 2026-11-27T17:27:53Z,pr-44,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
 2026-11-27T17:28:04Z,issue-23,esecutore-fermo,opus,orologio,un'osservazione smentisce un atteso: 9(9) COMP con FF FF FF FF vale 4294967295 con MOVE e -1 con ADD
+2026-11-27T17:28:08Z,issue-23,esecutore-inizio,opus,orologio,ripresa dopo la decisione (voce 63)
+2026-11-27T17:28:12Z,issue-23,esecutore-consuntivo,opus,orologio,prima fase fino al fermo: durata 1725 s; 95 chiamate a strumenti; contatore token 366051
+2026-11-27T17:28:44Z,pr-44,decisione,fable,orologio,validazione 1: tre rilievi accolti (uno bloccante); uno respinto
+2026-11-27T17:28:44Z,issue-25,esecutore-inizio,opus,orologio,giro di correzione unico
