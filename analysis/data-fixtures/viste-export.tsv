@@ -1,0 +1,12 @@
+# Vista attiva di un record di EXPORT.DATA.PS (contratto CVEXPORT.EXPORT-RECORD) secondo il tipo di record (issue #5),
+# scritta a mano leggendo app/cbl/CBIMPORT.cbl (EVALUATE EXPORT-REC-TYPE, righe 271-284). Verificata da glue/verifica.py:
+# alla riga citata c'e' WHEN '<tipo>', alla successiva PERFORM <paragrafo>; i tipi sono esattamente i WHEN dell'EVALUATE;
+# il paragrafo usa campi di una sola vista, quella dichiarata; le viste sono esattamente le aree che ridefiniscono
+# EXPORT-RECORD-DATA nel contratto. L'area EXPORT-TIMESTAMP-R ridefinisce un campo comune (EXPORT-TIMESTAMP), che si
+# decodifica intero: non e' una vista del carico.
+tipo	vista	riga	paragrafo
+C	EXPORT-CUSTOMER-DATA	272	2300-PROCESS-CUSTOMER-RECORD
+A	EXPORT-ACCOUNT-DATA	274	2400-PROCESS-ACCOUNT-RECORD
+X	EXPORT-CARD-XREF-DATA	276	2500-PROCESS-XREF-RECORD
+T	EXPORT-TRANSACTION-DATA	278	2600-PROCESS-TRAN-RECORD
+D	EXPORT-CARD-DATA	280	2650-PROCESS-CARD-RECORD

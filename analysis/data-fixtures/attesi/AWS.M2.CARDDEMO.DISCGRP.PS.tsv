@@ -1,0 +1,22 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+
+R	1	primo	c1 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f1 f0 f0 f0 f1 f0 f0 f1 f5 f0 c0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0
+C	1	DIS-ACCT-GROUP-ID	-	file	valido	testo	"A000000000"	cp037 (Pagina di codici z/OS): C1 = A, F0 x9
+C	1	DIS-TRAN-TYPE-CD	-	file	valido	testo	"01"	cp037 (Pagina di codici z/OS): F0 F1
+C	1	DIS-TRAN-CAT-CD	-	file	valido	intero	1	zona F, cifre 0001 (DISPLAY senza segno, zos-ebcdic)
+C	1	DIS-INT-RATE	-	file	valido	decimale	15.00	zona F cifre 00150; ultimo byte 0xC0: zona C = positivo, cifra 0 (DISPLAY con segno, zos-ebcdic)
+C	1	FILLER	-	file	valido	testo	"0"*28	cp037 (Pagina di codici z/OS): F0 x28
+
+R	34	differenza-ascii-ebcdic	c4 c5 c6 c1 e4 d3 e3 40 40 40 f0 f7 f0 f0 f0 f1 f0 f0 f1 f5 f0 c0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0
+C	34	DIS-ACCT-GROUP-ID	-	file	valido	testo	"DEFAULT" " "*3	cp037 (Pagina di codici z/OS): C4 C5 C6 C1 E4 D3 E3, 40 x3
+C	34	DIS-TRAN-TYPE-CD	-	file	valido	testo	"07"	cp037 (Pagina di codici z/OS): F0 F7
+C	34	DIS-TRAN-CAT-CD	-	file	valido	intero	1	zona F, cifre 0001 (DISPLAY senza segno, zos-ebcdic)
+C	34	DIS-INT-RATE	-	file	valido	decimale	15.00	zona F cifre 00150; ultimo byte 0xC0: zona C = positivo, cifra 0 (DISPLAY con segno, zos-ebcdic)
+C	34	FILLER	-	file	valido	testo	"0"*28	cp037 (Pagina di codici z/OS): F0 x28
+
+R	51	ultimo	e9 c5 d9 d6 c1 d7 d9 40 40 40 f0 f7 f0 f0 f0 f1 f0 f0 f0 f0 f0 c0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0
+C	51	DIS-ACCT-GROUP-ID	-	file	valido	testo	"ZEROAPR" " "*3	cp037 (Pagina di codici z/OS): E9 C5 D9 D6 C1 D7 D9, 40 x3
+C	51	DIS-TRAN-TYPE-CD	-	file	valido	testo	"07"	cp037 (Pagina di codici z/OS): F0 F7
+C	51	DIS-TRAN-CAT-CD	-	file	valido	intero	1	zona F, cifre 0001 (DISPLAY senza segno, zos-ebcdic)
+C	51	DIS-INT-RATE	-	file	valido	decimale	0.00	zona F cifre 00000; ultimo byte 0xC0: zona C = positivo, cifra 0 (DISPLAY con segno, zos-ebcdic)
+C	51	FILLER	-	file	valido	testo	"0"*28	cp037 (Pagina di codici z/OS): F0 x28

@@ -1,0 +1,13 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+R	1	primo	30 30 30 30 30 30 30 30 30 30 31 30 31 30 30 30 31 30 30 30 30 30 30 30 30 30 30 7b 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30
+C	1	TRANCAT-ACCT-ID	-	file	valido	intero	1	cifre 0x30-0x39 '00000000001' (DISPLAY senza segno)
+C	1	TRANCAT-TYPE-CD	-	file	valido	testo	"01"	latin-1, byte per byte (Alfanumerico)
+C	1	TRANCAT-CD	-	file	valido	intero	1	cifre 0x30-0x39 '0001' (DISPLAY senza segno)
+C	1	TRAN-CAT-BAL	-	file	valido	decimale	0.00	cifre 0x30-0x39 '0000000000'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	1	FILLER	-	file	valido	testo	"0"*22	latin-1, 22 byte 0x30 (Alfanumerico)
+R	50	ultimo,anomalo	30 30 30 30 30 30 30 30 30 35 30 30 31 30 30 30 31 30 30 30 30 30 30 30 30 30 30 7b 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30
+C	50	TRANCAT-ACCT-ID	-	file	valido	intero	50	cifre 0x30-0x39 '00000000050' (DISPLAY senza segno)
+C	50	TRANCAT-TYPE-CD	-	file	valido	testo	"01"	latin-1, byte per byte (Alfanumerico)
+C	50	TRANCAT-CD	-	file	valido	intero	1	cifre 0x30-0x39 '0001' (DISPLAY senza segno)
+C	50	TRAN-CAT-BAL	-	file	valido	decimale	0.00	cifre 0x30-0x39 '0000000000'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	50	FILLER	-	file	valido	testo	"0"*22	latin-1, 22 byte 0x30 (Alfanumerico); riga terminata da solo LF (le altre CRLF)

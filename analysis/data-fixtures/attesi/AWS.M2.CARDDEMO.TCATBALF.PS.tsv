@@ -1,0 +1,15 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+
+R	1	primo	f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f1 f0 f1 f0 f0 f0 f1 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 c0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0
+C	1	TRANCAT-ACCT-ID	-	file	valido	intero	1	zona F, cifre 00000000001 (DISPLAY senza segno, zos-ebcdic)
+C	1	TRANCAT-TYPE-CD	-	file	valido	testo	"01"	cp037 (Pagina di codici z/OS): F0 F1
+C	1	TRANCAT-CD	-	file	valido	intero	1	zona F, cifre 0001 (DISPLAY senza segno, zos-ebcdic)
+C	1	TRAN-CAT-BAL	-	file	valido	decimale	0.00	zona F cifre tutte 0; ultimo byte 0xC0: zona C = positivo, cifra 0 (DISPLAY con segno, zos-ebcdic)
+C	1	FILLER	-	file	valido	testo	"0"*22	cp037 (Pagina di codici z/OS): F0 x22
+
+R	50	ultimo	f0 f0 f0 f0 f0 f0 f0 f0 f0 f5 f0 f0 f1 f0 f0 f0 f1 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 c0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0
+C	50	TRANCAT-ACCT-ID	-	file	valido	intero	50	zona F, cifre 00000000050 (DISPLAY senza segno, zos-ebcdic)
+C	50	TRANCAT-TYPE-CD	-	file	valido	testo	"01"	cp037 (Pagina di codici z/OS): F0 F1
+C	50	TRANCAT-CD	-	file	valido	intero	1	zona F, cifre 0001 (DISPLAY senza segno, zos-ebcdic)
+C	50	TRAN-CAT-BAL	-	file	valido	decimale	0.00	zona F cifre tutte 0; ultimo byte 0xC0: zona C = positivo, cifra 0 (DISPLAY con segno, zos-ebcdic)
+C	50	FILLER	-	file	valido	testo	"0"*22	cp037 (Pagina di codici z/OS): F0 x22

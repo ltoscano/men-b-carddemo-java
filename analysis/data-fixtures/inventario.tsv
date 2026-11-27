@@ -1,0 +1,36 @@
+# Inventario dei file dati di esempio di CardDemo (issue #5), scritto a mano e verificato da glue/verifica.py.
+# Ogni file di app/data/ASCII/ e app/data/EBCDIC/ con tipo "data" nel manifesto ha una riga; ogni riga ha un file.
+#   file            percorso sotto il legacy
+#   codifica        ASCII | EBCDIC (profilo del codec: oracle-gnucobol | zos-ebcdic)
+#   contratto       contratto del record (docs/legacy-map/data-contract/contratti.tsv)
+#   lunghezza       lunghezza del record attesa (quella del contratto)
+#   dataset         dataset di file.tsv a cui il file corrisponde, per contratto e chiavi (chiavi.tsv); '-' se nessuno
+#   corrispondente  file dello stesso contenuto nell'altra codifica, separati da virgola; '-' se nessuno
+#   chiave          chiave di abbinamento: campi del contratto uniti da '+', oppure @offset+lunghezza (byte, offset da 0)
+#   fonte_chiave    riga della KEYS nel JCL (DEFINE CLUSTER del dataset), oppure "scelta" (dichiarata qui, non attribuita al sorgente)
+#   provenienza     carica (JCL che carica direttamente quel file) | consuma (programma/JCL che lo legge) | nessuno
+#   riga            riga del JCL con DSN=<nome del file> per carica/consuma; '-' per nessuno
+#   nota            motivo, in breve
+file	codifica	contratto	lunghezza	dataset	corrispondente	chiave	fonte_chiave	provenienza	riga	nota
+app/data/ASCII/acctdata.txt	ASCII	CVACT01Y.ACCOUNT-RECORD	300	AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS	app/data/EBCDIC/AWS.M2.CARDDEMO.ACCTDATA.PS,app/data/EBCDIC/AWS.M2.CARDDEMO.ACCDATA.PS	ACCT-ID	app/jcl/ACCTFILE.jcl:36	nessuno	-	nessun JCL o programma del repository legge i .txt ASCII: contratto e chiave sono quelli del corrispondente EBCDIC
+app/data/ASCII/carddata.txt	ASCII	CVACT02Y.CARD-RECORD	150	AWS.M2.CARDDEMO.CARDDATA.VSAM.KSDS	app/data/EBCDIC/AWS.M2.CARDDEMO.CARDDATA.PS	CARD-NUM	app/jcl/CARDFILE.jcl:50	nessuno	-	come acctdata.txt
+app/data/ASCII/cardxref.txt	ASCII	CVACT03Y.CARD-XREF-RECORD	50	AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS	app/data/EBCDIC/AWS.M2.CARDDEMO.CARDXREF.PS	XREF-CARD-NUM	app/jcl/XREFFILE.jcl:39	nessuno	-	come acctdata.txt
+app/data/ASCII/custdata.txt	ASCII	CVCUS01Y.CUSTOMER-RECORD	500	AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS	app/data/EBCDIC/AWS.M2.CARDDEMO.CUSTDATA.PS	CUST-ID	app/jcl/CUSTFILE.jcl:46	nessuno	-	come acctdata.txt
+app/data/ASCII/dailytran.txt	ASCII	CVTRA06Y.DALYTRAN-RECORD	350	-	app/data/EBCDIC/AWS.M2.CARDDEMO.DALYTRAN.PS	DALYTRAN-ID	scelta	nessuno	-	come acctdata.txt; file sequenziale senza chiave dichiarata: DALYTRAN-ID e' una scelta, la sua unicita' si verifica
+app/data/ASCII/discgrp.txt	ASCII	CVTRA02Y.DIS-GROUP-RECORD	50	AWS.M2.CARDDEMO.DISCGRP.VSAM.KSDS	app/data/EBCDIC/AWS.M2.CARDDEMO.DISCGRP.PS	DIS-ACCT-GROUP-ID+DIS-TRAN-TYPE-CD+DIS-TRAN-CAT-CD	app/jcl/DISCGRP.jcl:36	nessuno	-	come acctdata.txt
+app/data/ASCII/tcatbal.txt	ASCII	CVTRA01Y.TRAN-CAT-BAL-RECORD	50	AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS	app/data/EBCDIC/AWS.M2.CARDDEMO.TCATBALF.PS	TRANCAT-ACCT-ID+TRANCAT-TYPE-CD+TRANCAT-CD	app/jcl/TCATBALF.jcl:36	nessuno	-	come acctdata.txt
+app/data/ASCII/trancatg.txt	ASCII	CVTRA04Y.TRAN-CAT-RECORD	60	AWS.M2.CARDDEMO.TRANCATG.VSAM.KSDS	app/data/EBCDIC/AWS.M2.CARDDEMO.TRANCATG.PS	TRAN-TYPE-CD+TRAN-CAT-CD	app/jcl/TRANCATG.jcl:36	nessuno	-	come acctdata.txt
+app/data/ASCII/trantype.txt	ASCII	CVTRA03Y.TRAN-TYPE-RECORD	60	AWS.M2.CARDDEMO.TRANTYPE.VSAM.KSDS	app/data/EBCDIC/AWS.M2.CARDDEMO.TRANTYPE.PS	TRAN-TYPE	app/jcl/TRANTYPE.jcl:36	nessuno	-	come acctdata.txt
+app/data/EBCDIC/AWS.M2.CARDDEMO.ACCDATA.PS	EBCDIC	CVACT01Y.ACCOUNT-RECORD	300	AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS	app/data/ASCII/acctdata.txt	ACCT-ID	app/jcl/ACCTFILE.jcl:36	nessuno	-	alias di ACCTDATA.PS (stessa impronta, fisica.tsv): nessun JCL lo nomina; incluso nel confronto, non deduplicato
+app/data/EBCDIC/AWS.M2.CARDDEMO.ACCTDATA.PS	EBCDIC	CVACT01Y.ACCOUNT-RECORD	300	AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS	app/data/ASCII/acctdata.txt	ACCT-ID	app/jcl/ACCTFILE.jcl:36	carica	app/jcl/ACCTFILE.jcl:57	REPRO nel KSDS dei conti (STEP15)
+app/data/EBCDIC/AWS.M2.CARDDEMO.CARDDATA.PS	EBCDIC	CVACT02Y.CARD-RECORD	150	AWS.M2.CARDDEMO.CARDDATA.VSAM.KSDS	app/data/ASCII/carddata.txt	CARD-NUM	app/jcl/CARDFILE.jcl:50	carica	app/jcl/CARDFILE.jcl:71	REPRO nel KSDS delle carte
+app/data/EBCDIC/AWS.M2.CARDDEMO.CARDXREF.PS	EBCDIC	CVACT03Y.CARD-XREF-RECORD	50	AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS	app/data/ASCII/cardxref.txt	XREF-CARD-NUM	app/jcl/XREFFILE.jcl:39	carica	app/jcl/XREFFILE.jcl:60	REPRO nel KSDS dei riferimenti carta-conto
+app/data/EBCDIC/AWS.M2.CARDDEMO.CUSTDATA.PS	EBCDIC	CVCUS01Y.CUSTOMER-RECORD	500	AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS	app/data/ASCII/custdata.txt	CUST-ID	app/jcl/CUSTFILE.jcl:46	carica	app/jcl/CUSTFILE.jcl:67	REPRO nel KSDS dei clienti
+app/data/EBCDIC/AWS.M2.CARDDEMO.DALYTRAN.PS	EBCDIC	CVTRA06Y.DALYTRAN-RECORD	350	-	app/data/ASCII/dailytran.txt	DALYTRAN-ID	scelta	consuma	app/jcl/POSTTRAN.jcl:31	letto da CBTRN02C (DD DALYTRAN, assegnazioni.tsv) INTO DALYTRAN-RECORD; file sequenziale: chiave scelta
+app/data/EBCDIC/AWS.M2.CARDDEMO.DALYTRAN.PS.INIT	EBCDIC	CVTRA05Y.TRAN-RECORD	350	AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS	-	TRAN-ID	app/jcl/TRANFILE.jcl:49	carica	app/jcl/TRANFILE.jcl:70	REPRO nel KSDS delle transazioni (STEP15): il contratto e' quello del KSDS di destinazione
+app/data/EBCDIC/AWS.M2.CARDDEMO.DISCGRP.PS	EBCDIC	CVTRA02Y.DIS-GROUP-RECORD	50	AWS.M2.CARDDEMO.DISCGRP.VSAM.KSDS	app/data/ASCII/discgrp.txt	DIS-ACCT-GROUP-ID+DIS-TRAN-TYPE-CD+DIS-TRAN-CAT-CD	app/jcl/DISCGRP.jcl:36	carica	app/jcl/DISCGRP.jcl:57	REPRO nel KSDS dei gruppi di interesse
+app/data/EBCDIC/AWS.M2.CARDDEMO.EXPORT.DATA.PS	EBCDIC	CVEXPORT.EXPORT-RECORD	500	AWS.M2.CARDDEMO.EXPORT.DATA	-	@28+4	app/jcl/CBEXPORT.jcl:30	nessuno	-	nessun JCL nomina EXPORT.DATA.PS (CBEXPORT/CBIMPORT usano AWS.M2.CARDDEMO.EXPORT.DATA); la KEYS(4 28) del JCL taglia due campi (discordanze.md): si usa com'e', in byte
+app/data/EBCDIC/AWS.M2.CARDDEMO.TCATBALF.PS	EBCDIC	CVTRA01Y.TRAN-CAT-BAL-RECORD	50	AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS	app/data/ASCII/tcatbal.txt	TRANCAT-ACCT-ID+TRANCAT-TYPE-CD+TRANCAT-CD	app/jcl/TCATBALF.jcl:36	carica	app/jcl/TCATBALF.jcl:57	REPRO nel KSDS dei saldi per categoria
+app/data/EBCDIC/AWS.M2.CARDDEMO.TRANCATG.PS	EBCDIC	CVTRA04Y.TRAN-CAT-RECORD	60	AWS.M2.CARDDEMO.TRANCATG.VSAM.KSDS	app/data/ASCII/trancatg.txt	TRAN-TYPE-CD+TRAN-CAT-CD	app/jcl/TRANCATG.jcl:36	carica	app/jcl/TRANCATG.jcl:57	REPRO nel KSDS delle categorie
+app/data/EBCDIC/AWS.M2.CARDDEMO.TRANTYPE.PS	EBCDIC	CVTRA03Y.TRAN-TYPE-RECORD	60	AWS.M2.CARDDEMO.TRANTYPE.VSAM.KSDS	app/data/ASCII/trantype.txt	TRAN-TYPE	app/jcl/TRANTYPE.jcl:36	carica	app/jcl/TRANTYPE.jcl:57	REPRO nel KSDS dei tipi
+app/data/EBCDIC/AWS.M2.CARDDEMO.USRSEC.PS	EBCDIC	CSUSR01Y.SEC-USER-DATA	80	AWS.M2.CARDDEMO.USRSEC.VSAM.KSDS	-	SEC-USR-ID	app/jcl/DUSRSECJ.jcl:64	carica	app/jcl/DUSRSECJ.jcl:82	REPRO nel KSDS utenti (STEP03); il PS e' creato da IEBGENER con i dati in linea del JCL (righe 34-43)

@@ -1,0 +1,13 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+
+R	1	primo	f0 f5 f0 f0 f0 f2 f4 f4 f5 f3 f7 f6 f5 f7 f4 f0 f0 f0 f0 f0 f0 f0 f0 f5 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f5 f0 40 40 40 40 40 40 40 40 40 40 40 40 40 40
+C	1	XREF-CARD-NUM	-	file	valido	testo	"0500024453765740"	cp037 (Pagina di codici z/OS): F0-F9 cifre
+C	1	XREF-CUST-ID	-	file	valido	intero	50	zona F, cifre 000000050 (DISPLAY senza segno, zos-ebcdic)
+C	1	XREF-ACCT-ID	-	file	valido	intero	50	zona F, cifre 00000000050 (DISPLAY senza segno, zos-ebcdic)
+C	1	FILLER	-	file	valido	testo	" "*14	cp037 (Pagina di codici z/OS): 40 x14
+
+R	50	ultimo	f9 f8 f0 f5 f5 f8 f3 f4 f0 f8 f9 f9 f6 f5 f8 f8 f0 f0 f0 f0 f0 f0 f0 f4 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f4 f0 40 40 40 40 40 40 40 40 40 40 40 40 40 40
+C	50	XREF-CARD-NUM	-	file	valido	testo	"9805583408996588"	cp037 (Pagina di codici z/OS): F0-F9 cifre
+C	50	XREF-CUST-ID	-	file	valido	intero	40	zona F, cifre 000000040 (DISPLAY senza segno, zos-ebcdic)
+C	50	XREF-ACCT-ID	-	file	valido	intero	40	zona F, cifre 00000000040 (DISPLAY senza segno, zos-ebcdic)
+C	50	FILLER	-	file	valido	testo	" "*14	cp037 (Pagina di codici z/OS): 40 x14

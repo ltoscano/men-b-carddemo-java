@@ -1,0 +1,9 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+R	1	primo	30 31 50 75 72 63 68 61 73 65 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 30 30 30 30 30 30 30 30
+C	1	TRAN-TYPE	-	file	valido	testo	"01"	latin-1, byte per byte (Alfanumerico)
+C	1	TRAN-TYPE-DESC	-	file	valido	testo	"Purchase" " "*42	latin-1, byte per byte, 42 byte 0x20 finali (Alfanumerico)
+C	1	FILLER	-	file	valido	testo	"0"*8	latin-1, 8 byte 0x30 (Alfanumerico)
+R	7	ultimo	30 37 41 64 6a 75 73 74 6d 65 6e 74 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 30 30 30 30 30 30 30 30
+C	7	TRAN-TYPE	-	file	valido	testo	"07"	latin-1, byte per byte (Alfanumerico)
+C	7	TRAN-TYPE-DESC	-	file	valido	testo	"Adjustment" " "*40	latin-1, byte per byte, 40 byte 0x20 finali (Alfanumerico)
+C	7	FILLER	-	file	valido	testo	"0"*8	latin-1, 8 byte 0x30 (Alfanumerico)

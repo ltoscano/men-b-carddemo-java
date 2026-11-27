@@ -1,0 +1,43 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+R	1	primo	30 30 30 30 30 30 30 30 30 30 31 59 30 30 30 30 30 30 30 31 39 34 30 7b 30 30 30 30 30 30 32 30 32 30 30 7b 30 30 30 30 30 30 31 30 32 30 30 7b 32 30 31 34 2d 31 31 2d 32 30 32 30 32 35 2d 30 35 2d 32 30 32 30 32 35 2d 30 35 2d 32 30 30 30 30 30 30 30 30 30 30 30 30 7b 30 30 30 30 30 30 30 30 30 30 30 7b 41 30 30 30 30 30 30 30 30 30 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20
+C	1	ACCT-ID	-	file	valido	intero	1	cifre 0x30-0x39 '00000000001' (DISPLAY senza segno)
+C	1	ACCT-ACTIVE-STATUS	-	file	valido	testo	"Y"	latin-1, byte 0x59 (Alfanumerico)
+C	1	ACCT-CURR-BAL	-	file	valido	decimale	194.00	cifre 0x30-0x39 '00000001940'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	1	ACCT-CREDIT-LIMIT	-	file	valido	decimale	2020.00	cifre 0x30-0x39 '00000020200'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	1	ACCT-CASH-CREDIT-LIMIT	-	file	valido	decimale	1020.00	cifre 0x30-0x39 '00000010200'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	1	ACCT-OPEN-DATE	-	file	valido	testo	"2014-11-20"	latin-1, byte per byte (Alfanumerico)
+C	1	ACCT-EXPIRAION-DATE	-	file	valido	testo	"2025-05-20"	latin-1, byte per byte (Alfanumerico)
+C	1	ACCT-REISSUE-DATE	-	file	valido	testo	"2025-05-20"	latin-1, byte per byte (Alfanumerico)
+C	1	ACCT-CURR-CYC-CREDIT	-	file	valido	decimale	0.00	cifre 0x30-0x39 '00000000000'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	1	ACCT-CURR-CYC-DEBIT	-	file	valido	decimale	0.00	cifre 0x30-0x39 '00000000000'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	1	ACCT-ADDR-ZIP	-	file	valido	testo	"A000000000"	latin-1, byte 0x41 0x30.. (Alfanumerico)
+C	1	ACCT-GROUP-ID	-	file	valido	testo	" "*10	latin-1, 10 byte 0x20 (Alfanumerico)
+C	1	FILLER	-	file	valido	testo	" "*178	latin-1, 178 byte 0x20 (Alfanumerico)
+R	49	differenza-ascii-ebcdic	30 30 30 30 30 30 30 30 30 34 39 59 30 30 30 30 30 30 30 31 30 30 30 7b 30 30 30 30 30 30 39 30 34 38 30 7b 30 30 30 30 30 30 34 38 30 37 30 7b 32 30 31 39 2d 30 34 2d 30 36 32 30 32 33 2d 30 39 2d 31 37 32 30 32 33 2d 30 39 2d 31 37 30 30 30 30 30 30 30 30 30 30 30 7b 30 30 30 30 30 30 30 30 30 30 30 7b 41 30 30 30 30 30 30 30 30 30 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20
+C	49	ACCT-ID	-	file	valido	intero	49	cifre 0x30-0x39 '00000000049' (DISPLAY senza segno)
+C	49	ACCT-ACTIVE-STATUS	-	file	valido	testo	"Y"	latin-1, byte 0x59 (Alfanumerico)
+C	49	ACCT-CURR-BAL	-	file	valido	decimale	100.00	cifre 0x30-0x39 '00000001000'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	49	ACCT-CREDIT-LIMIT	-	file	valido	decimale	9048.00	cifre 0x30-0x39 '00000090480'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	49	ACCT-CASH-CREDIT-LIMIT	-	file	valido	decimale	4807.00	cifre 0x30-0x39 '00000048070'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	49	ACCT-OPEN-DATE	-	file	valido	testo	"2019-04-06"	latin-1, byte per byte (Alfanumerico)
+C	49	ACCT-EXPIRAION-DATE	-	file	valido	testo	"2023-09-17"	latin-1, byte per byte (Alfanumerico)
+C	49	ACCT-REISSUE-DATE	-	file	valido	testo	"2023-09-17"	latin-1, byte per byte (Alfanumerico)
+C	49	ACCT-CURR-CYC-CREDIT	-	file	valido	decimale	0.00	cifre 0x30-0x39 '00000000000'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	49	ACCT-CURR-CYC-DEBIT	-	file	valido	decimale	0.00	cifre 0x30-0x39 '00000000000'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	49	ACCT-ADDR-ZIP	-	file	valido	testo	"A000000000"	latin-1, byte 0x41 0x30.. (Alfanumerico)
+C	49	ACCT-GROUP-ID	-	file	valido	testo	" "*10	latin-1, 10 byte 0x20 (Alfanumerico)
+C	49	FILLER	-	file	valido	testo	" "*178	latin-1, 178 byte 0x20 (Alfanumerico)
+R	50	ultimo	30 30 30 30 30 30 30 30 30 35 30 59 30 30 30 30 30 30 30 34 39 32 30 7b 30 30 30 30 30 30 36 31 36 39 30 7b 30 30 30 30 30 30 34 35 38 37 30 7b 32 30 31 31 2d 30 34 2d 32 32 32 30 32 33 2d 30 33 2d 30 39 32 30 32 33 2d 30 33 2d 30 39 30 30 30 30 30 30 30 30 30 30 30 7b 30 30 30 30 30 30 30 30 30 30 30 7b 41 30 30 30 30 30 30 30 30 30 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20
+C	50	ACCT-ID	-	file	valido	intero	50	cifre 0x30-0x39 '00000000050' (DISPLAY senza segno)
+C	50	ACCT-ACTIVE-STATUS	-	file	valido	testo	"Y"	latin-1, byte 0x59 (Alfanumerico)
+C	50	ACCT-CURR-BAL	-	file	valido	decimale	492.00	cifre 0x30-0x39 '00000004920'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	50	ACCT-CREDIT-LIMIT	-	file	valido	decimale	6169.00	cifre 0x30-0x39 '00000061690'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	50	ACCT-CASH-CREDIT-LIMIT	-	file	valido	decimale	4587.00	cifre 0x30-0x39 '00000045870'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	50	ACCT-OPEN-DATE	-	file	valido	testo	"2011-04-22"	latin-1, byte per byte (Alfanumerico)
+C	50	ACCT-EXPIRAION-DATE	-	file	valido	testo	"2023-03-09"	latin-1, byte per byte (Alfanumerico)
+C	50	ACCT-REISSUE-DATE	-	file	valido	testo	"2023-03-09"	latin-1, byte per byte (Alfanumerico)
+C	50	ACCT-CURR-CYC-CREDIT	-	file	valido	decimale	0.00	cifre 0x30-0x39 '00000000000'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	50	ACCT-CURR-CYC-DEBIT	-	file	valido	decimale	0.00	cifre 0x30-0x39 '00000000000'; ultimo byte 0x7B '{' = cifra 0 positiva (tabella byte->(cifra,segno), oracle-gnucobol); V99
+C	50	ACCT-ADDR-ZIP	-	file	valido	testo	"A000000000"	latin-1, byte 0x41 0x30.. (Alfanumerico)
+C	50	ACCT-GROUP-ID	-	file	valido	testo	" "*10	latin-1, 10 byte 0x20 (Alfanumerico)
+C	50	FILLER	-	file	valido	testo	" "*178	latin-1, 178 byte 0x20 (Alfanumerico)

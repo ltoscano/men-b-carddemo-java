@@ -1,0 +1,19 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+
+R	1	primo	f0 f5 f0 f0 f0 f2 f4 f4 f5 f3 f7 f6 f5 f7 f4 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f5 f0 f7 f4 f7 c1 95 89 a8 81 40 e5 96 95 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 f2 f0 f2 f3 60 f0 f3 60 f0 f9 e8 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40
+C	1	CARD-NUM	-	file	valido	testo	"0500024453765740"	cp037 (Pagina di codici z/OS): F0-F9 cifre
+C	1	CARD-ACCT-ID	-	file	valido	intero	50	zona F, cifre 00000000050 (DISPLAY senza segno, zos-ebcdic)
+C	1	CARD-CVV-CD	-	file	valido	intero	747	zona F, cifre 747 (DISPLAY senza segno, zos-ebcdic)
+C	1	CARD-EMBOSSED-NAME	-	file	valido	testo	"Aniya Von" " "*41	cp037 (Pagina di codici z/OS): C1 95 89 A8 81 40 E5 96 95, 40 x41
+C	1	CARD-EXPIRAION-DATE	-	file	valido	testo	"2023-03-09"	cp037 (Pagina di codici z/OS): F0-F9 cifre, 60 = -
+C	1	CARD-ACTIVE-STATUS	-	file	valido	testo	"Y"	cp037 (Pagina di codici z/OS): E8 = Y
+C	1	FILLER	-	file	valido	testo	" "*59	cp037 (Pagina di codici z/OS): 40 x59
+
+R	50	ultimo	f9 f8 f0 f5 f5 f8 f3 f4 f0 f8 f9 f9 f6 f5 f8 f8 f0 f0 f0 f0 f0 f0 f0 f0 f0 f4 f0 f9 f0 f8 c4 81 a5 96 95 40 c5 94 94 85 99 89 83 88 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 f2 f0 f2 f3 60 f1 f0 60 f2 f7 e8 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40
+C	50	CARD-NUM	-	file	valido	testo	"9805583408996588"	cp037 (Pagina di codici z/OS): F0-F9 cifre
+C	50	CARD-ACCT-ID	-	file	valido	intero	40	zona F, cifre 00000000040 (DISPLAY senza segno, zos-ebcdic)
+C	50	CARD-CVV-CD	-	file	valido	intero	908	zona F, cifre 908 (DISPLAY senza segno, zos-ebcdic)
+C	50	CARD-EMBOSSED-NAME	-	file	valido	testo	"Davon Emmerich" " "*36	cp037 (Pagina di codici z/OS): C4 81 A5 96 95 40 C5 94 94 85 99 89 83 88, 40 x36
+C	50	CARD-EXPIRAION-DATE	-	file	valido	testo	"2023-10-27"	cp037 (Pagina di codici z/OS): F0-F9 cifre, 60 = -
+C	50	CARD-ACTIVE-STATUS	-	file	valido	testo	"Y"	cp037 (Pagina di codici z/OS): E8 = Y
+C	50	FILLER	-	file	valido	testo	" "*59	cp037 (Pagina di codici z/OS): 40 x59
