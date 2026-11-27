@@ -297,3 +297,9 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T17:56:28Z,issue-23,esecutore-consuntivo,opus,orologio,chiusura: durata cumulata 3444 s; 184 chiamate a strumenti; contatore token 540725 (cumulativi); comprende l'attesa a vuoto della CI
 2026-11-27T17:57:17Z,pr-44,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0; verdetto: APPROVATA
 2026-11-27T17:57:44Z,pr-44,merge,fable,orologio,PR #44 mergiata dopo due validazioni (seconda APPROVATA; 5 min 11 s); chiude #25
+2026-11-27T17:58:13Z,processo,risposta-consegnata,fable,orologio,PR #44 mergiata; specifica #35 in contestazione
+2026-11-27T17:58:14Z,issue-35,specifica-scritta,fable,orologio,riallineata dopo #24 e #25
+2026-11-27T17:58:14Z,issue-35,codex-inizio,codex,orologio,contestazione della specifica; sola lettura
+2026-11-27T18:02:49Z,issue-35,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-27T18:03:44Z,issue-35,ready,fable,orologio,specifica pubblicata; 7 rilievi accolti
+2026-11-27T18:03:44Z,issue-35,esecutore-inizio,opus,orologio,affidata
