@@ -363,3 +363,9 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T21:27:23Z,pr-51,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
 2026-11-27T21:28:04Z,pr-51,decisione,fable,orologio,validazione 1: sei rilievi accolti (uno bloccante)
 2026-11-27T21:28:04Z,issue-43,esecutore-inizio,opus,orologio,giro di correzione unico
+2026-11-27T21:29:07Z,processo,risposta-consegnata,fable,orologio,PR #51 rinviata; specifica #36 in contestazione
+2026-11-27T21:29:09Z,issue-36,specifica-scritta,fable,orologio,bozza completata dopo #35
+2026-11-27T21:29:09Z,issue-36,codex-inizio,codex,orologio,contestazione della specifica; sola lettura
+2026-11-27T21:29:52Z,pr-50,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T21:30:31Z,pr-48,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T21:30:33Z,pr-50,merge,fable,orologio,PR #50 mergiata dopo due validazioni; un residuo non bloccante in #45; chiude #22
