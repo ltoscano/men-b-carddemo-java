@@ -257,6 +257,7 @@ controlla_base() { # log
   conta "checkstyle senza violazioni" 4 "You have 0 Checkstyle violations"
   conta "test ArchUnit eseguiti" 1 "Running io.github.ltoscano.carddemo.parity.ArchitetturaTest"
   conta "controllo sulle classi dei database (padre + 5 moduli)" 6 "antrun:3.2.0:run (classi-database-vietate)"
+  conta "controllo sulle classi dei database eseguito, non saltato" 6 "Executed tasks"
   conta "test ArchUnit riusciti" 1 "Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed"
   return "${ok}"
 }
