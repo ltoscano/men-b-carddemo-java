@@ -1,0 +1,52 @@
+# Occorrenze nel sorgente originale app/cbl/CBSTM03A.CBL dei dati usati dalle righe 266-291 (blocchi di
+# controllo di z/OS), scritte a mano leggendo il sorgente. Una riga per nome e riga del sorgente in cui il
+# nome compare (confronto senza distinzione di maiuscole, nome intero). Fuori dalle righe 266-291 i nomi
+# compaiono solo nelle loro dichiarazioni (righe 235-260): nessun dato scritto o letto in quelle righe e'
+# letto altrove nel programma. Analisi in oracle/adattamenti/registro.md.
+nome	riga	uso
+PSAPTR	235	dichiarazione (WORKING-STORAGE, POINTER senza VALUE)
+PSAPTR	266	letto: SET ADDRESS OF PSA-BLOCK TO PSAPTR
+BUMP-TIOT	236	dichiarazione (WORKING-STORAGE)
+BUMP-TIOT	237	dichiarazione: TIOT-INDEX REDEFINES BUMP-TIOT
+BUMP-TIOT	272	scritto (COMPUTE)
+BUMP-TIOT	283	scritto (COMPUTE)
+TIOT-INDEX	237	dichiarazione (REDEFINES BUMP-TIOT)
+TIOT-INDEX	269	scritto (SET TIOT-INDEX TO TIOT-POINT)
+TIOT-INDEX	273	letto (SET ADDRESS OF TIOT-ENTRY TO TIOT-INDEX)
+TIOT-INDEX	284	letto (SET ADDRESS OF TIOT-ENTRY TO TIOT-INDEX)
+ALIGN-PSA	240	dichiarazione (LINKAGE), mai usato
+PSA-BLOCK	241	dichiarazione (LINKAGE)
+PSA-BLOCK	266	indirizzo impostato
+TCB-POINT	243	dichiarazione (subordinato di PSA-BLOCK)
+TCB-POINT	267	letto
+TCB-BLOCK	244	dichiarazione (LINKAGE)
+TCB-BLOCK	267	indirizzo impostato
+TIOT-POINT	246	dichiarazione (subordinato di TCB-BLOCK)
+TIOT-POINT	268	letto
+TIOT-POINT	269	letto
+TIOT-BLOCK	247	dichiarazione (LINKAGE)
+TIOT-BLOCK	268	indirizzo impostato
+TIOT-BLOCK	272	LENGTH OF TIOT-BLOCK
+TIOTNJOB	248	dichiarazione (subordinato di TIOT-BLOCK)
+TIOTNJOB	270	letto (DISPLAY)
+TIOTJSTP	249	dichiarazione (subordinato di TIOT-BLOCK)
+TIOTJSTP	270	letto (DISPLAY)
+TIOTPSTP	250	dichiarazione (subordinato di TIOT-BLOCK), mai usato
+TIOT-ENTRY	251	dichiarazione (LINKAGE)
+TIOT-ENTRY	273	indirizzo impostato
+TIOT-ENTRY	284	indirizzo impostato
+TIOT-SEG	252	dichiarazione (subordinato di TIOT-ENTRY)
+TIOT-SEG	283	LENGTH OF TIOT-SEG
+TIO-LEN	253	dichiarazione (subordinato di TIOT-SEG)
+TIO-LEN	277	letto (condizione del PERFORM)
+TIOCDDNM	255	dichiarazione (subordinato di TIOT-SEG)
+TIOCDDNM	279	letto (DISPLAY)
+TIOCDDNM	281	letto (DISPLAY)
+TIOCDDNM	288	letto (DISPLAY)
+TIOCDDNM	290	letto (DISPLAY)
+UCB-ADDR	257	dichiarazione (subordinato di TIOT-SEG)
+NULL-UCB	258	dichiarazione (condizione 88 su UCB-ADDR)
+NULL-UCB	278	letto (IF)
+NULL-UCB	287	letto (IF)
+END-OF-TIOT	260	dichiarazione (condizione 88 sul FILLER di TIOT-ENTRY)
+END-OF-TIOT	276	letto (condizione del PERFORM)

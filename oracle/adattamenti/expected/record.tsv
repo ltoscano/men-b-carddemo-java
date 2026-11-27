@@ -1,0 +1,3 @@
+file	lunghezza_record	numero_record	derivazione
+STMTFILE	80	61	FD-STMTFILE-REC PIC X(80) (riga 45). Per estratto: 16 record di 5000-CREATE-STATEMENT (righe 460, 488-502), 1 per movimento (679), 3 di chiusura (435-437). Estratti: 16+2+3, 16+0+3, 16+2+3
+HTMLFILE	100	236	FD-HTMLFILE-REC PIC X(100) (riga 47). Per estratto: 22 record di 5100 (righe 508-552), 34 di 5200 (560-669), 11 per movimento di 6000 (681-721), 8 di chiusura (439-454). Estratti: 64+22, 64+0, 64+22

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prova di avvio reale: ogni eseguibile degli 11 e' lanciato nel container in una cartella di lavoro
+# Prova di avvio reale: ogni eseguibile dei 12 (CBSTM03A dalla copia adattata, issue #25) e' lanciato nel container in una cartella di lavoro
 # vuota, senza file d'ingresso, senza PARM, con stdin vuoto e nell'ambiente fissato di oracle/ambiente.sh;
 # i moduli CBSTM03B e CSUTLDTC sono richiamati dai programmi di prova M03BCALL e DTCCALL (oracle/tests/).
 # Per ognuno si registrano il rapporto di oracle/esegui.sh (codice di uscita, stdout, stderr, file creati)
@@ -9,8 +9,8 @@
 # senza moduli; AVVIO_ESEGUI indica una copia alterata di esegui.sh (sotto oracle/).
 . "$ORACLE_ROOT/lib.sh"
 
-# Elenco dei lanci: gli 9 eseguibili del legacy e i due chiamanti dei moduli.
-LANCI="CBACT01C CBACT02C CBACT03C CBACT04C CBCUS01C CBTRN01C CBTRN02C CBTRN03C COBSWAIT M03BCALL DTCCALL"
+# Elenco dei lanci: i 10 eseguibili del legacy e i due chiamanti dei moduli.
+LANCI="CBACT01C CBACT02C CBACT03C CBACT04C CBCUS01C CBSTM03A CBTRN01C CBTRN02C CBTRN03C COBSWAIT M03BCALL DTCCALL"
 
 out="${AVVIO_OUT_DIR:-$ORACLE_ROOT/avvio/out}"
 esegui="/oracle/esegui.sh"

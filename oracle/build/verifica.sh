@@ -8,8 +8,11 @@
 #   AMBIENTE-*  le variabili fissate nel controllo per cobc e per i programmi (VAR=valore separate da spazi)
 # Attesi fissati in /oracle/build/expected/: configurazione.sha256 (cartella e SHA-256 dei file di
 # configurazione del compilatore) e runtime-config.txt (configurazione di runtime riportata da libcob).
-#   VOCE        origine:NOME:tipo:sorgente, con origine = legacy | stub | prova, tipo = eseguibile | modulo,
-#               sorgente = percorso nel container. Le voci legacy sono l'elenco fisso degli 11.
+#   VOCE        origine:NOME:tipo:sorgente, con origine = legacy | adattato | stub | prova, tipo = eseguibile |
+#               modulo, sorgente = percorso nel container. Le voci legacy e adattato sono l'elenco fisso dei
+#               12 programmi del legacy. Per una voce adattato il sorgente e' l'originale (quello dell'elenco
+#               della build); si compila la copia OUT/adattati/<nome del file>, con -I/out/adattati come
+#               primo argomento di cobc (oracle/build/compile.sh, oracle/adattamenti/registro.md).
 # Tutti i confronti sono esatti (righe intere, insiemi interi): niente prefissi, sottostringhe o jolly.
 # Stampa una riga per ogni difetto trovato; esce con 1 se ce n'e' almeno uno, con 0 altrimenti.
 set -u
@@ -24,7 +27,7 @@ w=/tmp/verifica; rm -rf "$w"; mkdir -p "$w"
 # 1. L'elenco della build coincide con le voci legacy (nome, tipo e sorgente; niente in piu' o in meno).
 [ -f "$elenco" ] || err "elenco della build assente: $elenco"
 for v in "$@"; do
-  case "$v" in legacy:*) echo "$v" | awk -F: '{sub("^/legacy/", "", $4); print $2 ":" $3 ":" $4}' ;; esac
+  case "$v" in legacy:*|adattato:*) echo "$v" | awk -F: '{sub("^/legacy/", "", $4); print $2 ":" $3 ":" $4}' ;; esac
 done | sort > "$w/fisso.txt"
 grep -v '^#' "$elenco" 2>/dev/null | tail -n +2 | awk -F"$TAB" 'NF>0 {print $1 ":" $3 ":" $2}' | sort > "$w/build.txt"
 comm -23 "$w/fisso.txt" "$w/build.txt" | while read -r v; do echo "DIFETTO: elenco: $v manca nell'elenco della build (o ha altro tipo o sorgente)"; done
@@ -60,12 +63,16 @@ for v in "$@"; do
     # Argomenti effettivi di ogni invocazione di cobc (registrati da compile.sh, uno per riga) contro
     # quelli attesi: le opzioni fissate e i soli argomenti strutturali del tipo, elencati qui.
     grep -E '^(== cobc$|arg )' "$logf" > "$w/argomenti.txt"
+    # Programma adattato: si compila la copia adattata, con la sua cartella come primo -I.
+    csrc="$src"
+    [ "$orig" != adattato ] || csrc="/out/adattati/$(basename "$src")"
     {
       echo "== cobc"
+      [ "$orig" != adattato ] || echo "arg -I/out/adattati"
       for o in $opzioni; do echo "arg $o"; done
       case "$tipo" in
-        modulo)     printf 'arg %s\n' -m -o "/out/bin/$n.so" "$src" ;;
-        eseguibile) printf 'arg %s\n' -c -o "/out/obj/$n.o" "$src"
+        modulo)     printf 'arg %s\n' -m -o "/out/bin/$n.so" "$csrc" ;;
+        eseguibile) printf 'arg %s\n' -c -o "/out/obj/$n.o" "$csrc"
                     echo "== cobc"
                     printf 'arg %s\n' -x -A "-DMENB_ENTRY=$n" -o "/out/bin/$n" /oracle/launcher/avvia.c "/out/obj/$n.o" ;;
       esac
@@ -75,6 +82,9 @@ for v in "$@"; do
       diff "$w/attesi.txt" "$w/argomenti.txt" | sed 's/^/      /'
     fi
     grep -E '^== codice ' "$logf" | grep -vx '== codice 0' > /dev/null && err "$n: un'invocazione di cobc non e' terminata con 0"
+  fi
+  if [ "$orig" = adattato ] && [ ! -f "$out/adattati/$(basename "$src")" ]; then
+    err "$n: copia adattata assente (adattati/$(basename "$src"))"
   fi
   case "$tipo" in
     eseguibile)
@@ -133,7 +143,9 @@ cmp -s "$ATTESI/runtime-config.txt" "$out/runtime-config.txt" 2>/dev/null || {
   diff "$ATTESI/runtime-config.txt" "$out/runtime-config.txt" 2>&1 | sed 's/^/      /'; }
 
 if [ "$errs" -eq 0 ]; then
-  echo "verifica riuscita: $# programmi compilati con gli argomenti attesi (11 del legacy), opzioni e ambiente conformi"
+  nleg=0
+  for v in "$@"; do case "$v" in legacy:*|adattato:*) nleg=$((nleg + 1)) ;; esac; done
+  echo "verifica riuscita: $# programmi compilati con gli argomenti attesi ($nleg del legacy), opzioni e ambiente conformi"
   exit 0
 fi
 echo "verifica fallita: $errs difetti"
