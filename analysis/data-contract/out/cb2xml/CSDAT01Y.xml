@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CSDAT01Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--******************************************************************-->
+    <!--* Copyright Amazon.com, Inc. or its affiliates.-->
+    <!--* All Rights Reserved.-->
+    <!--*-->
+    <!--* Licensed under the Apache License, Version 2.0 (the "License").-->
+    <!--* You may not use this file except in compliance with the License.-->
+    <!--* You may obtain a copy of the License at-->
+    <!--*-->
+    <!--*    http://www.apache.org/licenses/LICENSE-2.0-->
+    <!--*-->
+    <!--* Unless required by applicable law or agreed to in writing,-->
+    <!--* software distributed under the License is distributed on an-->
+    <!--* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,-->
+    <!--* either express or implied. See the License for the specific-->
+    <!--* language governing permissions and limitations under the License-->
+    <!--******************************************************************-->
+    <item level="01" name="WS-DATE-TIME" position="1" storage-length="58" display-length="58" display-position="1">
+        <item level="05" name="WS-CURDATE-DATA" position="1" storage-length="16" display-length="16" display-position="1">
+            <item level="10" name="WS-CURDATE" position="1" storage-length="8" display-length="8" display-position="1" redefined="true">
+                <item level="15" name="WS-CURDATE-YEAR" picture="9(04)" position="1" storage-length="4" display-length="4" numeric="COBOL_NUMERIC" display-position="1"/>
+                <item level="15" name="WS-CURDATE-MONTH" picture="9(02)" position="5" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="5"/>
+                <item level="15" name="WS-CURDATE-DAY" picture="9(02)" position="7" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="7"/>
+            </item>
+            <item level="10" name="WS-CURDATE-N" picture="9(08)" position="1" storage-length="8" display-length="8" numeric="COBOL_NUMERIC" display-position="1" redefines="WS-CURDATE"/>
+            <item level="10" name="WS-CURTIME" position="9" storage-length="8" display-length="8" display-position="9" redefined="true">
+                <item level="15" name="WS-CURTIME-HOURS" picture="9(02)" position="9" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="9"/>
+                <item level="15" name="WS-CURTIME-MINUTE" picture="9(02)" position="11" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="11"/>
+                <item level="15" name="WS-CURTIME-SECOND" picture="9(02)" position="13" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="13"/>
+                <item level="15" name="WS-CURTIME-MILSEC" picture="9(02)" position="15" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="15"/>
+            </item>
+            <item level="10" name="WS-CURTIME-N" picture="9(08)" position="9" storage-length="8" display-length="8" numeric="COBOL_NUMERIC" display-position="9" redefines="WS-CURTIME"/>
+        </item>
+        <item level="05" name="WS-CURDATE-MM-DD-YY" position="17" storage-length="8" display-length="8" display-position="17">
+            <item level="10" name="WS-CURDATE-MM" picture="9(02)" position="17" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="17"/>
+            <item level="10" name="FILLER" picture="X(01)" position="19" storage-length="1" display-length="1" display-position="19" value="&quot;/&quot;"/>
+            <item level="10" name="WS-CURDATE-DD" picture="9(02)" position="20" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="20"/>
+            <item level="10" name="FILLER" picture="X(01)" position="22" storage-length="1" display-length="1" display-position="22" value="&quot;/&quot;"/>
+            <item level="10" name="WS-CURDATE-YY" picture="9(02)" position="23" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="23"/>
+        </item>
+        <item level="05" name="WS-CURTIME-HH-MM-SS" position="25" storage-length="8" display-length="8" display-position="25">
+            <item level="10" name="WS-CURTIME-HH" picture="9(02)" position="25" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="25"/>
+            <item level="10" name="FILLER" picture="X(01)" position="27" storage-length="1" display-length="1" display-position="27" value="&quot;:&quot;"/>
+            <item level="10" name="WS-CURTIME-MM" picture="9(02)" position="28" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="28"/>
+            <item level="10" name="FILLER" picture="X(01)" position="30" storage-length="1" display-length="1" display-position="30" value="&quot;:&quot;"/>
+            <item level="10" name="WS-CURTIME-SS" picture="9(02)" position="31" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="31"/>
+        </item>
+        <item level="05" name="WS-TIMESTAMP" position="33" storage-length="26" display-length="26" display-position="33">
+            <item level="10" name="WS-TIMESTAMP-DT-YYYY" picture="9(04)" position="33" storage-length="4" display-length="4" numeric="COBOL_NUMERIC" display-position="33"/>
+            <item level="10" name="FILLER" picture="X(01)" position="37" storage-length="1" display-length="1" display-position="37" value="&quot;-&quot;"/>
+            <item level="10" name="WS-TIMESTAMP-DT-MM" picture="9(02)" position="38" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="38"/>
+            <item level="10" name="FILLER" picture="X(01)" position="40" storage-length="1" display-length="1" display-position="40" value="&quot;-&quot;"/>
+            <item level="10" name="WS-TIMESTAMP-DT-DD" picture="9(02)" position="41" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="41"/>
+            <item level="10" name="FILLER" picture="X(01)" position="43" storage-length="1" display-length="1" display-position="43" value="&quot; &quot;"/>
+            <item level="10" name="WS-TIMESTAMP-TM-HH" picture="9(02)" position="44" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="44"/>
+            <item level="10" name="FILLER" picture="X(01)" position="46" storage-length="1" display-length="1" display-position="46" value="&quot;:&quot;"/>
+            <item level="10" name="WS-TIMESTAMP-TM-MM" picture="9(02)" position="47" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="47"/>
+            <item level="10" name="FILLER" picture="X(01)" position="49" storage-length="1" display-length="1" display-position="49" value="&quot;:&quot;"/>
+            <item level="10" name="WS-TIMESTAMP-TM-SS" picture="9(02)" position="50" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="50"/>
+            <item level="10" name="FILLER" picture="X(01)" position="52" storage-length="1" display-length="1" display-position="52" value="&quot;.&quot;"/>
+            <item level="10" name="WS-TIMESTAMP-TM-MS6" picture="9(06)" position="53" storage-length="6" display-length="6" numeric="COBOL_NUMERIC" display-position="53"/>
+        </item>
+    </item>
+</copybook>

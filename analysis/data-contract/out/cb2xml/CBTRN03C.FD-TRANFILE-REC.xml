@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBTRN03C.FD-TRANFILE-REC.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="FD-TRANFILE-REC" position="1" storage-length="350" display-length="350" display-position="1">
+        <item level="05" name="FD-TRANS-DATA" picture="X(304)" position="1" storage-length="304" display-length="304" display-position="1"/>
+        <item level="05" name="FD-TRAN-PROC-TS" picture="X(26)" position="305" storage-length="26" display-length="26" display-position="305"/>
+        <item level="05" name="FD-FILLER" picture="X(20)" position="331" storage-length="20" display-length="20" display-position="331"/>
+    </item>
+</copybook>

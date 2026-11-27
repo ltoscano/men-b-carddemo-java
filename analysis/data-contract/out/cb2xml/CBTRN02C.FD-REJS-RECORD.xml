@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBTRN02C.FD-REJS-RECORD.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="FD-REJS-RECORD" position="1" storage-length="430" display-length="430" display-position="1">
+        <item level="05" name="FD-REJECT-RECORD" picture="X(350)" position="1" storage-length="350" display-length="350" display-position="1"/>
+        <item level="05" name="FD-VALIDATION-TRAILER" picture="X(80)" position="351" storage-length="80" display-length="80" display-position="351"/>
+    </item>
+</copybook>

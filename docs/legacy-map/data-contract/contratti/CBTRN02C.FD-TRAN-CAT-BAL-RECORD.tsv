@@ -1,0 +1,7 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+FD-TRAN-CAT-BAL-RECORD	01	gruppo	-	-	-	-	-	0	50	-	-	-	-	FD-TRAN-CAT-BAL-RECORD
+FD-TRAN-CAT-KEY	05	gruppo	-	-	-	-	-	0	17	-	-	-	-	FD-TRAN-CAT-BAL-RECORD/FD-TRAN-CAT-KEY
+FD-TRANCAT-ACCT-ID	10	elementare	9(11)	DISPLAY	-	11	0	0	11	-	-	-	-	FD-TRAN-CAT-BAL-RECORD/FD-TRAN-CAT-KEY/FD-TRANCAT-ACCT-ID
+FD-TRANCAT-TYPE-CD	10	elementare	X(02)	DISPLAY	-	-	-	11	2	-	-	-	-	FD-TRAN-CAT-BAL-RECORD/FD-TRAN-CAT-KEY/FD-TRANCAT-TYPE-CD
+FD-TRANCAT-CD	10	elementare	9(04)	DISPLAY	-	4	0	13	4	-	-	-	-	FD-TRAN-CAT-BAL-RECORD/FD-TRAN-CAT-KEY/FD-TRANCAT-CD
+FD-FD-TRAN-CAT-DATA	05	elementare	X(33)	DISPLAY	-	-	-	17	33	-	-	-	-	FD-TRAN-CAT-BAL-RECORD/FD-FD-TRAN-CAT-DATA

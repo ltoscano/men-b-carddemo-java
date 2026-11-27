@@ -1,0 +1,16 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+TRAN-RECORD	01	gruppo	-	-	-	-	-	0	350	-	-	-	-	TRAN-RECORD
+TRAN-ID	05	elementare	X(16)	DISPLAY	-	-	-	0	16	-	-	-	-	TRAN-RECORD/TRAN-ID
+TRAN-TYPE-CD	05	elementare	X(02)	DISPLAY	-	-	-	16	2	-	-	-	-	TRAN-RECORD/TRAN-TYPE-CD
+TRAN-CAT-CD	05	elementare	9(04)	DISPLAY	-	4	0	18	4	-	-	-	-	TRAN-RECORD/TRAN-CAT-CD
+TRAN-SOURCE	05	elementare	X(10)	DISPLAY	-	-	-	22	10	-	-	-	-	TRAN-RECORD/TRAN-SOURCE
+TRAN-DESC	05	elementare	X(100)	DISPLAY	-	-	-	32	100	-	-	-	-	TRAN-RECORD/TRAN-DESC
+TRAN-AMT	05	elementare	S9(09)V99	DISPLAY	S	9	2	132	11	-	-	-	-	TRAN-RECORD/TRAN-AMT
+TRAN-MERCHANT-ID	05	elementare	9(09)	DISPLAY	-	9	0	143	9	-	-	-	-	TRAN-RECORD/TRAN-MERCHANT-ID
+TRAN-MERCHANT-NAME	05	elementare	X(50)	DISPLAY	-	-	-	152	50	-	-	-	-	TRAN-RECORD/TRAN-MERCHANT-NAME
+TRAN-MERCHANT-CITY	05	elementare	X(50)	DISPLAY	-	-	-	202	50	-	-	-	-	TRAN-RECORD/TRAN-MERCHANT-CITY
+TRAN-MERCHANT-ZIP	05	elementare	X(10)	DISPLAY	-	-	-	252	10	-	-	-	-	TRAN-RECORD/TRAN-MERCHANT-ZIP
+TRAN-CARD-NUM	05	elementare	X(16)	DISPLAY	-	-	-	262	16	-	-	-	-	TRAN-RECORD/TRAN-CARD-NUM
+TRAN-ORIG-TS	05	elementare	X(26)	DISPLAY	-	-	-	278	26	-	-	-	-	TRAN-RECORD/TRAN-ORIG-TS
+TRAN-PROC-TS	05	elementare	X(26)	DISPLAY	-	-	-	304	26	-	-	-	-	TRAN-RECORD/TRAN-PROC-TS
+FILLER	05	elementare	X(20)	DISPLAY	-	-	-	330	20	-	-	-	-	TRAN-RECORD/FILLER

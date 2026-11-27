@@ -1,0 +1,5 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+WS-DATEPARM-RECORD	01	gruppo	-	-	-	-	-	0	21	-	-	-	-	WS-DATEPARM-RECORD
+WS-START-DATE	05	elementare	X(10)	DISPLAY	-	-	-	0	10	-	-	-	-	WS-DATEPARM-RECORD/WS-START-DATE
+FILLER	05	elementare	X(01)	DISPLAY	-	-	-	10	1	-	-	-	-	WS-DATEPARM-RECORD/FILLER
+WS-END-DATE	05	elementare	X(10)	DISPLAY	-	-	-	11	10	-	-	-	-	WS-DATEPARM-RECORD/WS-END-DATE

@@ -1,0 +1,6 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+VBRC-REC2	01	gruppo	-	-	-	-	-	0	39	-	-	-	-	VBRC-REC2
+VB2-ACCT-ID	05	elementare	9(11)	DISPLAY	-	11	0	0	11	-	-	-	-	VBRC-REC2/VB2-ACCT-ID
+VB2-ACCT-CURR-BAL	05	elementare	S9(10)V99	DISPLAY	S	10	2	11	12	-	-	-	-	VBRC-REC2/VB2-ACCT-CURR-BAL
+VB2-ACCT-CREDIT-LIMIT	05	elementare	S9(10)V99	DISPLAY	S	10	2	23	12	-	-	-	-	VBRC-REC2/VB2-ACCT-CREDIT-LIMIT
+VB2-ACCT-REISSUE-YYYY	05	elementare	X(04)	DISPLAY	-	-	-	35	4	-	-	-	-	VBRC-REC2/VB2-ACCT-REISSUE-YYYY

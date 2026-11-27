@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CUSTREC.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--*****************************************************************-->
+    <!--*    Data-structure for Customer entity (RECLN 500)-->
+    <!--*****************************************************************-->
+    <item level="01" name="CUSTOMER-RECORD" position="1" storage-length="500" display-length="500" display-position="1">
+        <item level="05" name="CUST-ID" picture="9(09)" position="1" storage-length="9" display-length="9" numeric="COBOL_NUMERIC" display-position="1"/>
+        <item level="05" name="CUST-FIRST-NAME" picture="X(25)" position="10" storage-length="25" display-length="25" display-position="10"/>
+        <item level="05" name="CUST-MIDDLE-NAME" picture="X(25)" position="35" storage-length="25" display-length="25" display-position="35"/>
+        <item level="05" name="CUST-LAST-NAME" picture="X(25)" position="60" storage-length="25" display-length="25" display-position="60"/>
+        <item level="05" name="CUST-ADDR-LINE-1" picture="X(50)" position="85" storage-length="50" display-length="50" display-position="85"/>
+        <item level="05" name="CUST-ADDR-LINE-2" picture="X(50)" position="135" storage-length="50" display-length="50" display-position="135"/>
+        <item level="05" name="CUST-ADDR-LINE-3" picture="X(50)" position="185" storage-length="50" display-length="50" display-position="185"/>
+        <item level="05" name="CUST-ADDR-STATE-CD" picture="X(02)" position="235" storage-length="2" display-length="2" display-position="235"/>
+        <item level="05" name="CUST-ADDR-COUNTRY-CD" picture="X(03)" position="237" storage-length="3" display-length="3" display-position="237"/>
+        <item level="05" name="CUST-ADDR-ZIP" picture="X(10)" position="240" storage-length="10" display-length="10" display-position="240"/>
+        <item level="05" name="CUST-PHONE-NUM-1" picture="X(15)" position="250" storage-length="15" display-length="15" display-position="250"/>
+        <item level="05" name="CUST-PHONE-NUM-2" picture="X(15)" position="265" storage-length="15" display-length="15" display-position="265"/>
+        <item level="05" name="CUST-SSN" picture="9(09)" position="280" storage-length="9" display-length="9" numeric="COBOL_NUMERIC" display-position="280"/>
+        <item level="05" name="CUST-GOVT-ISSUED-ID" picture="X(20)" position="289" storage-length="20" display-length="20" display-position="289"/>
+        <item level="05" name="CUST-DOB-YYYYMMDD" picture="X(10)" position="309" storage-length="10" display-length="10" display-position="309"/>
+        <item level="05" name="CUST-EFT-ACCOUNT-ID" picture="X(10)" position="319" storage-length="10" display-length="10" display-position="319"/>
+        <item level="05" name="CUST-PRI-CARD-HOLDER-IND" picture="X(01)" position="329" storage-length="1" display-length="1" display-position="329"/>
+        <item level="05" name="CUST-FICO-CREDIT-SCORE" picture="9(03)" position="330" storage-length="3" display-length="3" numeric="COBOL_NUMERIC" display-position="330"/>
+        <item level="05" name="FILLER" picture="X(168)" position="333" storage-length="168" display-length="168" display-position="333"/>
+    </item>
+</copybook>

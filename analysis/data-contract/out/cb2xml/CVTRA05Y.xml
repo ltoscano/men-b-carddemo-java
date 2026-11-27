@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CVTRA05Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--*****************************************************************-->
+    <!--*    Data-structure for TRANsaction record (RECLN = 350)-->
+    <!--*****************************************************************-->
+    <item level="01" name="TRAN-RECORD" position="1" storage-length="350" display-length="350" display-position="1">
+        <item level="05" name="TRAN-ID" picture="X(16)" position="1" storage-length="16" display-length="16" display-position="1"/>
+        <item level="05" name="TRAN-TYPE-CD" picture="X(02)" position="17" storage-length="2" display-length="2" display-position="17"/>
+        <item level="05" name="TRAN-CAT-CD" picture="9(04)" position="19" storage-length="4" display-length="4" numeric="COBOL_NUMERIC" display-position="19"/>
+        <item level="05" name="TRAN-SOURCE" picture="X(10)" position="23" storage-length="10" display-length="10" display-position="23"/>
+        <item level="05" name="TRAN-DESC" picture="X(100)" position="33" storage-length="100" display-length="100" display-position="33"/>
+        <item level="05" name="TRAN-AMT" picture="S9(09)V99" position="133" storage-length="11" display-length="11" scale="2" numeric="COBOL_NUMERIC" display-position="133"/>
+        <item level="05" name="TRAN-MERCHANT-ID" picture="9(09)" position="144" storage-length="9" display-length="9" numeric="COBOL_NUMERIC" display-position="144"/>
+        <item level="05" name="TRAN-MERCHANT-NAME" picture="X(50)" position="153" storage-length="50" display-length="50" display-position="153"/>
+        <item level="05" name="TRAN-MERCHANT-CITY" picture="X(50)" position="203" storage-length="50" display-length="50" display-position="203"/>
+        <item level="05" name="TRAN-MERCHANT-ZIP" picture="X(10)" position="253" storage-length="10" display-length="10" display-position="253"/>
+        <item level="05" name="TRAN-CARD-NUM" picture="X(16)" position="263" storage-length="16" display-length="16" display-position="263"/>
+        <item level="05" name="TRAN-ORIG-TS" picture="X(26)" position="279" storage-length="26" display-length="26" display-position="279"/>
+        <item level="05" name="TRAN-PROC-TS" picture="X(26)" position="305" storage-length="26" display-length="26" display-position="305"/>
+        <item level="05" name="FILLER" picture="X(20)" position="331" storage-length="20" display-length="20" display-position="331"/>
+    </item>
+</copybook>

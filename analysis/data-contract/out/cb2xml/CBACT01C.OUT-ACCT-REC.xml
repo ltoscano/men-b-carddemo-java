@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBACT01C.OUT-ACCT-REC.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="OUT-ACCT-REC" position="1" storage-length="107" display-length="112" display-position="1">
+        <item level="05" name="OUT-ACCT-ID" picture="9(11)" position="1" storage-length="11" display-length="11" numeric="COBOL_NUMERIC" display-position="1"/>
+        <item level="05" name="OUT-ACCT-ACTIVE-STATUS" picture="X(01)" position="12" storage-length="1" display-length="1" display-position="12"/>
+        <item level="05" name="OUT-ACCT-CURR-BAL" picture="S9(10)V99" position="13" storage-length="12" display-length="12" scale="2" numeric="COBOL_NUMERIC" display-position="13"/>
+        <item level="05" name="OUT-ACCT-CREDIT-LIMIT" picture="S9(10)V99" position="25" storage-length="12" display-length="12" scale="2" numeric="COBOL_NUMERIC" display-position="25"/>
+        <item level="05" name="OUT-ACCT-CASH-CREDIT-LIMIT" picture="S9(10)V99" position="37" storage-length="12" display-length="12" scale="2" numeric="COBOL_NUMERIC" display-position="37"/>
+        <item level="05" name="OUT-ACCT-OPEN-DATE" picture="X(10)" position="49" storage-length="10" display-length="10" display-position="49"/>
+        <item level="05" name="OUT-ACCT-EXPIRAION-DATE" picture="X(10)" position="59" storage-length="10" display-length="10" display-position="59"/>
+        <item level="05" name="OUT-ACCT-REISSUE-DATE" picture="X(10)" position="69" storage-length="10" display-length="10" display-position="69"/>
+        <item level="05" name="OUT-ACCT-CURR-CYC-CREDIT" picture="S9(10)V99" position="79" storage-length="12" display-length="12" scale="2" numeric="COBOL_NUMERIC" display-position="79"/>
+        <item level="05" name="OUT-ACCT-CURR-CYC-DEBIT" picture="S9(10)V99" usage="computational-3" position="91" storage-length="7" display-length="12" scale="2" numeric="COBOL_NUMERIC" display-position="91"/>
+        <item level="05" name="OUT-ACCT-GROUP-ID" picture="X(10)" position="98" storage-length="10" display-length="10" display-position="103"/>
+    </item>
+</copybook>

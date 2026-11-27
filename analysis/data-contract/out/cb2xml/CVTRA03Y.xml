@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CVTRA03Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--*****************************************************************-->
+    <!--*    Data-structure for transaction type (RECLN = 60)-->
+    <!--*****************************************************************-->
+    <item level="01" name="TRAN-TYPE-RECORD" position="1" storage-length="60" display-length="60" display-position="1">
+        <item level="05" name="TRAN-TYPE" picture="X(02)" position="1" storage-length="2" display-length="2" display-position="1"/>
+        <item level="05" name="TRAN-TYPE-DESC" picture="X(50)" position="3" storage-length="50" display-length="50" display-position="3"/>
+        <item level="05" name="FILLER" picture="X(08)" position="53" storage-length="8" display-length="8" display-position="53"/>
+    </item>
+</copybook>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CVTRA01Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--*****************************************************************-->
+    <!--*    Data-structure for transaction category balance (RECLN = 50)-->
+    <!--*****************************************************************-->
+    <item level="01" name="TRAN-CAT-BAL-RECORD" position="1" storage-length="50" display-length="50" display-position="1">
+        <item level="05" name="TRAN-CAT-KEY" position="1" storage-length="17" display-length="17" display-position="1">
+            <item level="10" name="TRANCAT-ACCT-ID" picture="9(11)" position="1" storage-length="11" display-length="11" numeric="COBOL_NUMERIC" display-position="1"/>
+            <item level="10" name="TRANCAT-TYPE-CD" picture="X(02)" position="12" storage-length="2" display-length="2" display-position="12"/>
+            <item level="10" name="TRANCAT-CD" picture="9(04)" position="14" storage-length="4" display-length="4" numeric="COBOL_NUMERIC" display-position="14"/>
+        </item>
+        <item level="05" name="TRAN-CAT-BAL" picture="S9(09)V99" position="18" storage-length="11" display-length="11" scale="2" numeric="COBOL_NUMERIC" display-position="18"/>
+        <item level="05" name="FILLER" picture="X(22)" position="29" storage-length="22" display-length="22" display-position="29"/>
+    </item>
+</copybook>

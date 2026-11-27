@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBTRN02C.WS-VALIDATION-TRAILER.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="WS-VALIDATION-TRAILER" position="1" storage-length="80" display-length="80" display-position="1">
+        <item level="05" name="WS-VALIDATION-FAIL-REASON" picture="9(04)" position="1" storage-length="4" display-length="4" numeric="COBOL_NUMERIC" display-position="1"/>
+        <item level="05" name="WS-VALIDATION-FAIL-REASON-DESC" picture="X(76)" position="5" storage-length="76" display-length="76" display-position="5"/>
+    </item>
+</copybook>

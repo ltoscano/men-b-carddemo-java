@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBSTM03A.FD-STMTFILE-REC.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="FD-STMTFILE-REC" picture="X(80)" position="1" storage-length="80" display-length="80" display-position="1"/>
+</copybook>

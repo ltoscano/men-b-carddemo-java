@@ -1,0 +1,2 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+ERROR-OUTPUT-RECORD	01	elementare	X(132)	DISPLAY	-	-	-	0	132	-	-	-	-	ERROR-OUTPUT-RECORD

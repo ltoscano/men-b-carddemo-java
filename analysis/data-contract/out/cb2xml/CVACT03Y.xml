@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CVACT03Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--*****************************************************************-->
+    <!--*    Data-structure for card xref (RECLN 50)-->
+    <!--*****************************************************************-->
+    <item level="01" name="CARD-XREF-RECORD" position="1" storage-length="50" display-length="50" display-position="1">
+        <item level="05" name="XREF-CARD-NUM" picture="X(16)" position="1" storage-length="16" display-length="16" display-position="1"/>
+        <item level="05" name="XREF-CUST-ID" picture="9(09)" position="17" storage-length="9" display-length="9" numeric="COBOL_NUMERIC" display-position="17"/>
+        <item level="05" name="XREF-ACCT-ID" picture="9(11)" position="26" storage-length="11" display-length="11" numeric="COBOL_NUMERIC" display-position="26"/>
+        <item level="05" name="FILLER" picture="X(14)" position="37" storage-length="14" display-length="14" display-position="37"/>
+    </item>
+</copybook>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CVACT02Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--*****************************************************************-->
+    <!--*    Data-structure for card entity (RECLN 150)-->
+    <!--*****************************************************************-->
+    <item level="01" name="CARD-RECORD" position="1" storage-length="150" display-length="150" display-position="1">
+        <item level="05" name="CARD-NUM" picture="X(16)" position="1" storage-length="16" display-length="16" display-position="1"/>
+        <item level="05" name="CARD-ACCT-ID" picture="9(11)" position="17" storage-length="11" display-length="11" numeric="COBOL_NUMERIC" display-position="17"/>
+        <item level="05" name="CARD-CVV-CD" picture="9(03)" position="28" storage-length="3" display-length="3" numeric="COBOL_NUMERIC" display-position="28"/>
+        <item level="05" name="CARD-EMBOSSED-NAME" picture="X(50)" position="31" storage-length="50" display-length="50" display-position="31"/>
+        <item level="05" name="CARD-EXPIRAION-DATE" picture="X(10)" position="81" storage-length="10" display-length="10" display-position="81"/>
+        <item level="05" name="CARD-ACTIVE-STATUS" picture="X(01)" position="91" storage-length="1" display-length="1" display-position="91"/>
+        <item level="05" name="FILLER" picture="X(59)" position="92" storage-length="59" display-length="59" display-position="92"/>
+    </item>
+</copybook>

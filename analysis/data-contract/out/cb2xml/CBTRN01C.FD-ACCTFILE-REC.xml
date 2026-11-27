@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBTRN01C.FD-ACCTFILE-REC.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="FD-ACCTFILE-REC" position="1" storage-length="300" display-length="300" display-position="1">
+        <item level="05" name="FD-ACCT-ID" picture="9(11)" position="1" storage-length="11" display-length="11" numeric="COBOL_NUMERIC" display-position="1"/>
+        <item level="05" name="FD-ACCT-DATA" picture="X(289)" position="12" storage-length="289" display-length="289" display-position="12"/>
+    </item>
+</copybook>

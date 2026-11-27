@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CVTRA02Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--*****************************************************************-->
+    <!--*    Data-structure for disclosure group (RECLN = 50)-->
+    <!--*****************************************************************-->
+    <item level="01" name="DIS-GROUP-RECORD" position="1" storage-length="50" display-length="50" display-position="1">
+        <item level="05" name="DIS-GROUP-KEY" position="1" storage-length="16" display-length="16" display-position="1">
+            <item level="10" name="DIS-ACCT-GROUP-ID" picture="X(10)" position="1" storage-length="10" display-length="10" display-position="1"/>
+            <item level="10" name="DIS-TRAN-TYPE-CD" picture="X(02)" position="11" storage-length="2" display-length="2" display-position="11"/>
+            <item level="10" name="DIS-TRAN-CAT-CD" picture="9(04)" position="13" storage-length="4" display-length="4" numeric="COBOL_NUMERIC" display-position="13"/>
+        </item>
+        <item level="05" name="DIS-INT-RATE" picture="S9(04)V99" position="17" storage-length="6" display-length="6" scale="2" numeric="COBOL_NUMERIC" display-position="17"/>
+        <item level="05" name="FILLER" picture="X(28)" position="23" storage-length="28" display-length="28" display-position="23"/>
+    </item>
+</copybook>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CSMSG01Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--******************************************************************-->
+    <!--* Copyright Amazon.com, Inc. or its affiliates.-->
+    <!--* All Rights Reserved.-->
+    <!--*-->
+    <!--* Licensed under the Apache License, Version 2.0 (the "License").-->
+    <!--* You may not use this file except in compliance with the License.-->
+    <!--* You may obtain a copy of the License at-->
+    <!--*-->
+    <!--*    http://www.apache.org/licenses/LICENSE-2.0-->
+    <!--*-->
+    <!--* Unless required by applicable law or agreed to in writing,-->
+    <!--* software distributed under the License is distributed on an-->
+    <!--* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,-->
+    <!--* either express or implied. See the License for the specific-->
+    <!--* language governing permissions and limitations under the License-->
+    <!--******************************************************************-->
+    <item level="01" name="CCDA-COMMON-MESSAGES" position="1" storage-length="100" display-length="100" display-position="1">
+        <item level="05" name="CCDA-MSG-THANK-YOU" picture="X(50)" position="1" storage-length="50" display-length="50" display-position="1" value="&quot;Thank you for using CardDemo application...      &quot;"/>
+        <item level="05" name="CCDA-MSG-INVALID-KEY" picture="X(50)" position="51" storage-length="50" display-length="50" display-position="51" value="&quot;Invalid key pressed. Please see below...         &quot;"/>
+    </item>
+</copybook>

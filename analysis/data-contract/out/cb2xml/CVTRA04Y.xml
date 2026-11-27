@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CVTRA04Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--*****************************************************************-->
+    <!--*    Data-structure for transaction category type (RECLN = 60)-->
+    <!--*****************************************************************-->
+    <item level="01" name="TRAN-CAT-RECORD" position="1" storage-length="60" display-length="60" display-position="1">
+        <item level="05" name="TRAN-CAT-KEY" position="1" storage-length="6" display-length="6" display-position="1">
+            <item level="10" name="TRAN-TYPE-CD" picture="X(02)" position="1" storage-length="2" display-length="2" display-position="1"/>
+            <item level="10" name="TRAN-CAT-CD" picture="9(04)" position="3" storage-length="4" display-length="4" numeric="COBOL_NUMERIC" display-position="3"/>
+        </item>
+        <item level="05" name="TRAN-CAT-TYPE-DESC" picture="X(50)" position="7" storage-length="50" display-length="50" display-position="7"/>
+        <item level="05" name="FILLER" picture="X(04)" position="57" storage-length="4" display-length="4" display-position="57"/>
+    </item>
+</copybook>
