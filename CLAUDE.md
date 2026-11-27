@@ -53,7 +53,7 @@ Migrazione **ibrida**: il comportamento da preservare è brownfield, lo stack ta
 | Validatore adversarial | **Codex CLI** (`codex exec` / `codex review`), contesto pulito | Legge solo specifica, diff e test. Mandato: falsificare. Max due giri, poi scala. |
 | Gate umano | l'utente | Unico a decidere il merge. |
 
-Il Validatore è deliberatamente un modello di un altro fornitore: non condivide contesto né bias dell'Esecutore. Il suo output va riportato per intero nella PR, comprese le obiezioni respinte e il motivo.
+Il Validatore è deliberatamente un modello di un altro fornitore: non condivide contesto né bias dell'Esecutore. Sulle PR lavora in un clone usa e getta con `-s workspace-write -c 'sandbox_workspace_write.network_access=true'`, così esegue da sé Docker e i criteri di accettazione (autonomia concordata con l'autore il 27 nov 2026); mai `danger-full-access`. Sulle specifiche basta `-s read-only`. Prompt in `paper/data/prompts/`. Il suo output va riportato per intero nella PR, comprese le obiezioni respinte e il motivo.
 
 ### Coda di issue
 

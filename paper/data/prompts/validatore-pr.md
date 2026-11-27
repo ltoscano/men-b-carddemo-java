@@ -5,12 +5,17 @@ Testo dato a Codex per validare una PR. Cambiano solo `{N}` (issue) e `{PR}`. Co
 Comando:
 
 ```sh
-git worktree add ../val-{PR} origin/{ramo} && cd ../val-{PR} && git submodule update --init
+git clone --recurse-submodules --branch {ramo} https://github.com/ltoscano/men-b-carddemo-java.git val-{PR} && cd val-{PR}
+mkdir .validazione
 gh issue view {N} --json body -q .body > .validazione/specifica.md
 gh pr view {PR} --json body -q .body > .validazione/descrizione-pr.md
 git diff origin/main...HEAD > .validazione/diff.patch
-codex exec -s workspace-write -o esito.md "<prompt>" < /dev/null
+codex exec -s workspace-write -c 'sandbox_workspace_write.network_access=true' -o esito.md "<prompt>" < /dev/null
 ```
+
+Livello di autonomia, e perché. Codex ha tre livelli: sola lettura, scrittura limitata alla cartella di lavoro, accesso completo. Si usa il secondo, con in più l'accesso alla rete locale: è ciò che serve per parlare con Docker ed eseguire da sé i criteri di accettazione. Provato il 27 novembre 2026: senza accesso alla rete `docker ps` è rifiutato, con l'accesso funziona. La cartella di lavoro è un clone usa e getta, non il repository vero. Limite da conoscere: chi può usare Docker può in teoria montare qualsiasi cartella dell'host in un container; il Validatore non ha motivo di farlo, ma la protezione non è assoluta. L'accesso completo non serve e non si usa.
+
+Storia: la PR #17 è stata validata con il livello di sola lettura; i criteri di accettazione li ha rieseguiti il pianificatore su un clone pulito e Codex ha ricevuto il log. Dalla PR successiva Codex li esegue da sé.
 
 ---
 

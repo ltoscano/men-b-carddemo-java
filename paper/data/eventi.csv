@@ -25,3 +25,10 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T10:03:59Z,P7,fine,fable,orologio,12 rilievi (2 bloccanti) tutti accolti; #1 e #13 aggiornate e passate a ready
 2026-11-27T10:04:29Z,issue-1,esecutore-inizio,sonnet,orologio,worktree isolato
 2026-11-27T10:04:31Z,issue-13,esecutore-inizio,sonnet,orologio,worktree isolato
+2026-11-27T10:04:58Z,P8,risposta-consegnata,fable,orologio,Esecutori in corso
+2026-11-27T10:10:31Z,issue-13,esecutore-fine,sonnet,orologio,PR #17 aperta; rapporto: 6 criteri su 6 dichiarati soddisfatti; CI verde
+2026-11-27T10:10:35Z,pr-17,validazione-inizio,fable,orologio,clone pulito e riesecuzione indipendente di verify.sh
+2026-11-27T10:11:16Z,issue-13,esecutore-consuntivo,sonnet,orologio,durata 347 s; 95783 token; 33 chiamate a strumenti; PR #17 creata 10:09:16Z; CI verde in 36-40 s
+2026-11-27T10:11:16Z,pr-17,verifica-indipendente,fable,orologio,clone pulito: verify.sh exit 0 in 33 s
+2026-11-27T10:11:28Z,pr-17,codex-inizio,codex,orologio,validazione PR #17 giro 1; sola lettura
+2026-11-27T10:12:37Z,pr-17,richiesta-autore,autore,orologio,propone di dare piu autonomia a Codex
