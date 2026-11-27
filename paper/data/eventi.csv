@@ -116,3 +116,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T13:26:23Z,pr-29,codex-inizio,codex,orologio,validazione giro 1
 2026-11-27T13:27:41Z,issue-2,esecutore-fine,sonnet,orologio,PR #30 aperta; SHA 0dd95d2; rapporto: tutti i criteri dichiarati soddisfatti; CI verde
 2026-11-27T13:27:44Z,issue-2,esecutore-consuntivo,sonnet,orologio,seconda fase dopo la ripresa: durata 2329 s; 76 chiamate a strumenti; contatore token 363642 (cumulativo)
+2026-11-27T13:27:47Z,pr-30,codex-inizio,codex,orologio,validazione giro 1
+2026-11-27T13:36:07Z,issue-21,esecutore-fine,sonnet,orologio,PR #31 aperta; SHA d79caab; rapporto: 7 criteri su 7 dichiarati soddisfatti; CI verde compreso il nuovo workflow
+2026-11-27T13:36:10Z,issue-21,esecutore-consuntivo,sonnet,orologio,durata 1709 s; contatore token 136856; 88 chiamate a strumenti; PR #31: 5 file
