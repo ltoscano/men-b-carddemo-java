@@ -23,3 +23,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T10:02:20Z,P7,contestazione-fine,codex,orologio,exit=0; token: 72.056
 2026-11-27T10:02:23Z,P7,inizio,fable,orologio,lettura dei rilievi e correzione delle specifiche di #1 e #13
 2026-11-27T10:03:59Z,P7,fine,fable,orologio,12 rilievi (2 bloccanti) tutti accolti; #1 e #13 aggiornate e passate a ready
+2026-11-27T10:04:29Z,issue-1,esecutore-inizio,sonnet,orologio,worktree isolato
+2026-11-27T10:04:31Z,issue-13,esecutore-inizio,sonnet,orologio,worktree isolato

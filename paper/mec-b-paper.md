@@ -145,7 +145,13 @@ Il piano è stato quindi riscritto (versione 2, `docs/piano-wave.md`): la prima 
 
 *Cosa si trasferisce:* un agente lanciato senza supervisione va avviato con l'input chiuso e con un limite di tempo, e va controllato che stia davvero lavorando.
 
-*(esito della contestazione: da compilare)*
+Il secondo lancio è durato 2 minuti e 51 secondi (72.056 token) e ha prodotto 12 rilievi: 2 bloccanti, 9 importanti, 1 minore, tutti accolti. Il più istruttivo riguarda un controllo che sembrava solido: la specifica chiedeva di confrontare l'elenco dei file sorgente contando quanti erano. Codex ha osservato che togliendo un file e duplicandone un altro i conti tornano lo stesso. Ora il controllo confronta l'elenco intero. Prompt, rilievi e specifiche prima e dopo sono in `paper/data/reviews/2026-11-27-specifiche-1-13/`.
+
+Corrette le specifiche, le issue #1 e #13 sono passate da `blocked` a `ready`.
+
+**Passo 8 — I primi due Esecutori.** Alle 10:04 UTC il pianificatore ha avviato due Esecutori (Claude Sonnet), uno per issue, ciascuno in un *worktree*: una seconda copia di lavoro dello stesso repository, in una cartella separata, così che i due non si pestino i piedi. L'etichetta delle issue è passata a `in-progress`. Il testo dato agli Esecutori è lo stesso per tutti, cambia solo il numero dell'issue: non contiene la specifica, che l'Esecutore legge da GitHub. È in `paper/data/prompts/esecutore.md`.
+
+*(esito: da compilare)*
 
 **Come si misurano i tempi.** Su richiesta dell'autore, da questo punto ogni passaggio è cronometrato nel momento in cui avviene. Un piccolo script, `paper/data/tlog.sh`, aggiunge una riga con l'ora corrente al registro `paper/data/eventi.csv`; il registro non si modifica mai, si aggiunge soltanto. Per i passi precedenti i tempi sono stati ricostruiti da fonti verificabili (date dei commit, date di creazione su GitHub, date dei file) e ogni riga dichiara la propria fonte.
 
@@ -159,8 +165,12 @@ Il piano è stato quindi riscritto (versione 2, `docs/piano-wave.md`): la prima 
 | 5. Piano v1, contestazione, piano v2 | 09:17:41 | 09:30:05 | 12 min 24 s | git, orologio | di cui 6 min 26 s di Codex |
 | 6. Approvazione, licenza, 16 specifiche, issue aperte | 09:30:21 | 09:49:35 | 19 min 14 s | git, GitHub | comprende l'attesa dell'approvazione |
 | 7. Contestazione di #1 e #13, primo tentativo | 09:38:44 | 09:58:43 | 19 min 59 s | orologio | **tempo perso**; in parte sovrapposto al passo 6 |
+| 7. Contestazione di #1 e #13, secondo tentativo | 09:59:29 | 10:02:20 | 2 min 51 s | orologio | 72.056 token |
+| 7. Correzione delle due specifiche e passaggio a `ready` | 10:02:23 | 10:03:59 | 1 min 36 s | orologio | |
 
 Il limite di questa tabella va detto: i primi quattro passi non hanno un inizio misurato, perché il cronometraggio sistematico è cominciato dopo. Dal passo 7 in poi ogni riga viene dall'orologio.
+
+Dal clone di CardDemo (08:49:22) al momento in cui i primi due Esecutori hanno cominciato a lavorare (10:04:29) è passata **1 ora e 15 minuti** di calendario, di cui 20 minuti persi per il blocco di Codex.
 
 ### 5.1 Wave 0A — mappa e golden oracle
 *(da compilare)*
