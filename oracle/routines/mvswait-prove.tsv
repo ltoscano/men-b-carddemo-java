@@ -1,0 +1,20 @@
+# Casi di prova di MVSWAIT ricavati dal sorgente (tabella in mvswait-casi.tsv, spiegazione in mvswait-casi.md).
+# Colonne separate da TAB:
+#   caso       nome (lettere maiuscole e cifre)
+#   programma  WAITPRB (chiamata diretta, oracle/tests/WAITPRB.cbl) | COBSWAIT (il programma del legacy, con --sysin)
+#   ingresso   WAITPRB: gli 8 caratteri esadecimali maiuscoli dell'argomento, passati come PARM
+#              COBSWAIT: jcl (riga 26 di app/jcl/WAITSTEP.jcl senza il CR finale) |
+#                        jcl:<8 cifre> (la stessa con le colonne 1-8 sostituite dalle 8 cifre)
+#   classe     classe della tabella a cui appartiene il valore
+# Atteso di ogni caso, scritto a mano dal sorgente prima di eseguire: mvswait-attesi/<caso>.txt.
+caso	programma	ingresso	classe
+D00000000	WAITPRB	00000000	V
+D00000001	WAITPRB	00000001	V
+D00000E10	WAITPRB	00000E10	V
+D05F5E0FF	WAITPRB	05F5E0FF	V
+D05F5E100	WAITPRB	05F5E100	V
+D7FFFFFFF	WAITPRB	7FFFFFFF	V
+D80000000	WAITPRB	80000000	L
+DFFFFFFFF	WAITPRB	FFFFFFFF	L
+S1	COBSWAIT	jcl	V
+S2	COBSWAIT	jcl:12345678	V

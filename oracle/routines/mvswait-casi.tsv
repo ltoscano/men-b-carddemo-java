@@ -1,0 +1,13 @@
+# Tabella dei casi di MVSWAIT in forma leggibile da macchina (spiegazione in mvswait-casi.md).
+# Colonne separate da TAB:
+#   classe     nome della classe
+#   da, a      intervallo del valore dell'argomento (4 byte senza segno, big-endian), 8 cifre esadecimali
+#              maiuscole, estremi compresi; le classi, in ordine, coprono da 00000000 a FFFFFFFF senza buchi
+#              ne' sovrapposizioni
+#   esito      ritorno-0 (riga di diagnostica su stderr, codice 0, argomento invariato) |
+#              arresto-97 (riga dell'arresto su stderr, esecuzione terminata con codice 97)
+#   righe      righe del sorgente che giustificano l'esito
+#   motivo
+classe	da	a	esito	righe	motivo
+V	00000000	7FFFFFFF	ritorno-0	MVSWAIT.asm 20-27; ASMWAIT.mac 19	STIMER WAIT,BINTVL ammette fino a X'7FFFFFFF' (Restrictions): attesa del valore in centesimi di secondo, poi SR 15,15 e ritorno; nell'oracle nessuna attesa
+L	80000000	FFFFFFFF	arresto-97	MVSWAIT.asm 20-23; ASMWAIT.mac 19	bit alto acceso: "If the time interval exceeds X'7FFFFFFF', your program receives a X'12F' abend" (Restrictions); la routine non ritorna
