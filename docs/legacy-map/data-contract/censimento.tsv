@@ -1,0 +1,107 @@
+# Censimento dei tracciati di CardDemo (issue #3), scritto a mano leggendo il sorgente. Forma leggibile da macchina di censimento.md.
+# Una riga per radice: ogni radice di livello 01 di ogni copybook di app/cpy/ (riga '-' se il copybook non ne ha), ogni 01 di ogni FD
+# dei programmi batch, ogni struttura di WORKING-STORAGE o LINKAGE da cui un record di FD e' composto prima della scrittura o in cui e' letto.
+# sorgente: percorso sotto il submodule legacy. tipo: copybook | FD:<nome dell'FD> | WORKING-STORAGE | LINKAGE.
+# riga: riga dell'01 nel sorgente (per un FD con COPY, la riga della COPY). frammento: righe del programma date a cb2xml
+# (copiate verbatim in un file temporaneo); 'COPY X' se l'01 dell'FD viene dal copybook X; '-' per i copybook (cb2xml legge il file).
+# classificazione: record-di-file | stato-di-conversazione | riga-di-report | area-di-lavoro | non-tracciato.
+# contratto: identificativo del contratto (file docs/legacy-map/data-contract/contratti/<contratto>.tsv) o '-'.
+sorgente	tipo	radice	riga	frammento	classificazione	contratto	motivo
+app/cpy/COADM02Y.cpy	copybook	CARDDEMO-ADMIN-MENU-OPTIONS	19	-	area-di-lavoro	-	tabella costante delle opzioni del menu amministratore (VALUE) esposta con REDEFINES e OCCURS; nessun file la legge o la scrive
+app/cpy/COCOM01Y.cpy	copybook	CARDDEMO-COMMAREA	19	-	stato-di-conversazione	COCOM01Y.CARDDEMO-COMMAREA	COMMAREA passata tra le transazioni CICS (stato pseudo-conversazionale: utente, programma chiamante, contesto ENTER/REENTER)
+app/cpy/CODATECN.cpy	copybook	CODATECN-REC	17	-	area-di-lavoro	-	area dei parametri di conversione di data passata con CALL a COBDATFT (CBACT01C); non e' un record di file
+app/cpy/COMEN02Y.cpy	copybook	CARDDEMO-MAIN-MENU-OPTIONS	19	-	area-di-lavoro	-	tabella costante delle opzioni del menu principale (VALUE) esposta con REDEFINES e OCCURS; nessun file la legge o la scrive
+app/cpy/COSTM01.CPY	copybook	TRNX-RECORD	20	-	record-di-file	COSTM01.TRNX-RECORD	tracciato del file TRXFL (chiave carta+transazione, KEYS(32 0) in CREASTMT.JCL) letto da CBSTM03B per CBSTM03A
+app/cpy/COTTL01Y.cpy	copybook	CCDA-SCREEN-TITLE	17	-	area-di-lavoro	-	costanti dei titoli delle schermate
+app/cpy/CSDAT01Y.cpy	copybook	WS-DATE-TIME	17	-	area-di-lavoro	-	area di lavoro per data e ora correnti e loro formati
+app/cpy/CSLKPCDY.cpy	copybook	WS-US-PHONE-AREA-CODE-TO-EDIT	24	-	area-di-lavoro	-	campo di lavoro con tabella di validazione (88 con i prefissi telefonici validi)
+app/cpy/CSLKPCDY.cpy	copybook	US-STATE-CODE-TO-EDIT	1012	-	area-di-lavoro	-	campo di lavoro con tabella di validazione (88 con i codici di stato validi)
+app/cpy/CSLKPCDY.cpy	copybook	US-STATE-ZIPCODE-TO-EDIT	1071	-	area-di-lavoro	-	campo di lavoro con tabella di validazione (88 con le combinazioni stato/CAP valide)
+app/cpy/CSMSG01Y.cpy	copybook	CCDA-COMMON-MESSAGES	17	-	area-di-lavoro	-	costanti dei messaggi comuni
+app/cpy/CSMSG02Y.cpy	copybook	ABEND-DATA	21	-	area-di-lavoro	-	area di lavoro della routine di abend (codice, programma, motivo, messaggio)
+app/cpy/CSSETATY.cpy	copybook	-	-	-	non-tracciato	-	contiene istruzioni della PROCEDURE DIVISION (IF/MOVE con segnaposto per REPLACING), nessuna descrizione di dati
+app/cpy/CSSTRPFY.cpy	copybook	-	-	-	non-tracciato	-	contiene un paragrafo della PROCEDURE DIVISION (YYYY-STORE-PFKEY: EVALUATE su EIBAID), nessuna descrizione di dati
+app/cpy/CSUSR01Y.cpy	copybook	SEC-USER-DATA	17	-	record-di-file	CSUSR01Y.SEC-USER-DATA	tracciato del file utenti USRSEC (KSDS, KEYS(8,0) RECORDSIZE(80,80) in DUSRSECJ.jcl) letto e scritto dai programmi online
+app/cpy/CSUTLDPY.cpy	copybook	-	-	-	non-tracciato	-	contiene paragrafi della PROCEDURE DIVISION (EDIT-DATE-CCYYMMDD e seguenti), nessuna descrizione di dati
+app/cpy/CSUTLDWY.cpy	copybook	-	-	-	area-di-lavoro	-	nessuna radice di livello 01: voci di livello 10 e 20 da includere sotto un gruppo del programma che lo copia (area di lavoro per la validazione delle date)
+app/cpy/CUSTREC.cpy	copybook	CUSTOMER-RECORD	4	-	record-di-file	CUSTREC.CUSTOMER-RECORD	tracciato cliente (RECLN 500) usato da CBSTM03A per il file CUSTDATA; variante di CVCUS01Y con CUST-DOB-YYYYMMDD e caratteri TAB nelle righe 6-22
+app/cpy/CVACT01Y.cpy	copybook	ACCOUNT-RECORD	4	-	record-di-file	CVACT01Y.ACCOUNT-RECORD	tracciato del file conti ACCTDATA (KEYS(11 0) RECORDSIZE(300 300) in ACCTFILE.jcl)
+app/cpy/CVACT02Y.cpy	copybook	CARD-RECORD	4	-	record-di-file	CVACT02Y.CARD-RECORD	tracciato del file carte CARDDATA (KEYS(16 0) RECORDSIZE(150 150) in CARDFILE.jcl)
+app/cpy/CVACT03Y.cpy	copybook	CARD-XREF-RECORD	4	-	record-di-file	CVACT03Y.CARD-XREF-RECORD	tracciato del file di riferimento incrociato CARDXREF (KEYS(16 0) RECORDSIZE(50 50) in XREFFILE.jcl)
+app/cpy/CVCRD01Y.cpy	copybook	CC-WORK-AREAS	1	-	area-di-lavoro	-	area di lavoro dei programmi online (tasto premuto, programma e mappa successivi, messaggi)
+app/cpy/CVCUS01Y.cpy	copybook	CUSTOMER-RECORD	4	-	record-di-file	CVCUS01Y.CUSTOMER-RECORD	tracciato del file clienti CUSTDATA (KEYS(9 0) RECORDSIZE(500 500) in CUSTFILE.jcl)
+app/cpy/CVEXPORT.cpy	copybook	EXPORT-RECORD	9	-	record-di-file	CVEXPORT.EXPORT-RECORD	tracciato a piu' tipi del file di export (RECORDSIZE(500 500) in CBEXPORT.jcl), scritto da CBEXPORT e letto da CBIMPORT
+app/cpy/CVTRA01Y.cpy	copybook	TRAN-CAT-BAL-RECORD	4	-	record-di-file	CVTRA01Y.TRAN-CAT-BAL-RECORD	tracciato del file saldi per categoria TCATBALF (KEYS(17 0) RECORDSIZE(50 50) in TCATBALF.jcl)
+app/cpy/CVTRA02Y.cpy	copybook	DIS-GROUP-RECORD	4	-	record-di-file	CVTRA02Y.DIS-GROUP-RECORD	tracciato del file gruppi di tasso DISCGRP (KEYS(16 0) RECORDSIZE(50 50) in DISCGRP.jcl)
+app/cpy/CVTRA03Y.cpy	copybook	TRAN-TYPE-RECORD	4	-	record-di-file	CVTRA03Y.TRAN-TYPE-RECORD	tracciato del file tipi di transazione TRANTYPE (KEYS(2 0) RECORDSIZE(60 60) in TRANTYPE.jcl)
+app/cpy/CVTRA04Y.cpy	copybook	TRAN-CAT-RECORD	4	-	record-di-file	CVTRA04Y.TRAN-CAT-RECORD	tracciato del file categorie TRANCATG (KEYS(6 0) RECORDSIZE(60 60) in TRANCATG.jcl)
+app/cpy/CVTRA05Y.cpy	copybook	TRAN-RECORD	4	-	record-di-file	CVTRA05Y.TRAN-RECORD	tracciato del file transazioni TRANSACT (KEYS(16 0) RECORDSIZE(350 350) in TRANFILE.jcl)
+app/cpy/CVTRA06Y.cpy	copybook	DALYTRAN-RECORD	4	-	record-di-file	CVTRA06Y.DALYTRAN-RECORD	tracciato del file sequenziale delle transazioni giornaliere DALYTRAN letto da CBTRN01C e CBTRN02C
+app/cpy/CVTRA07Y.cpy	copybook	REPORT-NAME-HEADER	4	-	riga-di-report	-	intestazione del report giornaliero, spostata in FD-REPTFILE-REC da CBTRN03C
+app/cpy/CVTRA07Y.cpy	copybook	TRANSACTION-DETAIL-REPORT	15	-	riga-di-report	-	riga di dettaglio del report (importo editato), spostata in FD-REPTFILE-REC da CBTRN03C
+app/cpy/CVTRA07Y.cpy	copybook	TRANSACTION-HEADER-1	33	-	riga-di-report	-	riga di intestazione delle colonne del report
+app/cpy/CVTRA07Y.cpy	copybook	TRANSACTION-HEADER-2	48	-	riga-di-report	-	riga di separazione del report (133 trattini)
+app/cpy/CVTRA07Y.cpy	copybook	REPORT-PAGE-TOTALS	50	-	riga-di-report	-	riga dei totali di pagina (importo editato)
+app/cpy/CVTRA07Y.cpy	copybook	REPORT-ACCOUNT-TOTALS	56	-	riga-di-report	-	riga dei totali di conto (importo editato)
+app/cpy/CVTRA07Y.cpy	copybook	REPORT-GRAND-TOTALS	62	-	riga-di-report	-	riga del totale generale (importo editato)
+app/cpy/UNUSED1Y.cpy	copybook	UNUSED-DATA	1	-	area-di-lavoro	-	nessun programma del repository lo include (nessuna COPY UNUSED1Y); stessa forma di SEC-USER-DATA ma senza un file associato
+app/cbl/CBACT01C.cbl	FD:ACCTFILE-FILE	FD-ACCTFILE-REC	53	53-55	record-di-file	CBACT01C.FD-ACCTFILE-REC	01 dell'FD del file conti: solo chiave e area generica; il record e' letto INTO ACCOUNT-RECORD (CVACT01Y)
+app/cbl/CBACT01C.cbl	FD:OUT-FILE	OUT-ACCT-REC	57	57-69	record-di-file	CBACT01C.OUT-ACCT-REC	01 dell'FD di OUTFILE con i campi veri (riempito campo per campo e scritto senza FROM)
+app/cbl/CBACT01C.cbl	FD:ARRY-FILE	ARR-ARRAY-REC	72	72-78	record-di-file	CBACT01C.ARR-ARRAY-REC	01 dell'FD di ARRYFILE con i campi veri (OCCURS 5), scritto senza FROM
+app/cbl/CBACT01C.cbl	FD:VBRC-FILE	VBR-REC	85	85-85	record-di-file	CBACT01C.VBR-REC	01 generico (PIC X(80)) del file a lunghezza variabile; i campi veri stanno in VBRC-REC1 e VBRC-REC2
+app/cbl/CBACT01C.cbl	WORKING-STORAGE	VBRC-REC1	123	123-125	record-di-file	CBACT01C.VBRC-REC1	primo tipo di record del file a lunghezza variabile: spostato in VBR-REC(1:12) e scritto con WS-RECD-LEN = 12
+app/cbl/CBACT01C.cbl	WORKING-STORAGE	VBRC-REC2	126	126-130	record-di-file	CBACT01C.VBRC-REC2	secondo tipo di record del file a lunghezza variabile: spostato in VBR-REC(1:39) e scritto con WS-RECD-LEN = 39
+app/cbl/CBACT02C.cbl	FD:CARDFILE-FILE	FD-CARDFILE-REC	38	38-40	record-di-file	CBACT02C.FD-CARDFILE-REC	01 dell'FD del file carte (chiave e area generica); letto INTO CARD-RECORD (CVACT02Y)
+app/cbl/CBACT03C.cbl	FD:XREFFILE-FILE	FD-XREFFILE-REC	38	38-40	record-di-file	CBACT03C.FD-XREFFILE-REC	01 dell'FD del file xref (chiave e area generica); letto INTO CARD-XREF-RECORD (CVACT03Y)
+app/cbl/CBCUS01C.cbl	FD:CUSTFILE-FILE	FD-CUSTFILE-REC	38	38-40	record-di-file	CBCUS01C.FD-CUSTFILE-REC	01 dell'FD del file clienti (chiave e area generica); letto INTO CUSTOMER-RECORD (CVCUS01Y)
+app/cbl/CBACT04C.cbl	FD:TCATBAL-FILE	FD-TRAN-CAT-BAL-RECORD	62	62-67	record-di-file	CBACT04C.FD-TRAN-CAT-BAL-RECORD	01 dell'FD del file saldi per categoria (chiave e area generica); letto INTO TRAN-CAT-BAL-RECORD (CVTRA01Y)
+app/cbl/CBACT04C.cbl	FD:XREF-FILE	FD-XREFFILE-REC	70	70-74	record-di-file	CBACT04C.FD-XREFFILE-REC	01 dell'FD del file xref con chiave primaria e chiave alternativa; letto INTO CARD-XREF-RECORD (CVACT03Y)
+app/cbl/CBACT04C.cbl	FD:DISCGRP-FILE	FD-DISCGRP-REC	77	77-82	record-di-file	CBACT04C.FD-DISCGRP-REC	01 dell'FD del file gruppi di tasso (chiave e area generica); letto INTO DIS-GROUP-RECORD (CVTRA02Y)
+app/cbl/CBACT04C.cbl	FD:ACCOUNT-FILE	FD-ACCTFILE-REC	85	85-87	record-di-file	CBACT04C.FD-ACCTFILE-REC	01 dell'FD del file conti (chiave e area generica); letto INTO e riscritto FROM ACCOUNT-RECORD (CVACT01Y)
+app/cbl/CBACT04C.cbl	FD:TRANSACT-FILE	FD-TRANFILE-REC	90	90-92	record-di-file	CBACT04C.FD-TRANFILE-REC	01 dell'FD del file transazioni generate (chiave e area generica); scritto FROM TRAN-RECORD (CVTRA05Y)
+app/cbl/CBTRN01C.cbl	FD:DALYTRAN-FILE	FD-TRAN-RECORD	67	67-69	record-di-file	CBTRN01C.FD-TRAN-RECORD	01 dell'FD del file giornaliero (chiave e area generica); letto INTO DALYTRAN-RECORD (CVTRA06Y)
+app/cbl/CBTRN01C.cbl	FD:CUSTOMER-FILE	FD-CUSTFILE-REC	72	72-74	record-di-file	CBTRN01C.FD-CUSTFILE-REC	01 dell'FD del file clienti (chiave e area generica); nessuna READ nel programma
+app/cbl/CBTRN01C.cbl	FD:XREF-FILE	FD-XREFFILE-REC	77	77-79	record-di-file	CBTRN01C.FD-XREFFILE-REC	01 dell'FD del file xref (chiave e area generica); letto INTO CARD-XREF-RECORD (CVACT03Y)
+app/cbl/CBTRN01C.cbl	FD:CARD-FILE	FD-CARDFILE-REC	82	82-84	record-di-file	CBTRN01C.FD-CARDFILE-REC	01 dell'FD del file carte (chiave e area generica); nessuna READ nel programma
+app/cbl/CBTRN01C.cbl	FD:ACCOUNT-FILE	FD-ACCTFILE-REC	87	87-89	record-di-file	CBTRN01C.FD-ACCTFILE-REC	01 dell'FD del file conti (chiave e area generica); letto INTO ACCOUNT-RECORD (CVACT01Y)
+app/cbl/CBTRN01C.cbl	FD:TRANSACT-FILE	FD-TRANFILE-REC	92	92-94	record-di-file	CBTRN01C.FD-TRANFILE-REC	01 dell'FD del file transazioni (chiave e area generica); nessuna READ o WRITE nel programma
+app/cbl/CBTRN02C.cbl	FD:DALYTRAN-FILE	FD-TRAN-RECORD	67	67-69	record-di-file	CBTRN02C.FD-TRAN-RECORD	01 dell'FD del file giornaliero (chiave e area generica); letto INTO DALYTRAN-RECORD (CVTRA06Y)
+app/cbl/CBTRN02C.cbl	FD:TRANSACT-FILE	FD-TRANFILE-REC	72	72-74	record-di-file	CBTRN02C.FD-TRANFILE-REC	01 dell'FD del file transazioni (chiave e area generica); scritto FROM TRAN-RECORD (CVTRA05Y)
+app/cbl/CBTRN02C.cbl	FD:XREF-FILE	FD-XREFFILE-REC	77	77-79	record-di-file	CBTRN02C.FD-XREFFILE-REC	01 dell'FD del file xref (chiave e area generica); letto INTO CARD-XREF-RECORD (CVACT03Y)
+app/cbl/CBTRN02C.cbl	FD:DALYREJS-FILE	FD-REJS-RECORD	82	82-84	record-di-file	CBTRN02C.FD-REJS-RECORD	01 dell'FD del file degli scarti (transazione + trailer di validazione); scritto FROM REJECT-RECORD
+app/cbl/CBTRN02C.cbl	FD:ACCOUNT-FILE	FD-ACCTFILE-REC	87	87-89	record-di-file	CBTRN02C.FD-ACCTFILE-REC	01 dell'FD del file conti (chiave e area generica); letto INTO e riscritto FROM ACCOUNT-RECORD (CVACT01Y)
+app/cbl/CBTRN02C.cbl	FD:TCATBAL-FILE	FD-TRAN-CAT-BAL-RECORD	92	92-97	record-di-file	CBTRN02C.FD-TRAN-CAT-BAL-RECORD	01 dell'FD del file saldi per categoria (chiave e area generica); letto INTO e scritto/riscritto FROM TRAN-CAT-BAL-RECORD (CVTRA01Y)
+app/cbl/CBTRN02C.cbl	WORKING-STORAGE	REJECT-RECORD	176	176-178	record-di-file	CBTRN02C.REJECT-RECORD	struttura scritta FROM nel file degli scarti; composta da DALYTRAN-RECORD (riga 447) e WS-VALIDATION-TRAILER (riga 448)
+app/cbl/CBTRN02C.cbl	WORKING-STORAGE	WS-VALIDATION-TRAILER	180	180-182	record-di-file	CBTRN02C.WS-VALIDATION-TRAILER	tracciato del trailer di validazione (codice e descrizione del motivo) spostato in VALIDATION-TRAILER del record degli scarti
+app/cbl/CBTRN03C.cbl	FD:TRANSACT-FILE	FD-TRANFILE-REC	62	62-65	record-di-file	CBTRN03C.FD-TRANFILE-REC	01 dell'FD del file transazioni del giorno (area generica e timestamp di elaborazione); letto INTO TRAN-RECORD (CVTRA05Y)
+app/cbl/CBTRN03C.cbl	FD:XREF-FILE	FD-CARDXREF-REC	68	68-70	record-di-file	CBTRN03C.FD-CARDXREF-REC	01 dell'FD del file xref (chiave e area generica); letto INTO CARD-XREF-RECORD (CVACT03Y)
+app/cbl/CBTRN03C.cbl	FD:TRANTYPE-FILE	FD-TRANTYPE-REC	73	73-75	record-di-file	CBTRN03C.FD-TRANTYPE-REC	01 dell'FD del file tipi di transazione (chiave e area generica); letto INTO TRAN-TYPE-RECORD (CVTRA03Y)
+app/cbl/CBTRN03C.cbl	FD:TRANCATG-FILE	FD-TRAN-CAT-RECORD	78	78-82	record-di-file	CBTRN03C.FD-TRAN-CAT-RECORD	01 dell'FD del file categorie (chiave e area generica); letto INTO TRAN-CAT-RECORD (CVTRA04Y)
+app/cbl/CBTRN03C.cbl	FD:REPORT-FILE	FD-REPTFILE-REC	85	85-85	riga-di-report	-	riga del report giornaliero (PIC X(133)); composta con MOVE dalle righe di CVTRA07Y e da WS-BLANK-LINE
+app/cbl/CBTRN03C.cbl	FD:DATE-PARMS-FILE	FD-DATEPARM-REC	88	88-88	record-di-file	CBTRN03C.FD-DATEPARM-REC	01 generico (PIC X(80)) del file dei parametri di data; letto INTO WS-DATEPARM-RECORD
+app/cbl/CBTRN03C.cbl	WORKING-STORAGE	WS-DATEPARM-RECORD	122	122-125	record-di-file	CBTRN03C.WS-DATEPARM-RECORD	tracciato del file dei parametri di data DATEPARM (data iniziale e finale), in cui il record e' letto
+app/cbl/CBTRN03C.cbl	WORKING-STORAGE	WS-REPORT-VARS	127	127-137	area-di-lavoro	-	variabili del report; WS-BLANK-LINE (PIC X(133)) e' spostata in FD-REPTFILE-REC come riga vuota
+app/cbl/CBEXPORT.cbl	FD:CUSTOMER-INPUT	CUSTOMER-RECORD	75	COPY CVCUS01Y	record-di-file	CVCUS01Y.CUSTOMER-RECORD	01 dell'FD dato dal copybook CVCUS01Y; letto senza INTO
+app/cbl/CBEXPORT.cbl	FD:ACCOUNT-INPUT	ACCOUNT-RECORD	78	COPY CVACT01Y	record-di-file	CVACT01Y.ACCOUNT-RECORD	01 dell'FD dato dal copybook CVACT01Y; letto senza INTO
+app/cbl/CBEXPORT.cbl	FD:XREF-INPUT	CARD-XREF-RECORD	81	COPY CVACT03Y	record-di-file	CVACT03Y.CARD-XREF-RECORD	01 dell'FD dato dal copybook CVACT03Y; letto senza INTO
+app/cbl/CBEXPORT.cbl	FD:TRANSACTION-INPUT	TRAN-RECORD	84	COPY CVTRA05Y	record-di-file	CVTRA05Y.TRAN-RECORD	01 dell'FD dato dal copybook CVTRA05Y; letto senza INTO
+app/cbl/CBEXPORT.cbl	FD:CARD-INPUT	CARD-RECORD	87	COPY CVACT02Y	record-di-file	CVACT02Y.CARD-RECORD	01 dell'FD dato dal copybook CVACT02Y; letto senza INTO
+app/cbl/CBEXPORT.cbl	FD:EXPORT-OUTPUT	EXPORT-OUTPUT-RECORD	92	92-92	record-di-file	CBEXPORT.EXPORT-OUTPUT-RECORD	01 generico (PIC X(500)) del file di export; i campi veri sono in EXPORT-RECORD (CVEXPORT, WORKING-STORAGE) scritto FROM
+app/cbl/CBIMPORT.cbl	FD:EXPORT-INPUT	EXPORT-INPUT-RECORD	79	79-79	record-di-file	CBIMPORT.EXPORT-INPUT-RECORD	01 generico (PIC X(500)) del file di export; letto INTO EXPORT-RECORD (CVEXPORT)
+app/cbl/CBIMPORT.cbl	FD:CUSTOMER-OUTPUT	CUSTOMER-RECORD	84	COPY CVCUS01Y	record-di-file	CVCUS01Y.CUSTOMER-RECORD	01 dell'FD dato dal copybook CVCUS01Y; scritto senza FROM
+app/cbl/CBIMPORT.cbl	FD:ACCOUNT-OUTPUT	ACCOUNT-RECORD	89	COPY CVACT01Y	record-di-file	CVACT01Y.ACCOUNT-RECORD	01 dell'FD dato dal copybook CVACT01Y; scritto senza FROM
+app/cbl/CBIMPORT.cbl	FD:XREF-OUTPUT	CARD-XREF-RECORD	94	COPY CVACT03Y	record-di-file	CVACT03Y.CARD-XREF-RECORD	01 dell'FD dato dal copybook CVACT03Y; scritto senza FROM
+app/cbl/CBIMPORT.cbl	FD:TRANSACTION-OUTPUT	TRAN-RECORD	99	COPY CVTRA05Y	record-di-file	CVTRA05Y.TRAN-RECORD	01 dell'FD dato dal copybook CVTRA05Y; scritto senza FROM
+app/cbl/CBIMPORT.cbl	FD:CARD-OUTPUT	CARD-RECORD	104	COPY CVACT02Y	record-di-file	CVACT02Y.CARD-RECORD	01 dell'FD dato dal copybook CVACT02Y; scritto senza FROM
+app/cbl/CBIMPORT.cbl	FD:ERROR-OUTPUT	ERROR-OUTPUT-RECORD	109	109-109	record-di-file	CBIMPORT.ERROR-OUTPUT-RECORD	01 generico (PIC X(132)) del file degli errori di import; i campi veri sono in WS-ERROR-RECORD scritto FROM
+app/cbl/CBIMPORT.cbl	WORKING-STORAGE	WS-ERROR-RECORD	152	152-160	record-di-file	CBIMPORT.WS-ERROR-RECORD	tracciato del record di errore (timestamp, tipo, sequenza, messaggio separati da '|') scritto FROM in ERROR-OUTPUT-RECORD
+app/cbl/CBSTM03A.CBL	FD:STMT-FILE	FD-STMTFILE-REC	45	45-45	riga-di-report	-	riga dell'estratto conto testuale (PIC X(80)), scritta FROM le righe ST-LINE* di STATEMENT-LINES
+app/cbl/CBSTM03A.CBL	FD:HTML-FILE	FD-HTMLFILE-REC	47	47-47	riga-di-report	-	riga dell'estratto conto HTML (PIC X(100)), scritta FROM le righe di HTML-LINES o composta con STRING
+app/cbl/CBSTM03A.CBL	WORKING-STORAGE	WS-M03B-AREA	71	71-83	area-di-lavoro	-	area dei parametri passata a CBSTM03B (CALL ... USING); WS-M03B-FLDT (PIC X(1000)) riceve i record letti, poi spostati in TRNX-RECORD, CARD-XREF-RECORD, CUSTOMER-RECORD, ACCOUNT-RECORD
+app/cbl/CBSTM03A.CBL	WORKING-STORAGE	STATEMENT-LINES	85	85-146	riga-di-report	-	righe dell'estratto conto testuale (ST-LINE0 ... ST-LINE15, 80 byte ciascuna)
+app/cbl/CBSTM03A.CBL	WORKING-STORAGE	HTML-LINES	148	148-223	riga-di-report	-	righe dell'estratto conto HTML (HTML-FIXED-LN con i valori 88, HTML-L11, HTML-ADDR-LN, HTML-BSIC-LN, HTML-TRAN-LN)
+app/cbl/CBSTM03B.CBL	FD:TRNX-FILE	FD-TRNXFILE-REC	59	59-63	record-di-file	CBSTM03B.FD-TRNXFILE-REC	01 dell'FD del file TRXFL (chiave composta carta+transazione e area generica); letto INTO LK-M03B-FLDT
+app/cbl/CBSTM03B.CBL	FD:XREF-FILE	FD-XREFFILE-REC	66	66-68	record-di-file	CBSTM03B.FD-XREFFILE-REC	01 dell'FD del file xref (chiave e area generica); letto INTO LK-M03B-FLDT
+app/cbl/CBSTM03B.CBL	FD:CUST-FILE	FD-CUSTFILE-REC	71	71-73	record-di-file	CBSTM03B.FD-CUSTFILE-REC	01 dell'FD del file clienti (chiave alfanumerica e area generica); letto INTO LK-M03B-FLDT
+app/cbl/CBSTM03B.CBL	FD:ACCT-FILE	FD-ACCTFILE-REC	76	76-78	record-di-file	CBSTM03B.FD-ACCTFILE-REC	01 dell'FD del file conti (chiave e area generica); letto INTO LK-M03B-FLDT
+app/cbl/CBSTM03B.CBL	LINKAGE	LK-M03B-AREA	100	100-112	area-di-lavoro	-	area dei parametri passata da CBSTM03A (USING); LK-M03B-FLDT (PIC X(1000)) riceve i record letti, poi spostati da CBSTM03A in TRNX-RECORD, CARD-XREF-RECORD, CUSTOMER-RECORD, ACCOUNT-RECORD
