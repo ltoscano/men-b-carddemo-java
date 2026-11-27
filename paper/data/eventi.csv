@@ -278,3 +278,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T17:28:12Z,issue-23,esecutore-consuntivo,opus,orologio,prima fase fino al fermo: durata 1725 s; 95 chiamate a strumenti; contatore token 366051
 2026-11-27T17:28:44Z,pr-44,decisione,fable,orologio,validazione 1: tre rilievi accolti (uno bloccante); uno respinto
 2026-11-27T17:28:44Z,issue-25,esecutore-inizio,opus,orologio,giro di correzione unico
+2026-11-27T17:28:49Z,processo,risposta-consegnata,fable,orologio,PR #44 rinviata; decisione sui binari oltre la PICTURE; verifica PR #30 in corso
+2026-11-27T17:34:23Z,pr-30,verifica-fine,fable,orologio,verifica dell'Approvatore conclusa
+2026-11-27T17:35:03Z,pr-30,merge,fable,orologio,PR #30 mergiata dopo tre giri e verifica dell'Approvatore; chiude #2
