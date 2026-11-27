@@ -47,8 +47,11 @@ OPZIONI_FISSE="-std=ibm -fbinary-truncate -fsingle-quote -fsign=EBCDIC -Wall -I/
 # Passi dei criteri di accettazione: nome e dipendenza (- = nessuna). selftest ha solo check.sh.
 PASSI="build:- avvio:build avviatore:build abend:build segno:build dialetto:build routines:build adattamenti:build selftest:-"
 
-tmp="$(mktmp)"
-trap 'rm -rf "$tmp"' EXIT
+tmp="$(mktmp)" || exit 1
+# Volume di prova di ensure_legacy_volume (punto 6d), rimosso all'uscita: solo questo, nessuna risorsa condivisa.
+COMMIT_FINTO="i35p${$}000000000"
+VOL_PROVA="menb-oracle-legacy-${COMMIT_FINTO:0:12}"
+trap 'rm -rf "$tmp"; docker volume rm -f "$VOL_PROVA" > /dev/null 2>&1 || true' EXIT
 
 # verifica ELENCO OUT: verifica nel container + impronta (sull'host, con git).
 verifica() {
@@ -241,7 +244,8 @@ build_alterata() {
     || { indent "$tmp/$1.log" >&2; fail "build alterata '$1' fallita"; }
 }
 config_alternativa "$tmp/alt"
-alt="$(in_container "$tmp/alt")" || fail "percorso della configurazione alternativa non calcolabile"
+percorso_alt() { local a; a="$(in_container "$tmp/alt")" || fail "percorso della configurazione alternativa non calcolabile"; echo "$a"; }
+alt="$(percorso_alt)" || exit 1
 # a) configurazione alternativa (perform-osvs: no) che arriva davvero a cobc.
 build_alterata cfg "s#^\. /oracle/ambiente\.sh\$#. /oracle/ambiente.sh; AMBIENTE_COBC=\"\$AMBIENTE_COBC COB_CONFIG_DIR=$alt\"#"
 expect_fail "build con COB_CONFIG_DIR alternativo nell'ambiente di cobc: ambiente" "ambiente di cobc diverso" verifica_container "$ORACLE_ROOT/programs.tsv" "$tmp/cfg"
@@ -362,6 +366,8 @@ bersaglio() {
     || { [ ! -f "$1" ] || indent "$1" >&2; fail "comando bersaglio $2 non raggiunto o non avvolto come atteso (registro $(rel "$1"))"; }
   log "     bersaglio raggiunto: $2 ($n invocazioni con esito reale $3 restituite come 42)"
 }
+# Esportata per le sue prove negative, eseguite in una bash separata (fail esce dalla shell).
+export -f bersaglio
 
 # 6a. Build di produzione. build/run.sh (con lib.sh, la verifica del volume e la scrittura dell'impronta) gira su
 #     una copia dell'oracle con il legacy collegato, in cui compile.sh ha un solo comando avvolto. Un'acquisizione
@@ -408,7 +414,8 @@ C01|grep -c -- \"\$1\"|42@1|1|conteggio di ': warning: ' in /out/log/CEE3ABD.log
 C02|grep -v '^#'|42|0|lettura dell'elenco /oracle/programs.tsv fallita (grep, codice 42)
 C03|tail -n +2|42|0|lettura dell'elenco /oracle/programs.tsv fallita (tail)
 C04|awk -F'\\t' 'NR>1|42|0|lettura di /out/compilazione.tsv fallita (awk)
-C05|sed -e 's/#|42@1|0|lettura delle opzioni di /oracle/cobc.opts fallita (sed)"
+C05|sed -e 's/#|42@1|0|lettura delle opzioni di /oracle/cobc.opts fallita (sed)
+C06|mktemp -d /tmp/compile|42|0|impossibile creare la cartella di lavoro"
 # Il file del ciclo degli hash che si fa fallire (acu.conf) non e' l'ultimo della cartella.
 ultimo_cfg="$(tail -n 1 "$ORACLE_ROOT/build/expected/configurazione.sha256")" || fail "lettura dell'atteso della configurazione fallita"
 [ "${ultimo_cfg##* }" != acu.conf ] && grep -q '  acu\.conf$' "$ORACLE_ROOT/build/expected/configurazione.sha256" \
@@ -472,9 +479,9 @@ mutate "$tmp/rout-alt/registro" 's/^A01 1 0 0 /A01 1 0 42 /'
 expect_fail "controprova: involucro che ha alterato l'esito (registro)" "A01 non raggiunto o con l'esito alterato" passato_intatto "$tmp/rout-alt/registro" A01
 expect_fail "controprova: comando mai raggiunto (registro)" "Z99 non raggiunto" passato_intatto "$tmp/rout-alt/registro" Z99
 expect_fail "bersaglio: nessuna invocazione restituita come 42 (registro della controprova)" "comando bersaglio A02 non raggiunto" \
-  bash -c '. "$ORACLE_ROOT/lib.sh"; eval "$1"; bersaglio "$2" A02 0' _ "$(declare -f bersaglio)" "$rout/registro"
+  bash -c '. "$ORACLE_ROOT/lib.sh"; bersaglio "$1" A02 0' _ "$rout/registro"
 expect_fail "bersaglio: esito reale diverso dall'atteso" "comando bersaglio A01 non raggiunto" \
-  bash -c '. "$ORACLE_ROOT/lib.sh"; eval "$1"; bersaglio "$2" A01 1' _ "$(declare -f bersaglio)" "$tmp/rout-alt/registro"
+  bash -c '. "$ORACLE_ROOT/lib.sh"; bersaglio "$1" A01 1' _ "$tmp/rout-alt/registro"
 # Residuo sano: l'impronta e il registro della controprova restano nella cartella; una build con A01 a 42 deve
 # fallire senza impronta e con un registro che contiene solo la sua invocazione (build/run.sh cancella l'output).
 cp "$ORACLE_ROOT/build/compile.sh" "$radice/oracle/build/compile.sh" || fail "copia di compile.sh fallita"
@@ -499,12 +506,31 @@ prepara_avvolti() {
   local d="$1" s c m; shift
   clean_dir "$d"
   mkdir -p "$d/avv" "$d/res" || fail "cartelle degli involucri non creabili"
+  # Registro scrivibile anche dai container che non girano con l'utente dell'host (volume del legacy).
+  chmod 777 "$d/res" || fail "permessi della cartella del registro non impostabili"
+  # Copia dell'involucro accanto agli involucri: serve anche nei container che non montano oracle/.
+  cp "$ORACLE_ROOT/build/avvolgi.sh" "$d/avv/.avvolgi.sh" || fail "copia di avvolgi.sh fallita"
   for s in "$@"; do
     c="${s%%=*}"; m="${s#*=}"
-    printf '#!/bin/sh\nexec sh /oracle/build/avvolgi.sh /res/registro %s '\''%s'\'' /usr/bin/%s "$@"\n' "$c" "$m" "$c" > "$d/avv/$c" \
+    printf '#!/bin/sh\nexec sh /avv/.avvolgi.sh /res/registro %s '\''%s'\'' /usr/bin/%s "$@"\n' "$c" "$m" "$c" > "$d/avv/$c" \
       && chmod +x "$d/avv/$c" || fail "involucro di $c non creabile"
   done
 }
+# con_docker_avvolto CARTELLA CHIAMATA...: CHIAMATA in una sottoshell in cui ogni `docker run` ha in piu' gli
+# involucri di CARTELLA/avv davanti nel PATH e il registro in /res (per gli script di lib.sh che girano in
+# container senza accettare opzioni di docker).
+con_docker_avvolto() (
+  AVV_D="$1"; shift
+  docker() {
+    if [ "${1:-}" = run ]; then
+      shift
+      command docker run -e PATH=/avv:/usr/bin:/bin -v "$AVV_D/avv:/avv:ro" -v "$AVV_D/res:/res" "$@"
+    else
+      command docker "$@"
+    fi
+  }
+  "$@"
+)
 # esegui_avvolto NOME COMANDO=MODO...: PARMECHO con esegui.sh, rapporto in $tmp/es-NOME/res/out/PARMECHO.txt.
 esegui_avvolto() {
   local d="$tmp/es-$1"; shift
@@ -514,7 +540,7 @@ esegui_avvolto() {
     -- timeout -k 10 120 sh /oracle/esegui.sh /res/out PARMECHO --parm 2022071800
 }
 esegui_avvolto rif > "$tmp/es-rif.log" 2>&1 || { indent "$tmp/es-rif.log" >&2; fail "esegui.sh senza involucri fallito"; }
-esegui_avvolto passa ls=passa cat=passa sort=passa wc=passa tr=passa rm=passa mkdir=passa env=passa > "$tmp/es-passa.log" 2>&1 \
+esegui_avvolto passa ls=passa cat=passa sort=passa wc=passa rm=passa mkdir=passa env=passa > "$tmp/es-passa.log" 2>&1 \
   || { indent "$tmp/es-passa.log" >&2; fail "controprova: esegui.sh con gli involucri in modo passa fallito"; }
 # rapporti_identici CARTELLA-A CARTELLA-B: rapporto e ambiente di PARMECHO uguali byte per byte.
 rapporti_identici() {
@@ -526,7 +552,7 @@ rapporti_identici "$tmp/es-rif/res/out" "$tmp/es-passa/res/out" > "$tmp/rid.out"
 mkdir -p "$tmp/es-alt" && cp "$tmp/es-passa/res/out/PARMECHO.txt" "$tmp/es-passa/res/out/PARMECHO.ambiente" "$tmp/es-alt/" || fail "copia del rapporto fallita"
 mutate "$tmp/es-alt/PARMECHO.txt" 's/^PARMDUMP /PARMDUMQ /'
 expect_fail "controprova di esegui.sh: rapporto con un nome di file alterato" "rapporto o ambiente di PARMECHO diversi" rapporti_identici "$tmp/es-rif/res/out" "$tmp/es-alt"
-for c in ls cat sort wc tr rm mkdir env; do
+for c in ls cat sort wc rm mkdir env; do
   passato_intatto "$tmp/es-passa/res/registro" "$c" > "$tmp/pi.out" 2>&1 || { indent "$tmp/pi.out" >&2; fail "controprova di esegui.sh: $c"; }
 done
 grep -qx 'PARMDUMP [0-9][0-9]*' "$tmp/es-rif/res/out/PARMECHO.txt" || fail "PARMECHO non ha creato PARMDUMP: wc e tr non sarebbero provati"
@@ -538,7 +564,10 @@ ES03|cat=42@1|rapporto non scrivibile o incompleto
 ES04|cat=42@2|rapporto non scrivibile o incompleto
 ES05|sort=42|rapporto non scrivibile o incompleto
 ES06|wc=42|rapporto non scrivibile o incompleto
-ES07|tr=42|rapporto non scrivibile o incompleto
+ES07|sort=T42|rapporto non scrivibile o incompleto
+ES12|ls=T42@2|rapporto non scrivibile o incompleto
+ES13|wc=T42|rapporto non scrivibile o incompleto
+ES14|cat=T42@1|rapporto non scrivibile o incompleto
 ES08|rm=42@1|cartella di lavoro non creabile
 ES09|mkdir=42|cartella di lavoro non creabile
 ES10|rm=42@2|file temporanei non rimovibili
@@ -557,14 +586,32 @@ verifica_avvolta() {
   orun -v "$d/avv:/avv:ro" -v "$d/res:/res" -e PATH=/avv:/usr/bin:/bin -- timeout 300 sh /oracle/build/verifica.sh \
     /oracle/programs.tsv "$bo" "$OPZIONI_FISSE" "$AMB_COBC_FISSO" "$AMB_RUN_FISSO" $FISSO $ACCESSORI
 }
-verifica_avvolta passa comm=passa grep=passa tail=passa nm=passa > "$tmp/vf-passa.log" 2>&1 \
+verifica_avvolta passa comm=passa grep=passa tail=passa nm=passa awk=passa sort=passa ls=passa > "$tmp/vf-passa.log" 2>&1 \
   || { indent "$tmp/vf-passa.log" >&2; fail "controprova: verifica.sh con gli involucri in modo passa fallita"; }
-for c in comm grep tail nm; do
+for c in comm grep tail nm awk sort ls; do
   passato_intatto "$tmp/vf-passa/res/registro" "$c" > "$tmp/pi.out" 2>&1 || { indent "$tmp/pi.out" >&2; fail "controprova di verifica.sh: $c"; }
 done
 log "   controprova ok: verifica.sh con gli involucri in modo passa supera la verifica della build sana"
 # ID;COMANDO=MODO;ESITO REALE;MOTIVO ATTESO (separatore ';': un modello di grep contiene '|')
-PUNTI_VERIFICA="VF01;comm=42:-3;0;DIFETTO: elenco: confronto con l'elenco fisso fallito (comm)
+PUNTI_VERIFICA="VF01;comm=42:-23;0;DIFETTO: verifica incompleta: confronto con l'elenco fisso (comm -23) fallito (codice 42)
+VF13;comm=42:-13;0;DIFETTO: verifica incompleta: confronto con l'elenco fisso (comm -13) fallito (codice 42)
+VF14;grep=42:^#;0;DIFETTO: verifica incompleta: lettura dell'elenco della build (grep -v) fallito (codice 42)
+VF15;tail=42:+2;0;DIFETTO: verifica incompleta: lettura dell'elenco della build (tail) fallito (codice 42)
+VF16;awk=42@1;0;DIFETTO: verifica incompleta: lettura dell'elenco della build (awk) fallito (codice 42)
+VF17;awk=42@2;0;DIFETTO: verifica incompleta: lettura dei nomi di compilazione.tsv (awk) fallito (codice 42)
+VF18;awk=42@3;0;DIFETTO: CBACT01C: lettura della riga di compilazione.tsv fallita (awk)
+VF19;awk=T42@3;0;DIFETTO: CBACT01C: lettura della riga di compilazione.tsv fallita (awk)
+VF20;sort=42@1;0;DIFETTO: verifica incompleta: ordinamento dell'elenco fisso (sort) fallito (codice 42)
+VF21;sort=42@2;0;DIFETTO: verifica incompleta: ordinamento dell'elenco della build (sort) fallito (codice 42)
+VF22;sort=42@3;0;DIFETTO: verifica incompleta: ordinamento dei nomi attesi (sort) fallito (codice 42)
+VF23;sort=42@4;0;DIFETTO: verifica incompleta: ordinamento dei nomi di compilazione.tsv (sort) fallito (codice 42)
+VF24;sort=42@5;0;DIFETTO: verifica incompleta: ordinamento degli artefatti attesi (sort) fallito (codice 42)
+VF25;sort=42@6;0;DIFETTO: verifica incompleta: ordinamento di bin/ (sort) fallito (codice 42)
+VF26;ls=42;0;DIFETTO: verifica incompleta: elenco di bin/ (ls) fallito (codice 42)
+VF27;ls=T42;0;DIFETTO: verifica incompleta: elenco di bin/ (ls) fallito (codice 42)
+VF29;awk=42@4;0;DIFETTO: CBACT01C: in compilazione.tsv origine, tipo, esito o errori non validi
+VF30;awk=42@5;0;DIFETTO: CBACT01C: avvertimenti/errori in compilazione.tsv diversi da quelli nel log
+VF28;grep=T42:^== codice ;0;DIFETTO: CBACT01C: lettura dei codici di cobc dal log fallita (grep, codice 42)
 VF02;grep=42:;0;DIFETTO: CBACT01C: attesa una riga in compilazione.tsv, trovate (conteggio fallito, grep codice 42)
 VF03;grep=42:: warning: ;1;DIFETTO: CBACT01C: conteggio di avvertimenti/errori nel log fallito (grep -c)
 VF04;tail=42@2;0;DIFETTO: CBACT01C: l'ultima riga del log non e' 'codice di uscita: 0' ((lettura del log fallita: tail))
@@ -580,6 +627,13 @@ while IFS=';' read -r id spec reale motivo; do
   expect_fail "verifica.sh con ${spec%%=*} che restituisce 42 (${spec#*=}, $id)" "$motivo" verifica_avvolta "$id" "$spec"
   bersaglio "$tmp/vf-$id/res/registro" "${spec%%=*}" "$reale"
 done <<< "$PUNTI_VERIFICA"
+# Righe "== codice" dei log (rilievo 4, giro 1 della PR #49): la loro assenza non vale "tutti i codici a 0".
+copia codtot; mutate "$tmp/codtot/log/CBACT01C.log" '/^== codice /d'
+expect_fail "log di CBACT01C senza nessuna riga '== codice'" "CBACT01C: righe '== codice' nel log: 0, attese 2" verifica "$tmp/codtot.tsv" "$tmp/codtot"
+copia codpar; mutate "$tmp/codpar/log/CBACT01C.log" '1,/^== codice 0$/{/^== codice 0$/d;}'
+expect_fail "log di CBACT01C con una sola delle due righe '== codice'" "CBACT01C: righe '== codice' nel log: 1, attese 2" verifica "$tmp/codpar.tsv" "$tmp/codpar"
+copia codmod; mutate "$tmp/codmod/log/CSUTLDTC.log" '/^== codice /d'
+expect_fail "log del modulo CSUTLDTC senza la riga '== codice'" "CSUTLDTC: righe '== codice' nel log: 0, attese 1" verifica "$tmp/codmod.tsv" "$tmp/codmod"
 
 # 6d. lib.sh e questo controllo (sull'host). avvolto_42 COMANDO PRIMO-ARGOMENTO CHIAMATA...: esegue CHIAMATA in
 #     una sottoshell in cui COMANDO, quando il suo primo argomento e' PRIMO-ARGOMENTO, gira davvero (output
@@ -643,4 +697,99 @@ expect_fail_raggiunto "check.sh build_alterata: in_container restituisce 42" "pe
   con_in_container_42 build_alterata incont 's/^set -u$/set -u # prova/'
 expect_fail_raggiunto "check.sh adafail: in_container restituisce 42" "percorso di adafail.compile.sh non calcolabile" "AVVOLTO in_container" \
   con_in_container_42 adafail_build
+expect_fail_raggiunto "check.sh vecchia_build: in_container restituisce 42" "percorso di vecchia.compile.sh non calcolabile" "AVVOLTO in_container" \
+  con_in_container_42 vecchia_build
+expect_fail_raggiunto "check.sh percorso_alt: in_container restituisce 42" "percorso della configurazione alternativa non calcolabile" "AVVOLTO in_container" \
+  con_in_container_42 percorso_alt
+
+# 6e. Ricerca esaustiva nel perimetro (giro 1 della PR #49): le acquisizioni rimaste in lib.sh e in build/run.sh.
+# avvolto_glob COMANDO MODELLO CHIAMATA...: come avvolto_42, ma il comando e' colpito quando la riga dei suoi
+# argomenti ("$*") corrisponde al MODELLO (glob della shell).
+avvolto_glob() (
+  AVV_CMD="$1"; AVV_MOD="$2"; shift 2
+  eval "$AVV_CMD() {
+    case \"\$*\" in
+      \$AVV_MOD)
+        local r=0; command $AVV_CMD \"\$@\" || r=\$?
+        echo \"AVVOLTO $AVV_CMD \$* (esito reale \$r)\" >&2
+        return 42 ;;
+    esac
+    command $AVV_CMD \"\$@\"
+  }"
+  "$@"
+)
+artefatti_o_errore() { artifacts_hash "$1" > /dev/null || { echo "hash degli artefatti fallito"; return 1; }; }
+manifesto_o_errore() { manifesto_indipendente "$tmp/alt" "$alt" > /dev/null || { echo "manifesto indipendente non calcolabile"; return 1; }; }
+volume_finto() { legacy_commit() { echo "$COMMIT_FINTO"; }; LEGACY_VOL=""; ensure_legacy_volume; }
+impronta_build() { stamp_problem "$BUILD_OUT"; }
+expect_fail_raggiunto "lib.sh: pwd della radice del repository restituisce 42" "radice del repository non calcolabile" "AVVOLTO pwd" \
+  bash -c 'pwd() { builtin pwd; echo "AVVOLTO pwd" >&2; return 42; }; . "$ORACLE_ROOT/lib.sh"; echo "lib.sh caricato"'
+expect_fail_raggiunto "lib.sh require_legacy: git status restituisce 42" "git status sul legacy fallito" "AVVOLTO git -C" \
+  avvolto_glob git '-C * status --porcelain' require_legacy
+expect_fail_raggiunto "lib.sh ensure_image: docker build restituisce 42" "build dell'immagine" "AVVOLTO docker build" \
+  avvolto_glob docker 'build *' immagine_da_capo
+expect_fail_raggiunto "lib.sh image_id: docker image inspect restituisce 42" "calcolo dell'impronta fallito" "AVVOLTO docker image inspect" \
+  avvolto_glob docker 'image inspect *' stamp_problem "$BUILD_OUT"
+expect_fail_raggiunto "lib.sh fingerprint: git rev-parse del legacy restituisce 42" "calcolo dell'impronta fallito" "AVVOLTO git -C" \
+  avvolto_glob git '-C * rev-parse HEAD' stamp_problem "$BUILD_OUT"
+expect_fail_raggiunto "lib.sh build_inputs: ls di stubs/ e tests/ restituisce 42" "calcolo dell'impronta fallito" "AVVOLTO ls" \
+  avvolto_glob ls '*/stubs/*' stamp_problem "$BUILD_OUT"
+expect_fail_raggiunto "lib.sh fingerprint: git hash-object --stdin restituisce 42" "calcolo dell'impronta fallito" "AVVOLTO git hash-object --stdin" \
+  avvolto_glob git 'hash-object --stdin' stamp_problem "$BUILD_OUT"
+expect_fail_raggiunto "lib.sh hash_righe: ls di bin/ restituisce 42" "hash degli artefatti fallito" "AVVOLTO ls -A" \
+  avvolto_glob ls '-A */bin' artefatti_o_errore "$BUILD_OUT"
+expect_fail_raggiunto "lib.sh hash_righe: sort restituisce 42" "hash degli artefatti fallito" "AVVOLTO sort" \
+  avvolto_glob sort '' artefatti_o_errore "$BUILD_OUT"
+expect_fail_raggiunto "lib.sh artifacts_hash: git hash-object --stdin restituisce 42" "hash degli artefatti fallito" "AVVOLTO git hash-object --stdin" \
+  avvolto_glob git 'hash-object --stdin' artefatti_o_errore "$BUILD_OUT"
+expect_fail_raggiunto "check.sh opzioni_fisse: sed finale della seconda pipeline restituisce 42" "lettura fallita" "AVVOLTO sed s/ \$//" \
+  avvolto_glob sed 's/ $//' opzioni_fisse "$ORACLE_ROOT/cobc.opts"
+printf 'a\n' > "$tmp/mutprova.txt" || fail "file di prova non creabile"
+expect_fail_raggiunto "lib.sh mutate: cmp restituisce 42" "mutate: confronto fallito" "AVVOLTO cmp -s" \
+  avvolto_glob cmp '-s *' mutate "$tmp/mutprova.txt" 's/a/b/'
+expect_fail_raggiunto "lib.sh ensure_legacy_volume: docker volume create restituisce 42" "creazione del volume" "AVVOLTO docker volume create" \
+  avvolto_glob docker 'volume create *' volume_finto
+# Comandi che girano nei container di lib.sh (config_hash, verify_legacy_volume, ensure_legacy_volume) e del
+# manifesto indipendente di questo controllo: involucri davanti nel PATH tramite con_docker_avvolto.
+# ID;COMANDO=MODO;CHIAMATA;MOTIVO ATTESO
+PUNTI_CONTAINER="LC01;ls=42;impronta_build;calcolo dell'impronta fallito
+LC02;sha256sum=42@2;impronta_build;calcolo dell'impronta fallito
+LC03;find=42@1;verify_legacy_volume;non coincide con il submodule legacy
+LC04;find=T42@2;verify_legacy_volume;non coincide con il submodule legacy
+LC05;find=42@2;volume_finto;copia del legacy nel volume
+LC06;find=42@3;volume_finto;copia del legacy nel volume
+LC07;find=42;manifesto_o_errore;manifesto indipendente non calcolabile
+LC08;sort=42;manifesto_o_errore;manifesto indipendente non calcolabile
+LC09;tr=42;manifesto_o_errore;manifesto indipendente non calcolabile
+LC10;xargs=42;manifesto_o_errore;manifesto indipendente non calcolabile"
+while IFS=';' read -r id spec chiamata motivo; do
+  prepara_avvolti "$tmp/lc-$id" "$spec"
+  # shellcheck disable=SC2086
+  expect_fail "$chiamata con ${spec%%=*} che restituisce 42 (${spec#*=}, $id)" "$motivo" con_docker_avvolto "$tmp/lc-$id" $chiamata
+  bersaglio "$tmp/lc-$id/res/registro" "${spec%%=*}" 0
+done <<< "$PUNTI_CONTAINER"
+# Build di produzione (copia): in_container dell'elenco e awk del conteggio in build/run.sh, con output autentico
+# ed esito 42 (funzioni aggiunte in coda al lib.sh della copia). La build fallisce e non scrive l'impronta.
+cp "$ORACLE_ROOT/build/compile.sh" "$radice/oracle/build/compile.sh" || fail "copia di compile.sh fallita"
+printf '%s\n' 'in_container() { printf "/oracle/%s\n" "${1#"$ORACLE_ROOT"/}"; echo "AVVOLTO in_container $1" >&2; return 42; }' \
+  >> "$radice/oracle/lib.sh" || fail "lib.sh della copia non alterabile"
+clean_dir "$rout"
+expect_fail_raggiunto "build di produzione: in_container dell'elenco in build/run.sh restituisce 42" \
+  "percorso dell'elenco nel container non calcolabile" "AVVOLTO in_container" build_copia
+[ ! -e "$rout/IMPRONTA" ] || fail "in_container a 42: la build fallita ha scritto l'impronta"
+cp "$ORACLE_ROOT/lib.sh" "$radice/oracle/lib.sh" || fail "ripristino del lib.sh della copia fallito"
+printf '%s\n' 'awk() { local r=0; command awk "$@" || r=$?; echo "AVVOLTO awk $* (esito reale $r)" >&2; return 42; }' \
+  >> "$radice/oracle/lib.sh" || fail "lib.sh della copia non alterabile"
+clean_dir "$rout"
+expect_fail_raggiunto "build di produzione: awk del conteggio in build/run.sh restituisce 42" \
+  "compilazione.tsv fallita (awk)" "AVVOLTO awk" build_copia
+[ ! -e "$rout/IMPRONTA" ] || fail "awk a 42: la build fallita ha scritto l'impronta"
+cp "$ORACLE_ROOT/lib.sh" "$radice/oracle/lib.sh" || fail "ripristino del lib.sh della copia fallito"
+printf '%s\n' 'git() { if [ "${1:-} ${2:-}" = "hash-object --stdin" ]; then local r=0; command git "$@" || r=$?; echo "AVVOLTO git $* (esito reale $r)" >&2; return 42; fi; command git "$@"; }' \
+  >> "$radice/oracle/lib.sh" || fail "lib.sh della copia non alterabile"
+clean_dir "$rout"
+expect_fail_raggiunto "build di produzione: impronta (git hash-object --stdin) in build/run.sh restituisce 42" \
+  "calcolo dell'impronta fallito" "AVVOLTO git hash-object --stdin" build_copia
+[ ! -e "$rout/IMPRONTA" ] || fail "impronta a 42: la build fallita ha scritto l'impronta"
+cp "$ORACLE_ROOT/lib.sh" "$radice/oracle/lib.sh" || fail "ripristino del lib.sh della copia fallito"
 log "controllo superato"

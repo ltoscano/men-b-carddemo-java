@@ -7,7 +7,7 @@ export LC_ALL=C
 : "${ORACLE_ROOT:?ORACLE_ROOT non impostata: lanciare gli script tramite oracle/run.sh}"
 : "${ORACLE_NAME:=?}"
 
-REPO_ROOT="$(cd "$ORACLE_ROOT/.." && pwd)"
+REPO_ROOT="$(cd "$ORACLE_ROOT/.." && pwd)" || { echo "[$ORACLE_NAME] ERRORE: radice del repository non calcolabile" >&2; exit 1; }
 LEGACY="$REPO_ROOT/legacy/aws-mainframe-modernization-carddemo"
 # Output della build (artefatti). ORACLE_BUILD_OUT lo sposta: serve solo alle prove negative dei controlli.
 BUILD_OUT="${ORACLE_BUILD_OUT:-$ORACLE_ROOT/build/out}"
@@ -33,7 +33,15 @@ mutate() { # mutate FILE ESPRESSIONE-SED
   local f="$1" expr="$2"
   [ -f "$f" ] || fail "mutate: file assente: $(rel "$f")"
   sed -e "$expr" "$f" > "$f.mut" || fail "mutate: sed fallito su $(rel "$f")"
-  if cmp -s "$f" "$f.mut"; then rm -f "$f.mut"; fail "mutate: l'espressione '$expr' non altera $(rel "$f")"; fi
+  # Esiti di cmp: 0 = nessuna alterazione, 1 = alterato; ogni altro esito e' un errore (issue #35: prima un cmp
+  # fallito valeva come "alterato").
+  local r=0
+  cmp -s "$f" "$f.mut" || r=$?
+  case "$r" in
+    0) rm -f "$f.mut"; fail "mutate: l'espressione '$expr' non altera $(rel "$f")" ;;
+    1) ;;
+    *) fail "mutate: confronto fallito su $(rel "$f") (cmp, codice $r)" ;;
+  esac
   mv "$f.mut" "$f" || fail "mutate: impossibile sostituire $(rel "$f")"
 }
 

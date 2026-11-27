@@ -43,6 +43,8 @@ set -o pipefail
 OPTFILE=/oracle/cobc.opts
 if [ "${1:-}" = uno ] && [ -n "${UNO_OPZIONI:-}" ]; then OPTFILE="$UNO_OPZIONI"; fi
 LAUNCHER=/oracle/launcher/avvia.c
+# Tabulazione (separatore di programs.tsv): una costante, senza comandi.
+TAB='	'
 # Programmi di prova (oracle/tests/), tutti eseguibili.
 PROVE="PARMECHO ABDUSING ABDNOARG M03BCALL DTCCALL SEGNOPRB PERFPRB DATFTPRB IDXLOAD IDXDUMP"
 # Programmi del legacy compilati da una copia adattata (oracle/adattamenti/registro.md).
@@ -199,7 +201,7 @@ case "${1:-}" in
     # shellcheck disable=SC2086
     printf '%s\n' $OPTS > "$out/opzioni.txt" || die "scrittura di $out/opzioni.txt fallita"
     for f in /oracle/stubs/*.cbl; do
-      n="$(basename "$f" .cbl)" || die "basename di $f fallito"
+      n="${f##*/}"; n="${n%.cbl}"
       compila modulo "$f" "$n" "$out"; rc=$?
       riga "$n" stub modulo "$out" "$rc"
     done
@@ -215,11 +217,13 @@ case "${1:-}" in
     grep -v '^#' "$elenco" > "$w/elenco.tsv"
     r=$?; [ "$r" -le 1 ] || die "lettura dell'elenco $elenco fallita (grep, codice $r)"
     tail -n +2 "$w/elenco.tsv" > "$w/elenco-righe.tsv" || die "lettura dell'elenco $elenco fallita (tail)"
-    while IFS="$(printf '\t')" read -r n src tipo motivo; do
+    # Separatore: la costante TAB, non una sostituzione di comando (giro 1 della PR #49: "$(printf '\t')"
+    # fallito lasciava IFS vuoto, nessun programma del legacy compilato e la build verde).
+    while IFS="$TAB" read -r n src tipo motivo; do
       [ -n "$n" ] || continue
       case " $ADATTATI " in
         *" $n "*)
-          b="$(basename "$src")" || die "basename di $src fallito"
+          b="${src##*/}"
           compila "$tipo" "$out/adattati/$b" "$n" "$out" "" "" "$out/adattati"; rc=$?
           riga "$n" adattato "$tipo" "$out" "$rc" ;;
         *)

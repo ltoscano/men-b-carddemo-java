@@ -33,38 +33,60 @@ conta() {
   case "$c" in ''|*[!0-9]*) return 1 ;; esac
   echo "$c"
 }
-TAB="$(printf '\t')"
+# Tabulazione come costante (issue #35: prima era "$(printf '\t')", una sostituzione senza esito controllato).
+TAB='	'
+# op CODICE DESCRIZIONE: esito di un passo di preparazione della verifica; diverso da 0 e' un DIFETTO (giro 1
+# della PR #49: una pipeline o un'assegnazione fallita seguita da un confronto riuscito faceva passare la verifica).
+op() { [ "$1" -eq 0 ] || err "verifica incompleta: $2 fallito (codice $1)"; }
+# campi VOCE: orig, n, tipo, src dalla voce origine:NOME:tipo:sorgente, senza comandi esterni (prima cut).
+campi() { orig="${1%%:*}"; resto="${1#*:}"; n="${resto%%:*}"; resto="${resto#*:}"; tipo="${resto%%:*}"; src="${resto#*:}"; }
 w=/tmp/verifica
 rm -rf "$w" && mkdir -p "$w" || { echo "verifica.sh: cartella di lavoro $w non creabile" >&2; exit 2; }
 
 # 1. L'elenco della build coincide con le voci legacy (nome, tipo e sorgente; niente in piu' o in meno).
+#    Ogni passo scrive un file e ha l'esito controllato; grep -v ammette 0 e 1 (nessuna riga non commento).
 [ -f "$elenco" ] || err "elenco della build assente: $elenco"
 for v in "$@"; do
-  case "$v" in legacy:*|adattato:*) echo "$v" | awk -F: '{sub("^/legacy/", "", $4); print $2 ":" $3 ":" $4}' ;; esac
-done | sort > "$w/fisso.txt"
-grep -v '^#' "$elenco" 2>/dev/null | tail -n +2 | awk -F"$TAB" 'NF>0 {print $1 ":" $3 ":" $2}' | sort > "$w/build.txt"
-comm -23 "$w/fisso.txt" "$w/build.txt" | while read -r v; do echo "DIFETTO: elenco: $v manca nell'elenco della build (o ha altro tipo o sorgente)"; done
-comm -13 "$w/fisso.txt" "$w/build.txt" | while read -r v; do echo "DIFETTO: elenco: $v nell'elenco della build ma non nell'elenco fisso del controllo"; done
-# Esito di comm controllato (issue #35): prima si perdeva dentro "$(comm ... | wc -l)" e il conteggio era 0.
-if d="$(comm -3 "$w/fisso.txt" "$w/build.txt" | wc -l)"; then [ "$d" -eq 0 ] || errs=$((errs + d))
-else err "elenco: confronto con l'elenco fisso fallito (comm)"; fi
+  campi "$v"
+  case "$orig" in legacy|adattato) printf '%s:%s:%s\n' "$n" "$tipo" "${src#/legacy/}" ;; esac
+done > "$w/fisso.voci"; op $? "scrittura dell'elenco fisso"
+sort "$w/fisso.voci" > "$w/fisso.txt"; op $? "ordinamento dell'elenco fisso (sort)"
+grep -v '^#' "$elenco" > "$w/elenco.senza-commenti" 2>/dev/null
+r=$?; [ "$r" -le 1 ] || op "$r" "lettura dell'elenco della build (grep -v)"
+tail -n +2 "$w/elenco.senza-commenti" > "$w/elenco.righe"; op $? "lettura dell'elenco della build (tail)"
+awk -F"$TAB" 'NF>0 {print $1 ":" $3 ":" $2}' "$w/elenco.righe" > "$w/build.voci"; op $? "lettura dell'elenco della build (awk)"
+sort "$w/build.voci" > "$w/build.txt"; op $? "ordinamento dell'elenco della build (sort)"
+comm -23 "$w/fisso.txt" "$w/build.txt" > "$w/mancanti.txt"; op $? "confronto con l'elenco fisso (comm -23)"
+comm -13 "$w/fisso.txt" "$w/build.txt" > "$w/in-piu.txt"; op $? "confronto con l'elenco fisso (comm -13)"
+while IFS= read -r v; do err "elenco: $v manca nell'elenco della build (o ha altro tipo o sorgente)"; done < "$w/mancanti.txt"
+while IFS= read -r v; do err "elenco: $v nell'elenco della build ma non nell'elenco fisso del controllo"; done < "$w/in-piu.txt"
 
 # 2. compilazione.tsv e bin/ contengono esattamente le voci attese, ne' piu' ne' meno.
 tsv="$out/compilazione.tsv"
 [ -f "$tsv" ] || err "compilazione.tsv assente"
-for v in "$@"; do echo "$v" | awk -F: '{print $2}'; done | sort > "$w/nomi.txt"
-awk -F"$TAB" 'NR>1 {print $1}' "$tsv" 2>/dev/null | sort > "$w/tsv-nomi.txt"
+for v in "$@"; do campi "$v"; echo "$n"; done > "$w/nomi.voci"; op $? "scrittura dei nomi attesi"
+sort "$w/nomi.voci" > "$w/nomi.txt"; op $? "ordinamento dei nomi attesi (sort)"
+: > "$w/tsv-nomi.voci"
+[ ! -f "$tsv" ] || { awk -F"$TAB" 'NR>1 {print $1}' "$tsv" > "$w/tsv-nomi.voci"; op $? "lettura dei nomi di compilazione.tsv (awk)"; }
+sort "$w/tsv-nomi.voci" > "$w/tsv-nomi.txt"; op $? "ordinamento dei nomi di compilazione.tsv (sort)"
 cmp -s "$w/nomi.txt" "$w/tsv-nomi.txt" || err "compilazione.tsv: programmi diversi da quelli attesi: $(comm -3 "$w/nomi.txt" "$w/tsv-nomi.txt" | tr -d '\t' | tr '\n' ' ')"
-for v in "$@"; do echo "$v" | awk -F: '{ if ($3 == "modulo") print $2 ".so"; else print $2 }'; done | sort > "$w/artefatti.txt"
-ls -A "$out/bin" 2>/dev/null | sort > "$w/bin.txt"
+for v in "$@"; do
+  campi "$v"
+  case "$tipo" in modulo) echo "$n.so" ;; *) echo "$n" ;; esac
+done > "$w/artefatti.voci"; op $? "scrittura degli artefatti attesi"
+sort "$w/artefatti.voci" > "$w/artefatti.txt"; op $? "ordinamento degli artefatti attesi (sort)"
+: > "$w/bin.voci"
+[ ! -d "$out/bin" ] || { ls -A "$out/bin" > "$w/bin.voci"; op $? "elenco di bin/ (ls)"; }
+sort "$w/bin.voci" > "$w/bin.txt"; op $? "ordinamento di bin/ (sort)"
 cmp -s "$w/artefatti.txt" "$w/bin.txt" || err "bin/: artefatti diversi da quelli attesi: $(comm -3 "$w/artefatti.txt" "$w/bin.txt" | tr -d '\t' | tr '\n' ' ')"
 
 # 3. Per ogni voce: una sola riga in compilazione.tsv, compilazione riuscita, argomenti di cobc esatti,
 #    artefatto del tipo giusto.
 for v in "$@"; do
-  orig="$(echo "$v" | cut -d: -f1)"; n="$(echo "$v" | cut -d: -f2)"
-  tipo="$(echo "$v" | cut -d: -f3)"; src="$(echo "$v" | cut -d: -f4-)"
-  righe="$(awk -F"$TAB" -v n="$n" 'NR>1 && $1==n' "$tsv" 2>/dev/null)"
+  campi "$v"
+  righe=""
+  [ ! -f "$tsv" ] || righe="$(awk -F"$TAB" -v n="$n" 'NR>1 && $1==n' "$tsv")" \
+    || { err "$n: lettura della riga di compilazione.tsv fallita (awk)"; righe=""; }
   # Numero di righe con l'esito di grep -c controllato (ammessi 0 e 1; issue #35).
   nr="$(printf '%s' "$righe" | grep -c '')"; r=$?
   [ "$r" -le 1 ] || nr="(conteggio fallito, grep codice $r)"
@@ -86,7 +108,7 @@ for v in "$@"; do
     r=$?; [ "$r" -le 1 ] || err "$n: lettura degli argomenti dal log fallita (grep, codice $r)"
     # Programma adattato: si compila la copia adattata, con la sua cartella come primo -I.
     csrc="$src"
-    [ "$orig" != adattato ] || csrc="/out/adattati/$(basename "$src")"
+    [ "$orig" != adattato ] || csrc="/out/adattati/${src##*/}"
     {
       echo "== cobc"
       [ "$orig" != adattato ] || echo "arg -I/out/adattati"
@@ -97,16 +119,21 @@ for v in "$@"; do
                     echo "== cobc"
                     printf 'arg %s\n' -x -A "-DMENB_ENTRY=$n" -o "/out/bin/$n" /oracle/launcher/avvia.c "/out/obj/$n.o" ;;
       esac
-    } > "$w/attesi.txt"
+    } > "$w/attesi.txt" || err "$n: scrittura degli argomenti attesi fallita"
     if ! cmp -s "$w/attesi.txt" "$w/argomenti.txt"; then
       err "$n: argomenti di cobc diversi da quelli attesi:"
       diff "$w/attesi.txt" "$w/argomenti.txt" | sed 's/^/      /'
     fi
-    # Codici delle invocazioni (issue #35: prima l'esito del primo grep si perdeva nella pipeline).
+    # Codici delle invocazioni (issue #35: prima l'esito del primo grep si perdeva nella pipeline). Ci deve
+    # essere una riga "== codice" per ogni invocazione attesa (1 per un modulo, 2 per un eseguibile): l'assenza
+    # delle righe non e' "nessun codice diverso da 0" (rilievo 4, giro 1 della PR #49).
+    case "$tipo" in modulo) ninv=1 ;; *) ninv=2 ;; esac
     grep -E '^== codice ' "$logf" > "$w/codici.txt"
     r=$?
     if [ "$r" -gt 1 ]; then err "$n: lettura dei codici di cobc dal log fallita (grep, codice $r)"
     else
+      nc=0; while IFS= read -r _riga; do nc=$((nc + 1)); done < "$w/codici.txt"
+      [ "$nc" = "$ninv" ] || err "$n: righe '== codice' nel log: $nc, attese $ninv (una per invocazione di cobc)"
       grep -vx '== codice 0' "$w/codici.txt" > /dev/null
       r=$?
       case "$r" in
@@ -116,8 +143,8 @@ for v in "$@"; do
       esac
     fi
   fi
-  if [ "$orig" = adattato ] && [ ! -f "$out/adattati/$(basename "$src")" ]; then
-    err "$n: copia adattata assente (adattati/$(basename "$src"))"
+  if [ "$orig" = adattato ] && [ ! -f "$out/adattati/${src##*/}" ]; then
+    err "$n: copia adattata assente (adattati/${src##*/})"
   fi
   case "$tipo" in
     eseguibile)
@@ -146,7 +173,7 @@ for v in "$@"; do
 done
 
 # 4. opzioni.txt: esattamente le opzioni fissate, una per riga, nell'ordine.
-for o in $opzioni; do echo "$o"; done > "$w/opzioni-attese.txt"
+for o in $opzioni; do echo "$o"; done > "$w/opzioni-attese.txt"; op $? "scrittura delle opzioni attese"
 cmp -s "$w/opzioni-attese.txt" "$out/opzioni.txt" 2>/dev/null \
   || err "opzioni: usate '$(tr '\n' ' ' < "$out/opzioni.txt" 2>/dev/null)', fissate '$opzioni'"
 
@@ -159,10 +186,10 @@ done
 
 # 6. Ambiente e configurazione effettivamente usati.
 #    a) le variabili ricevute da cobc e dai programmi sono esattamente quelle fissate, nell'ordine;
-for o in $amb_cobc; do echo "$o"; done > "$w/amb-cobc.txt"
+for o in $amb_cobc; do echo "$o"; done > "$w/amb-cobc.txt"; op $? "scrittura dell'ambiente di cobc atteso"
 cmp -s "$w/amb-cobc.txt" "$out/ambiente-cobc.txt" 2>/dev/null \
   || err "ambiente di cobc diverso da quello fissato: $(tr '\n' ' ' < "$out/ambiente-cobc.txt" 2>/dev/null)"
-for o in $amb_run; do echo "$o"; done > "$w/amb-run.txt"
+for o in $amb_run; do echo "$o"; done > "$w/amb-run.txt"; op $? "scrittura dell'ambiente dei programmi atteso"
 cmp -s "$w/amb-run.txt" "$out/ambiente-run.txt" 2>/dev/null \
   || err "ambiente dei programmi diverso da quello fissato: $(tr '\n' ' ' < "$out/ambiente-run.txt" 2>/dev/null)"
 #    b) cobc --info (letto nello stesso ambiente) riporta la cartella di configurazione e dei copybook

@@ -22,6 +22,7 @@
 # date con --dd: nulla dell'ambiente di questo script gli arriva. Ha stdin vuoto e un limite di tempo
 # (ORACLE_TIMEOUT_RUN secondi, poi TERM e, 5 secondi dopo, KILL).
 set -u
+set -o pipefail
 . /oracle/ambiente.sh
 BIN=/oracle-bin
 [ $# -ge 2 ] || { echo "uso: esegui.sh OUT NOME [--parm TESTO] [--dd DD_<nome>=<percorso>]..." >&2; exit 2; }
@@ -64,13 +65,18 @@ cd / || exit 2
 # Il rapporto, con l'esito di ogni comando controllato (issue #35): prima gli esiti di cat, ls, sort e wc si
 # perdevano dentro il gruppo, la pipeline e le sostituzioni di comando, e un rapporto incompleto passava.
 # file_lavoro: una riga "<nome> <byte>" per file della cartella di lavoro, in ordine (formato invariato).
+# Nessuna pipeline (giro 1 della PR #49: senza pipefail l'esito del primo comando di "printf | sort" e
+# "printf | tr" si perdeva): sort legge l'elenco da un here-document, gli spazi si tolgono senza comandi.
 file_lavoro() (
   cd "$lav" || exit 1
   nomi="$(ls -A)" || exit 1
-  nomi="$(printf '%s\n' "$nomi" | sort)" || exit 1
+  nomi="$(sort <<FINE
+$nomi
+FINE
+)" || exit 1
   for f in $nomi; do
     b="$(wc -c < "$f")" || exit 1
-    b="$(printf '%s' "$b" | tr -d ' ')" || exit 1
+    b="${b#"${b%%[! ]*}"}"; b="${b%"${b##*[! ]}"}"
     echo "$f $b" || exit 1
   done
 )
