@@ -12,7 +12,6 @@
   <module name="RegexpSingleline">
     <property name="format" value="\\u+[0-9a-fA-F]{4}"/>
     <property name="message" value="UNICODE-ESCAPE-VIETATO: escape Unicode nel codice di produzione"/>
-    <property name="ignoreComments" value="false"/>
   </module>
   <module name="TreeWalker">
     <!-- Parole chiave double e float in ogni posizione: campi, parametri, ritorni, locali,
