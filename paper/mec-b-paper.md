@@ -70,6 +70,58 @@ Il Validatore è volutamente un modello di un altro fornitore rispetto all'Esecu
 
 *Brownfield* indica un sistema che esiste già e il cui comportamento va preservato; *greenfield* un sistema costruito da zero. Questa migrazione è entrambe le cose: il comportamento da preservare è brownfield, lo stack di arrivo è greenfield. Servono quindi due preparazioni ("Fasi 0") prima di qualsiasi logica di business: capire il legacy e costruire un riferimento con cui confrontarsi, e preparare lo scheletro del nuovo sistema. Il riferimento si chiama *oracle*: qualcosa che, dato un ingresso, dice quale deve essere l'uscita giusta.
 
+### 2.1 Il ragionamento dietro la Wave 0
+
+La Wave 0 è la parte del lavoro in cui non si traduce nulla. In questo progetto ha occupato l'intero primo giorno. Chi replica deve poter giudicare se quel tempo è ben speso: qui è spiegato da dove viene ogni suo pezzo. Una precisazione sul metodo di scrittura: le dipendenze descritte sono quelle del piano approvato al passo 6 e modificato nei passi successivi (`docs/piano-wave.md`); la forma del racconto, "dalla fine all'indietro", è stata scritta a posteriori, alla fine del primo giorno, su richiesta dell'autore.
+
+**Si parte dalla fine.** Il piano non è stato scritto chiedendosi "che cosa conviene preparare?", ma chiedendosi: *qual è il primo test che dirà, senza possibilità di discussione, che un programma tradotto fa ciò che faceva l'originale? E che cosa deve esistere perché quel test si possa scrivere?* Il primo test scelto è piccolo: un programma batch che legge l'archivio dei conti e ne scrive il contenuto in tre file (`CBACT01C`), tradotto in Java, deve produrre file identici byte per byte a quelli dell'originale. Da lì si risale all'indietro.
+
+```mermaid
+flowchart BT
+    T[Primo test di parità:<br/>il Java produce gli stessi file dell'originale]
+    G[Output di riferimento dell'originale] --> T
+    J[Un posto dove far girare il Java<br/>con un database vero] --> T
+    O[L'originale che gira davvero:<br/>oracle] --> G
+    F[Dati d'ingresso noti] --> G
+    R[Le routine esterne che il programma chiama] --> O
+    C[Compilatore e ambiente fissati] --> O
+    D[Dove sta ogni campo:<br/>contratto dati] --> F
+    K[Come i byte diventano valori:<br/>regole di codifica] --> F
+    M[Chi chiama chi, quali file:<br/>mappa] --> O
+    M --> D
+    S[Quali strumenti funzionano<br/>su questo sorgente] --> M
+    S --> D
+    S --> C
+```
+
+Letto dal basso, il grafico è l'ordine delle issue della Wave 0A. Ogni freccia è una domanda a cui si è dovuto rispondere:
+
+- *Per confrontare servono gli output dell'originale.* Non avendo un mainframe, l'originale va fatto girare altrove: è l'oracle. Un output di riferimento prodotto da un oracle sbagliato è peggio di nessun riferimento, perché certifica l'errore. Per questo l'oracle ha ricevuto più controlli di qualsiasi altra parte (e uno di essi ha trovato i segni degli importi letti al contrario, passo 15).
+- *Per far girare l'originale serve tutto ciò che esso chiama.* `CBACT01C` chiama una routine scritta in assembler per convertire una data. Senza un equivalente, il programma si ferma alla prima riga utile. Lo si è scoperto perché la prova degli strumenti, e poi la mappa delle dipendenze, lo mostravano tra le chiamate non risolte, non perché qualcuno lo sapesse.
+- *Per dare all'originale un ingresso noto bisogna saper leggere e scrivere i suoi dati.* Cioè sapere dove sta ogni campo (il contratto dati) e come i suoi byte diventano un valore (le regole di codifica). Sono due cose distinte, e sbagliare la seconda è meno visibile: un importo letto con il segno sbagliato è un numero plausibile.
+- *Per scrivere mappa e contratto servono strumenti, e non si sa quali funzionino finché non li si prova su questo sorgente.* Per questo la prima issue in assoluto è stata una prova degli strumenti, con esiti controllati a mano su pochi file. Lo strumento più noto ha fallito proprio sul formato COBOL tradizionale (sezione 4).
+
+**Per i programmi a schermo il ragionamento è lo stesso, ma la risposta è diversa.** Non esiste un modo libero e pronto di eseguire i comandi CICS, quindi non c'è un originale che gira. Il riferimento diventa un documento: per ogni programma, una tabella di casi (ingresso, stato, tasto premuto → schermata, messaggio, dati scritti, programma successivo) ricavata dal sorgente e criticata dal Validatore. È un riferimento più debole di un'esecuzione, e il paper lo dichiara tra i limiti. Per costruirlo serve sapere quali comandi CICS usa ogni programma e verso che cosa: per questo la mappa dei comandi CICS fa parte della Wave 0, anche se nessuno strumento la forniva.
+
+**L'altra metà: preparare l'arrivo.** Lo stesso primo test richiede un posto dove il Java possa girare contro un database vero, con un comando solo, in un container: è la Wave 0B. Due scelte al suo interno seguono la stessa logica del "prima":
+
+- *Le regole si mettono prima del codice che devono governare.* Vietare i numeri in virgola mobile dove passano importi, o un database in memoria al posto di quello vero, costa poco quando l'applicazione è vuota e molto quando ci sono quaranta programmi tradotti da ricontrollare.
+- *Il controllo che dice "funziona" va provato rompendo qualcosa.* Uno scheletro vuoto passa qualsiasi verifica; per sapere che la verifica vale, la si è fatta fallire apposta in ogni modo previsto.
+
+Le due metà non si toccano: la 0A legge soltanto il sorgente originale, la 0B scrive soltanto codice nuovo. Per questo procedono in parallelo.
+
+**Perché tanti controlli sui controlli.** In una migrazione fatta da agenti, chi scrive il codice e chi scrive il test che lo approva è lo stesso tipo di esecutore, con la stessa tendenza a dichiarare finito ciò che sembra finito. La Wave 0 costruisce i giudici di tutto il lavoro successivo: se un giudice è indulgente, ogni traduzione che seguirà erediterà quell'indulgenza senza che nessuno la veda. È il motivo per cui ogni controllo ha una "prova negativa" (lo si altera e deve fallire) e per cui un secondo agente, di un altro fornitore, ha il solo compito di cercare il modo di ingannarli. È anche il motivo per cui la Wave 0 è costata più del previsto.
+
+**Che cosa si è scelto di non fare.** Altrettanto parte del ragionamento:
+
+- nessun emulatore CICS (non ne è emerso uno libero e pronto; il riferimento documentale è dichiarato più debole);
+- i tre moduli opzionali restano fuori fino all'ultima wave, ma compaiono nella mappa, perché i menu dei programmi di base li richiamano;
+- ciò che il sorgente non determina non si inventa: dove una routine assembler dipende dalla memoria della macchina, o dove il compilatore libero dà due risposte per lo stesso dato, l'oracle si ferma o registra un'osservazione dichiarata, e non produce un valore (passi 17 e 21).
+
+**Quando la Wave 0 è finita.** Non "quando la mappa è completa", che non ha un termine, ma quando valgono due cose verificabili con un comando: l'oracle rigenera gli output di riferimento da zero, e l'applicazione vuota parte da un clone pulito. Tutto ciò che non serve a queste due frasi è stato rinviato.
+
+**Che cosa è costato, e che cosa ne ricava chi replica.** Il piano prevedeva 8 issue per la prima metà; contestato una prima volta sono diventate 12, e strada facendo 17 e oltre, quasi sempre perché un'issue conteneva due lavori indipendenti. Gli strumenti e i controlli scritti contano circa ventimila righe (sezione 4). Se la Wave 0 valga questo costo si potrà dire solo dopo il pilota (Wave 2), quando si vedrà quante traduzioni sbagliate i suoi controlli fermano. Fin qui l'unico dato è indiretto: nelle PR della Wave 0 il contenuto consegnato era quasi sempre giusto e i controlli quasi sempre da correggere (passo 22). Per un altro sistema legacy il grafico qui sopra si ridisegna allo stesso modo: si sceglie il primo test di parità più piccolo possibile e si risale a ciò che gli serve. Ciò che cambia sono i nodi (un altro linguaggio, altri archivi, un altro ambiente di esecuzione), non il verso delle frecce.
+
 Il piano completo, con le dipendenze tra le wave, è in `docs/piano-wave.md`.
 
 ## 3. Oggetto della migrazione

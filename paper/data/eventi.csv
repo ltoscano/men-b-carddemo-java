@@ -387,3 +387,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T21:44:05Z,processo,risposta-consegnata,fable,orologio,annotata la riscrittura della sezione 1.1 per la revisione finale
 2026-11-27T22:05:12Z,issue-43,esecutore-fine,opus,orologio,giro di correzione consegnato; SHA b7aa5a3; 2792 prove; 81 asserzioni coperte; CI verde dichiarata
 2026-11-27T22:05:15Z,issue-43,esecutore-consuntivo,opus,orologio,giro di correzione: durata 2206 s; 79 chiamate a strumenti; contatore token 635289 (cumulativi)
+2026-11-27T22:05:16Z,pr-51,codex-inizio,codex,orologio,validazione 2 di 2; in forma ristretta
+2026-11-27T22:11:27Z,processo,richiesta-autore,autore,orologio,scrivere nel paper il ragionamento che sottende alla Wave 0
+2026-11-27T22:12:15Z,paper,aggiornamento,fable,orologio,sezione 2.1: il ragionamento dietro la Wave 0
