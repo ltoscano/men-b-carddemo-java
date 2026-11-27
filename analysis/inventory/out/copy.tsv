@@ -1,0 +1,347 @@
+file	riga	copybook	sostituzioni
+app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl	117	CIPAUSMY	
+app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl	121	CIPAUDTY	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	149	CMQODV	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	152	CMQMDV	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	155	CMQODV	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	158	CMQMDV	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	161	CMQV	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	164	CMQTML	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	167	CMQPMOV	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	170	CMQGMOV	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	178	CCPAURQY	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	182	CCPAURLY	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	185	CCPAUERY	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	193	CIPAUSMY	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	197	CIPAUDTY	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	203	CVACT03Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	206	CVACT01Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl	209	CVCUS01Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl	116	COCOM01Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl	129	COPAU00	
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl	132	COTTL01Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl	135	CSDAT01Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl	138	CSMSG01Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl	141	CSMSG02Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl	144	CVACT01Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl	147	CVACT02Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl	150	CVACT03Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl	153	CVCUS01Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl	161	CIPAUSMY	
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl	165	CIPAUDTY	
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl	168	DFHAID	
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl	169	DFHBMSCA	
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	109	COCOM01Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	122	COPAU01	
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	126	COTTL01Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	129	CSDAT01Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	132	CSMSG01Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	135	CSMSG02Y	
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	142	CIPAUSMY	
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	146	CIPAUDTY	
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	148	DFHAID	
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	149	DFHBMSCA	
+app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl	78	CIPAUDTY	
+app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL	136	IMSFUNCS	
+app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL	143	CIPAUSMY	
+app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL	147	CIPAUDTY	
+app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL	154	PAUTBPCB	
+app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL	155	PASFLPCB	
+app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL	156	PADFLPCB	
+app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL	142	IMSFUNCS	
+app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL	149	CIPAUSMY	
+app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL	153	CIPAUDTY	
+app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL	161	PAUTBPCB	
+app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL	132	IMSFUNCS	
+app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL	139	CIPAUSMY	
+app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL	143	CIPAUDTY	
+app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL	150	PAUTBPCB	
+app/app-transaction-type-db2/cbl/COTRTLIC.cbl	327	CVCRD01Y	
+app/app-transaction-type-db2/cbl/COTRTLIC.cbl	375	COCOM01Y	
+app/app-transaction-type-db2/cbl/COTRTLIC.cbl	425	DFHBMSCA	
+app/app-transaction-type-db2/cbl/COTRTLIC.cbl	426	DFHAID	
+app/app-transaction-type-db2/cbl/COTRTLIC.cbl	430	COTTL01Y	
+app/app-transaction-type-db2/cbl/COTRTLIC.cbl	433	COTRTLI	
+app/app-transaction-type-db2/cbl/COTRTLIC.cbl	480	CSDAT01Y	
+app/app-transaction-type-db2/cbl/COTRTLIC.cbl	482	CSMSG01Y	
+app/app-transaction-type-db2/cbl/COTRTLIC.cbl	485	CSUSR01Y	
+app/app-transaction-type-db2/cbl/COTRTLIC.cbl	490	CVACT02Y	
+app/app-transaction-type-db2/cbl/COTRTLIC.cbl	2060	CSSTRPFY	
+app/app-transaction-type-db2/cbl/COTRTUPC.cbl	76	CSUTLDWY	
+app/app-transaction-type-db2/cbl/COTRTUPC.cbl	241	CVCRD01Y	
+app/app-transaction-type-db2/cbl/COTRTUPC.cbl	257	DFHBMSCA	
+app/app-transaction-type-db2/cbl/COTRTUPC.cbl	258	DFHAID	
+app/app-transaction-type-db2/cbl/COTRTUPC.cbl	262	COTTL01Y	
+app/app-transaction-type-db2/cbl/COTRTUPC.cbl	265	COTRTUP	
+app/app-transaction-type-db2/cbl/COTRTUPC.cbl	268	CSDAT01Y	
+app/app-transaction-type-db2/cbl/COTRTUPC.cbl	271	CSMSG01Y	
+app/app-transaction-type-db2/cbl/COTRTUPC.cbl	274	CSMSG02Y	
+app/app-transaction-type-db2/cbl/COTRTUPC.cbl	277	CSUSR01Y	
+app/app-transaction-type-db2/cbl/COTRTUPC.cbl	292	COCOM01Y	
+app/app-transaction-type-db2/cbl/COTRTUPC.cbl	1358	CSSETATY	(TESTVAR1)=DESCRIPTION;(SCRNVAR2)=TRTYDSC;(MAPNAME3)=CTRTUPA
+app/app-transaction-type-db2/cbl/COTRTUPC.cbl	1671	CSSTRPFY	
+app/app-vsam-mq/cbl/COACCT01.cbl	71	CMQGMOV	
+app/app-vsam-mq/cbl/COACCT01.cbl	75	CMQPMOV	
+app/app-vsam-mq/cbl/COACCT01.cbl	79	CMQMDV	
+app/app-vsam-mq/cbl/COACCT01.cbl	83	CMQODV	
+app/app-vsam-mq/cbl/COACCT01.cbl	87	CMQV	
+app/app-vsam-mq/cbl/COACCT01.cbl	90	CMQTML	
+app/app-vsam-mq/cbl/COACCT01.cbl	171	CVACT01Y	
+app/app-vsam-mq/cbl/CODATE01.cbl	71	CMQGMOV	
+app/app-vsam-mq/cbl/CODATE01.cbl	75	CMQPMOV	
+app/app-vsam-mq/cbl/CODATE01.cbl	79	CMQMDV	
+app/app-vsam-mq/cbl/CODATE01.cbl	83	CMQODV	
+app/app-vsam-mq/cbl/CODATE01.cbl	87	CMQV	
+app/app-vsam-mq/cbl/CODATE01.cbl	90	CMQTML	
+app/cbl/CBACT01C.cbl	89	CVACT01Y	
+app/cbl/CBACT01C.cbl	90	CODATECN	
+app/cbl/CBACT02C.cbl	45	CVACT02Y	
+app/cbl/CBACT03C.cbl	45	CVACT03Y	
+app/cbl/CBACT04C.cbl	97	CVTRA01Y	
+app/cbl/CBACT04C.cbl	102	CVACT03Y	
+app/cbl/CBACT04C.cbl	107	CVTRA02Y	
+app/cbl/CBACT04C.cbl	112	CVACT01Y	
+app/cbl/CBACT04C.cbl	117	CVTRA05Y	
+app/cbl/CBCUS01C.cbl	45	CVCUS01Y	
+app/cbl/CBEXPORT.cbl	75	CVCUS01Y	
+app/cbl/CBEXPORT.cbl	78	CVACT01Y	
+app/cbl/CBEXPORT.cbl	81	CVACT03Y	
+app/cbl/CBEXPORT.cbl	84	CVTRA05Y	
+app/cbl/CBEXPORT.cbl	87	CVACT02Y	
+app/cbl/CBEXPORT.cbl	96	CVEXPORT	
+app/cbl/CBIMPORT.cbl	84	CVCUS01Y	
+app/cbl/CBIMPORT.cbl	89	CVACT01Y	
+app/cbl/CBIMPORT.cbl	94	CVACT03Y	
+app/cbl/CBIMPORT.cbl	99	CVTRA05Y	
+app/cbl/CBIMPORT.cbl	104	CVACT02Y	
+app/cbl/CBIMPORT.cbl	113	CVEXPORT	
+app/cbl/CBSTM03A.CBL	51	COSTM01	
+app/cbl/CBSTM03A.CBL	53	CVACT03Y	
+app/cbl/CBSTM03A.CBL	55	CUSTREC	
+app/cbl/CBSTM03A.CBL	57	CVACT01Y	
+app/cbl/CBTRN01C.cbl	99	CVTRA06Y	
+app/cbl/CBTRN01C.cbl	104	CVCUS01Y	
+app/cbl/CBTRN01C.cbl	109	CVACT03Y	
+app/cbl/CBTRN01C.cbl	114	CVACT02Y	
+app/cbl/CBTRN01C.cbl	119	CVACT01Y	
+app/cbl/CBTRN01C.cbl	124	CVTRA05Y	
+app/cbl/CBTRN02C.cbl	102	CVTRA06Y	
+app/cbl/CBTRN02C.cbl	107	CVTRA05Y	
+app/cbl/CBTRN02C.cbl	112	CVACT03Y	
+app/cbl/CBTRN02C.cbl	121	CVACT01Y	
+app/cbl/CBTRN02C.cbl	126	CVTRA01Y	
+app/cbl/CBTRN03C.cbl	93	CVTRA05Y	
+app/cbl/CBTRN03C.cbl	98	CVACT03Y	
+app/cbl/CBTRN03C.cbl	103	CVTRA03Y	
+app/cbl/CBTRN03C.cbl	108	CVTRA04Y	
+app/cbl/CBTRN03C.cbl	113	CVTRA07Y	
+app/cbl/COACTUPC.cbl	166	CSUTLDWY	
+app/cbl/COACTUPC.cbl	597	CVCRD01Y	
+app/cbl/COACTUPC.cbl	602	CSLKPCDY	
+app/cbl/COACTUPC.cbl	615	DFHBMSCA	
+app/cbl/COACTUPC.cbl	616	DFHAID	
+app/cbl/COACTUPC.cbl	620	COTTL01Y	
+app/cbl/COACTUPC.cbl	623	COACTUP	
+app/cbl/COACTUPC.cbl	626	CSDAT01Y	
+app/cbl/COACTUPC.cbl	629	CSMSG01Y	
+app/cbl/COACTUPC.cbl	632	CSMSG02Y	
+app/cbl/COACTUPC.cbl	635	CSUSR01Y	
+app/cbl/COACTUPC.cbl	640	CVACT01Y	
+app/cbl/COACTUPC.cbl	643	CVACT03Y	
+app/cbl/COACTUPC.cbl	646	CVCUS01Y	
+app/cbl/COACTUPC.cbl	650	COCOM01Y	
+app/cbl/COACTUPC.cbl	3208	CSSETATY	(TESTVAR1)=ACCT-STATUS;(SCRNVAR2)=ACSTTUS;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3214	CSSETATY	(TESTVAR1)=OPEN-YEAR;(SCRNVAR2)=OPNYEAR;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3220	CSSETATY	(TESTVAR1)=OPEN-MONTH;(SCRNVAR2)=OPNMON;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3226	CSSETATY	(TESTVAR1)=OPEN-DAY;(SCRNVAR2)=OPNDAY;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3232	CSSETATY	(TESTVAR1)=CRED-LIMIT;(SCRNVAR2)=ACRDLIM;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3238	CSSETATY	(TESTVAR1)=EXPIRY-YEAR;(SCRNVAR2)=EXPYEAR;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3244	CSSETATY	(TESTVAR1)=EXPIRY-MONTH;(SCRNVAR2)=EXPMON;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3250	CSSETATY	(TESTVAR1)=EXPIRY-DAY;(SCRNVAR2)=EXPDAY;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3256	CSSETATY	(TESTVAR1)=CASH-CREDIT-LIMIT;(SCRNVAR2)=ACSHLIM;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3262	CSSETATY	(TESTVAR1)=REISSUE-YEAR;(SCRNVAR2)=RISYEAR;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3268	CSSETATY	(TESTVAR1)=REISSUE-MONTH;(SCRNVAR2)=RISMON;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3274	CSSETATY	(TESTVAR1)=REISSUE-DAY;(SCRNVAR2)=RISDAY;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3280	CSSETATY	(TESTVAR1)=CURR-BAL;(SCRNVAR2)=ACURBAL;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3286	CSSETATY	(TESTVAR1)=CURR-CYC-CREDIT;(SCRNVAR2)=ACRCYCR;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3292	CSSETATY	(TESTVAR1)=CURR-CYC-DEBIT;(SCRNVAR2)=ACRCYDB;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3298	CSSETATY	(TESTVAR1)=EDIT-US-SSN-PART1;(SCRNVAR2)=ACTSSN1;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3304	CSSETATY	(TESTVAR1)=EDIT-US-SSN-PART2;(SCRNVAR2)=ACTSSN2;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3310	CSSETATY	(TESTVAR1)=EDIT-US-SSN-PART3;(SCRNVAR2)=ACTSSN3;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3316	CSSETATY	(TESTVAR1)=DT-OF-BIRTH-YEAR;(SCRNVAR2)=DOBYEAR;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3322	CSSETATY	(TESTVAR1)=DT-OF-BIRTH-MONTH;(SCRNVAR2)=DOBMON;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3328	CSSETATY	(TESTVAR1)=DT-OF-BIRTH-DAY;(SCRNVAR2)=DOBDAY;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3334	CSSETATY	(TESTVAR1)=FICO-SCORE;(SCRNVAR2)=ACSTFCO;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3340	CSSETATY	(TESTVAR1)=FIRST-NAME;(SCRNVAR2)=ACSFNAM;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3346	CSSETATY	(TESTVAR1)=MIDDLE-NAME;(SCRNVAR2)=ACSMNAM;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3352	CSSETATY	(TESTVAR1)=LAST-NAME;(SCRNVAR2)=ACSLNAM;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3358	CSSETATY	(TESTVAR1)=ADDRESS-LINE-1;(SCRNVAR2)=ACSADL1;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3364	CSSETATY	(TESTVAR1)=STATE;(SCRNVAR2)=ACSSTTE;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3370	CSSETATY	(TESTVAR1)=ADDRESS-LINE-2;(SCRNVAR2)=ACSADL2;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3376	CSSETATY	(TESTVAR1)=ZIPCODE;(SCRNVAR2)=ACSZIPC;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3382	CSSETATY	(TESTVAR1)=CITY;(SCRNVAR2)=ACSCITY;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3388	CSSETATY	(TESTVAR1)=COUNTRY;(SCRNVAR2)=ACSCTRY;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3394	CSSETATY	(TESTVAR1)=PHONE-NUM-1A;(SCRNVAR2)=ACSPH1A;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3400	CSSETATY	(TESTVAR1)=PHONE-NUM-1B;(SCRNVAR2)=ACSPH1B;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3405	CSSETATY	(TESTVAR1)=PHONE-NUM-1C;(SCRNVAR2)=ACSPH1C;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3411	CSSETATY	(TESTVAR1)=PHONE-NUM-2A;(SCRNVAR2)=ACSPH2A;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3417	CSSETATY	(TESTVAR1)=PHONE-NUM-2B;(SCRNVAR2)=ACSPH2B;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3422	CSSETATY	(TESTVAR1)=PHONE-NUM-2C;(SCRNVAR2)=ACSPH2C;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3427	CSSETATY	(TESTVAR1)=PRI-CARDHOLDER;(SCRNVAR2)=ACSPFLG;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	3432	CSSETATY	(TESTVAR1)=EFT-ACCOUNT-ID;(SCRNVAR2)=ACSEFTC;(MAPNAME3)=CACTUPA
+app/cbl/COACTUPC.cbl	4199	CSSTRPFY	
+app/cbl/COACTUPC.cbl	4232	CSUTLDPY	
+app/cbl/COACTVWC.cbl	207	CVCRD01Y	
+app/cbl/COACTVWC.cbl	211	COCOM01Y	
+app/cbl/COACTVWC.cbl	221	DFHBMSCA	
+app/cbl/COACTVWC.cbl	222	DFHAID	
+app/cbl/COACTVWC.cbl	226	COTTL01Y	
+app/cbl/COACTVWC.cbl	229	COACTVW	
+app/cbl/COACTVWC.cbl	232	CSDAT01Y	
+app/cbl/COACTVWC.cbl	235	CSMSG01Y	
+app/cbl/COACTVWC.cbl	238	CSMSG02Y	
+app/cbl/COACTVWC.cbl	241	CSUSR01Y	
+app/cbl/COACTVWC.cbl	244	CVACT01Y	
+app/cbl/COACTVWC.cbl	248	CVACT02Y	
+app/cbl/COACTVWC.cbl	251	CVACT03Y	
+app/cbl/COACTVWC.cbl	254	CVCUS01Y	
+app/cbl/COACTVWC.cbl	913	CSSTRPFY	
+app/cbl/COADM01C.cbl	50	COCOM01Y	
+app/cbl/COADM01C.cbl	51	COADM02Y	
+app/cbl/COADM01C.cbl	53	COADM01	
+app/cbl/COADM01C.cbl	55	COTTL01Y	
+app/cbl/COADM01C.cbl	56	CSDAT01Y	
+app/cbl/COADM01C.cbl	57	CSMSG01Y	
+app/cbl/COADM01C.cbl	58	CSUSR01Y	
+app/cbl/COADM01C.cbl	60	DFHAID	
+app/cbl/COADM01C.cbl	61	DFHBMSCA	
+app/cbl/COBIL00C.cbl	63	COCOM01Y	
+app/cbl/COBIL00C.cbl	74	COBIL00	
+app/cbl/COBIL00C.cbl	76	COTTL01Y	
+app/cbl/COBIL00C.cbl	77	CSDAT01Y	
+app/cbl/COBIL00C.cbl	78	CSMSG01Y	
+app/cbl/COBIL00C.cbl	80	CVACT01Y	
+app/cbl/COBIL00C.cbl	81	CVACT03Y	
+app/cbl/COBIL00C.cbl	82	CVTRA05Y	
+app/cbl/COBIL00C.cbl	84	DFHAID	
+app/cbl/COBIL00C.cbl	85	DFHBMSCA	
+app/cbl/COCRDLIC.cbl	221	CVCRD01Y	
+app/cbl/COCRDLIC.cbl	227	COCOM01Y	
+app/cbl/COCRDLIC.cbl	267	DFHBMSCA	
+app/cbl/COCRDLIC.cbl	268	DFHAID	
+app/cbl/COCRDLIC.cbl	272	COTTL01Y	
+app/cbl/COCRDLIC.cbl	276	COCRDLI	
+app/cbl/COCRDLIC.cbl	279	CSDAT01Y	
+app/cbl/COCRDLIC.cbl	281	CSMSG01Y	
+app/cbl/COCRDLIC.cbl	285	CSUSR01Y	
+app/cbl/COCRDLIC.cbl	290	CVACT02Y	
+app/cbl/COCRDLIC.cbl	1416	CSSTRPFY	
+app/cbl/COCRDSLC.cbl	194	CVCRD01Y	
+app/cbl/COCRDSLC.cbl	198	COCOM01Y	
+app/cbl/COCRDSLC.cbl	208	DFHBMSCA	
+app/cbl/COCRDSLC.cbl	209	DFHAID	
+app/cbl/COCRDSLC.cbl	213	COTTL01Y	
+app/cbl/COCRDSLC.cbl	215	COCRDSL	
+app/cbl/COCRDSLC.cbl	218	CSDAT01Y	
+app/cbl/COCRDSLC.cbl	221	CSMSG01Y	
+app/cbl/COCRDSLC.cbl	224	CSMSG02Y	
+app/cbl/COCRDSLC.cbl	227	CSUSR01Y	
+app/cbl/COCRDSLC.cbl	234	CVACT02Y	
+app/cbl/COCRDSLC.cbl	240	CVCUS01Y	
+app/cbl/COCRDSLC.cbl	855	CSSTRPFY	
+app/cbl/COCRDUPC.cbl	268	CVCRD01Y	
+app/cbl/COCRDUPC.cbl	272	COCOM01Y	
+app/cbl/COCRDUPC.cbl	327	DFHBMSCA	
+app/cbl/COCRDUPC.cbl	328	DFHAID	
+app/cbl/COCRDUPC.cbl	332	COTTL01Y	
+app/cbl/COCRDUPC.cbl	334	COCRDUP	
+app/cbl/COCRDUPC.cbl	337	CSDAT01Y	
+app/cbl/COCRDUPC.cbl	340	CSMSG01Y	
+app/cbl/COCRDUPC.cbl	343	CSMSG02Y	
+app/cbl/COCRDUPC.cbl	346	CSUSR01Y	
+app/cbl/COCRDUPC.cbl	353	CVACT02Y	
+app/cbl/COCRDUPC.cbl	359	CVCUS01Y	
+app/cbl/COCRDUPC.cbl	1528	CSSTRPFY	
+app/cbl/COMEN01C.cbl	50	COCOM01Y	
+app/cbl/COMEN01C.cbl	51	COMEN02Y	
+app/cbl/COMEN01C.cbl	53	COMEN01	
+app/cbl/COMEN01C.cbl	55	COTTL01Y	
+app/cbl/COMEN01C.cbl	56	CSDAT01Y	
+app/cbl/COMEN01C.cbl	57	CSMSG01Y	
+app/cbl/COMEN01C.cbl	58	CSUSR01Y	
+app/cbl/COMEN01C.cbl	60	DFHAID	
+app/cbl/COMEN01C.cbl	61	DFHBMSCA	
+app/cbl/CORPT00C.cbl	138	COCOM01Y	
+app/cbl/CORPT00C.cbl	140	CORPT00	
+app/cbl/CORPT00C.cbl	142	COTTL01Y	
+app/cbl/CORPT00C.cbl	143	CSDAT01Y	
+app/cbl/CORPT00C.cbl	144	CSMSG01Y	
+app/cbl/CORPT00C.cbl	146	CVTRA05Y	
+app/cbl/CORPT00C.cbl	148	DFHAID	
+app/cbl/CORPT00C.cbl	149	DFHBMSCA	
+app/cbl/COSGN00C.cbl	48	COCOM01Y	
+app/cbl/COSGN00C.cbl	50	COSGN00	
+app/cbl/COSGN00C.cbl	52	COTTL01Y	
+app/cbl/COSGN00C.cbl	53	CSDAT01Y	
+app/cbl/COSGN00C.cbl	54	CSMSG01Y	
+app/cbl/COSGN00C.cbl	55	CSUSR01Y	
+app/cbl/COSGN00C.cbl	57	DFHAID	
+app/cbl/COSGN00C.cbl	58	DFHBMSCA	
+app/cbl/COTRN00C.cbl	61	COCOM01Y	
+app/cbl/COTRN00C.cbl	72	COTRN00	
+app/cbl/COTRN00C.cbl	74	COTTL01Y	
+app/cbl/COTRN00C.cbl	75	CSDAT01Y	
+app/cbl/COTRN00C.cbl	76	CSMSG01Y	
+app/cbl/COTRN00C.cbl	78	CVTRA05Y	
+app/cbl/COTRN00C.cbl	80	DFHAID	
+app/cbl/COTRN00C.cbl	81	DFHBMSCA	
+app/cbl/COTRN01C.cbl	52	COCOM01Y	
+app/cbl/COTRN01C.cbl	63	COTRN01	
+app/cbl/COTRN01C.cbl	65	COTTL01Y	
+app/cbl/COTRN01C.cbl	66	CSDAT01Y	
+app/cbl/COTRN01C.cbl	67	CSMSG01Y	
+app/cbl/COTRN01C.cbl	69	CVTRA05Y	
+app/cbl/COTRN01C.cbl	71	DFHAID	
+app/cbl/COTRN01C.cbl	72	DFHBMSCA	
+app/cbl/COTRN02C.cbl	71	COCOM01Y	
+app/cbl/COTRN02C.cbl	82	COTRN02	
+app/cbl/COTRN02C.cbl	84	COTTL01Y	
+app/cbl/COTRN02C.cbl	85	CSDAT01Y	
+app/cbl/COTRN02C.cbl	86	CSMSG01Y	
+app/cbl/COTRN02C.cbl	88	CVTRA05Y	
+app/cbl/COTRN02C.cbl	89	CVACT01Y	
+app/cbl/COTRN02C.cbl	90	CVACT03Y	
+app/cbl/COTRN02C.cbl	92	DFHAID	
+app/cbl/COTRN02C.cbl	93	DFHBMSCA	
+app/cbl/COUSR00C.cbl	66	COCOM01Y	
+app/cbl/COUSR00C.cbl	76	COUSR00	
+app/cbl/COUSR00C.cbl	78	COTTL01Y	
+app/cbl/COUSR00C.cbl	79	CSDAT01Y	
+app/cbl/COUSR00C.cbl	80	CSMSG01Y	
+app/cbl/COUSR00C.cbl	81	CSUSR01Y	
+app/cbl/COUSR00C.cbl	83	DFHAID	
+app/cbl/COUSR00C.cbl	84	DFHBMSCA	
+app/cbl/COUSR01C.cbl	46	COCOM01Y	
+app/cbl/COUSR01C.cbl	48	COUSR01	
+app/cbl/COUSR01C.cbl	50	COTTL01Y	
+app/cbl/COUSR01C.cbl	51	CSDAT01Y	
+app/cbl/COUSR01C.cbl	52	CSMSG01Y	
+app/cbl/COUSR01C.cbl	53	CSUSR01Y	
+app/cbl/COUSR01C.cbl	55	DFHAID	
+app/cbl/COUSR01C.cbl	56	DFHBMSCA	
+app/cbl/COUSR02C.cbl	49	COCOM01Y	
+app/cbl/COUSR02C.cbl	60	COUSR02	
+app/cbl/COUSR02C.cbl	62	COTTL01Y	
+app/cbl/COUSR02C.cbl	63	CSDAT01Y	
+app/cbl/COUSR02C.cbl	64	CSMSG01Y	
+app/cbl/COUSR02C.cbl	65	CSUSR01Y	
+app/cbl/COUSR02C.cbl	67	DFHAID	
+app/cbl/COUSR02C.cbl	68	DFHBMSCA	
+app/cbl/COUSR03C.cbl	49	COCOM01Y	
+app/cbl/COUSR03C.cbl	60	COUSR03	
+app/cbl/COUSR03C.cbl	62	COTTL01Y	
+app/cbl/COUSR03C.cbl	63	CSDAT01Y	
+app/cbl/COUSR03C.cbl	64	CSMSG01Y	
+app/cbl/COUSR03C.cbl	65	CSUSR01Y	
+app/cbl/COUSR03C.cbl	67	DFHAID	
+app/cbl/COUSR03C.cbl	68	DFHBMSCA	

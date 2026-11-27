@@ -1,0 +1,5 @@
+# Attesi scritti a mano: COPY di CSSETATY con REPLACING diversi in app/cbl/COACTUPC.cbl (righe 3208 e 3214). tipo, da, a, file, riga, dettaglio
+COPY	program:COACTUPC	copybook:CSSETATY	app/cbl/COACTUPC.cbl	3208	(TESTVAR1)=ACCT-STATUS;(SCRNVAR2)=ACSTTUS;(MAPNAME3)=CACTUPA
+COPY	program:COACTUPC	copybook:CSSETATY	app/cbl/COACTUPC.cbl	3214	(TESTVAR1)=OPEN-YEAR;(SCRNVAR2)=OPNYEAR;(MAPNAME3)=CACTUPA
+COPY	program:COACTUPC	copybook:CSSTRPFY	app/cbl/COACTUPC.cbl	4199	
+COPY	program:COACTUPC	copybook:CSUTLDWY	app/cbl/COACTUPC.cbl	166	

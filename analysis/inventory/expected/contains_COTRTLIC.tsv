@@ -1,0 +1,2 @@
+# Attesi scritti a mano: COPY con il nome tra apici in app/app-transaction-type-db2/cbl/COTRTLIC.cbl (riga 2060) e COPY del nome a capo. tipo, da, a, file, riga, dettaglio
+COPY	program:COTRTLIC	copybook:CSSTRPFY	app/app-transaction-type-db2/cbl/COTRTLIC.cbl	2060	
