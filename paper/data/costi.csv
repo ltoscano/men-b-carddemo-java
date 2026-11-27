@@ -93,3 +93,4 @@ ora_utc,oggetto,ruolo,modello,token,tipo_contatore,fonte,note
 2026-11-27T22:05:15Z,issue-43,esecutore,opus,635289,cumulativo dichiarato,contatore riportato dall'ambiente alla fine della fase,
 2026-11-27T22:33:03Z,issue-27,esecutore,sonnet,459127,cumulativo dichiarato,contatore riportato dall'ambiente alla fine della fase,
 2026-11-27T22:42:18Z,issue-36,esecutore,opus,373642,per fase (prima fase),contatore riportato dall'ambiente alla fine della fase,
+2026-11-27T23:09:59Z,issue-5,esecutore,opus,274252,cumulativo dichiarato,contatore riportato dall'ambiente alla fine della fase,91 chiamate a strumenti

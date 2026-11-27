@@ -426,3 +426,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T22:59:58Z,paper,richiesta-autore,autore,orologio,regola 1 confermata; ricordare la catena specifiche-test-issue-implementazione agentica
 2026-11-27T23:00:29Z,paper,risposta-consegnata,fable,orologio,catena esplicitata; voce 88
 2026-11-27T23:09:01Z,paper,richiesta-autore,autore,orologio,approvato: test di parità come fallimento atteso con controllo
+2026-11-27T23:09:04Z,paper,risposta-consegnata,fable,orologio,voce 89
+2026-11-27T23:09:49Z,issue-5,esecutore-fine,opus,orologio,PR #56 aperta; SHA 488621b; 5 criteri su 6 dichiarati; CI in attesa; 274252 token; 91 chiamate; 36 min 31 s
+2026-11-27T23:09:56Z,pr-56,codex-inizio,codex,orologio,validazione 1 di 2
