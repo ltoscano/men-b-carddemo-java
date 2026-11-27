@@ -51,3 +51,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T10:36:08Z,issue-1,esecutore-fine,sonnet,orologio,PR #18 aperta; rapporto: 6 criteri su 6 dichiarati soddisfatti; 5 capacita available; 3 batch non compilano con cobc
 2026-11-27T10:36:10Z,issue-1,esecutore-consuntivo,sonnet,orologio,durata 1874 s; contatore token riportato 357208; 203 chiamate a strumenti; PR #18: 125 file
 2026-11-27T10:36:15Z,pr-18,codex-inizio,codex,orologio,validazione giro 1; scrittura nel clone e Docker
+2026-11-27T10:40:39Z,pr-17,codex-fine,codex,orologio,giro 3; exit=0; token: 84.419
+2026-11-27T10:40:59Z,pr-17,escalation,fable,orologio,giro 3: BOCCIATA per un rilievo importante nuovo (falso rosso); giri esauriti; decisione all'autore
