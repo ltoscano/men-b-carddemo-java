@@ -248,3 +248,9 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T16:28:53Z,pr-30,decisione,fable,orologio,giro 3 BOCCIATA: tre falsi verdi del controllo; correzione mirata; poi verifica di Fable
 2026-11-27T16:28:53Z,issue-2,esecutore-inizio,sonnet,orologio,correzione mirata dopo il giro 3 (nuovo Esecutore; il precedente non è più disponibile)
 2026-11-27T16:30:07Z,paper,aggiornamento,fable,orologio,passi 16-18; tabelle 9-11; rettifica delle ore del registro (voce 59)
+2026-11-27T16:30:10Z,processo,risposta-consegnata,fable,orologio,PR #30 in correzione mirata; paper aggiornato ai passi 16-18
+2026-11-27T16:43:18Z,issue-26,esecutore-fine,sonnet,orologio,correzione mirata consegnata; SHA cf6ffc3; 44 casi dichiarati; CI verde dichiarata
+2026-11-27T16:43:18Z,pr-40,verifica-inizio,fable,orologio,controesempio di Codex e criteri su clone pulito
+2026-11-27T16:43:20Z,issue-26,esecutore-consuntivo,sonnet,orologio,correzione mirata: durata 913 s; 23 chiamate a strumenti; contatore token 241964
+2026-11-27T16:50:15Z,pr-40,verifica-fine,fable,orologio,verifica dell'Approvatore conclusa
+2026-11-27T16:50:45Z,pr-40,merge,fable,orologio,PR #40 mergiata dopo due validazioni e verifica dell'Approvatore; chiude #26
