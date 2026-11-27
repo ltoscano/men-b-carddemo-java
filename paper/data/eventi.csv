@@ -38,3 +38,10 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T10:14:36Z,pr-17,validazione-fine,fable,orologio,giro 1: BOCCIATA; 6 rilievi (1 bloccante); 4 da correggere; rinviata all'Esecutore
 2026-11-27T10:14:36Z,issue-13,esecutore-inizio,sonnet,orologio,giro di correzione 1
 2026-11-27T10:15:36Z,processo,richiesta-autore,autore,orologio,delega a Fable l'approvazione e il merge delle PR; chiede un registro delle approvazioni e la massima automazione
+2026-11-27T10:15:45Z,processo,risposta-consegnata,fable,orologio,delega recepita; due Esecutori in corso
+2026-11-27T10:20:06Z,issue-13,esecutore-fine,sonnet,orologio,giro di correzione 1 consegnato; SHA 9cecf04; CI verde
+2026-11-27T10:20:26Z,issue-13,esecutore-consuntivo,sonnet,orologio,giro di correzione 1: durata 304 s; 121938 token; 15 chiamate a strumenti
+2026-11-27T10:20:26Z,pr-17,codex-inizio,codex,orologio,validazione giro 2; scrittura nel clone e Docker
+2026-11-27T10:29:34Z,pr-17,codex-fine,codex,orologio,giro 2; exit=0; token: 79.166
+2026-11-27T10:30:06Z,pr-17,validazione-fine,fable,orologio,giro 2: BOCCIATA; 2 rilievi importanti; rinviata per l'ultimo giro di correzione
+2026-11-27T10:30:06Z,issue-13,esecutore-inizio,sonnet,orologio,giro di correzione 2
