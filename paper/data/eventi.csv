@@ -147,3 +147,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T14:11:15Z,pr-29,codex-fine,codex,orologio,giro 2; exit=0; token: 157.065
 2026-11-27T14:11:51Z,pr-29,validazione-fine,fable,orologio,giro 2: BOCCIATA; 1 importante (configurazione dall'ambiente); ultimo giro di correzione
 2026-11-27T14:11:51Z,issue-4,esecutore-inizio,opus,orologio,giro di correzione 2
+2026-11-27T14:26:02Z,issue-21,esecutore-fine,sonnet,orologio,giro di correzione 1 consegnato; SHA 4b70d0e; CI verde
+2026-11-27T14:26:05Z,issue-21,esecutore-consuntivo,sonnet,orologio,giro di correzione 1: 48 chiamate a strumenti in piu; contatore token 202038 (cumulativo); durata riportata cumulativa e comprensiva di attese: fa fede l'intervallo inizio-fine
