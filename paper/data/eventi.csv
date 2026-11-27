@@ -241,3 +241,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T16:21:42Z,issue-25,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
 2026-11-27T16:22:23Z,issue-25,ready,fable,orologio,specifica pubblicata dopo la contestazione; 5 rilievi accolti
 2026-11-27T16:22:23Z,issue-25,esecutore-inizio,opus,orologio,affidata
+2026-11-27T16:27:09Z,pr-40,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T16:27:43Z,pr-40,decisione,fable,orologio,validazione 2: un rilievo con falso verde; correzione mirata; poi verifica di Fable
+2026-11-27T16:27:43Z,issue-26,esecutore-inizio,sonnet,orologio,correzione mirata dopo la seconda validazione
