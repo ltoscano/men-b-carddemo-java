@@ -20,7 +20,9 @@
 # arriva la sfiducia negli script").
 #
 # Prerequisiti: bash, git, Docker. Albero di lavoro pulito (git status vuoto) all'avvio.
-# Variabile opzionale: MENB_REGRESSIONI_TIMEOUT (secondi per ogni ./verify.sh, predefinito 1800).
+# Variabili opzionali: MENB_REGRESSIONI_TIMEOUT (secondi per ogni ./verify.sh, predefinito 1800);
+# MENB_REGRESSIONI_LOGS (cartella esistente in cui conservare il log di ogni caso, <caso>.log;
+# senza, i log stanno in una cartella temporanea cancellata alla fine).
 # Esce con 0 solo se tutti i casi danno l'esito atteso e alla fine git status e' pulito.
 set -euo pipefail
 
@@ -64,6 +66,8 @@ esac
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/menb-regressioni.XXXXXX")" || { echo "ERRORE: mktemp fallito" >&2; exit 1; }
 [ -n "${WORK}" ] && [ -d "${WORK}" ] || { echo "ERRORE: cartella temporanea non valida: '${WORK}'" >&2; exit 1; }
 cp "${ROOT}/${ONLINE_POM}" "${WORK}/online-pom.orig" || { echo "ERRORE: copia di ${ONLINE_POM} fallita" >&2; exit 1; }
+LOG_DIR="${MENB_REGRESSIONI_LOGS:-${WORK}}"
+[ -d "${LOG_DIR}" ] || { echo "ERRORE: MENB_REGRESSIONI_LOGS non e' una cartella esistente: '${LOG_DIR}'" >&2; rm -rf "${WORK}"; exit 1; }
 
 # Ripristino: POM di online dalla copia, test rotto cancellato. Idempotente.
 restore() {
@@ -109,13 +113,13 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 # run_verify <caso> [PATH alternativo]: esegue ./verify.sh con limite di tempo, output in
-# ${WORK}/<caso>.log. Imposta RUN_RC, RUN_SECONDS e RUN_LOG (contenuto del log).
+# ${LOG_DIR}/<caso>.log (riscritto a ogni corsa). Imposta RUN_RC, RUN_SECONDS e RUN_LOG (contenuto del log).
 RUN_RC=0
 RUN_SECONDS=0
 RUN_LOG=""
 run_verify() {
   local name="$1" path="${2:-${PATH}}" started
-  local log="${WORK}/${name}.log"
+  local log="${LOG_DIR}/${name}.log"
   started="${SECONDS}"
   RUN_RC=0
   limited "${CASE_TIMEOUT}" env PATH="${path}" "${ROOT}/verify.sh" </dev/null >"${log}" 2>&1 || RUN_RC=$?
