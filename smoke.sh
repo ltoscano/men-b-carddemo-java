@@ -224,7 +224,11 @@ verify_executions() {
   if ! rows="$(query_executions </dev/null)"; then
     fail "interrogazione delle esecuzioni di ${JOB_NAME} fallita"
   fi
-  printf '%s\n' "${rows}" | sed 's/^/   /'
+  if [ -n "${rows}" ]; then
+    printf '%s\n' "${rows}" | sed 's/^/   /'
+  else
+    echo "   (nessuna esecuzione di ${JOB_NAME})"
+  fi
   while IFS='|' read -r exec_id inst_id status exit_code steps steps_ok; do
     [ -n "${exec_id}" ] || continue
     count=$((count + 1))
@@ -290,7 +294,7 @@ limited "${BUILD_TIMEOUT}" "${COMPOSE[@]}" --profile batch build </dev/null || f
 STEP="avvio"
 log "docker compose up (db, online), attesa dello stato sano entro ${UP_TIMEOUT}s"
 limited "$((UP_TIMEOUT + 30))" "${COMPOSE[@]}" up -d --no-build --wait --wait-timeout "${UP_TIMEOUT}" </dev/null \
-  || fail "lo stack non e' diventato sano entro ${UP_TIMEOUT}s"
+  || fail "docker compose up --wait fallito: db e online non sono diventati sani (limite ${UP_TIMEOUT}s)"
 for svc in db online; do
   ids="$(limited "${SHORT_TIMEOUT}" "${COMPOSE[@]}" ps -q "${svc}" </dev/null)" || fail "elenco dei container di ${svc} fallito"
   [ -n "${ids}" ] && [ "$(printf '%s\n' "${ids}" | wc -l | tr -d ' ')" = "1" ] || fail "atteso un solo container di ${svc}, trovati: '${ids}'"
