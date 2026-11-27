@@ -230,3 +230,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T16:08:48Z,issue-24,esecutore-consuntivo,opus,orologio,giro di correzione: durata 1250 s; 43 chiamate a strumenti; contatore token 276964
 2026-11-27T16:08:49Z,pr-39,codex-inizio,codex,orologio,validazione 2 di 2; in forma ristretta
 2026-11-27T16:10:33Z,pr-42,merge,fable,orologio,PR #42 mergiata senza Codex; chiude #41
+2026-11-27T16:16:05Z,pr-39,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0; verdetto: APPROVATA
+2026-11-27T16:16:32Z,pr-39,merge,fable,orologio,PR #39 mergiata dopo la validazione 2 di 2 (APPROVATA; 7 min 16 s); chiude #24
