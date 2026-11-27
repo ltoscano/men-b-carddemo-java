@@ -4,6 +4,8 @@ Dal 27 novembre 2026 l'autore ha delegato al pianificatore (Claude Fable) l'appr
 
 Regole di approvazione: sezione "Approvazione delegata" di `CLAUDE.md`. Il registro è in sola aggiunta: una voce sbagliata si corregge con una voce nuova.
 
+**Sugli orari.** La colonna "Data e ora" delle voci 11–26 è stata scritta a mano ed è indicativa (scarti fino a una decina di minuti). Gli orari esatti di ogni evento sono in `paper/data/eventi.csv`, che fa fede. Dalla voce 27 l'ora viene letta dall'orologio al momento della scrittura.
+
 Tipi di voce: **specifica** (passata a `ready`), **merge**, **decisione delegata**, **rilievo respinto**, **escalation**.
 
 | # | Data e ora (UTC) | Tipo | Oggetto | Decisione | Motivo ed evidenze | Rinviato a |
