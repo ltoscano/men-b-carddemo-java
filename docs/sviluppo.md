@@ -74,7 +74,7 @@ Si esegue a richiesta (non fa parte di `./verify.sh` né della CI obbligatoria),
 
 | Caso | Mutazione | Atteso |
 | --- | --- | --- |
-| `repackage-rimosso` | blocco `<build>` tolto da `carddemo-online/pom.xml`, con il jar eseguibile della corsa di base presente | codice ≠ 0, `attesi esattamente 1 jar eseguibile in carddemo-online/target, trovati 0` |
+| `repackage-rimosso` | plugin `spring-boot-maven-plugin` tolto da `carddemo-online/pom.xml` (non più l'intero blocco `<build>`: dal #27 contiene anche SpotBugs, il cui rapporto mancante fermerebbe la corsa prima del controllo dei jar; modifica dichiarata), con il jar eseguibile della corsa di base presente | codice ≠ 0, `attesi esattamente 1 jar eseguibile in carddemo-online/target, trovati 0` |
 | `rapporto-incompleto` | `docker` sul `PATH` che inoltra al vero `docker` e, nel solo `docker run`, mette nel container di build un `mvn` che esegue il vero Maven e poi tronca a metà il rapporto del test di integrazione | codice ≠ 0, `non e' XML ben formato e completo`, `rapporto del test di integrazione non valido` |
 | `rapporto-altra-corsa` | come sopra, ma il rapporto viene sostituito da quello completo e riuscito della corsa di base | codice ≠ 0, `il rapporto non e' della corsa corrente`, `rapporto del test di integrazione non valido` |
 | `test-rotto` | un test che fallisce, aggiunto in `carddemo-domain` | codice ≠ 0, il test nell'elenco dei fallimenti di surefire, `mvn verify fallito` |
@@ -205,7 +205,7 @@ L'identificativo della corsa (`-Dmenb.verify.run`, già usato per il rapporto di
 
 ### SpotBugs
 
-- Dove: plugin dichiarato nel POM padre (`pluginManagement`, esecuzione `analisi-difetti`, obiettivo `check`, fase `verify`) e riattivato dai quattro moduli di produzione (`domain`, `loader`, `online`, `batch`); `parity` non ha codice di produzione. Nella build delle immagini **non gira**: `package` precede `verify`.
+- Dove: plugin dichiarato nel POM padre (`pluginManagement`, esecuzione `analisi-difetti`, obiettivo `check`, fase `verify`; la configurazione sta a livello di plugin e non dell'esecuzione, perché `check` lancia in fork l'obiettivo `spotbugs` con l'esecuzione predefinita, che non riceve quella di `analisi-difetti`: così effort, soglia e filtro erano ignorati, scoperto provando un filtro di esclusioni) e riattivato dai quattro moduli di produzione (`domain`, `loader`, `online`, `batch`); `parity` non ha codice di produzione. Nella build delle immagini **non gira**: `package` precede `verify`.
 - Soglia: `threshold=Medium` (segnala difetti a confidenza media e alta, esclude la bassa, che è rumorosa) ed `effort=Max` (analisi più approfondita: il codice è poco, il costo non pesa). Nessun limite sul grado del difetto (`maxRank` predefinito, 20). Motivo: sono i valori che segnalano per intero quanto SpotBugs considera un difetto probabile, senza il rumore della confidenza bassa; prima del codice di business si parte stretti e si allenta, con motivo, solo davanti a falsi positivi reali. Da riconsiderare quando arriva il codice.
 - Un difetto alla soglia fa fallire `mvn verify` (`failOnError`), quindi `./verify.sh`.
 - Esclusioni: oggi **nessuna**. Un file di esclusioni è ammesso solo come `quality/regole/spotbugs-esclusioni.xml`, configurato nel POM padre (`excludeFilterFile`), con un commento XML con il motivo subito prima di ogni `<Match>`; `RapportiQualita spotbugs` respinge il file senza motivo, un filtro configurato senza il file o con un altro nome, e un file non configurato.

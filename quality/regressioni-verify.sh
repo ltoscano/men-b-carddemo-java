@@ -8,8 +8,10 @@
 #   0. base                   nessuna mutazione: ./verify.sh deve riuscire (altrimenti i casi
 #                             negativi fallirebbero per la ragione sbagliata); ne conserva il
 #                             rapporto del test di integrazione e il jar eseguibile di online
-#   1. repackage-rimosso      blocco <build> tolto dal POM di online, con il jar eseguibile della
-#                             corsa precedente (la base) presente
+#   1. repackage-rimosso      plugin spring-boot-maven-plugin tolto dal POM di online (resta il
+#                             resto del blocco <build>: dal #27 contiene anche SpotBugs, il cui
+#                             rapporto mancante fermerebbe la corsa prima del controllo dei jar),
+#                             con il jar eseguibile della corsa precedente (la base) presente
 #   2. rapporto-incompleto    dentro il container di build, dopo il vero Maven, il rapporto del
 #                             test di integrazione viene troncato a meta'
 #   3. rapporto-altra-corsa   dentro il container di build, dopo il vero Maven, il rapporto viene
@@ -280,7 +282,7 @@ limited "${SHORT_TIMEOUT}" cp "${ROOT}/${IT_REPORT}" "${WORK}/rapporto-base.xml"
   || { echo "ERRORE: copia del rapporto della corsa di base fallita" >&2; exit 1; }
 
 # --- 1. repackage rimosso, jar della corsa base presente ----------------------------------
-echo "== [repackage-rimosso] mutazione: blocco <build> tolto da ${ONLINE_POM}"
+echo "== [repackage-rimosso] mutazione: plugin spring-boot-maven-plugin tolto da ${ONLINE_POM}"
 shopt -s nullglob
 old_jars=("${ROOT}"/carddemo-online/target/*-exec.jar)
 shopt -u nullglob
@@ -289,12 +291,16 @@ if [ "${#old_jars[@]}" -ne 1 ]; then
   exit 1
 fi
 echo "   jar della corsa precedente presente: ${old_jars[0]#"${ROOT}"/}"
-pom="$(<"${ROOT}/${ONLINE_POM}")" || { echo "ERRORE: lettura di ${ONLINE_POM} fallita" >&2; exit 1; }
-case "${pom}" in
-  *"<build>"*"</build>"*) ;;
-  *) echo "ERRORE: blocco <build> non trovato in ${ONLINE_POM}: mutazione non applicabile" >&2; exit 1 ;;
-esac
-printf '%s%s\n' "${pom%%<build>*}" "${pom#*</build>}" >"${ROOT}/${ONLINE_POM}" \
+awk '/^[ \t]*<plugin>/ { buf = $0; dentro = 1; next }
+  dentro { buf = buf "\n" $0; if ($0 ~ /<\/plugin>/) { dentro = 0; if (buf !~ /<artifactId>spring-boot-maven-plugin<\/artifactId>/) print buf }; next }
+  { print }' "${ROOT}/${ONLINE_POM}" >"${WORK}/online-pom.mut" || { echo "ERRORE: awk su ${ONLINE_POM} fallito" >&2; exit 1; }
+if ! limited "${SHORT_TIMEOUT}" cmp -s "${ROOT}/${ONLINE_POM}" "${WORK}/online-pom.mut" </dev/null; then
+  :
+else
+  echo "ERRORE: spring-boot-maven-plugin non trovato in ${ONLINE_POM}: mutazione non applicabile" >&2
+  exit 1
+fi
+limited "${SHORT_TIMEOUT}" cp "${WORK}/online-pom.mut" "${ROOT}/${ONLINE_POM}" </dev/null \
   || { echo "ERRORE: scrittura di ${ONLINE_POM} fallita" >&2; exit 1; }
 run_verify repackage-rimosso || exit 1
 expect repackage-rimosso ko "ERRORE: attesi esattamente 1 jar eseguibile in carddemo-online/target, trovati 0"

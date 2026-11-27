@@ -125,6 +125,18 @@
               <version>${spotbugs.version}</version>
             </dependency>
           </dependencies>
+          <!-- Configurazione a livello di plugin e non dell'esecuzione: l'obiettivo check lancia
+               in fork l'obiettivo spotbugs con l'esecuzione predefinita, che non riceve la
+               configurazione di "analisi-difetti" (verificato: effort, soglia e filtro non venivano
+               applicati all'analisi). -->
+          <configuration>
+            <effort>Max</effort>
+            <threshold>Medium</threshold>
+            <failOnError>true</failOnError>
+            <xmlOutput>true</xmlOutput>
+            <includeTests>false</includeTests>
+            <!-- niente file di esclusioni: ne' oggi ne' per default -->
+          </configuration>
           <executions>
             <execution>
               <id>analisi-difetti</id>
@@ -132,14 +144,6 @@
               <goals>
                 <goal>check</goal>
               </goals>
-              <configuration>
-                <effort>Max</effort>
-                <threshold>Medium</threshold>
-                <failOnError>true</failOnError>
-                <xmlOutput>true</xmlOutput>
-                <includeTests>false</includeTests>
-                <!-- niente file di esclusioni: ne' oggi ne' per default -->
-              </configuration>
             </execution>
           </executions>
         </plugin>
