@@ -18,7 +18,7 @@
       * o testo per gli alfanumerici) nel campo; byte risultanti.
       * Una riga su stdout per vettore, campi separati da '|':
       *   ID|OP|VAR|CLASSE|VALORE-MOVE|VALORE-ADD|SCRITTO|DOPO-USO
-      * byte in esadecimale; '-' dove non si applica. Ultima riga FINE.
+      * byte e valori in esadecimale; '-' se non si applica. Riga FINE.
       *****************************************************************
        IDENTIFICATION DIVISION.
        PROGRAM-ID. CODECPRB.
@@ -49,8 +49,12 @@
        01  WS-LETTI                PIC 9(6) VALUE 0.
        01  W-MOVE                  PIC S9(20)V9(6)
                                    SIGN IS LEADING SEPARATE.
+       01  W-MOVE-X REDEFINES W-MOVE PIC X(27).
        01  W-CALC                  PIC S9(20)V9(6)
                                    SIGN IS LEADING SEPARATE.
+       01  W-CALC-X REDEFINES W-CALC PIC X(27).
+       01  HX-VM                   PIC X(54).
+       01  HX-VA                   PIC X(54).
        01  O-CLASSE                PIC X(01).
        01  O-N                     PIC 9(3).
        01  O-SCRITTO               PIC X(500).
@@ -237,6 +241,16 @@
            MOVE O-DOPO TO HX-IN
            PERFORM 3000-ESA
            MOVE HX-OUT TO HX-DOPO
+      * Valori in esadecimale: su dati non validi il MOVE copia anche
+      * byte di controllo (per esempio X'0A') che spezzerebbero la riga.
+           MOVE W-MOVE-X TO HX-IN
+           MOVE 27 TO HX-N
+           PERFORM 3000-ESA
+           MOVE HX-OUT TO HX-VM
+           MOVE W-CALC-X TO HX-IN
+           PERFORM 3000-ESA
+           MOVE HX-OUT TO HX-VA
+           MOVE O-N TO HX-N
            MOVE SPACES TO O-LINEA
            MOVE 1 TO O-PTR
            IF IN-OP = 'D'
@@ -244,7 +258,7 @@
                       '|' O-CLASSE '|' DELIMITED BY SIZE
                       INTO O-LINEA WITH POINTER O-PTR
                IF O-HAS-VAL = 'S'
-                   STRING W-MOVE '|' W-CALC '|'
+                   STRING HX-VM '|' HX-VA '|'
                           HX-SCRITTO(1:2 * O-N) '|'
                           HX-DOPO(1:2 * O-N) DELIMITED BY SIZE
                           INTO O-LINEA WITH POINTER O-PTR

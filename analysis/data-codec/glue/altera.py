@@ -60,7 +60,7 @@ def main(nome, mondo):
     elif nome == "vettore-con-colonna-vuota":
         cambia(v_z, lambda x: c(x)[:4] == ["comp", "9(3)", "decodifica", "00 7B"], lambda x: colonna(x, 6, ""))
     elif nome == "variante-senza-vettori":
-        togli(v_z, lambda x: c(x)[:3] == ["display-senza-segno", "9(16)", "decodifica"], attese=4)
+        togli(v_z, lambda x: c(x)[:3] == ["display-senza-segno", "9(16)", "decodifica"], attese=5)
     elif nome == "variante-del-censimento-in-piu":
         p = os.path.join(out, "censimento.tsv")
         r = _righe(p)
@@ -73,7 +73,9 @@ def main(nome, mondo):
     elif nome == "estremo-binario-tolto":
         togli(v_o, lambda x: c(x)[:4] == ["comp", "9(11)", "decodifica", "00 00 00 17 48 76 E7 FF"])
     elif nome == "byte-distintivo-tolto":
+        # anche la riga dei 256 byte contiene i sei byte distintivi: si tolgono entrambe
         togli(v_z, lambda x: c(x)[:4] == ["alfanumerico", "X(10)", "decodifica", "BA BB B0 5F AD BD 40*4"])
+        togli(v_z, lambda x: c(x)[:3] == ["alfanumerico", "X(289)", "decodifica"] and c(x)[3].startswith("00 01 02"))
     elif nome == "fonte-dell-altro-profilo":
         cambia(v_z, lambda x: c(x)[:4] == ["comp-3", "9(3)", "decodifica", "12 3F"], lambda x: colonna(x, 8, "GC-SRC-PACKED"))
     elif nome == "variante-tolta-dal-documento":
@@ -133,6 +135,25 @@ def main(nome, mondo):
         togli(v_z, lambda x: c(x)[0] == "comp-3" and c(x)[2] == "codifica" and c(x)[4] == "errore")
     elif nome == "copertura-codifica-ok-tolta":
         togli(v_z, lambda x: c(x)[0] == "comp" and c(x)[2] == "codifica" and c(x)[4] == "ok", attese=4)
+    # giro di correzione 1: tutte le righe di ogni regola
+    elif nome == "copertura-cifra-semplice-zos-tolta":
+        togli(v_z, lambda x: c(x)[:4] == ["display-con-segno", "S9(4)V9(2)", "decodifica", "F1 F2 F3 F4 F5 F0"])
+    elif nome == "copertura-cifra-del-corpo-tolta":
+        togli(v_o, lambda x: c(x)[:4] == ["display-senza-segno", "9(16)", "decodifica", "35 36 37 38 35 36 37 38 35 36 37 38 35 36 37 38"])
+    elif nome == "copertura-codice-di-segno-5-tolto":
+        togli(v_z, lambda x: c(x)[:4] == ["comp-3", "S9(10)V9(2)", "decodifica", "00 00 00 01 23 45 65"])
+    elif nome == "copertura-cifra-packed-tolta":
+        togli(v_o, lambda x: c(x)[:4] == ["comp-3", "9(3)", "decodifica", "78 0F"])
+    elif nome == "copertura-semiottetto-C-tolto":
+        togli(v_o, lambda x: c(x)[:4] == ["comp-3", "S9(9)V9(2)", "decodifica", "00 00 0C 23 45 6C"])
+    elif nome == "copertura-riempimento-7-tolto":
+        togli(v_z, lambda x: c(x)[:4] == ["comp-3", "S9(10)V9(2)", "decodifica", "70 00 00 01 23 45 6C"])
+    elif nome == "copertura-256-byte-tolti":
+        togli(v_o, lambda x: c(x)[:3] == ["alfanumerico", "X(289)", "decodifica"] and c(x)[3].startswith("00 01 02"))
+    elif nome == "osservazione-esaustiva-alterata":
+        cambia(os.path.join(out, "sonde", "osservazioni.tsv"), lambda x: x.startswith("900001\t"), lambda x: colonna(x, 3, "S"))
+    elif nome == "osservazione-esaustiva-tolta":
+        togli(os.path.join(out, "sonde", "osservazioni.tsv"), lambda x: x.startswith("900001\t"))
     # struttura dei vettori
     elif nome == "vettore-lunghezza-sbagliata":
         cambia(v_o, lambda x: c(x)[:4] == ["comp", "9(3)", "decodifica", "00 7B"], lambda x: colonna(x, 3, "00 7B 00"))

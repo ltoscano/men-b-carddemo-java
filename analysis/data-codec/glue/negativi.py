@@ -2,6 +2,7 @@
 attesi, esegue il confronto della colla con i vettori e pretende che fallisca per il motivo dichiarato.
 
 Uso: negativi.py VETTORI CENSIMENTO.tsv DOC
+Ogni mutazione passa per gli stessi confronti della verifica sulla colla: vettori, casi esaustivi dei DISPLAY, geometria.
 Per ogni mutazione:
   - ogni testo da sostituire deve comparire esattamente una volta in codec.py (una mutazione che non cambia
     nulla renderebbe la prova vuota);
@@ -96,13 +97,23 @@ MUTAZIONI = [
      [("    if any(c > 9 for c in cifre) or any(c > 9 for c in riempimento):", "    if any(c > 9 for c in riempimento):")],
      f"[decodifica] {O} categoria comp-3 variante S9(9)V9(2) byte 00 00 0A 23 45 6C: stato atteso non-valido, ottenuto valido"),
     ("comp3-riempimento-rifiutato-anche-nell-oracle",
-     [('        if profilo == "zos-ebcdic":\n            return Risultato("non-determinato", None, b)',
-       '        if True:\n            return Risultato("non-determinato", None, b)')],
-     f"[decodifica] {O} categoria comp-3 variante S9(10)V9(2) byte 10 00 00 01 23 45 6C: stato atteso valido, ottenuto non-determinato"),
+     [('        if profilo == "zos-ebcdic":\n            return Risultato("non-valido", None, b)',
+       '        if True:\n            return Risultato("non-valido", None, b)')],
+     f"[decodifica] {O} categoria comp-3 variante S9(10)V9(2) byte 10 00 00 01 23 45 6C: stato atteso valido, ottenuto non-valido"),
     ("comp3-riempimento-accettato-su-zos",
-     [('        if profilo == "zos-ebcdic":\n            return Risultato("non-determinato", None, b)',
-       '        if False:\n            return Risultato("non-determinato", None, b)')],
-     f"[decodifica] {Z} categoria comp-3 variante S9(10)V9(2) byte 10 00 00 01 23 45 6C: stato atteso non-determinato, ottenuto valido"),
+     [('        if profilo == "zos-ebcdic":\n            return Risultato("non-valido", None, b)',
+       '        if False:\n            return Risultato("non-valido", None, b)')],
+     f"[decodifica] {Z} categoria comp-3 variante S9(10)V9(2) byte 10 00 00 01 23 45 6C: stato atteso non-valido, ottenuto valido"),
+    ("comp3-zos-riempimento-2-accettato",
+     [("    if any(c != 0 for c in riempimento):", "    if any(c not in (0, 2) for c in riempimento):")],
+     f"[decodifica] {Z} categoria comp-3 variante S9(10)V9(2) byte 20 00 00 01 23 45 6C: stato atteso non-valido, ottenuto valido"),
+    ("comp3-oracle-codice-0-accettato-con-segno",
+     [('"oracle-gnucobol": ({0xC: 1, 0xD: -1, 0xF: 1}, {0xF: 1}),', '"oracle-gnucobol": ({0xC: 1, 0xD: -1, 0xF: 1, 0x0: 1}, {0xF: 1}),')],
+     f"[decodifica] {O} categoria comp-3 variante S9(9)V9(2) byte 00 00 01 23 45 60: stato atteso non-valido, ottenuto valido"),
+    ("comp3-cifre-7-8-scambiate",
+     [("    n = int(\"\".join(str(c) for c in cifre))\n    return Risultato(\"valido\", _valore(accettati[codice] * n, g), b)",
+       "    n = int(\"\".join(str({7: 8, 8: 7}.get(c, c)) for c in cifre))\n    return Risultato(\"valido\", _valore(accettati[codice] * n, g), b)")],
+     f"[decodifica] {O} categoria comp-3 variante S9(9)V9(2) byte 00 00 07 78 87 8C: valore atteso 7788.78, ottenuto 8877.87"),
     ("comp3-riempimento-contato-nel-valore",
      [("    cifre = cifre[len(cifre) - cifre_pic:]\n", "")],
      f"[decodifica] {O} categoria comp-3 variante S9(10)V9(2) byte 10 00 00 01 23 45 6C: valore atteso 1234.56, ottenuto 10000001234.56"),
@@ -146,6 +157,35 @@ MUTAZIONI = [
     ("codifica-negativo-in-campo-senza-segno",
      [("    if n < 0 and not g.segno:", "    if False:")],
      f"[codifica] {O} categoria display-senza-segno variante 9(4) valore -5: atteso errore, ottenuto 30 30 30 35"),
+    # giro di correzione 1: rappresentazioni alternative, cifre del corpo, casi esaustivi, alfanumerico, geometria
+    ("segno-oracle-cifre-semplici-0-1-scambiate",
+     [("        c = _cifra_ascii(ultimo)\n", "        c = {0: 1, 1: 0}.get(_cifra_ascii(ultimo), _cifra_ascii(ultimo))\n")],
+     f"[decodifica] {O} categoria display-con-segno variante S9(4)V9(2) byte 31 32 33 34 35 30: valore atteso 1234.50, ottenuto 1234.51"),
+    ("segno-zos-zona-F-cifre-0-1-scambiate",
+     [("        segno = ZONE_SEGNO_ZOS[zona]\n        cifre.append(c)",
+       "        segno = ZONE_SEGNO_ZOS[zona]\n        cifre.append({0: 1, 1: 0}.get(c, c) if zona == 0xF else c)")],
+     f"[decodifica] {Z} categoria display-con-segno variante S9(4)V9(2) byte F1 F2 F3 F4 F5 F0: valore atteso 1234.50, ottenuto 1234.51"),
+    ("display-oracle-cifre-5-6-scambiate",
+     [("    return x - 0x30 if 0x30 <= x <= 0x39 else None", "    return {5: 6, 6: 5}.get(x - 0x30, x - 0x30) if 0x30 <= x <= 0x39 else None")],
+     f"[decodifica] {O} categoria display-senza-segno variante 9(1) byte 36: valore atteso 6, ottenuto 5"),
+    ("display-zos-cifre-7-8-scambiate-nel-corpo",
+     [("        cifre.append(x & 0xF)\n", "        cifre.append({7: 8, 8: 7}.get(x & 0xF, x & 0xF))\n")],
+     f"[decodifica] {Z} categoria display-senza-segno variante 9(1) byte F7: valore atteso 7, ottenuto 8"),
+    ("segno-oracle-byte-5B-accettato",
+     [("    0x7B: (0, 1),   # {", "    0x5B: (0, 1),\n    0x7B: (0, 1),   # {")],
+     f"[esaustivo] {O} categoria display-con-segno variante S9(4)V9(2) byte 31*5 5B (segno 5B): stato atteso non-valido, ottenuto valido"),
+    ("alfa-zos-pagina-1140-invece-di-037",
+     [('"zos-ebcdic": ("cp037", 0x40)', '"zos-ebcdic": ("cp1140", 0x40)')],
+     f"[decodifica] {Z} categoria alfanumerico variante X(289) byte"),
+    ("alfa-oracle-iso-8859-15-invece-dell-identita",
+     [('"oracle-gnucobol": ("latin-1", 0x20)', '"oracle-gnucobol": ("iso8859_15", 0x20)')],
+     f"[decodifica] {O} categoria alfanumerico variante X(289) byte"),
+    ("geometria-campo-troncato-accettato",
+     [("    if offset + g.lunghezza > len(record):", "    if False:")],
+     f"[geometria] {O} categoria comp variante 9(3) byte 00 7B (record troncato di un byte): atteso CampoIncompleto, ottenuto stato valido valore 0"),
+    ("geometria-offset-negativo-accettato",
+     [("    if not isinstance(offset, int) or isinstance(offset, bool) or offset < 0:", "    if not isinstance(offset, int):")],
+     f"[geometria] {O} categoria alfanumerico variante X(1) byte 41 (offset negativo): atteso CampoIncompleto"),
 ]
 
 RIGA_GEOMETRIA = "    return Geometria(categoria, variante, segno, intere, decimali, lunghezza)"
@@ -185,7 +225,7 @@ def main(vett, censimento_path, doc):
     _, censimento = leggi_tsv(censimento_path)
     _, fonti = verifica.fonti_documento(doc)
     vettori = verifica.carica_vettori(vett, originale, fonti)
-    verifica.controlla_codec(originale, vettori)
+    verifica.controlla_codec(originale, vettori); verifica.controlla_esaustivi_codec(originale); verifica.controlla_geometria(originale, vettori)
     if verifica.ERRORI:
         print("\n".join(verifica.ERRORI))
         raise SystemExit("la colla non mutata non supera i vettori: prove negative non eseguibili")
@@ -207,7 +247,7 @@ def main(vett, censimento_path, doc):
                 continue
             verifica.ERRORI.clear()
             mod = carica_da_testo(testo, "codec_mutato")
-            verifica.controlla_codec(mod, vettori)
+            verifica.controlla_codec(mod, vettori); verifica.controlla_esaustivi_codec(mod); verifica.controlla_geometria(mod, vettori)
             trovati = [e for e in verifica.ERRORI if atteso in e and "attes" in e and "ottenut" in e and "eccezione" not in e]
             if not verifica.ERRORI:
                 print(f"PROVA NEGATIVA FALLITA ({nome}): il confronto non si e' accorto della mutazione")

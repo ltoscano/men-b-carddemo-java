@@ -49,8 +49,8 @@ glue_run --mount "$DCOD_DOC:/v/codifica.md:ro" -- /analysis/data-codec/glue/nega
   /analysis/data-codec/vettori "$(cont "$tmp/gen/censimento.tsv")" /v/codifica.md > "$tmp/neg.txt" 2>&1 \
   || { grep -v '^ok: ' "$tmp/neg.txt" >&2; fail "prove negative sulla colla non superate"; }
 grep -q '^prove negative sulla colla: .* superate' "$tmp/neg.txt" || { cat "$tmp/neg.txt" >&2; fail "prove negative sulla colla senza esito riconoscibile"; }
-grep -v '^ok: \(ampiezza\|scala\)-' "$tmp/neg.txt" | sed 's/^/   /' >&2
-log "   (piu' $(grep -c '^ok: \(ampiezza\|scala\)-' "$tmp/neg.txt") prove per variante: ampiezza aumentata di un byte, scala spostata di uno)"
+sed "s/^/   /" "$tmp/neg.txt" >&2
+log "   ($(grep -c "^ok: " "$tmp/neg.txt") prove, tutte riportate qui sopra con nome e diagnosi; $(grep -c "^ok: \(ampiezza\|scala\)-" "$tmp/neg.txt") sono per variante)"
 
 log "4. prove negative su vettori, censimento, documento e osservazioni alterati"
 # mondo NOME: copia di vettori, output rigenerato e documento in $tmp/m-NOME, poi l'alterazione
@@ -92,19 +92,28 @@ negativa oltre-picture-add-alterato "ERRORE [oltre-picture] profilo oracle-gnuco
 negativa oltre-picture-osservazione-tolta "ERRORE [oltre-picture] profilo oracle-gnucobol categoria comp variante 9(3) byte FF FF: caso oltre la PICTURE senza osservazione dichiarata"
 negativa compilazione-senza-fsign "ERRORE [sonda] argomenti di compilazione della sonda"
 negativa ambiente-in-piu "ERRORE [sonda] ambiente della sonda"
-negativa copertura-alternativa-tolta "ERRORE [copertura] profilo oracle-gnucobol categoria display-con-segno variante S9(9)V9(2): manca la rappresentazione alternativa"
+negativa copertura-alternativa-tolta "ERRORE [copertura] profilo oracle-gnucobol categoria display-con-segno variante S9(9)V9(2): manca la cifra semplice 37 (rappresentazione alternativa ammessa)"
 negativa copertura-fuori-tabella-tolta "ERRORE [copertura] profilo zos-ebcdic categoria display-con-segno variante S9(4)V9(2): manca un byte fuori tabella"
 negativa copertura-zero-negativo-tolto "ERRORE [copertura] profilo oracle-gnucobol categoria display-con-segno variante S9(4)V9(2): manca lo zero negativo"
 negativa copertura-spazi-tolti "ERRORE [copertura] profilo oracle-gnucobol categoria display-senza-segno variante 9(1): manca il campo di spazi"
 negativa copertura-non-numerico-tolto "ERRORE [copertura] profilo oracle-gnucobol categoria display-senza-segno variante 9(1): manca un carattere non numerico"
 negativa copertura-codice-non-ammesso-tolto "ERRORE [copertura] profilo oracle-gnucobol categoria comp-3 variante 9(3): manca il codice di segno non ammesso D"
-negativa copertura-semiottetto-tolto "ERRORE [copertura] profilo zos-ebcdic categoria comp-3 variante 9(3): manca un semiottetto di cifra non valido"
+negativa copertura-semiottetto-tolto "ERRORE [copertura] profilo zos-ebcdic categoria comp-3 variante 9(3): manca il semiottetto di cifra non valido A"
 negativa copertura-oltre-picture-tolto "ERRORE [copertura] profilo zos-ebcdic categoria comp variante 9(9): manca un valore oltre la PICTURE"
 negativa copertura-riempimento-tolto "ERRORE [copertura] profilo oracle-gnucobol categoria alfanumerico: manca il riempimento a destra"
 negativa copertura-campo-pieno-tolto "ERRORE [copertura] profilo oracle-gnucobol categoria alfanumerico: manca il campo pieno"
 negativa copertura-non-rappresentabile-tolto "ERRORE [copertura] profilo oracle-gnucobol categoria alfanumerico: manca il carattere o il testo non rappresentabile"
 negativa copertura-codifica-rifiutata-tolta "ERRORE [copertura] profilo zos-ebcdic categoria comp-3: nessun vettore di codifica rifiutata"
 negativa copertura-codifica-ok-tolta "ERRORE [copertura] profilo zos-ebcdic categoria comp: nessun vettore di codifica di un valore nuovo"
+negativa copertura-cifra-semplice-zos-tolta "ERRORE [copertura] profilo zos-ebcdic categoria display-con-segno variante S9(4)V9(2): manca la cifra semplice F0"
+negativa copertura-cifra-del-corpo-tolta "ERRORE [copertura] profilo oracle-gnucobol categoria display-senza-segno variante 9(16): manca la cifra 5 nel corpo"
+negativa copertura-codice-di-segno-5-tolto "ERRORE [copertura] profilo zos-ebcdic categoria comp-3 variante S9(10)V9(2): manca il codice di segno non ammesso 5"
+negativa copertura-cifra-packed-tolta "ERRORE [copertura] profilo oracle-gnucobol categoria comp-3 variante 9(3): manca la cifra 7 nei semiottetti di cifra"
+negativa copertura-semiottetto-C-tolto "ERRORE [copertura] profilo oracle-gnucobol categoria comp-3 variante S9(9)V9(2): manca il semiottetto di cifra non valido C"
+negativa copertura-riempimento-7-tolto "ERRORE [copertura] profilo zos-ebcdic categoria comp-3 variante S9(10)V9(2): manca il semiottetto di riempimento 7"
+negativa copertura-256-byte-tolti "ERRORE [copertura] profilo oracle-gnucobol categoria alfanumerico: manca il byte 80 in un vettore di decodifica"
+negativa osservazione-esaustiva-alterata "byte 31*5 00 (segno 00): IS NUMERIC atteso non-valido, osservato valido"
+negativa osservazione-esaustiva-tolta "nessuna osservazione della sonda (caso esaustivo 900001)"
 negativa vettore-lunghezza-sbagliata "3 byte d'ingresso, la variante 9(3) ne ha 2"
 negativa vettore-non-valido-con-valore "stato non-valido con un valore o dei byte attesi"
 negativa vettore-valore-non-canonico "valore '123.4' non canonico per la scala 2"

@@ -69,6 +69,15 @@ def ingresso(vettori, out):
     print(f"ingresso della sonda: {n} record dai vettori, {e} casi esaustivi")
 
 
+def _valore_sonda(h):
+    """Il campo largo S9(20)V9(6) SIGN LEADING SEPARATE arriva in esadecimale (27 byte): come testo se e' fatto di
+    caratteri stampabili, altrimenti 'esa:' seguito dai byte (su dati non validi il MOVE copia anche byte di controllo)."""
+    b = bytes.fromhex(h)
+    if len(b) != 27:
+        raise ValueError(f"valore di {len(b)} byte invece di 27")
+    return b.decode("latin-1") if all(0x20 <= x <= 0x7E and x != 0x7C for x in b) else "esa:" + b.hex().upper()
+
+
 def leggi(rapporto, out):
     with open(rapporto, encoding="latin-1") as f:
         testo = f.read().split("\n")
@@ -89,10 +98,14 @@ def leggi(rapporto, out):
         if len(c) != 8 or not c[0].isdigit() or c[1] not in ("D", "C"):
             raise SystemExit(f"{rapporto}: riga della sonda malformata: {riga!r}")
         idv, op, var, classe, vm, va, scritto, dopo = c
-        esa = lambda h: "-" if h == "-" else a_esa(bytes.fromhex(h)) if h else "-"  # noqa: E731
-        oss.append({"riga": int(idv), "operazione": "decodifica" if op == "D" else "codifica", "variante": var,
-                    "classe": classe, "valore_move": vm if op == "D" and not var.startswith("alfanumerico:") else esa(vm),
-                    "valore_add": va, "scritto": esa(scritto), "dopo": esa(dopo)})
+        try:
+            esa = lambda h: "-" if h in ("-", "") else a_esa(bytes.fromhex(h))  # noqa: E731
+            numerico = op == "D" and not var.startswith("alfanumerico:")
+            oss.append({"riga": int(idv), "operazione": "decodifica" if op == "D" else "codifica", "variante": var,
+                        "classe": classe, "valore_move": _valore_sonda(vm) if numerico else esa(vm),
+                        "valore_add": _valore_sonda(va) if numerico else va, "scritto": esa(scritto), "dopo": esa(dopo)})
+        except ValueError as e:
+            raise SystemExit(f"{rapporto}: riga della sonda malformata ({e}): {riga!r}")
     if len(oss) != attese:
         raise SystemExit(f"{rapporto}: la sonda dichiara {attese} record letti, righe stampate {len(oss)}")
     scrivi_tsv(out, ["riga", "operazione", "variante", "classe", "valore_move", "valore_add", "scritto", "dopo"], oss)

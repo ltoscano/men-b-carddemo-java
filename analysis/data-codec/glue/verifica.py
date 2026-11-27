@@ -17,6 +17,11 @@ Controlli (tutti eseguiti; ogni difetto e' una riga "ERRORE [gruppo] ..."; uscit
   [sonda]       le osservazioni della sonda (profilo oracle-gnucobol) coincidono con gli attesi: classe (IS NUMERIC),
                 valore con MOVE e con ADD, byte scritti, byte del MOVE nei vettori di codifica; argomenti di
                 compilazione e ambiente della sonda; [oltre-picture] le osservazioni dei binari oltre la PICTURE
+  [esaustivo]   per ogni DISPLAY e profilo, i 256 valori dell'ultimo byte (con segno) e del primo byte del corpo: la colla
+                deve dare lo stato e il valore della regola scritta qui a mano (TABELLA_SEGNO, CIFRE_SEMPLICI); la sonda
+                esegue un sottoinsieme fisso degli stessi casi, confrontato con la stessa regola
+  [geometria]   un campo che non sta tutto nel record (troncato, record vuoto, offset oltre la fine o negativo) deve
+                essere rifiutato con CampoIncompleto, mai convertito
   [documento]   codifica.md elenca ogni variante del censimento e definisce ogni fonte citata
   [pagina]      nessun byte distintivo fra 037 e 1047 in un campo alfanumerico; conclusione coerente con codifica.md
 I messaggi di [decodifica], [sonda] e [oltre-picture] indicano categoria, variante, byte, valore atteso e ottenuto.

@@ -273,12 +273,13 @@ La colla si verifica decodificando il campo **dentro un record**, con otto byte 
 1. Commit `aa22593`: vettori dei due profili, scritti prima di eseguire qualsiasi sonda.
 2. Prima esecuzione della sonda. Due difetti della sonda stessa, non degli attesi, corretti prima del confronto: il `MOVE` del gruppo `IN-VALORE` al posto del campo numerico `IN-VALORE-N` produceva byte senza senso nei vettori di codifica; la riga di uscita di 2200 caratteri troncava i campi da 373 byte in su.
 3. Confronto di 267 righe: una sola differenza, il caso `9(9) COMP` `FF FF FF FF` descritto sopra. Esecutore fermato, decisione dell'Approvatore (voce 63), attesi cambiati nel commit `11ba1dd`.
+4. Giro di correzione 1 della PR #47. Nuovi attesi scritti prima di rieseguire la sonda, nel commit `ad00ac6`: le righe aggiunte ai vettori e la regola dei casi esaustivi in `verifica.py`. Alla nuova esecuzione è emerso un difetto della sonda, non degli attesi: su dati non validi il `MOVE` verso il campo largo copia anche byte di controllo (per esempio X'0A'), che spezzavano la riga d'uscita. La sonda ora stampa i valori in esadecimale; `sonda.py` li riporta come testo se sono stampabili, altrimenti con il prefisso `esa:`. Poi tutte le 1654 osservazioni (374 dai vettori, 1280 casi esaustivi) hanno coinciso con gli attesi: nessuno scostamento dalla previsione.
 
 ## Comportamento osservato di GnuCOBOL su dati non validi (informativo)
 
 La sonda registra, anche per i vettori non validi, il valore che GnuCOBOL calcola e i byte del campo dopo l'uso (`out/sonde/osservazioni.tsv`, colonne `valore_move`, `valore_add`, `dopo`). Non sono regole della colla, che non assegna valori ai non validi. Sono fissati dal confronto con l'output versionato, quindi un cambiamento si vede. Fatti utili per la parità (#5 e successive):
 
-- con `ADD` un campo non valido produce comunque un numero. Ogni byte vale il suo semiottetto basso: per esempio `31 41 33` in `9(3)` vale 113 e gli spazi valgono 0. Con `MOVE` verso un `DISPLAY` i byte non validi sono copiati tali e quali (`+…1A3…`);
+- con `ADD` un campo non valido produce comunque un numero. Ogni byte vale il suo semiottetto basso: per esempio `31 41 33` in `9(3)` vale 113 e gli spazi valgono 0. Con `MOVE` verso un `DISPLAY` i byte non validi sono copiati tali e quali (`+…1A3…`; nelle osservazioni, con il prefisso `esa:` quando non sono stampabili);
 - un ultimo byte fuori tabella in un `DISPLAY` con segno viene **riscritto in memoria** quando il campo è usato. Per esempio `p` (X'70') diventa `{`, `S` diventa `C`, `y` diventa `I`; lo spazio resta spazio. Per i campi validi i byte non cambiano;
 - un packed con codice B o E è trattato come positivo, con D come negativo (anche in un campo senza segno, dove D non è ammesso).
 
