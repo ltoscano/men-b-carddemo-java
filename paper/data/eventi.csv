@@ -355,3 +355,11 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T21:00:23Z,issue-22,esecutore-consuntivo,opus,orologio,giro di correzione: durata 3567 s; 82 chiamate a strumenti; contatore token 665860 (cumulativi)
 2026-11-27T21:00:23Z,pr-50,codex-inizio,codex,orologio,validazione 2 di 2; in forma ristretta
 2026-11-27T21:00:57Z,pr-49,merge,fable,orologio,PR #49 mergiata dopo due validazioni; due residui non bloccanti rinviati a #45; chiude #35
+2026-11-27T21:01:04Z,processo,risposta-consegnata,fable,orologio,PR #49 mergiata; PR #50 in validazione 2
+2026-11-27T21:19:51Z,processo,richiesta-autore,autore,orologio,chiede lo stato
+2026-11-27T21:20:01Z,processo,risposta-consegnata,fable,orologio,stato alle 21:19 UTC
+2026-11-27T21:24:50Z,processo,richiesta-autore,autore,orologio,quante wave ci sono
+2026-11-27T21:24:56Z,processo,risposta-consegnata,fable,orologio,elenco delle wave e posizione attuale
+2026-11-27T21:27:23Z,pr-51,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T21:28:04Z,pr-51,decisione,fable,orologio,validazione 1: sei rilievi accolti (uno bloccante)
+2026-11-27T21:28:04Z,issue-43,esecutore-inizio,opus,orologio,giro di correzione unico
