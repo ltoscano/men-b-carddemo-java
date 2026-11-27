@@ -149,7 +149,8 @@ Tre filoni indipendenti, in ordine di difficoltà crescente: tipi transazione su
 
 ## Regole che valgono per tutte le wave
 
-- Una specifica diventa `ready` solo dopo una **contestazione avversariale della specifica stessa** (Codex), non solo della PR: una specifica sbagliata costa più di un'implementazione sbagliata.
+- Una specifica diventa `ready` solo dopo una **contestazione avversariale della specifica stessa** (Codex), non solo della PR: una specifica sbagliata costa più di un'implementazione sbagliata. La contestazione si fa nel momento in cui l'issue sta per diventare `ready`, non prima: nel frattempo le issue da cui dipende possono averla cambiata.
+- Le issue sono numerate su GitHub nell'ordine del piano: #1–#12 sono 0A-1…0A-12, #13–#16 sono 0B-1…0B-4.
 - Al termine di ogni wave: revisione umana dei contratti, riallineamento delle issue a valle, aggiornamento del paper.
 - Codice e analisi entrano solo via PR con merge umano. Paper, piano e dati di misura sono aggiornati dal pianificatore direttamente su `main`.
 
