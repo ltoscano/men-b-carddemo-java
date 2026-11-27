@@ -17,7 +17,7 @@
 #                              una sola classe di un modulo che resta presente, mai prodotto (aggregato
 #                              in skip in parity)
 #   esecuzione-troncata        il file di esecuzione di un modulo troncato
-#   agente-spento-<modulo>     agente JaCoCo spento in online, batch (codice eseguito) e in domain,
+#   agente-spento-<modulo>     agente JaCoCo spento in online, batch, domain (codice eseguito) e in
 #                              loader (oggi senza righe di produzione): manca la prova dell'agente
 #   agente-residuo-online      agente spento in online e, dopo Maven, il file di esecuzione sano di
 #                              un'altra corsa rimesso al suo posto: non vale come prova
@@ -785,8 +785,10 @@ if selezionato controprova-lecita; then
     printf '== [controprova-lecita] controlli mancanti: %s\n' "${mancanti//$'\n'/; }"
     FAILED="${FAILED} controprova-lecita"
   else
-    expect controprova-lecita ok "JaCoCo carddemo-domain: 1 di 1 classi eseguibili presenti nel rapporto aggregato" \
-      "SpotBugs carddemo-domain: 2 classi analizzate, 0 difetti" "== verifica completata"
+    # Conteggi del modulo domain con la classe di prova: dal codec dei campi (#54) il modulo ha 7
+    # classi eseguibili e 10 classi analizzate da SpotBugs; ProvaCopertura ne aggiunge una a ciascun conteggio.
+    expect controprova-lecita ok "JaCoCo carddemo-domain: 8 di 8 classi eseguibili presenti nel rapporto aggregato" \
+      "SpotBugs carddemo-domain: 11 classi analizzate, 0 difetti" "== verifica completata"
   fi
   ripristina
 fi
