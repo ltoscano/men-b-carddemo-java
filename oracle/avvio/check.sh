@@ -9,8 +9,9 @@
 #    (CEE3ABD e segnaposto non risolvibili); ognuna deve far fallire il confronto.
 . "$ORACLE_ROOT/lib.sh"
 
-# Elenco fisso: i 9 eseguibili del legacy e i chiamanti di prova dei 2 moduli (CBSTM03B, CSUTLDTC).
-LANCI="CBACT01C CBACT02C CBACT03C CBACT04C CBCUS01C CBTRN01C CBTRN02C CBTRN03C COBSWAIT M03BCALL DTCCALL"
+# Elenco fisso: i 10 eseguibili del legacy (CBSTM03A compreso, issue #25) e i chiamanti di prova dei 2
+# moduli (CBSTM03B, CSUTLDTC).
+LANCI="CBACT01C CBACT02C CBACT03C CBACT04C CBCUS01C CBSTM03A CBTRN01C CBTRN02C CBTRN03C COBSWAIT M03BCALL DTCCALL"
 EXP="$ORACLE_ROOT/avvio/expected"
 
 tmp="$(mktmp)"
@@ -59,6 +60,8 @@ neg messaggio; mutate "$tmp/messaggio/obs/CBTRN02C.txt" '/^ABENDING PROGRAM$/d'
 expect_fail "riga 'ABENDING PROGRAM' tolta da CBTRN02C" "CBTRN02C: osservato diverso" confronta "$tmp/messaggio/obs" "$tmp/messaggio/exp"
 neg stato;     mutate "$tmp/stato/obs/M03BCALL.txt" 's/^M03BCALL CUSTFILE O RC=35$/M03BCALL CUSTFILE O RC=00/'
 expect_fail "ritorno di CBSTM03B per CUSTFILE 35 -> 00" "M03BCALL: osservato diverso" confronta "$tmp/stato/obs" "$tmp/stato/exp"
+neg stm03a;    mutate "$tmp/stm03a/obs/CBSTM03A.txt" 's/^RETURN CODE: 35$/RETURN CODE: 00/'
+expect_fail "CBSTM03A: stato dell'apertura di TRNXFILE 35 -> 00" "CBSTM03A: osservato diverso" confronta "$tmp/stm03a/obs" "$tmp/stm03a/exp"
 neg file;      mutate "$tmp/file/obs/CBACT01C.txt" '$a\
 ACCTFILE 0'
 expect_fail "file creato nella cartella di lavoro di CBACT01C" "CBACT01C: osservato diverso" confronta "$tmp/file/obs" "$tmp/file/exp"
