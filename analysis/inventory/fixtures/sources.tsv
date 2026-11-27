@@ -1,0 +1,5 @@
+percorso	tipo
+app/cbl/FIXPROG.cbl	cobol
+app/cpy/FIXCPY.cpy	copybook
+app/jcl/FIXJOB.jcl	jcl
+app/csd/FIX.CSD	csd

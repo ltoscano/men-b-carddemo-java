@@ -1,0 +1,3 @@
+# Attesi scritti a mano: COACTUPC include CSUTLDPY (riga 4232) e il copybook contiene CALL 'CSUTLDTC' (riga 293): percorso COACTUPC -> CSUTLDPY -> CSUTLDTC. tipo, da, a, file, riga, dettaglio
+COPY	program:COACTUPC	copybook:CSUTLDPY	app/cbl/COACTUPC.cbl	4232	
+CALL	copybook:CSUTLDPY	program:CSUTLDTC	app/cpy/CSUTLDPY.cpy	293	
