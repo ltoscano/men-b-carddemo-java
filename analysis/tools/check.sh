@@ -60,6 +60,28 @@ reconcile() {
   echo "   $n verdetti/prove salvati coincidono con il ricalcolo"
 }
 
+# --- 0. completezza dei verdetti: l'insieme esatto dei file presenti coincide con quello dichiarato in verdetti.tsv
+log "0. insieme dei file di verdetto e di prova fallita uguale a quello dichiarato (verdetti.tsv)"
+verdict_set_check "$OUT" || fail "verdetti presenti diversi da quelli dichiarati in analysis/tools/verdetti.tsv"
+n_decl="$(verdict_declared | wc -l | tr -d ' ')"
+log "   $n_decl file dichiarati, tutti presenti e nessun altro"
+# Prove negative automatiche, su copie in cartella temporanea: mancante, nome sconosciuto, verdetto valido sotto un altro strumento.
+set_negative() { # set_negative NOME ATTESO -- comando di alterazione (cwd = copia di out)
+  local name="$1" needle="$2"; shift 3
+  rm -rf "$tmp/setneg"; cp -R "$OUT" "$tmp/setneg"
+  ( cd "$tmp/setneg" && "$@" )
+  if verdict_set_check "$tmp/setneg" > "$tmp/neg.out" 2>&1; then
+    fail "PROVA NEGATIVA FALLITA ($name): l'insieme alterato e' accettato"
+  fi
+  grep -qF -- "$needle" "$tmp/neg.out" || { cat "$tmp/neg.out" >&2; fail "prova negativa ($name): fallito ma non nominando '$needle'"; }
+  log "   prova negativa ok: $name"
+}
+set_negative "verdetto cb2xml cancellato" "verdetto dovuto mancante: cb2xml/verdetto-layout.txt" -- rm cb2xml/verdetto-layout.txt
+set_negative "prova fallita della ripartizione cancellata" "verdetto dovuto mancante: scc/prova-fallita-ripartizione.txt" -- rm scc/prova-fallita-ripartizione.txt
+set_negative "nome di verdetto sconosciuto" "file di verdetto non dovuto: scc/verdetto-sconosciuto.txt" -- cp scc/verdetto-scc.txt scc/verdetto-sconosciuto.txt
+set_negative "verdetto valido copiato sotto un altro strumento" "file di verdetto non dovuto: cmt/verdetto-layout.txt" -- cp cb2xml/verdetto-layout.txt cmt/verdetto-layout.txt
+set_negative "verdetto spostato sotto un altro strumento" "verdetto dovuto mancante: cb2xml/verdetto-layout.txt" -- mv cb2xml/verdetto-layout.txt mapa/verdetto-layout.txt
+
 # --- 1. capacita' dichiarate e controlli degli strumenti adottati
 log "1. controlli a campione per ogni capacita' dichiarata in capabilities.tsv"
 [ -f "$CAPS" ] || fail "capabilities.tsv assente"

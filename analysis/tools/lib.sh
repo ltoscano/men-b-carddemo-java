@@ -63,3 +63,37 @@ record() { # record TOOL FILE TEXT
   mkdir -p "$OUT/$1"
   printf '%s\n' "$3" > "$OUT/$1/$2"
 }
+
+# --- Dichiarazione unica dei verdetti dovuti (verdetti.tsv): usata da run.sh (produzione) e da check.sh (controllo).
+VERDETTI="$TOOLS_DIR/verdetti.tsv"
+
+# Percorsi dichiarati (cartella/nome), uno per riga, ordinati; errore se una riga e' malformata o duplicata.
+verdict_declared() {
+  [ -f "$VERDETTI" ] || { echo "dichiarazione dei verdetti assente: analysis/tools/verdetti.tsv" >&2; return 1; }
+  local paths
+  paths="$(awk -F'\t' '
+    /^[ \t]*#/ || /^[ \t]*$/ { next }
+    { if (NF != 2 || $1 == "" || $1 ~ /[\/ ]|^\.+$/ || $2 !~ /^(verdetto|prova-fallita)-[^\/ ]+\.txt$/) { print "riga malformata in verdetti.tsv: " $0 > "/dev/stderr"; bad = 1; next }
+      print $1 "/" $2 }
+    END { exit bad }' "$VERDETTI")" || return 1
+  paths="$(printf '%s\n' "$paths" | LC_ALL=C sort)"
+  if [ -n "$(printf '%s\n' "$paths" | uniq -d)" ]; then echo "voce duplicata in verdetti.tsv: $(printf '%s\n' "$paths" | uniq -d | head -1)" >&2; return 1; fi
+  printf '%s\n' "$paths"
+}
+
+# Confronta l'insieme esatto dei file di verdetto/prova presenti sotto DIR (a qualsiasi profondita', qualunque tipo
+# di file tranne le cartelle) con quello dichiarato. Stampa su stderr ogni file mancante o non dovuto; ritorna 1 se differiscono.
+verdict_set_check() {
+  local dir="$1" decl present rc=0 p
+  decl="$(verdict_declared)" || return 1
+  present="$(cd "$dir" && find . \( -name 'verdetto-*' -o -name 'prova-fallita-*' \) ! -type d | sed 's|^\./||' | LC_ALL=C sort)"
+  while IFS= read -r p; do [ -z "$p" ] || { echo "verdetto dovuto mancante: $p" >&2; rc=1; }; done < <(comm -23 <(printf '%s\n' "$decl") <(printf '%s\n' "$present"))
+  while IFS= read -r p; do [ -z "$p" ] || { echo "file di verdetto non dovuto: $p" >&2; rc=1; }; done < <(comm -13 <(printf '%s\n' "$decl") <(printf '%s\n' "$present"))
+  return $rc
+}
+
+# Errore se CARTELLA/NOME non e' dichiarato (usato da run.sh prima di scrivere un verdetto).
+verdict_require_declared() {
+  local decl; decl="$(verdict_declared)" || fail "dichiarazione dei verdetti non valida"
+  printf '%s\n' "$decl" | grep -qxF -- "$1" || fail "verdetto non dichiarato in analysis/tools/verdetti.tsv: $1"
+}

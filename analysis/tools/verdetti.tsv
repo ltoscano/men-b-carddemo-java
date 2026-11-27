@@ -1,0 +1,16 @@
+# Dichiarazione unica dei file di verdetto dovuti in analysis/tools/out/ (issue #21).
+# Letta da run.sh (che li produce: rifiuta un verdetto non dichiarato e, a fine corsa, ne richiede la presenza esatta)
+# e da check.sh (che confronta l'insieme esatto dei percorsi presenti con questo). Non esiste un altro elenco.
+# Colonne separate da TAB: cartella dello strumento sotto out/, nome del file. Un verdetto vale solo nella cartella
+# dichiarata: lo stesso nome sotto un altro strumento non e' dovuto.
+# Nomi ammessi: verdetto-*.txt (esito del confronto con gli attesi), prova-fallita-*.txt (prova del fallimento di una
+# capacita' unavailable).
+cb2xml	verdetto-layout.txt
+cmt	verdetto-call.txt
+cmt	verdetto-copy.txt
+cobmix	verdetto-copy.txt
+gnucobol	verdetto-compile.txt
+mapa	verdetto-jcl.txt
+proleap	verdetto-copy.txt
+scc	prova-fallita-ripartizione.txt
+scc	verdetto-scc.txt

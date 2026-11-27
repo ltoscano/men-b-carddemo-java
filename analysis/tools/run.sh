@@ -17,6 +17,7 @@ verdict() {
   [ -n "$dir" ] || dir="$check"
   mkdir -p "$OUT/$dir"
   file="$OUT/$dir/verdetto-$check.txt"
+  verdict_require_declared "$dir/verdetto-$check.txt"
   verdict_text "$check" "$tool" > "$file"
   [ "$(tail -1 "$file")" = "VERDETTO: pass" ] || rc=1
   log "verdetto $check ${tool}: $(tail -1 "$file")"
@@ -30,6 +31,7 @@ trial 10-scc
 verdict scc "" scc || true
 # Capacita' ripartizione-codice-commenti: i campioni a mano smentiscono scc. Il fallimento e' la prova richiesta
 # per una capacita' unavailable e si salva come tale (campioni, valori di scc e differenze).
+verdict_require_declared "scc/prova-fallita-ripartizione.txt"
 verdict_text scc-split > "$OUT/scc/prova-fallita-ripartizione.txt"
 log "prova del fallimento (ripartizione codice/commenti): $(tail -1 "$OUT/scc/prova-fallita-ripartizione.txt")"
 
@@ -65,5 +67,8 @@ verdict layout "" cb2xml || true
 # --- JCL
 trial 50-mapa
 verdict jcl "" mapa || true
+
+# L'insieme dei verdetti prodotti deve coincidere con quello dichiarato in verdetti.tsv.
+verdict_set_check "$OUT" || fail "i verdetti presenti non coincidono con analysis/tools/verdetti.tsv"
 
 log "prove completate; i verdetti sono in analysis/tools/out/*/verdetto-*.txt"
