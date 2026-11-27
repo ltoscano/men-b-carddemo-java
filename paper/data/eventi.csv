@@ -110,3 +110,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T13:21:44Z,issue-15,esecutore-fermo,opus,orologio,needs-spec-update: con tag e digest Docker ignora il tag; criterio sull'immagine irrealizzabile
 2026-11-27T13:21:48Z,issue-15,specifica-aggiornata,fable,orologio,voce 28 del registro
 2026-11-27T13:21:48Z,issue-15,esecutore-inizio,opus,orologio,ripresa dopo l'aggiornamento della specifica
+2026-11-27T13:21:53Z,issue-15,esecutore-consuntivo,opus,orologio,prima fase fino al fermo: durata 841 s; 49 chiamate a strumenti; contatore token 203309
