@@ -1,0 +1,3 @@
+controllo: copy proleap
+  proleap: occorrenze COPY riportate per 28 programmi, 252 righe in tutto
+VERDETTO: pass

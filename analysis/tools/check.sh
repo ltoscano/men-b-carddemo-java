@@ -84,3 +84,16 @@ glue_run -- /analysis/tools/glue/lint_pins.py /analysis
 # --- 5. capabilities.tsv coerente con strumenti.md
 log "5. strumenti.md coerente con capabilities.tsv e con le prove eseguite"
 glue_run --mount "$REPO_ROOT/docs/legacy-map:/docs:ro" -- /analysis/tools/glue/check_docs.py /analysis/tools/capabilities.tsv /docs/strumenti.md /analysis/tools/out
+
+log "   prova negativa: una capacita' con stato diverso da quello del documento deve far fallire il controllo"
+glue_run --rw "$tmp" -- -c "
+s = open('/analysis/tools/capabilities.tsv', encoding='utf-8').read()
+t = s.replace('conteggi\tpaper\tavailable', 'conteggi\tpaper\tunavailable')
+assert s != t, 'alterazione non applicata'
+open('/work/capabilities-bad.tsv', 'w', encoding='utf-8').write(t)"
+if glue_run --rw "$tmp" --mount "$REPO_ROOT/docs/legacy-map:/docs:ro" -- /analysis/tools/glue/check_docs.py /work/capabilities-bad.tsv /docs/strumenti.md /analysis/tools/out > "$tmp/neg-doc.out" 2>&1; then
+  fail "il controllo di coerenza NON ha rilevato lo stato alterato"
+fi
+grep -q "conteggi: stato nel documento 'available' diverso da capabilities.tsv 'unavailable'" "$tmp/neg-doc.out" || { cat "$tmp/neg-doc.out" >&2; fail "motivo del fallimento inatteso"; }
+log "   ok"
+log "tools: tutti i controlli superati"
