@@ -125,10 +125,24 @@ Si aggiorna **man mano**, a ogni passo chiuso, non alla fine.
 - **Reale.** Si racconta ciò che è accaduto, compresi errori, vicoli ciechi e interventi umani. Niente esempi ripuliti a posteriori. Costi e tempi così come misurati.
 - **Trasferibile.** A ogni wave, una nota su cosa è specifico di CardDemo e cosa vale per un altro sistema legacy; dove serve, una lista di controllo riusabile.
 - **Solo fatti misurati.** Ogni numero ha una fonte in `paper/data/` o un comando riproducibile. Niente stime presentate come misure; ciò che è stima è etichettato come tale.
-- **Tempi:** per ogni issue registrare in `paper/data/timeline.csv` apertura, inizio lavoro, PR aperta, esito di ogni giro del Validatore, merge (timestamp da GitHub), modello Esecutore, numero di giri, intervento umano, e dove disponibile consumo di token/costo. Distinguere tempo-agente, tempo di attesa del gate umano e tempo di calendario.
+- **Tempi: ogni singolo passaggio ha i suoi.** Alla fine il lettore deve sapere quanto tempo è servito in tutto e dove è andato. Vedi la sezione "Misura dei tempi" qui sotto.
 - **Anche i fallimenti:** PR bocciate, `needs-spec-update`, rework, strumenti scartati. Sono il dato più utile.
 - Tabelle e grafici dove chiariscono (Mermaid per i flussi, figure generate da `paper/data/` per le misure).
 - Il metodo si chiama **MEN-B**; il file resta `mec-b-paper.md` finché l'utente non decide diversamente.
+
+## Misura dei tempi
+
+Vincolo dell'autore: nessun passaggio senza tempi. Il registro è `paper/data/eventi.csv`, in sola aggiunta.
+
+- **Si registra nel momento in cui accade**, con `paper/data/tlog.sh <passo> <evento> <attore> [note]`, che scrive l'ora UTC corrente. Mai ricostruire a memoria.
+- **Ogni turno di lavoro**: all'inizio `tlog.sh <passo> richiesta-autore autore`, alla fine `tlog.sh <passo> risposta-consegnata fable`. L'intervallo tra una risposta consegnata e la richiesta successiva è tempo di attesa umano.
+- **Ogni passo** ha `inizio` e `fine`. Ogni lancio di Esecutore o Validatore ha inizio, fine, modello, token ed esito; il comando si avvolge tra due chiamate a `tlog.sh`.
+- **Issue e PR**: apertura, etichette, PR aperta, merge si leggono dai timestamp di GitHub (fonte `github`) e si esportano nel registro alla chiusura di ogni issue.
+- **Colonna `fonte`**: `orologio` (registrato dal vivo), `git`, `github`, `file` (data di un file), `log-strumento`. Un tempo ricostruito a posteriori dichiara la fonte e, se è solo un limite, lo dice nelle note.
+- **Ciò che non è stato misurato si scrive "non misurato"**, non si stima. Vale anche per il lavoro dell'autore fatto fuori sessione.
+- **Tempo perso** (blocchi, tentativi falliti, rework) si registra come gli altri: è parte del totale.
+- Nel paper ogni passo riporta la propria durata, e la sezione 6.1 dà il totale distinto in: lavoro degli agenti, attesa e lavoro dell'autore, tempo perso, tempo di calendario.
+- Comandi non interattivi lanciati da script (Codex compreso) vanno avviati con `< /dev/null`: senza, `codex exec` può restare in attesa di input all'infinito.
 
 ## Azioni che richiedono conferma esplicita
 

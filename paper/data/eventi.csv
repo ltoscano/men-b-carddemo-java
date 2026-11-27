@@ -1,0 +1,19 @@
+timestamp_utc,passo,evento,attore,fonte,note
+2026-11-27T08:49:22Z,P0,inizio,autore,file,clone locale di CardDemo (data di creazione della cartella): primo istante documentato
+2026-11-27T08:50:34Z,P0,documento-metodo,autore,file,ultima modifica di paper/articolo-metodo-greenfield-brownfield.md
+2026-11-27T09:03:08Z,P0,fine,autore,file,ultima modifica di paper/piano-migrazione-carddemo-java.md; il tempo di scrittura dei due documenti prima delle 08:49 non e' noto
+2026-11-27T09:03:08Z,P1-P3,inizio,fable,file,limite inferiore: l'inizio esatto della sessione non e' stato registrato
+2026-11-27T09:17:30Z,P4,repository-creato,github,github,createdAt del repository
+2026-11-27T09:17:41Z,P1-P3,fine,fable,git,commit 5280306: contesto CLAUDE.md; ricognizione strumenti; scheletro del paper. Comprende le attese dell'autore
+2026-11-27T09:17:41Z,P4,fine,fable,git,primo push riuscito dopo il rifiuto per protezione email
+2026-11-27T09:21:06Z,P5,piano-v1-scritto,fable,file,creazione di docs/piano-wave.md
+2026-11-27T09:21:16Z,P5,contestazione-inizio,codex,orologio,piano v1 e 8 bozze di issue
+2026-11-27T09:27:42Z,P5,contestazione-fine,codex,orologio,23 rilievi di cui 5 bloccanti; 152899 token; modello gpt-6.1-sol
+2026-11-27T09:30:05Z,P5,fine,fable,git,commit 092cbb5: piano v2 e sezione 5.0 del paper
+2026-11-27T09:30:21Z,P6,inizio,fable,git,limite inferiore: riscrittura delle 16 specifiche dopo l'approvazione dell'autore
+2026-11-27T09:38:42Z,P6,licenza,fable,git,commit f5f619a; a questo punto le 16 specifiche v2 erano scritte
+2026-11-27T09:38:44Z,P7,contestazione-inizio,codex,orologio,specifiche di #1 e #13: primo tentativo
+2026-11-27T09:48:51Z,P6,issue-prima-creata,github,github,createdAt di #1
+2026-11-27T09:49:35Z,P6,fine,github,github,createdAt di #16
+2026-11-27T09:58:43Z,P7,contestazione-fallita,fable,orologio,Codex fermo in attesa di input da tastiera fin dall'avvio: 1199 s persi; processo terminato
+2026-11-27T09:59:29Z,P7,contestazione-inizio,codex,orologio,specifiche di #1 e #13: secondo tentativo con stdin chiuso
