@@ -1,0 +1,11 @@
+.git
+.github
+**/target/
+legacy/
+paper/
+docs/
+.idea/
+.vscode/
+*.iml
+.env
+.DS_Store
