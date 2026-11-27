@@ -92,9 +92,9 @@ impronte() {
       echo "${f%.sysin} $b ${s%% *}" || exit 1
     done' > "$2"
 }
-coerenza() { # coerenza [TABELLA] [PROVE] [ATTESI] [OSSERVAZIONI] [OSSERVATI] [SCHEDE] [IMPRONTE]
+coerenza() { # coerenza [TABELLA] [PROVE] [ATTESI] [OSSERVAZIONI] [OSSERVATI] [SCHEDE] [IMPRONTE] [JCL]
   bash "$DIR/mvswait-coerenza.sh" "${1:-$TAB}" "${2:-$PROVE}" "${3:-$ATT}" "${4:-$OSS}" "${5:-$OSSD}" \
-    "${6:-$tmp/obs/schede}" "${7:-$tmp/impronte}" "$JCL"
+    "${6:-$tmp/obs/schede}" "${7:-$tmp/impronte}" "${8:-$JCL}"
 }
 
 log "M1. MVSWAIT: casi rieseguiti in una cartella nuova (limite operativo 3 s per esecuzione)"
@@ -249,6 +249,16 @@ expect_fail "--sysin con una cartella" "esegui.sh: --sysin: file assente o illeg
 expect_fail "--sysin con un percorso relativo" "esegui.sh: --sysin ammette solo un percorso assoluto: 'S1.sysin'" sysin_diretto --sysin S1.sysin
 expect_fail "--sysin senza file" "esegui.sh: --sysin senza file" sysin_diretto --sysin
 expect_fail "--sysin ripetuto" "esegui.sh: --sysin ripetuto" sysin_diretto --sysin /s/S1.sysin --sysin /s/S2.sysin
+# Scheda dentro la cartella di lavoro del programma: esegui.sh la pulisce prima di leggere la scheda, quindi
+# la scheda risulta assente (il programma non parte con un ingresso che sta per sparire).
+sysin_in_lavoro() {
+  local d="$tmp/in-lavoro"
+  clean_dir "$d"
+  mkdir -p "$d/lavoro-COBSWAIT" && cp "$tmp/obs/schede/S1.sysin" "$d/lavoro-COBSWAIT/S1.sysin" || fail "preparazione fallita"
+  orun -v "$d:/out" -v "$BUILD_OUT/bin:/oracle-bin:ro" -e ORACLE_TIMEOUT_RUN=3 \
+    -- timeout -k 10 60 sh /oracle/esegui.sh /out COBSWAIT --sysin /out/lavoro-COBSWAIT/S1.sysin
+}
+expect_fail "--sysin con una scheda dentro la cartella di lavoro" "esegui.sh: --sysin: file assente o illeggibile: '/out/lavoro-COBSWAIT/S1.sysin'" sysin_in_lavoro
 cp "$ORACLE_ROOT/esegui.sh" "$tmp/esegui-ignora.sh" || fail "copia di esegui.sh fallita"
 mutate "$tmp/esegui-ignora.sh" 's#< "\$ingresso" >#< /dev/null >#g'
 MVSWAIT_ESEGUI="$tmp/esegui-ignora.sh" MVSWAIT_OUT_DIR="$tmp/ignora" bash "$DIR/mvswait-run.sh" > "$tmp/ignora.log" 2>&1 \
@@ -324,6 +334,8 @@ expect_fail "mvswait-run.sh con sed (scheda dal JCL) che restituisce 42" "scheda
 raggiunto "$tmp/ra-sed/res/registro" sed 42
 expect_fail "mvswait-run.sh con mv (rapporto del caso) che restituisce 42" "esecuzione dei casi di MVSWAIT fallita" run_avvolto mv mv=42
 raggiunto "$tmp/ra-mv/res/registro" mv 42
+expect_fail "mvswait-run.sh con mkdir (cartella del caso) che restituisce 42" "esecuzione dei casi di MVSWAIT fallita" run_avvolto mkdir mkdir=42
+raggiunto "$tmp/ra-mkdir/res/registro" mkdir 42
 impronte_avvolte() { # impronte_avvolte NOME COMANDO=MODO: impronte delle schede di M1 con il comando avvolto
   local d="$tmp/ia-$1" s="$2" c m
   clean_dir "$d"
@@ -405,6 +417,50 @@ cp "$tmp/impronte" "$tmp/i1"; mutate "$tmp/i1" 's/^S2 81 /S2 82 /'
 expect_fail "impronta di S2 con un byte in piu'" "S2: la scheda ha 82 byte invece di 81" coerenza "" "" "" "" "" "" "$tmp/i1"
 cp "$OSS" "$tmp/s1.tsv"; mutate "$tmp/s1.tsv" 's/^O1	COBSWAIT	vuoto	/S1	COBSWAIT	vuoto	/'
 expect_fail "osservazione con il nome di un caso ricavato (S1)" "osservazioni: S1 e anche un caso ricavato dal sorgente" coerenza "" "" "" "$tmp/s1.tsv"
+# Controlli di forma della coerenza, uno per riga: QUALE (posizione dell'argomento di coerenza: 1 tabella,
+# 2 casi, 4 osservazioni, 7 impronte) | espressione sed sulla copia | motivo atteso.
+FORMA="1|s/^classe	da	a	/classe	inizio	a	/|tabella: intestazione diversa da quella attesa
+1|s/	bit alto acceso: .*$//|tabella: riga con 5 colonne invece di 6
+1|s/^L	/V	/|tabella: classe ripetuta: V
+1|s/^L	/l	/|tabella: nome di classe non valido: l
+1|s/^L	80000000	/L	8000000G	/|tabella L: estremi non validi
+1|s/^L	80000000	FFFFFFFF	/L	FFFFFFFF	80000000	/|tabella L: da maggiore di a
+1|s/	arresto-97	/	abend	/|tabella L: esito non valido: abend
+1|s/	MVSWAIT.asm 20-23; ASMWAIT.mac 19	/		/|tabella L: righe del sorgente o motivo assenti
+2|s/^caso	programma	ingresso	classe$/caso	programma	argomento	classe/|casi: intestazione diversa da quella attesa
+2|s/^D00000001	/D00000000	/|casi: caso ripetuto: D00000000
+2|s/^D00000001	WAITPRB	00000001	/D00000001	WAITPRB	0000001	/|D00000001: argomento non valido
+2|s/^S1	COBSWAIT	/S1	COBSWAIX	/|S1: programma non valido: COBSWAIX
+2|s/^S1	COBSWAIT	jcl	/S1	COBSWAIT	jcl:ABC	/|S1: ingresso non valido per COBSWAIT: jcl:ABC
+2|s/^S2	COBSWAIT	jcl:12345678	V$/S2	COBSWAIT	jcl:12345678/|casi: riga con 3 colonne invece di 4
+4|s/^caso	programma	ingresso	previsione$/caso	programma	ingresso/|osservazioni: intestazione diversa da quella attesa
+4|s/^O2	/O1	/|osservazioni: caso ripetuto: O1
+4|s/^O2	COBSWAIT	/O2	WAITPRB	/|osservazioni: O2: programma diverso da COBSWAIT
+4|s/^O2	COBSWAIT	testo:3600	/O2	COBSWAIT	testo:3601	/|osservazioni: O2: scheda diversa dal testo dichiarato
+4|s/^O2	COBSWAIT	testo:3600	/O2	COBSWAIT	vuoto	/|osservazioni: O2: la scheda non e vuota
+4|s/^O2	COBSWAIT	testo:3600	/O2	COBSWAIT	riga:3600	/|osservazioni: O2: ingresso non valido: riga:3600
+7|s/^\(S1 81 \)[0-9a-f]*$/\1xyz/|impronte: riga non valida: S1 81 xyz
+7|/^S1 /d|S1: impronta della scheda assente"
+i=0
+while IFS='|' read -r quale expr motivo; do
+  i=$((i + 1))
+  case "$quale" in 1) src="$TAB" ;; 2) src="$PROVE" ;; 4) src="$OSS" ;; 7) src="$tmp/impronte" ;; *) fail "FORMA: posizione $quale" ;; esac
+  cp "$src" "$tmp/forma$i" || fail "copia per la prova di forma $i fallita"
+  mutate "$tmp/forma$i" "$expr"
+  set -- "" "" "" "" "" "" ""
+  case "$quale" in 1) set -- "$tmp/forma$i" ;; 2) set -- "" "$tmp/forma$i" ;; 4) set -- "" "" "" "$tmp/forma$i" ;; 7) set -- "" "" "" "" "" "" "$tmp/forma$i" ;; esac
+  expect_fail "coerenza, forma: $motivo" "$motivo" coerenza "$@"
+done <<< "$FORMA"
+# JCL alterato: riga 26 tolta; prime 8 colonne non numeriche (con la scheda della corsa alterata allo stesso modo).
+cp "$JCL" "$tmp/jcl-corto"; mutate "$tmp/jcl-corto" '26,$d'
+expect_fail "coerenza: JCL senza la riga 26" "JCL: riga 26 assente o vuota" coerenza "" "" "" "" "" "" "" "$tmp/jcl-corto"
+cp "$JCL" "$tmp/jcl-x"; mutate "$tmp/jcl-x" 's/^00003600/0000360X/'
+mkdir -p "$tmp/sch-x"; cp "$tmp/obs/schede"/* "$tmp/sch-x/"; mutate "$tmp/sch-x/S1.sysin" 's/^00003600/0000360X/'
+expect_fail "coerenza: prime 8 colonne della scheda non numeriche" "S1: le prime 8 colonne della scheda non sono cifre" coerenza "" "" "" "" "" "$tmp/sch-x" "" "$tmp/jcl-x"
+expect_fail "coerenza: riga 26 del JCL che non inizia con 00003600 (caso S2)" "S2: la riga 26 del JCL non inizia con 00003600" coerenza "" "" "" "" "" "$tmp/sch-x" "" "$tmp/jcl-x"
+# Elenco degli attesi che fallisce: ls che restituisce 42 dopo l'output autentico.
+ls_42() ( ls() { command ls "$@"; return 42; }; export -f ls; coerenza )
+expect_fail "coerenza con ls (elenco degli attesi) che restituisce 42" "DIFETTO: cartella degli attesi non elencabile" ls_42
 
 # 6. Residui: i rapporti sani di M1 lasciati nella cartella d'uscita non soddisfano una corsa rotta.
 mkdir -p "$tmp/residuo"; cp -R "$tmp/obs"/. "$tmp/residuo/"

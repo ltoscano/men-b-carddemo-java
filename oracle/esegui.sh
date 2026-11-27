@@ -58,8 +58,14 @@ while [ $# -gt 0 ]; do
 done
 t="${ORACLE_TIMEOUT_RUN:-60}"
 [ -x "$BIN/$nome" ] || { echo "esegui.sh: eseguibile assente: $BIN/$nome" >&2; exit 2; }
+lav="$out/lavoro-$nome"
+rm -rf "$lav" && mkdir -p "$lav" || { echo "esegui.sh: cartella di lavoro non creabile: $lav" >&2; exit 2; }
+# Esito di ls controllato (issue #35): prima si perdeva dentro [ -z "$(ls -A ...)" ].
+vuota="$(ls -A "$lav")" || { echo "esegui.sh: cartella di lavoro non elencabile: $lav" >&2; exit 2; }
+[ -z "$vuota" ] || { echo "esegui.sh: cartella di lavoro non vuota: $lav" >&2; exit 2; }
 # Ingresso standard del programma: vuoto, oppure il file di --sysin. Byte e impronta del file si leggono
-# PRIMA dell'esecuzione, ciascuno con l'esito controllato e il valore validato (issue #36).
+# PRIMA dell'esecuzione, ciascuno con l'esito controllato e il valore validato (issue #36). Il controllo
+# viene dopo la pulizia della cartella di lavoro: un file che stava li' dentro risulta assente.
 ingresso=/dev/null
 if [ "$hasysin" -eq 1 ]; then
   { [ -f "$sysin" ] && [ -r "$sysin" ]; } || { echo "esegui.sh: --sysin: file assente o illeggibile: '$sysin'" >&2; exit 2; }
@@ -72,11 +78,6 @@ if [ "$hasysin" -eq 1 ]; then
   [ "${#sysin_sha}" -eq 64 ] || { echo "esegui.sh: --sysin: impronta non valida: '$sysin_sha'" >&2; exit 2; }
   ingresso="$sysin"
 fi
-lav="$out/lavoro-$nome"
-rm -rf "$lav" && mkdir -p "$lav" || { echo "esegui.sh: cartella di lavoro non creabile: $lav" >&2; exit 2; }
-# Esito di ls controllato (issue #35): prima si perdeva dentro [ -z "$(ls -A ...)" ].
-vuota="$(ls -A "$lav")" || { echo "esegui.sh: cartella di lavoro non elencabile: $lav" >&2; exit 2; }
-[ -z "$vuota" ] || { echo "esegui.sh: cartella di lavoro non vuota: $lav" >&2; exit 2; }
 so="$out/$nome.stdout"; se="$out/$nome.stderr"
 cd "$lav" || exit 2
 # shellcheck disable=SC2086
