@@ -175,3 +175,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T15:00:01Z,issue-21,esecutore-inizio,sonnet,orologio,giro di correzione 2
 2026-11-27T15:00:32Z,pr-30,validazione-fine,fable,orologio,giro 2: BOCCIATA; 1 bloccante (attributi non verificati) e 1 importante
 2026-11-27T15:00:32Z,issue-2,esecutore-inizio,sonnet,orologio,giro di correzione 2
+2026-11-27T15:00:56Z,P15,contestazione-inizio,codex,orologio,bozze di #24 #25 #26
