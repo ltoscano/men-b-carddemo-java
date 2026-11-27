@@ -44,8 +44,6 @@ crun() {
 }
 
 cics_build_images() {
-  # l'immagine condivisa di ProLeap (#1) si costruisce dalla cache con il suo Dockerfile, senza modifiche; poi la nostra
-  with_timeout "$T_BUILD" docker build -q -t "$IMG_PROLEAP" "$DOCKER_DIR/proleap" > /dev/null || fail "build dell'immagine $IMG_PROLEAP fallita"
   with_timeout "$T_BUILD" docker build -q -t "$IMG_CICS" "$CICS_DIR/docker/proleap-cics" > /dev/null || fail "build dell'immagine $IMG_CICS fallita"
 }
 
