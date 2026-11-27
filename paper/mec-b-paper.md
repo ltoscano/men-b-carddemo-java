@@ -96,7 +96,7 @@ Ogni sottosezione segue lo stesso schema, così che il lettore possa rifare il p
 
 Questa sezione racconta ciò che è stato fatto prima di aprire la prima issue, nell'ordine in cui è avvenuto. Tutto si è svolto il 27 novembre 2026 in una sola sessione di lavoro tra l'autore e il pianificatore (Claude Fable 5.2, usato da terminale con Claude Code).
 
-**Passo 1 — Il punto di partenza.** Il lavoro è cominciato con tre cose già presenti in una cartella: una copia del repository CardDemo e due documenti scritti dall'autore. Il primo documento descrive il metodo (issue come coda di specifiche, quattro ruoli); il secondo è una prima idea di piano di migrazione. Entrambi sono nel repository, in `paper/`, così come erano.
+**Passo 1 — Il punto di partenza.** Il lavoro è cominciato con tre cose già presenti in una cartella: una copia del repository CardDemo e due documenti scritti dall'autore. Il primo documento descrive il metodo (issue come coda di specifiche, quattro ruoli); il secondo è una prima idea di piano di migrazione. Entrambi sono nel repository, in `paper/`, così come erano. L'autore non li ha scritti a mano: li ha ottenuti interrogando un'AI, in circa cinque minuti. È un dato utile per chi replica: il materiale di partenza non richiede giorni di preparazione, ma proprio per questo va trattato come una proposta da verificare, ed è ciò che fanno i passi successivi.
 
 **Passo 2 — Un contesto di riferimento per gli agenti.** Un agente non ricorda le sessioni precedenti. Perché ogni sessione parta dalle stesse regole, il pianificatore ha letto i due documenti e li ha condensati in un file, `CLAUDE.md`, che Claude Code carica automaticamente all'avvio. Contiene obiettivo, ruoli, regole non negoziabili, strumenti e criteri di scrittura di questo paper. Nello stesso passo è stata misurata la dimensione del sorgente (Tabella 1).
 
@@ -153,7 +153,7 @@ Il piano è stato quindi riscritto (versione 2, `docs/piano-wave.md`): la prima 
 
 | Passo | Inizio | Fine | Durata | Fonte | Note |
 | --- | --- | --- | ---: | --- | --- |
-| 0. Materiale di partenza (autore) | 08:49:22 | 09:03:08 | ≥ 13 min 46 s | date dei file | limite inferiore: la scrittura dei due documenti può essere cominciata prima |
+| 0. Materiale di partenza (autore) | 08:49:22 | 09:03:08 | 13 min 46 s | date dei file | dal clone di CardDemo all'ultimo salvataggio del piano; i due documenti sono stati generati interrogando un'AI, circa 5 minuti secondo l'autore (dato dichiarato, non misurato) |
 | 1–3. Contesto, strumenti, scheletro del paper | ≥ 09:03:08 | 09:17:41 | ≤ 14 min 33 s | file, git | inizio della sessione non registrato; comprende le attese dell'autore |
 | 4. Repository | — | 09:17:41 | compreso sopra | GitHub, git | |
 | 5. Piano v1, contestazione, piano v2 | 09:17:41 | 09:30:05 | 12 min 24 s | git, orologio | di cui 6 min 26 s di Codex |

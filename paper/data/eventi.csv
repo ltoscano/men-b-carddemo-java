@@ -17,3 +17,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T09:49:35Z,P6,fine,github,github,createdAt di #16
 2026-11-27T09:58:43Z,P7,contestazione-fallita,fable,orologio,Codex fermo in attesa di input da tastiera fin dall'avvio: 1199 s persi; processo terminato
 2026-11-27T09:59:29Z,P7,contestazione-inizio,codex,orologio,specifiche di #1 e #13: secondo tentativo con stdin chiuso
+2026-11-27T10:00:47Z,P7,richiesta-autore,autore,orologio,chiede se deve fare qualcosa
+2026-11-27T10:02:09Z,P0,richiesta-autore,autore,orologio,dichiara: i due documenti di partenza generati interrogando un'AI; circa 5 minuti. Conferma il NOTICE
