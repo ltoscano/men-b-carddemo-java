@@ -190,3 +190,8 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T15:19:00Z,pr-32,codex-inizio,codex,orologio,validazione giro 3 (finale)
 2026-11-27T15:24:29Z,issue-2,esecutore-fine,sonnet,orologio,giro di correzione 2 consegnato; SHA 9304eef; CI verde
 2026-11-27T15:24:32Z,issue-2,esecutore-consuntivo,sonnet,orologio,giro di correzione 2: durata 1417 s; 21 chiamate a strumenti; contatore token 484742 (cumulativo)
+2026-11-27T15:24:33Z,pr-30,codex-inizio,codex,orologio,validazione giro 3 (finale)
+2026-11-27T15:29:47Z,processo,richiesta-autore,autore,orologio,chiede lo stato
+2026-11-27T15:31:26Z,issue-26,esecutore-fermo,sonnet,orologio,needs-spec-update: i controlli nel ciclo Maven girano anche nella build delle immagini e la configurazione non e nel contesto Docker
+2026-11-27T15:31:30Z,issue-26,specifica-aggiornata,fable,orologio,voce 46 del registro
+2026-11-27T15:31:30Z,issue-26,esecutore-inizio,sonnet,orologio,ripresa dopo l'aggiornamento della specifica
