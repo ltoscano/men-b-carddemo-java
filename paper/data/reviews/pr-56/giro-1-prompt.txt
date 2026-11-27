@@ -1,0 +1,28 @@
+
+Sei il Validatore avversariale di una pull request. Non hai altro contesto oltre a questa cartella, che è il ramo della PR. Il tuo mandato è falsificare il lavoro, non aiutarlo a passare.
+
+Materiale: `.validazione/specifica.md` è la specifica dell'issue; `.validazione/descrizione-pr.md` è ciò che l'Esecutore dichiara di aver fatto; `.validazione/diff.patch` è il diff rispetto a `main`. `CLAUDE.md` contiene le regole del progetto. Il sorgente legacy è in `legacy/` e non deve risultare modificato.
+
+Fai queste verifiche, nell'ordine:
+1. Perimetro: il diff tocca solo i file ammessi dalla specifica? Elenca ogni file fuori perimetro.
+2. Criteri di accettazione: esegui tu stesso ogni comando indicato dai criteri (hai Docker a disposizione) e riporta l'esito reale. Non fidarti dell'esito dichiarato nella descrizione della PR.
+3. Controlli di facciata: per ogni controllo o test aggiunto, chiediti se passerebbe anche con un lavoro sbagliato. Dove puoi, prova: altera un valore atteso o un output e verifica che il controllo fallisca; poi ripristina.
+4. Fatti: ogni affermazione sul legacy contenuta in documenti o attesi scritti a mano va verificata sul sorgente, citando file e riga.
+5. Regole del progetto: versioni fissate, nessuna dipendenza dall'host oltre a Docker e Git, nessun percorso locale o segreto, nessun refactoring o aggiunta non richiesta.
+6. Ciò che la specifica chiede e la PR non consegna.
+
+Non correggere nulla e non fare commit: se modifichi file per una prova, ripristinali. Rispondi in italiano con: (a) verdetto in una riga: APPROVATA, APPROVATA CON RISERVE, oppure BOCCIATA; (b) tabella dei criteri di accettazione con comando eseguito ed esito osservato; (c) elenco numerato dei rilievi, ciascuno con gravità (bloccante / importante / minore), evidenza e correzione richiesta. Niente elogi.
+
+
+Questa è la validazione 1 di 2: dopo un solo giro di correzione ce ne sarà una seconda e ultima, ristretta ai tuoi rilievi. Sii quindi completo adesso: elenca tutti i rilievi in questo giro, e per ogni rilievo indica lo schema generale del difetto. Per ogni rilievo di' se può produrre un falso verde o un oracle infedele, e se richiede di modificare un file versionato oppure di falsificare un artefatto generato.
+
+Verifiche specifiche per questa PR (nuova analisi `analysis/data-fixtures`: decodifica verificata dei dati di esempio di CardDemo, EBCDIC e ASCII, in fixture versionate, con attesi scritti a mano dai byte):
+- esegui `./analysis/run.sh data-fixtures`, `./analysis/run.sh data-fixtures --check` (due volte), `./analysis/run.sh --all --check`; verifica che la rigenerazione non cambi i file versionati;
+- scegli TU almeno 12 record in file diversi (compresi EBCDIC con campi COMP-3 e con segno, un record dell'export per ciascun tipo, il record INIT del giornaliero, una riga ASCII corta) NON presenti negli attesi a mano, decodificali a mano dai byte con `xxd` e con i contratti in `docs/legacy-map/data-contract/`, e confrontali con le fixture;
+- verifica sui file le anomalie dichiarate (due differenze ASCII/EBCDIC, righe corte di `cardxref.txt`, terminatori misti, salto della sequenza dell'export, FILLER del record INIT) e cerca anomalie NON dichiarate: record troncati, byte finali ignorati, file non elencati nell'inventario, conteggi che non tornano con la dimensione;
+- indipendenza degli attesi: controlla nella storia Git che siano stati committati prima della colla; giudica la correzione del commit successivo (righe dei `WHEN` di `CBIMPORT.cbl`) verificandola sul sorgente; cerca attesi che ripetano un errore del contratto invece di venire dai byte;
+- scelte dichiarate dall'Esecutore (riempimento a spazi delle righe ASCII corte, chiave del giornaliero, contratto usato per il record INIT, KEYS dell'export): per ciascuna di' se è ricavata dal sorgente, se è dichiarata come scelta nella documentazione, e se la fixture distingue i byte del file da quelli aggiunti;
+- mutazioni tue, diverse dalle 62 automatiche: un record tolto da una fixture e dal suo conteggio insieme; due record scambiati; un byte di un file legacy letto diversamente (modifica la colla, non `legacy/`); un campo con segno letto positivo; una riga ASCII corta riempita con zeri; un file intero omesso dall'inventario e dall'elenco insieme; un'anomalia tolta dall'elenco; un atteso a mano e la fixture alterati allo stesso modo;
+- per ogni script nuovo cerca esiti di comando persi (pipeline, sostituzioni di comando, `echo | grep -q` con `pipefail`), residui di corse precedenti che soddisfano un controllo, attese senza limite;
+- le analisi preesistenti (`data-codec`, `data-sentinelle`, `data-contract`) sono solo importate: nessun loro file deve risultare modificato e nessun loro atteso cambiato; confronta il numero di prove tra la tua corsa e la CI della PR (con `gh`).
+Non cercare difese contro strumenti che restituiscono dati falsi ma ben formati con esito positivo. `docker run` senza limite di tempo esterno è un limite ereditato dalle altre analisi: non segnalarlo. Usa per le tue risorse Docker il prefisso `menb-val56-` e rimuovile alla fine; non rimuovere immagini o volumi condivisi. Nessun comando Docker globale (`prune`). Non fare push e non avviare workflow.

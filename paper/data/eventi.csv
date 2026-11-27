@@ -432,3 +432,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T23:10:38Z,pr-52,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: **BOCCIATA**
 2026-11-27T23:11:10Z,pr-52,rinvio-esecutore,fable,orologio,5 rilievi accolti
 2026-11-27T23:11:16Z,pr-52,correzione-inizio,opus,orologio,giro unico; 5 rilievi
+2026-11-27T23:49:30Z,pr-56,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0
+2026-11-27T23:50:04Z,pr-56,rinvio-esecutore,fable,orologio,7 rilievi accolti
+2026-11-27T23:50:04Z,pr-56,correzione-inizio,opus,orologio,giro unico
