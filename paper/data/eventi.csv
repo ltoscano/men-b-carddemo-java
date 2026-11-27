@@ -406,3 +406,12 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T22:33:07Z,processo,risposta-consegnata,fable,orologio,PR #51 mergiata; #5 affidata; verifica della PR #48 in corso
 2026-11-27T22:38:34Z,pr-48,verifica-fine,fable,orologio,verifica dell'Approvatore conclusa
 2026-11-27T22:39:05Z,pr-48,merge,fable,orologio,PR #48 mergiata dopo due validazioni e verifica dell'Approvatore; chiude #27
+2026-11-27T22:40:04Z,processo,risposta-consegnata,fable,orologio,PR #48 mergiata; specifica della codifica in Java in contestazione
+2026-11-27T22:40:07Z,issue-16,specifica-scritta,fable,orologio,divisa: prima parte; codifica dei campi in Java (nuova issue)
+2026-11-27T22:40:07Z,issue-16a,codex-inizio,codex,orologio,contestazione della specifica della codifica in Java; sola lettura
+2026-11-27T22:42:13Z,issue-36,esecutore-fine,opus,orologio,PR #52 aperta; SHA 5ee7956; criteri dichiarati soddisfatti; 101 prove negative nuove; CI verde dichiarata
+2026-11-27T22:42:18Z,issue-36,esecutore-consuntivo,opus,orologio,durata 4006 s; 163 chiamate a strumenti; contatore token 373642
+2026-11-27T22:42:19Z,pr-52,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T22:43:45Z,issue-16a,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-27T22:44:41Z,issue-54,ready,fable,orologio,specifica pubblicata; 8 rilievi accolti
+2026-11-27T22:44:41Z,issue-54,esecutore-inizio,opus,orologio,affidata
