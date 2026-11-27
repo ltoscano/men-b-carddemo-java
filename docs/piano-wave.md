@@ -33,7 +33,7 @@ flowchart LR
 
 | Wave | Scopo | Issue (ordine di grandezza) | Parallelismo | Si chiude quando |
 | --- | --- | ---: | --- | --- |
-| 0A | Capire il legacy e costruire l'oracle | 17 (erano 12, poi 8 nella prima versione) | parziale | l'oracle rigenera i golden con un comando |
+| 0A | Capire il legacy e costruire l'oracle | 17 (8 nella prima versione del piano, 12 nella seconda) | parziale | l'oracle rigenera i golden con un comando |
 | 0B | Scheletro Java che gira in container | 4 | in parallelo a 0A | `docker compose up` porta su un'applicazione vuota ma sana, CI verde |
 | 1 | Schema e caricamento dati | 13 | alto (una tabella per issue) | i dati di esempio sono in PostgreSQL, verificati contro le fixture |
 | 2 | Pilota: una fetta batch e una online, da capo a fondo | 3–4 | no | due test di parità verdi e template di issue ritarato |
