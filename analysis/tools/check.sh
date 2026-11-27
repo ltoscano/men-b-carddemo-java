@@ -27,6 +27,39 @@ negative() {
   log "   prova negativa ok: $name (atteso alterato -> il controllo fallisce)"
 }
 
+# Percorso, visto dal container, di una cartella dentro $tmp (che sta in analysis/.work, montata in sola lettura su /analysis)
+cont() { echo "/analysis/.work/$(basename "$tmp")/$1"; }
+
+# check_unavailable CAPACITA CANDIDATI CONTROLLI HOSTOUT CONTOUT: per una capacita' unavailable la prova del fallimento
+# deve esistere per ogni candidato, essere un fallimento, coincidere con il ricalcolo e il ricalcolo deve fallire ancora.
+check_unavailable() {
+  local cap="$1" cands="$2" checks="$3" hout="$4" cout="$5" t c f
+  for t in $(echo "$cands" | tr ',' ' '); do
+    f="$(ls "$hout/$t"/prova-fallita-*.txt 2>/dev/null | head -1)"
+    [ -n "$f" ] || { echo "capacita' '$cap' unavailable ma manca la prova del fallimento di '$t' (out/$t/prova-fallita-*.txt)" >&2; return 1; }
+    [ "$(tail -1 "$f")" = "VERDETTO: fail" ] || { echo "la prova salvata per '$t' non e' un fallimento" >&2; return 1; }
+    for c in $(echo "$checks" | tr ',' ' '); do
+      verdict_text "$c" "" --out "$cout" > "$tmp/live.txt"
+      [ "$(tail -1 "$tmp/live.txt")" = "VERDETTO: fail" ] || { echo "capacita' '$cap': i campioni a mano coincidono ora con '$t': non e' piu' unavailable, aggiornare capabilities.tsv e strumenti.md" >&2; return 1; }
+      cmp -s "$f" "$tmp/live.txt" || { echo "la prova salvata in $f differisce dal ricalcolo" >&2; return 1; }
+    done
+  done
+}
+
+# reconcile HOSTOUT CONTOUT: ogni verdetto / prova salvata deve coincidere con quello ricalcolato dagli output
+reconcile() {
+  local hout="$1" cout="$2" f dir name check tool n=0
+  for f in "$hout"/*/verdetto-*.txt "$hout"/*/prova-fallita-*.txt; do
+    dir="$(basename "$(dirname "$f")")"; name="$(basename "$f" .txt)"
+    case "$name" in verdetto-*) check="${name#verdetto-}" ;; prova-fallita-ripartizione) check="scc-split" ;; *) echo "file di verdetto sconosciuto: $f" >&2; return 1 ;; esac
+    case "$dir" in cmt|cobmix|proleap) tool="$dir" ;; *) tool="" ;; esac
+    verdict_text "$check" "$tool" --out "$cout" > "$tmp/re.txt"
+    cmp -s "$f" "$tmp/re.txt" || { echo "verdetto salvato $dir/$name.txt (ultima riga '$(tail -1 "$f")') diverso dal ricalcolato ('$(tail -1 "$tmp/re.txt")')" >&2; return 1; }
+    n=$((n + 1))
+  done
+  echo "   $n verdetti/prove salvati coincidono con il ricalcolo"
+}
+
 # --- 1. capacita' dichiarate e controlli degli strumenti adottati
 log "1. controlli a campione per ogni capacita' dichiarata in capabilities.tsv"
 [ -f "$CAPS" ] || fail "capabilities.tsv assente"
@@ -44,10 +77,8 @@ while IFS=$'\t' read -r cap issues stato tools checks scartati; do
       done
       ;;
     unavailable)
-      log "   capacita' '$cap' (unavailable): prova del fallimento per ogni candidato"
-      for t in $(echo "$scartati" | tr ',' ' '); do
-        ls "$OUT/$t"/prova-fallita*.txt > /dev/null 2>&1 || fail "capacita' '$cap' unavailable ma manca la prova del fallimento di '$t' in out/$t/prova-fallita*.txt"
-      done
+      log "   capacita' '$cap' (unavailable): prova del fallimento per ogni candidato, riproducibile"
+      check_unavailable "$cap" "$scartati" "$checks" "$OUT" /analysis/tools/out || fail "prova del fallimento non valida per '$cap'"
       ;;
     *) fail "stato non valido '$stato' per la capacita' '$cap' (ammessi: available, unavailable)" ;;
   esac
@@ -76,7 +107,7 @@ negative "tracciati: offset di ACCT-CURR-BAL" layout-offset "CVACT01Y.ACCT-CURR-
 negative "tracciati: lunghezza totale di CVTRA05Y" layout-length "CVTRA05Y: lunghezza totale attesa 351" layout
 negative "JCL: programma del passo STEP15 di POSTTRAN" jcl-program "POSTTRAN/STEP15: tipo e programma attesi ('PGM', 'CBTRN03C')" jcl
 negative "JCL: tipo del passo atteso PROC invece di PGM" jcl-type "POSTTRAN/STEP15: tipo e programma attesi ('PROC', 'CBTRN02C')" jcl
-negative "conteggi: campione a mano di CVACT03Y (codice, commenti)" scc-sample "CVACT03Y.cpy: Code atteso 11, scc 5" scc
+negative "conteggi: campione a mano di CVACT03Y (righe vuote)" scc-sample "CVACT03Y.cpy: Blanks atteso 1, scc 0" scc
 negative "JCL: dataset della DD DALYREJS (GDG)" jcl-dd "POSTTRAN/STEP15: DD attese" jcl
 
 # --- 3b. prove negative sull'OUTPUT dello strumento (l'atteso resta quello vero, si altera l'output)
@@ -92,7 +123,7 @@ negative_out() {
   log "   prova negativa ok: $name (output alterato -> il controllo fallisce)"
 }
 negative_out "scc: codice, commenti e vuote dell'aggregato app/cbl azzerati" scc-aggregate-zero "app/cbl: righe 20650 != codice + commenti + vuote" scc
-negative_out "scc: commenti di CVACT03Y azzerati nel CSV per file" scc-file-comments "CVACT03Y.cpy: Code atteso 5, scc 11" scc
+negative_out "scc: commenti di CVACT03Y azzerati nel CSV per file" scc-file-comments "app/cpy: Code dell'aggregato" scc
 negative_out "compilazione: errori di CBSTM03A portati da 39 a 9999 nel TSV (log originale invariato)" compile-count "CBSTM03A: errori nel TSV 9999, nelle diagnostiche salvate 39" compile
 negative_out "JCL: tipo del passo POSTTRAN/STEP15 alterato nell'output (PGM -> PROC)" jcl-type "POSTTRAN/STEP15: tipo e programma attesi ('PGM', 'CBTRN02C'), mapa ('PROC', 'CBTRN02C')" jcl
 
@@ -122,12 +153,30 @@ mkdir -p "$tmp/rerun"
 for t in 10-scc 20-gnucobol 30-cmt 31-cobmix 32-proleap 40-cb2xml 50-mapa; do
   TOOLS_OUT="$tmp/rerun" bash "$TOOLS_DIR/trials/$t.sh" > /dev/null 2>&1 || fail "riesecuzione della prova $t fallita"
 done
-diff -r -x 'verdetto-*' "$tmp/rerun" "$OUT" > "$tmp/rerun.diff" || { head -20 "$tmp/rerun.diff" >&2; fail "output versionati diversi da quelli rigenerati dagli strumenti"; }
+diff -r -x 'verdetto-*' -x 'prova-fallita-*' "$tmp/rerun" "$OUT" > "$tmp/rerun.diff" || { head -20 "$tmp/rerun.diff" >&2; fail "output versionati diversi da quelli rigenerati dagli strumenti"; }
 log "   ok: output rigenerati identici a quelli versionati"
 log "   prova negativa: un output versionato alterato e' diverso da quello rigenerato"
 glue_run --rw "$tmp" -- /analysis/tools/glue/mutate_out.py cmt-call-rename /analysis/tools/out /work/out-diff
-if diff -r -x 'verdetto-*' "$tmp/rerun" "$tmp/out-diff" > /dev/null; then fail "il confronto con la rigenerazione non rileva un output alterato"; fi
+if diff -r -x 'verdetto-*' -x 'prova-fallita-*' "$tmp/rerun" "$tmp/out-diff" > /dev/null; then fail "il confronto con la rigenerazione non rileva un output alterato"; fi
 log "   ok"
+
+# --- 3d. capacita' unavailable e riconciliazione dei verdetti salvati
+log "3d. capacita' unavailable: prove negative"
+glue_run --rw "$tmp" -- /analysis/tools/glue/mutate_out.py drop-evidence /analysis/tools/out /work/out-drop
+if check_unavailable ripartizione-codice-commenti scc scc-split "$tmp/out-drop" "$(cont out-drop)" > "$tmp/neg.out" 2>&1; then fail "PROVA NEGATIVA FALLITA: la prova del fallimento mancante non e' rilevata"; fi
+grep -q "manca la prova del fallimento di 'scc'" "$tmp/neg.out" || { cat "$tmp/neg.out" >&2; fail "motivo inatteso"; }
+log "   prova negativa ok: prova del fallimento assente -> il controllo fallisce"
+glue_run --rw "$tmp" -- /analysis/tools/glue/mutate_out.py scc-split-fixed /analysis/tools/out /work/out-fixed
+if check_unavailable ripartizione-codice-commenti scc scc-split "$tmp/out-fixed" "$(cont out-fixed)" > "$tmp/neg.out" 2>&1; then fail "PROVA NEGATIVA FALLITA: scc 'corretto' non e' rilevato"; fi
+grep -q "i campioni a mano coincidono ora" "$tmp/neg.out" || { cat "$tmp/neg.out" >&2; fail "motivo inatteso"; }
+log "   prova negativa ok: se scc coincidesse con i campioni a mano la capacita' non sarebbe piu' unavailable"
+
+log "3e. i verdetti e le prove salvati coincidono con il ricalcolo"
+reconcile "$OUT" /analysis/tools/out || fail "verdetto salvato incoerente"
+glue_run --rw "$tmp" -- /analysis/tools/glue/mutate_out.py verdict-flip /analysis/tools/out /work/out-flip
+if reconcile "$tmp/out-flip" "$(cont out-flip)" > "$tmp/neg.out" 2>&1; then fail "PROVA NEGATIVA FALLITA: un verdetto salvato alterato non e' rilevato"; fi
+grep -q "verdetto salvato scc/verdetto-scc.txt" "$tmp/neg.out" || { cat "$tmp/neg.out" >&2; fail "motivo inatteso"; }
+log "   prova negativa ok: verdetto salvato 'fail' contro ricalcolo 'pass' -> il controllo fallisce"
 
 # --- 4. versioni fissate
 log "4. immagini con versione fissata"
@@ -140,12 +189,24 @@ glue_run --mount "$REPO_ROOT/docs/legacy-map:/docs:ro" -- /analysis/tools/glue/c
 log "   prova negativa: una capacita' con stato diverso da quello del documento deve far fallire il controllo"
 glue_run --rw "$tmp" -- -c "
 s = open('/analysis/tools/capabilities.tsv', encoding='utf-8').read()
-t = s.replace('conteggi\tpaper\tavailable', 'conteggi\tpaper\tunavailable')
+t = s.replace('conteggi-file-righe-vuote\tpaper\tavailable', 'conteggi-file-righe-vuote\tpaper\tunavailable')
 assert s != t, 'alterazione non applicata'
 open('/work/capabilities-bad.tsv', 'w', encoding='utf-8').write(t)"
 if glue_run --rw "$tmp" --mount "$REPO_ROOT/docs/legacy-map:/docs:ro" -- /analysis/tools/glue/check_docs.py /work/capabilities-bad.tsv /docs/strumenti.md /analysis/tools/out > "$tmp/neg-doc.out" 2>&1; then
   fail "il controllo di coerenza NON ha rilevato lo stato alterato"
 fi
-grep -q "conteggi: stato nel documento 'available' diverso da capabilities.tsv 'unavailable'" "$tmp/neg-doc.out" || { cat "$tmp/neg-doc.out" >&2; fail "motivo del fallimento inatteso"; }
+grep -q "conteggi-file-righe-vuote: stato nel documento 'available' diverso da capabilities.tsv 'unavailable'" "$tmp/neg-doc.out" || { cat "$tmp/neg-doc.out" >&2; fail "motivo del fallimento inatteso"; }
+log "   ok"
+
+log "   prova negativa: il verdetto di un candidato scartato cambiato in 'adottato' nel documento deve far fallire il controllo"
+glue_run --rw "$tmp" --mount "$REPO_ROOT/docs/legacy-map:/docs:ro" -- -c "
+s = open('/docs/strumenti.md', encoding='utf-8').read()
+t = s.replace('| scartato: provato perche\u0301 cmt', '| adottato: provato perche\u0301 cmt').replace('| scartato: provato perché cmt', '| adottato: provato perché cmt')
+assert s != t, 'alterazione non applicata'
+open('/work/strumenti-bad.md', 'w', encoding='utf-8').write(t)"
+if glue_run --rw "$tmp" -- /analysis/tools/glue/check_docs.py /analysis/tools/capabilities.tsv /work/strumenti-bad.md /analysis/tools/out > "$tmp/neg-doc2.out" 2>&1; then
+  fail "il controllo NON ha rilevato un candidato scartato dichiarato adottato"
+fi
+grep -q "cobmix: non e' adottato da nessuna capacita' available" "$tmp/neg-doc2.out" || { cat "$tmp/neg-doc2.out" >&2; fail "motivo del fallimento inatteso"; }
 log "   ok"
 log "tools: tutti i controlli superati"

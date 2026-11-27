@@ -20,7 +20,7 @@ M = {
     "layout-length": ("lengths.tsv", "CVTRA05Y\t350\t", "CVTRA05Y\t351\t"),
     "jcl-program": ("jcl_steps.tsv", "POSTTRAN\tSTEP15\tPGM\tCBTRN02C\t", "POSTTRAN\tSTEP15\tPGM\tCBTRN03C\t"),
     "jcl-type": ("jcl_steps.tsv", "POSTTRAN\tSTEP15\tPGM\t", "POSTTRAN\tSTEP15\tPROC\t"),
-    "scc-sample": ("scc_files.tsv", "app/cpy/CVACT03Y.cpy\t11\t5\t6\t0", "app/cpy/CVACT03Y.cpy\t11\t11\t0\t0"),
+    "scc-sample": ("scc_files.tsv", "app/cpy/CVACT03Y.cpy\t11\t5\t6\t0", "app/cpy/CVACT03Y.cpy\t11\t5\t5\t1"),
     "jcl-dd": ("jcl_dd.tsv", "POSTTRAN\tSTEP15\tDALYREJS\tAWS.M2.CARDDEMO.DALYREJS(+1)", "POSTTRAN\tSTEP15\tDALYREJS\tAWS.M2.CARDDEMO.DALYREJS"),
 }
 

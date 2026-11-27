@@ -2,7 +2,7 @@
 """Controlli a campione: confronta l'output normalizzato di uno strumento con gli attesi scritti a mano.
 
 Uso: compare.py CHECK [TOOL] [--expected DIR] [--out DIR]
-  CHECK: scc | compile | copy | call | layout | jcl
+  CHECK: scc | scc-split | compile | copy | call | layout | jcl
   TOOL : per copy/call, lo strumento (cmt | cobmix | proleap)
 Percorsi (nel container): /analysis/tools/out, /analysis/tools/expected, /analysis/manifest/sources.tsv, /legacy.
 L'ultima riga stampata e' 'VERDETTO: pass' o 'VERDETTO: fail'; il codice di uscita e' 0 solo per pass.
@@ -111,26 +111,49 @@ def check_scc(exp_dir):
         got = dirs.get(d[:-1], {}).get("Files")
         if n != got:
             bad(f"{d}: manifesto {n} file di tipo {t}, scc {got}")
-    # campioni contati a mano: righe, codice, commenti, vuote per file (con le divergenze note dichiarate)
+    # campioni contati a mano: righe totali e righe vuote (capacita' conteggi-file-righe-vuote)
     nsamp = 0
-    for r in read_tsv(f"{exp_dir}/scc_files.tsv"):
-        path = r[0]
-        hand = dict(zip(("Lines", "Code", "Comments", "Blanks"), (int(x) for x in r[1:5])))
+    for path, hand in scc_samples(exp_dir).items():
         if hand["Code"] + hand["Comments"] + hand["Blanks"] != hand["Lines"]:
             bad(f"{path}: il campione a mano non e' coerente (codice + commenti + vuote != righe)")
         if path not in files:
             bad(f"{path}: campione non presente nell'output di scc")
             continue
         got = files[path][1]
-        want = dict(hand)
-        for k, cell in zip(("Code", "Comments", "Blanks"), r[5:8]):
-            if cell != "=":
-                want[k] = int(cell)
-        for k in ("Lines", "Code", "Comments", "Blanks"):
-            if got[k] != want[k]:
-                bad(f"{path}: {k} atteso {want[k]}, scc {got[k]}")
+        for k in ("Lines", "Blanks"):
+            if got[k] != hand[k]:
+                bad(f"{path}: {k} atteso {hand[k]}, scc {got[k]}")
         nsamp += 1
-    note(f"scc: {nsamp} campioni contati a mano (righe, codice, commenti, vuote) confrontati")
+    note(f"scc: {nsamp} campioni contati a mano (righe totali e righe vuote) confrontati")
+
+
+def scc_samples(exp_dir):
+    out = {}
+    for r in read_tsv(f"{exp_dir}/scc_files.tsv"):
+        out[r[0]] = dict(zip(("Lines", "Code", "Comments", "Blanks"), (int(x) for x in r[1:5])))
+    return out
+
+
+def check_scc_split(exp_dir):
+    """Capacita' ripartizione-codice-commenti: i campioni a mano contro scc. Per questa capacita' l'esito
+    atteso e' 'fail' (capacita' unavailable): il fallimento, con campioni e differenze, e' la prova richiesta."""
+    files = {}
+    with open(f"{OUT}/scc/app-by-file.csv", encoding="utf-8", newline="") as f:
+        for r in csv.DictReader(f):
+            files[r["Provider"].replace("/legacy/", "", 1)] = {k: int(r[k]) for k in ("Lines", "Code", "Comments", "Blanks")}
+    ok = 0
+    for path, hand in scc_samples(exp_dir).items():
+        got = files.get(path)
+        if got is None:
+            bad(f"{path}: campione non presente nell'output di scc")
+            continue
+        diffs = [k for k in ("Code", "Comments") if got[k] != hand[k]]
+        note(f"{path}: a mano codice {hand['Code']} commenti {hand['Comments']}; scc codice {got['Code']} commenti {got['Comments']}"
+             f"{'  <- DIFFERENZA' if diffs else ''}")
+        for k in diffs:
+            bad(f"{path}: {k} atteso {hand[k]}, scc {got[k]}")
+        ok += not diffs
+    note(f"{ok} campioni su {len(scc_samples(exp_dir))} coincidono con scc")
 
 
 # ---------------------------------------------------------------- compile
@@ -302,6 +325,8 @@ def main(argv):
     check = args[0]
     if check == "scc":
         check_scc(exp_dir)
+    elif check == "scc-split":
+        check_scc_split(exp_dir)
     elif check == "compile":
         check_compile(exp_dir)
     elif check == "copy":

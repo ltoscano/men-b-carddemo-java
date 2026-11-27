@@ -1,11 +1,12 @@
-# file	righe	codice	commenti	vuote	scc_codice	scc_commenti	scc_vuote
-# Campioni contati a mano leggendo i file. Regole: commento COBOL = colonna 7 uguale a * o /; commento JCL = riga che inizia con //*;
-# commento assembler = * in colonna 1; riga vuota = solo spazi; codice = tutto il resto; righe = codice + commenti + vuote.
-# Le ultime tre colonne dicono cosa deve riportare scc: '=' se coincide con la conta a mano, altrimenti il numero che scc riporta
-# (divergenze note, dichiarate in docs/legacy-map/strumenti.md: se scc cambiasse comportamento il controllo fallirebbe e va riletto).
-app/cpy/CVACT03Y.cpy	11	5	6	0	=	=	=
-app/cpy/CVTRA05Y.cpy	21	15	6	0	=	=	=
-app/cbl/COBSWAIT.cbl	41	13	22	6	=	=	=
-app/jcl/POSTTRAN.jcl	45	22	23	0	=	=	=
-app/cbl/CBACT01C.cbl	430	358	51	21	379	30	=
-app/asm/MVSWAIT.asm	30	14	16	0	30	0	=
+# file	righe	codice	commenti	vuote
+# Campioni contati a mano leggendo i file (valori veri: non vengono mai sostituiti con quelli di uno strumento).
+# Regole: commento COBOL = colonna 7 uguale a * o /; commento JCL = riga che inizia con //*; commento assembler = * in colonna 1;
+# riga vuota = solo spazi; codice = tutto il resto; righe = codice + commenti + vuote.
+# righe e vuote si confrontano con scc nella capacita' conteggi-file-righe-vuote; codice e commenti nella capacita'
+# ripartizione-codice-commenti (controllo scc-split), dove CBACT01C.cbl e MVSWAIT.asm NON coincidono con scc.
+app/cpy/CVACT03Y.cpy	11	5	6	0
+app/cpy/CVTRA05Y.cpy	21	15	6	0
+app/cbl/COBSWAIT.cbl	41	13	22	6
+app/jcl/POSTTRAN.jcl	45	22	23	0
+app/cbl/CBACT01C.cbl	430	358	51	21
+app/asm/MVSWAIT.asm	30	14	16	0

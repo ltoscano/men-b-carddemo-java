@@ -1,8 +1,11 @@
 # Capacita' del banco di prova e loro stato. Leggibile da macchina; coerente con la tabella finale di docs/legacy-map/strumenti.md (lo verifica check.sh).
 # stato: available = c'e' uno strumento adottato e i controlli a campione di quella capacita' passano; unavailable = tutti i candidati provati e scartati
-# controlli: elenco CHECK[:strumento] eseguiti da check.sh; candidati: per unavailable, strumenti con la prova del fallimento in out/<strumento>/prova-fallita*.txt
+# controlli: per available, elenco CHECK[:strumento] che check.sh esegue e che devono passare; per unavailable, i controlli che devono FALLIRE
+#            (la prova del fallimento: out/<candidato>/prova-fallita-*.txt, rigenerata e confrontata da check.sh)
+# candidati: per unavailable, strumenti provati e scartati
 capacita	issue_dipendenti	stato	strumenti	controlli	candidati
-conteggi	paper	available	scc	scc	-
+conteggi-file-righe-vuote	paper	available	scc	scc	-
+ripartizione-codice-commenti	nessuna	unavailable	-	scc-split	scc
 compilazione-diagnostica	#4	available	gnucobol	compile	-
 grafi-copy-call	#2	available	proleap+cmt	copy:proleap,call:cmt	-
 tracciati-copybook	#3	available	cb2xml	layout	-

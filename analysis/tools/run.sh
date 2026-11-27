@@ -17,7 +17,8 @@ verdict() {
   [ -n "$dir" ] || dir="$check"
   mkdir -p "$OUT/$dir"
   file="$OUT/$dir/verdetto-$check.txt"
-  { echo "controllo: $check ${tool}"; glue_run -- /analysis/tools/glue/compare.py $check $tool; } > "$file" 2>&1 || rc=$?
+  verdict_text "$check" "$tool" > "$file"
+  [ "$(tail -1 "$file")" = "VERDETTO: pass" ] || rc=1
   log "verdetto $check ${tool}: $(tail -1 "$file")"
   return $rc
 }
@@ -27,6 +28,10 @@ mkdir -p "$OUT"
 # --- conteggi
 trial 10-scc
 verdict scc "" scc || true
+# Capacita' ripartizione-codice-commenti: i campioni a mano smentiscono scc. Il fallimento e' la prova richiesta
+# per una capacita' unavailable e si salva come tale (campioni, valori di scc e differenze).
+verdict_text scc-split > "$OUT/scc/prova-fallita-ripartizione.txt"
+log "prova del fallimento (ripartizione codice/commenti): $(tail -1 "$OUT/scc/prova-fallita-ripartizione.txt")"
 
 # --- compilazione e diagnostica
 trial 20-gnucobol

@@ -1,0 +1,13 @@
+controllo: scc-split 
+  app/cpy/CVACT03Y.cpy: a mano codice 5 commenti 6; scc codice 5 commenti 6
+  app/cpy/CVTRA05Y.cpy: a mano codice 15 commenti 6; scc codice 15 commenti 6
+  app/cbl/COBSWAIT.cbl: a mano codice 13 commenti 22; scc codice 13 commenti 22
+  app/jcl/POSTTRAN.jcl: a mano codice 22 commenti 23; scc codice 22 commenti 23
+  app/cbl/CBACT01C.cbl: a mano codice 358 commenti 51; scc codice 379 commenti 30  <- DIFFERENZA
+  app/asm/MVSWAIT.asm: a mano codice 14 commenti 16; scc codice 30 commenti 0  <- DIFFERENZA
+  4 campioni su 6 coincidono con scc
+  PROBLEMA: app/cbl/CBACT01C.cbl: Code atteso 358, scc 379
+  PROBLEMA: app/cbl/CBACT01C.cbl: Comments atteso 51, scc 30
+  PROBLEMA: app/asm/MVSWAIT.asm: Code atteso 14, scc 30
+  PROBLEMA: app/asm/MVSWAIT.asm: Comments atteso 16, scc 0
+VERDETTO: fail

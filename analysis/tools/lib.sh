@@ -49,6 +49,15 @@ tool_run() {
     -v "$LEGACY_VOL:/legacy:ro" -v "$outdir:/out" ${extra[@]+"${extra[@]}"} "$image" "$@"
 }
 
+# Testo di un verdetto: intestazione + output del confronto (stesso formato dei file verdetto-*.txt / prova-fallita-*.txt).
+# Uso: verdict_text CHECK [TOOL] [argomenti di compare.py, es. --out DIR]   (il codice di uscita del confronto e' ignorato)
+verdict_text() {
+  local check="$1" tool="${2:-}"
+  shift; [ $# -eq 0 ] || shift
+  echo "controllo: $check ${tool}"
+  glue_run -- /analysis/tools/glue/compare.py $check $tool "$@" 2>&1 || true
+}
+
 # Registra versione e comando eseguito (testo semplice, versionato) per uno strumento.
 record() { # record TOOL FILE TEXT
   mkdir -p "$OUT/$1"

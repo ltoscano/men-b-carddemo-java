@@ -24,6 +24,23 @@ def main(kind, src, dst):
     if os.path.exists(dst):
         shutil.rmtree(dst)
     shutil.copytree(src, dst)
+    if kind == "drop-evidence":          # manca la prova del fallimento della capacita' unavailable
+        os.remove(os.path.join(dst, "scc/prova-fallita-ripartizione.txt"))
+        return 0
+    if kind == "scc-split-fixed":        # scc "corretto": i due campioni divergenti riportano i valori a mano
+        path = os.path.join(dst, "scc/app-by-file.csv")
+        text = open(path, encoding="utf-8").read()
+        for old, new in (("CBACT01C.cbl,430,379,30,21,", "CBACT01C.cbl,430,358,51,21,"), ("MVSWAIT.asm,30,30,0,0,", "MVSWAIT.asm,30,14,16,0,")):
+            assert old in text, old
+            text = text.replace(old, new, 1)
+        open(path, "w", encoding="utf-8").write(text)
+        return 0
+    if kind == "verdict-flip":           # verdetto salvato che contraddice il ricalcolo
+        path = os.path.join(dst, "scc/verdetto-scc.txt")
+        text = open(path, encoding="utf-8").read()
+        assert "VERDETTO: pass" in text
+        open(path, "w", encoding="utf-8").write(text.replace("VERDETTO: pass", "VERDETTO: fail"))
+        return 0
     name, old, new = M[kind]
     path = os.path.join(dst, name)
     text = open(path, encoding="utf-8").read()

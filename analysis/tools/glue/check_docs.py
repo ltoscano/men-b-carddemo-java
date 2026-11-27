@@ -111,6 +111,24 @@ def main(caps_path, doc_path, out_dir):
                 if not v.lower().startswith("adottato"):
                     errors.append(f"{c[0]}: lo strumento '{t}' e' available ma il suo verdetto e' '{v}'")
 
+    # verdetto di ogni candidato provato rispetto all'esito delle sue prove (non solo di quelli nelle capacita' available)
+    adopted = {t for c in caps if c[2] == "available" for t in c[3].split("+")}
+    for name, d in CANDIDATES:
+        v = verdict_of.get(d, "")
+        if not v or v.lower().startswith("non provato"):
+            continue
+        low = v.lower()
+        if d in adopted and not low.startswith("adottato"):
+            errors.append(f"{name}: usato in una capacita' available, il verdetto deve iniziare con 'adottato' (trovato '{v[:30]}')")
+        if d not in adopted and not low.startswith("scartato"):
+            errors.append(f"{name}: non e' adottato da nessuna capacita' available, il verdetto deve iniziare con 'scartato' (trovato '{v[:30]}')")
+        results = []
+        for f in sorted(os.listdir(os.path.join(out_dir, d))):
+            if f.startswith("verdetto-"):
+                results.append(open(os.path.join(out_dir, d, f), encoding="utf-8").read().strip().split("\n")[-1])
+        if low.startswith("adottato") and results and all(r == "VERDETTO: fail" for r in results):
+            errors.append(f"{name}: verdetto 'adottato' ma tutte le sue prove hanno esito fail")
+
     for e in errors:
         print("DOC: " + e, file=sys.stderr)
     if not errors:
