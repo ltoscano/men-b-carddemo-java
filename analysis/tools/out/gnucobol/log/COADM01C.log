@@ -1,0 +1,34 @@
+/legacy/app/cbl/COADM01C.cbl:60: error: DFHAID: No such file or directory
+   58 |        COPY CSUSR01Y...
+   59 | ..
+   60 >        COPY DFHAID...
+   61 |        COPY DFHBMSCA...
+   62 | ..
+/legacy/app/cbl/COADM01C.cbl:61: error: DFHBMSCA: No such file or directory
+   59 | ..
+   60 |        COPY DFHAID...
+   61 >        COPY DFHBMSCA...
+   62 | ..
+   63 |       *----------------------------------------------------------------*..
+/legacy/app/cpy/COADM02Y.cpy:55: warning: larger REDEFINES used [-Wdialect]
+   53 | 004940     10 FILLER                        PIC X(08) VALUE 'COTRTUPC'. 0..
+   54 | 005000*    Option added for Db2 v1 release end                          0..
+   55 > 005100   05 CDEMO-ADMIN-OPTIONS REDEFINES CDEMO-ADMIN-OPTIONS-DATA.     0..
+   56 | 005200     10 CDEMO-ADMIN-OPT OCCURS 9 TIMES.                           0..
+   57 | 005300       15 CDEMO-ADMIN-OPT-NUM           PIC 9(02).                0..
+/legacy/app/cpy/COADM02Y.cpy:55: note: size of 'CDEMO-ADMIN-OPTIONS' larger than size of 'CDEMO-ADMIN-OPTIONS-DATA' [-Wdialect]
+/legacy/app/cbl/COADM01C.cbl:69: error: 'EIBCALEN' is not defined
+   67 |        01  DFHCOMMAREA...
+   68 |          05  LK-COMMAREA                           PIC X(01)..
+   69 >              OCCURS 1 TO 32767 TIMES DEPENDING ON EIBCALEN...
+   70 | ..
+   71 |       *----------------------------------------------------------------*..
+/legacy/app/cbl/COADM01C.cbl: in paragraph 'MAIN-PARA':
+/legacy/app/cbl/COADM01C.cbl:77: error: 'EXEC' is a reserved word, but isn't supported
+   75 |        MAIN-PARA...
+   76 | ..
+   77 >            EXEC CICS
+   78 |                 HANDLE CONDITION PGMIDERR(PGMIDERR-ERR-PARA)
+   79 |            END-EXEC
+/legacy/app/cbl/COADM01C.cbl:77: error: syntax error, unexpected Identifier, expecting SECTION or .
+/legacy/app/cbl/COADM01C.cbl:77: note: 'EXEC' is not a statement

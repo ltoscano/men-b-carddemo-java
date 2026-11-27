@@ -1,0 +1,13 @@
+# chiave	valore
+# Conteggi di baseline misurati con wc -l il 27 nov 2026 (CLAUDE.md): righe totali (codice + commenti + vuote) e numero di file.
+cartella:app/cbl:file	31
+cartella:app/cbl:righe	20650
+cartella:app/cpy:file	30
+cartella:app/cpy:righe	2786
+cartella:app/jcl:file	38
+cartella:app/jcl:righe	2429
+# Estensioni (minuscole) dei file sotto app/ per cui scc non ha una definizione di linguaggio e che quindi non conta;
+# il resto del manifesto sotto app/ deve essere contato. Letto dall'elenco dei file del manifesto.
+non_contate:estensioni	bms,ca7,controlm,csd,ctl,dat,dbd,dcl,gitkeep,init,mac,psb
+# File sotto app/ che scc salta pur riconoscendone l'estensione (contenuto binario EBCDIC con byte NUL).
+non_contato:file	app/data/EBCDIC/AWS.M2.CARDDEMO.EXPORT.DATA.PS

@@ -1,0 +1,122 @@
+/legacy/app/cbl/COTRN01C.cbl:71: error: DFHAID: No such file or directory
+   69 |        COPY CVTRA05Y.
+   70 | 
+   71 >        COPY DFHAID.
+   72 |        COPY DFHBMSCA.
+   73 | 
+/legacy/app/cbl/COTRN01C.cbl:72: error: DFHBMSCA: No such file or directory
+   70 | 
+   71 |        COPY DFHAID.
+   72 >        COPY DFHBMSCA.
+   73 | 
+   74 |       *----------------------------------------------------------------*
+/legacy/app/cbl/COTRN01C.cbl:80: error: 'EIBCALEN' is not defined
+   78 |        01  DFHCOMMAREA.
+   79 |          05  LK-COMMAREA                           PIC X(01)
+   80 >              OCCURS 1 TO 32767 TIMES DEPENDING ON EIBCALEN.
+   81 | 
+   82 |       *----------------------------------------------------------------*
+/legacy/app/cbl/COTRN01C.cbl: in paragraph 'MAIN-PARA':
+/legacy/app/cbl/COTRN01C.cbl:112: error: 'EIBAID' is not defined
+  110 |                ELSE
+  111 |                    PERFORM RECEIVE-TRNVIEW-SCREEN
+  112 >                    EVALUATE EIBAID
+  113 |                        WHEN DFHENTER
+  114 |                            PERFORM PROCESS-ENTER-KEY
+/legacy/app/cbl/COTRN01C.cbl:113: error: 'DFHENTER' is not defined
+  111 |                    PERFORM RECEIVE-TRNVIEW-SCREEN
+  112 |                    EVALUATE EIBAID
+  113 >                        WHEN DFHENTER
+  114 |                            PERFORM PROCESS-ENTER-KEY
+  115 |                        WHEN DFHPF3
+/legacy/app/cbl/COTRN01C.cbl:115: error: 'DFHPF3' is not defined
+  113 |                        WHEN DFHENTER
+  114 |                            PERFORM PROCESS-ENTER-KEY
+  115 >                        WHEN DFHPF3
+  116 |                            IF CDEMO-FROM-PROGRAM = SPACES OR LOW-VALUES
+  117 |                                MOVE 'COMEN01C' TO CDEMO-TO-PROGRAM
+/legacy/app/cbl/COTRN01C.cbl:123: error: 'DFHPF4' is not defined
+  121 |                            END-IF
+  122 |                            PERFORM RETURN-TO-PREV-SCREEN
+  123 >                        WHEN DFHPF4
+  124 |                            PERFORM CLEAR-CURRENT-SCREEN
+  125 |                        WHEN DFHPF5
+/legacy/app/cbl/COTRN01C.cbl:125: error: 'DFHPF5' is not defined
+  123 |                        WHEN DFHPF4
+  124 |                            PERFORM CLEAR-CURRENT-SCREEN
+  125 >                        WHEN DFHPF5
+  126 |                            MOVE 'COTRN00C' TO CDEMO-TO-PROGRAM
+  127 |                            PERFORM RETURN-TO-PREV-SCREEN
+/legacy/app/cbl/COTRN01C.cbl:136: error: 'EXEC' is a reserved word, but isn't supported
+  134 |            END-IF
+  135 | 
+  136 >            EXEC CICS RETURN
+  137 |                      TRANSID (WS-TRANID)
+  138 |                      COMMAREA (CARDDEMO-COMMAREA)
+/legacy/app/cbl/COTRN01C.cbl:136: error: syntax error, unexpected Identifier
+/legacy/app/cbl/COTRN01C.cbl:137: error: 'TRANSID' is not defined
+  135 | 
+  136 |            EXEC CICS RETURN
+  137 >                      TRANSID (WS-TRANID)
+  138 |                      COMMAREA (CARDDEMO-COMMAREA)
+  139 |            END-EXEC.
+/legacy/app/cbl/COTRN01C.cbl:137: error: 'TRANSID' is not a file name
+/legacy/app/cbl/COTRN01C.cbl:137: error: syntax error, unexpected (, expecting AT END or END or NOT AT END
+/legacy/app/cbl/COTRN01C.cbl:139: error: 'END-EXEC' is a reserved word, but isn't supported
+  137 |                      TRANSID (WS-TRANID)
+  138 |                      COMMAREA (CARDDEMO-COMMAREA)
+  139 >            END-EXEC.
+  140 | 
+  141 |       *----------------------------------------------------------------*
+/legacy/app/cbl/COTRN01C.cbl: in paragraph 'RETURN-TO-PREV-SCREEN':
+/legacy/app/cbl/COTRN01C.cbl:205: error: 'EXEC' is a reserved word, but isn't supported
+  203 |            MOVE WS-PGMNAME   TO CDEMO-FROM-PROGRAM
+  204 |            MOVE ZEROS        TO CDEMO-PGM-CONTEXT
+  205 >            EXEC CICS
+  206 |                XCTL PROGRAM(CDEMO-TO-PROGRAM)
+  207 |                COMMAREA(CARDDEMO-COMMAREA)
+/legacy/app/cbl/COTRN01C.cbl:205: error: 'EXEC' cannot be used here
+/legacy/app/cbl/COTRN01C.cbl:205: error: 'CICS' is not defined
+/legacy/app/cbl/COTRN01C.cbl:206: error: 'XCTL' is not defined
+  204 |            MOVE ZEROS        TO CDEMO-PGM-CONTEXT
+  205 |            EXEC CICS
+  206 >                XCTL PROGRAM(CDEMO-TO-PROGRAM)
+  207 |                COMMAREA(CARDDEMO-COMMAREA)
+  208 |            END-EXEC.
+/legacy/app/cbl/COTRN01C.cbl:206: error: syntax error, unexpected PROGRAM
+/legacy/app/cbl/COTRN01C.cbl:208: error: 'END-EXEC' is a reserved word, but isn't supported
+  206 |                XCTL PROGRAM(CDEMO-TO-PROGRAM)
+  207 |                COMMAREA(CARDDEMO-COMMAREA)
+  208 >            END-EXEC.
+  209 | 
+  210 |       *----------------------------------------------------------------*
+/legacy/app/cbl/COTRN01C.cbl: in paragraph 'SEND-TRNVIEW-SCREEN':
+/legacy/app/cbl/COTRN01C.cbl:219: error: 'EXEC' is a reserved word, but isn't supported
+  217 |            MOVE WS-MESSAGE TO ERRMSGO OF COTRN1AO
+  218 | 
+  219 >            EXEC CICS SEND
+  220 |                      MAP('COTRN1A')
+  221 |                      MAPSET('COTRN01')
+/legacy/app/cbl/COTRN01C.cbl:220: error: 'MAP' is not defined
+  218 | 
+  219 |            EXEC CICS SEND
+  220 >                      MAP('COTRN1A')
+  221 |                      MAPSET('COTRN01')
+  222 |                      FROM(COTRN1AO)
+/legacy/app/cbl/COTRN01C.cbl:220: error: 'MAP' is not a CD name
+/legacy/app/cbl/COTRN01C.cbl:220: error: syntax error, unexpected (, expecting EGI or EMI or ESI or Identifier
+/legacy/app/cbl/COTRN01C.cbl:225: error: 'END-EXEC' is a reserved word, but isn't supported
+  223 |                      ERASE
+  224 |                      CURSOR
+  225 >            END-EXEC.
+  226 | 
+  227 |       *----------------------------------------------------------------*
+/legacy/app/cbl/COTRN01C.cbl: in paragraph 'RECEIVE-TRNVIEW-SCREEN':
+/legacy/app/cbl/COTRN01C.cbl:232: error: 'EXEC' is a reserved word, but isn't supported
+  230 |        RECEIVE-TRNVIEW-SCREEN.
+  231 | 
+  232 >            EXEC CICS RECEIVE
+  233 |                      MAP('COTRN1A')
+  234 |                      MAPSET('COTRN01')
+/legacy/app/cbl/COTRN01C.cbl:232: error: syntax error, unexpected Identifier, expecting SECTION or .
+/legacy/app/cbl/COTRN01C.cbl:232: note: 'EXEC' is not a statement

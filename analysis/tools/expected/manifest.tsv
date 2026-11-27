@@ -1,0 +1,25 @@
+# Attesi sul manifesto (scritti a mano; i conteggi dei programmi vengono dalla baseline misurata e dai nomi dei file).
+# chiave	valore
+file_totali	329
+cobol_totali	44
+cobol_sotto_app_cbl	31
+cobol_estensione_maiuscola	5
+tipo:app/cbl/CBSTM03A.CBL	cobol
+tipo:app/cbl/CBSTM03B.CBL	cobol
+tipo:app/cbl/CBACT01C.cbl	cobol
+tipo:app/cpy/CVEXPORT.cpy	copybook
+tipo:app/app-authorization-ims-db2-mq/cpy/PADFLPCB.CPY	copybook
+tipo:app/jcl/CREASTMT.JCL	jcl
+tipo:app/jcl/POSTTRAN.jcl	jcl
+tipo:app/proc/TRANREPT.prc	proc
+tipo:app/bms/COACTUP.bms	bms
+tipo:app/asm/COBDATFT.asm	asm
+tipo:app/maclib/ASMWAIT.mac	macro
+tipo:app/csd/CARDDEMO.CSD	csd
+tipo:app/scheduler/CardDemo.controlm	scheduler
+tipo:app/app-authorization-ims-db2-mq/ims/DLIGSAMP.PSB	ims
+tipo:app/data/EBCDIC/AWS.M2.CARDDEMO.ACCTDATA.PS	data
+tipo:scripts/run_full_batch.sh	script
+tipo:README.md	doc
+tipo:samples/jcl/BATCMP.jcl	sample
+tipo:.gitignore	other

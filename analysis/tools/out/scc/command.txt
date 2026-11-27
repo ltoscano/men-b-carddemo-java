@@ -1,0 +1,2 @@
+docker run --rm -v $LEGACY:/legacy:ro menb-analysis-scc:4.1.0 --no-config --no-gitignore --no-ignore --no-scc-ignore --no-cocomo --no-complexity --by-file -f csv /legacy/app    (CSV per file, righe ordinate)
+docker run --rm -v $LEGACY:/legacy:ro menb-analysis-scc:4.1.0 --no-config --no-gitignore --no-ignore --no-scc-ignore --no-cocomo --no-complexity /legacy/app/<cbl|cpy|jcl>    (riepilogo per cartella, formato csv)

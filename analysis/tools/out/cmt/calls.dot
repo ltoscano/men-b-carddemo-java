@@ -1,0 +1,25 @@
+digraph cobol_calls {
+  rankdir=LR;
+  node [shape=box];
+  "CBACT01C" -> "CEE3ABD" [label="CALL", color=red];
+  "CBACT01C" -> "COBDATFT" [label="CALL", color=red];
+  "CBACT02C" -> "CEE3ABD" [label="CALL", color=red];
+  "CBACT03C" -> "CEE3ABD" [label="CALL", color=red];
+  "CBACT04C" -> "CEE3ABD" [label="CALL", color=red];
+  "CBCUS01C" -> "CEE3ABD" [label="CALL", color=red];
+  "CBEXPORT" -> "CEE3ABD" [label="CALL", color=red];
+  "CBIMPORT" -> "CEE3ABD" [label="CALL", color=red];
+  "CBSTM03A" -> "CBSTM03B" [label="CALL"];
+  "CBSTM03A" -> "CEE3ABD" [label="CALL", color=red];
+  "CBTRN01C" -> "CEE3ABD" [label="CALL", color=red];
+  "CBTRN02C" -> "CEE3ABD" [label="CALL", color=red];
+  "CBTRN03C" -> "CEE3ABD" [label="CALL", color=red];
+  "COBSWAIT" -> "MVSWAIT" [label="CALL", color=red];
+  "CORPT00C" -> "CSUTLDTC" [label="CALL"];
+  "COTRN02C" -> "CSUTLDTC" [label="CALL"];
+  "CSUTLDTC" -> "CEEDAYS" [label="CALL", color=red];
+  "CEE3ABD" [style=filled, fillcolor="#ffdddd"];
+  "CEEDAYS" [style=filled, fillcolor="#ffdddd"];
+  "COBDATFT" [style=filled, fillcolor="#ffdddd"];
+  "MVSWAIT" [style=filled, fillcolor="#ffdddd"];
+}

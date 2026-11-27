@@ -1,0 +1,4 @@
+# programma	riga	chiamato	nota
+# Trasferimenti di controllo CICS (EXEC CICS XCTL) letti dal sorgente. Servono solo a dichiarare se lo strumento li vede: non e' un controllo che fallisce.
+COSGN00C	231	COADM01C	EXEC CICS XCTL PROGRAM ('COADM01C')
+COSGN00C	236	COMEN01C	EXEC CICS XCTL PROGRAM ('COMEN01C')

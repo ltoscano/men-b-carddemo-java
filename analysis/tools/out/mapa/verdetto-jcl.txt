@@ -1,0 +1,3 @@
+controllo: jcl 
+  mapa: passi attesi verificati 10 (tipo e programma), DD di POSTTRAN/STEP15 verificate 9
+VERDETTO: pass

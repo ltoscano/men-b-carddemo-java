@@ -1,0 +1,5 @@
+# programma	riga	chiamato	nota
+# CALL statici letti dal sorgente (righe di commento escluse). Per CBACT01C e' elencata anche CEE3ABD (servizio runtime LE, non nel repository).
+CBACT01C	231	COBDATFT	CALL 'COBDATFT'
+CBACT01C	410	CEE3ABD	CALL 'CEE3ABD'
+COBSWAIT	38	MVSWAIT	CALL 'MVSWAIT'

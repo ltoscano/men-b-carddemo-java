@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CVEXPORT.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--******************************************************************-->
+    <!--* CVEXPORT.cpy - CardDemo Multi-Record Export Layout-->
+    <!--* This copybook defines the structure for export records-->
+    <!--* stored in the sequential export file for branch migration-->
+    <!--* Total Record Length: 500 bytes-->
+    <!--* Storage Optimization: COMP/COMP-3 fields for numeric data-->
+    <!--* Enhancement: Multiple record types with REDEFINES structure-->
+    <!--******************************************************************-->
+    <item level="01" name="EXPORT-RECORD" position="1" storage-length="500" display-length="519" display-position="1">
+        <item level="05" name="EXPORT-REC-TYPE" picture="X(1)" position="1" storage-length="1" display-length="1" display-position="1"/>
+        <item level="05" name="EXPORT-TIMESTAMP" picture="X(26)" position="2" storage-length="26" display-length="26" display-position="2" redefined="true"/>
+        <item level="05" name="EXPORT-TIMESTAMP-R" position="2" storage-length="26" display-length="26" display-position="2" redefines="EXPORT-TIMESTAMP">
+            <item level="10" name="EXPORT-DATE" picture="X(10)" position="2" storage-length="10" display-length="10" display-position="2"/>
+            <item level="10" name="EXPORT-DATE-TIME-SEP" picture="X(1)" position="12" storage-length="1" display-length="1" display-position="12"/>
+            <item level="10" name="EXPORT-TIME" picture="X(15)" position="13" storage-length="15" display-length="15" display-position="13"/>
+        </item>
+        <item level="05" name="EXPORT-SEQUENCE-NUM" picture="9(9)" usage="computational" position="28" storage-length="4" display-length="9" numeric="COBOL_NUMERIC" display-position="28"/>
+        <item level="05" name="EXPORT-BRANCH-ID" picture="X(4)" position="32" storage-length="4" display-length="4" display-position="37"/>
+        <item level="05" name="EXPORT-REGION-CODE" picture="X(5)" position="36" storage-length="5" display-length="5" display-position="41"/>
+        <item level="05" name="EXPORT-RECORD-DATA" picture="X(460)" position="41" storage-length="460" display-length="460" display-position="46" redefined="true"/>
+        <!--******************************************************************-->
+        <!--* Customer Record Structure - From CVCUS01Y.cpy-->
+        <!--******************************************************************-->
+        <item level="05" name="EXPORT-CUSTOMER-DATA" position="41" storage-length="460" display-length="466" display-position="46" redefines="EXPORT-RECORD-DATA">
+            <item level="10" name="EXP-CUST-ID" picture="9(09)" usage="computational" position="41" storage-length="4" display-length="9" numeric="COBOL_NUMERIC" display-position="46"/>
+            <item level="10" name="EXP-CUST-FIRST-NAME" picture="X(25)" position="45" storage-length="25" display-length="25" display-position="55"/>
+            <item level="10" name="EXP-CUST-MIDDLE-NAME" picture="X(25)" position="70" storage-length="25" display-length="25" display-position="80"/>
+            <item level="10" name="EXP-CUST-LAST-NAME" picture="X(25)" position="95" storage-length="25" display-length="25" display-position="105"/>
+            <item level="10" name="EXP-CUST-ADDR-LINES" occurs="3" position="120" storage-length="50" display-length="50" display-position="130">
+                <item level="15" name="EXP-CUST-ADDR-LINE" picture="X(50)" position="120" storage-length="50" display-length="50" display-position="130"/>
+            </item>
+            <item level="10" name="EXP-CUST-ADDR-STATE-CD" picture="X(02)" position="270" storage-length="2" display-length="2" display-position="280"/>
+            <item level="10" name="EXP-CUST-ADDR-COUNTRY-CD" picture="X(03)" position="272" storage-length="3" display-length="3" display-position="282"/>
+            <item level="10" name="EXP-CUST-ADDR-ZIP" picture="X(10)" position="275" storage-length="10" display-length="10" display-position="285"/>
+            <item level="10" name="EXP-CUST-PHONE-NUMS" occurs="2" position="285" storage-length="15" display-length="15" display-position="295">
+                <item level="15" name="EXP-CUST-PHONE-NUM" picture="X(15)" position="285" storage-length="15" display-length="15" display-position="295"/>
+            </item>
+            <item level="10" name="EXP-CUST-SSN" picture="9(09)" position="315" storage-length="9" display-length="9" numeric="COBOL_NUMERIC" display-position="325"/>
+            <item level="10" name="EXP-CUST-GOVT-ISSUED-ID" picture="X(20)" position="324" storage-length="20" display-length="20" display-position="334"/>
+            <item level="10" name="EXP-CUST-DOB-YYYY-MM-DD" picture="X(10)" position="344" storage-length="10" display-length="10" display-position="354"/>
+            <item level="10" name="EXP-CUST-EFT-ACCOUNT-ID" picture="X(10)" position="354" storage-length="10" display-length="10" display-position="364"/>
+            <item level="10" name="EXP-CUST-PRI-CARD-HOLDER-IND" picture="X(01)" position="364" storage-length="1" display-length="1" display-position="374"/>
+            <item level="10" name="EXP-CUST-FICO-CREDIT-SCORE" picture="9(03)" usage="computational-3" position="365" storage-length="2" display-length="3" numeric="COBOL_NUMERIC" display-position="375"/>
+            <item level="10" name="FILLER" picture="X(134)" position="367" storage-length="134" display-length="134" display-position="378"/>
+        </item>
+        <!--******************************************************************-->
+        <!--* Account Record Structure - From CVACT01Y.cpy-->
+        <!--******************************************************************-->
+        <item level="05" name="EXPORT-ACCOUNT-DATA" position="41" storage-length="460" display-length="474" display-position="46" redefines="EXPORT-RECORD-DATA">
+            <item level="10" name="EXP-ACCT-ID" picture="9(11)" position="41" storage-length="11" display-length="11" numeric="COBOL_NUMERIC" display-position="46"/>
+            <item level="10" name="EXP-ACCT-ACTIVE-STATUS" picture="X(01)" position="52" storage-length="1" display-length="1" display-position="57"/>
+            <item level="10" name="EXP-ACCT-CURR-BAL" picture="S9(10)V99" usage="computational-3" position="53" storage-length="7" display-length="12" scale="2" numeric="COBOL_NUMERIC" display-position="58"/>
+            <item level="10" name="EXP-ACCT-CREDIT-LIMIT" picture="S9(10)V99" position="60" storage-length="12" display-length="12" scale="2" numeric="COBOL_NUMERIC" display-position="70"/>
+            <item level="10" name="EXP-ACCT-CASH-CREDIT-LIMIT" picture="S9(10)V99" usage="computational-3" position="72" storage-length="7" display-length="12" scale="2" numeric="COBOL_NUMERIC" display-position="82"/>
+            <item level="10" name="EXP-ACCT-OPEN-DATE" picture="X(10)" position="79" storage-length="10" display-length="10" display-position="94"/>
+            <item level="10" name="EXP-ACCT-EXPIRAION-DATE" picture="X(10)" position="89" storage-length="10" display-length="10" display-position="104"/>
+            <item level="10" name="EXP-ACCT-REISSUE-DATE" picture="X(10)" position="99" storage-length="10" display-length="10" display-position="114"/>
+            <item level="10" name="EXP-ACCT-CURR-CYC-CREDIT" picture="S9(10)V99" position="109" storage-length="12" display-length="12" scale="2" numeric="COBOL_NUMERIC" display-position="124"/>
+            <item level="10" name="EXP-ACCT-CURR-CYC-DEBIT" picture="S9(10)V99" usage="computational" position="121" storage-length="8" display-length="12" scale="2" numeric="COBOL_NUMERIC" display-position="136"/>
+            <item level="10" name="EXP-ACCT-ADDR-ZIP" picture="X(10)" position="129" storage-length="10" display-length="10" display-position="148"/>
+            <item level="10" name="EXP-ACCT-GROUP-ID" picture="X(10)" position="139" storage-length="10" display-length="10" display-position="158"/>
+            <item level="10" name="FILLER" picture="X(352)" position="149" storage-length="352" display-length="352" display-position="168"/>
+        </item>
+        <!--******************************************************************-->
+        <!--* Transaction Record Structure - From CVTRA05Y.cpy-->
+        <!--******************************************************************-->
+        <item level="05" name="EXPORT-TRANSACTION-DATA" position="41" storage-length="460" display-length="470" display-position="46" redefines="EXPORT-RECORD-DATA">
+            <item level="10" name="EXP-TRAN-ID" picture="X(16)" position="41" storage-length="16" display-length="16" display-position="46"/>
+            <item level="10" name="EXP-TRAN-TYPE-CD" picture="X(02)" position="57" storage-length="2" display-length="2" display-position="62"/>
+            <item level="10" name="EXP-TRAN-CAT-CD" picture="9(04)" position="59" storage-length="4" display-length="4" numeric="COBOL_NUMERIC" display-position="64"/>
+            <item level="10" name="EXP-TRAN-SOURCE" picture="X(10)" position="63" storage-length="10" display-length="10" display-position="68"/>
+            <item level="10" name="EXP-TRAN-DESC" picture="X(100)" position="73" storage-length="100" display-length="100" display-position="78"/>
+            <item level="10" name="EXP-TRAN-AMT" picture="S9(09)V99" usage="computational-3" position="173" storage-length="6" display-length="11" scale="2" numeric="COBOL_NUMERIC" display-position="178"/>
+            <item level="10" name="EXP-TRAN-MERCHANT-ID" picture="9(09)" usage="computational" position="179" storage-length="4" display-length="9" numeric="COBOL_NUMERIC" display-position="189"/>
+            <item level="10" name="EXP-TRAN-MERCHANT-NAME" picture="X(50)" position="183" storage-length="50" display-length="50" display-position="198"/>
+            <item level="10" name="EXP-TRAN-MERCHANT-CITY" picture="X(50)" position="233" storage-length="50" display-length="50" display-position="248"/>
+            <item level="10" name="EXP-TRAN-MERCHANT-ZIP" picture="X(10)" position="283" storage-length="10" display-length="10" display-position="298"/>
+            <item level="10" name="EXP-TRAN-CARD-NUM" picture="X(16)" position="293" storage-length="16" display-length="16" display-position="308"/>
+            <item level="10" name="EXP-TRAN-ORIG-TS" picture="X(26)" position="309" storage-length="26" display-length="26" display-position="324"/>
+            <item level="10" name="EXP-TRAN-PROC-TS" picture="X(26)" position="335" storage-length="26" display-length="26" display-position="350"/>
+            <item level="10" name="FILLER" picture="X(140)" position="361" storage-length="140" display-length="140" display-position="376"/>
+        </item>
+        <!--******************************************************************-->
+        <!--* Card Cross-Reference Structure - From CVACT03Y.cpy-->
+        <!--******************************************************************-->
+        <item level="05" name="EXPORT-CARD-XREF-DATA" position="41" storage-length="460" display-length="463" display-position="46" redefines="EXPORT-RECORD-DATA">
+            <item level="10" name="EXP-XREF-CARD-NUM" picture="X(16)" position="41" storage-length="16" display-length="16" display-position="46"/>
+            <item level="10" name="EXP-XREF-CUST-ID" picture="9(09)" position="57" storage-length="9" display-length="9" numeric="COBOL_NUMERIC" display-position="62"/>
+            <item level="10" name="EXP-XREF-ACCT-ID" picture="9(11)" usage="computational" position="66" storage-length="8" display-length="11" numeric="COBOL_NUMERIC" display-position="71"/>
+            <item level="10" name="FILLER" picture="X(427)" position="74" storage-length="427" display-length="427" display-position="82"/>
+        </item>
+        <!--******************************************************************-->
+        <!--* Card Record Structure - From CVACT02Y.cpy-->
+        <!--******************************************************************-->
+        <item level="05" name="EXPORT-CARD-DATA" position="41" storage-length="460" display-length="464" display-position="46" redefines="EXPORT-RECORD-DATA">
+            <item level="10" name="EXP-CARD-NUM" picture="X(16)" position="41" storage-length="16" display-length="16" display-position="46"/>
+            <item level="10" name="EXP-CARD-ACCT-ID" picture="9(11)" usage="computational" position="57" storage-length="8" display-length="11" numeric="COBOL_NUMERIC" display-position="62"/>
+            <item level="10" name="EXP-CARD-CVV-CD" picture="9(03)" usage="computational" position="65" storage-length="2" display-length="3" numeric="COBOL_NUMERIC" display-position="73"/>
+            <item level="10" name="EXP-CARD-EMBOSSED-NAME" picture="X(50)" position="67" storage-length="50" display-length="50" display-position="76"/>
+            <item level="10" name="EXP-CARD-EXPIRAION-DATE" picture="X(10)" position="117" storage-length="10" display-length="10" display-position="126"/>
+            <item level="10" name="EXP-CARD-ACTIVE-STATUS" picture="X(01)" position="127" storage-length="1" display-length="1" display-position="136"/>
+            <item level="10" name="FILLER" picture="X(373)" position="128" storage-length="373" display-length="373" display-position="137"/>
+        </item>
+    </item>
+</copybook>

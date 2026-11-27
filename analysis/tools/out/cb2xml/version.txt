@@ -1,0 +1,1 @@
+cb2xml 1.01.08 (jar della release GitHub, SHA-256 verificato in fase di build)

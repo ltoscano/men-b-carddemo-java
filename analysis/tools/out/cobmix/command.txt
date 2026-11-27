@@ -1,0 +1,3 @@
+per ogni programma P di app/cbl/ (elenco dal manifesto):
+cobmix --code-file /legacy/<P> --copy-path /legacy/app/cpy --copy-path /legacy/app/cpy-bms --graphs copybook --format json --output /out/<P>
+(il JSON grezzo, di centinaia di nodi per programma, non e' versionato: si conserva la forma normalizzata in copy.tsv)

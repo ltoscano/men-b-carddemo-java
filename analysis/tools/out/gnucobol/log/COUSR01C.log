@@ -1,0 +1,116 @@
+/legacy/app/cbl/COUSR01C.cbl:55: error: DFHAID: No such file or directory
+   53 |        COPY CSUSR01Y.
+   54 | 
+   55 >        COPY DFHAID.
+   56 |        COPY DFHBMSCA.
+   57 |       *COPY DFHATTR.
+/legacy/app/cbl/COUSR01C.cbl:56: error: DFHBMSCA: No such file or directory
+   54 | 
+   55 |        COPY DFHAID.
+   56 >        COPY DFHBMSCA.
+   57 |       *COPY DFHATTR.
+   58 | 
+/legacy/app/cbl/COUSR01C.cbl:65: error: 'EIBCALEN' is not defined
+   63 |        01  DFHCOMMAREA.
+   64 |          05  LK-COMMAREA                           PIC X(01)
+   65 >              OCCURS 1 TO 32767 TIMES DEPENDING ON EIBCALEN.
+   66 | 
+   67 |       *----------------------------------------------------------------*
+/legacy/app/cbl/COUSR01C.cbl: in paragraph 'MAIN-PARA':
+/legacy/app/cbl/COUSR01C.cbl:90: error: 'EIBAID' is not defined
+   88 |                ELSE
+   89 |                    PERFORM RECEIVE-USRADD-SCREEN
+   90 >                    EVALUATE EIBAID
+   91 |                        WHEN DFHENTER
+   92 |                            PERFORM PROCESS-ENTER-KEY
+/legacy/app/cbl/COUSR01C.cbl:91: error: 'DFHENTER' is not defined
+   89 |                    PERFORM RECEIVE-USRADD-SCREEN
+   90 |                    EVALUATE EIBAID
+   91 >                        WHEN DFHENTER
+   92 |                            PERFORM PROCESS-ENTER-KEY
+   93 |                        WHEN DFHPF3
+/legacy/app/cbl/COUSR01C.cbl:93: error: 'DFHPF3' is not defined
+   91 |                        WHEN DFHENTER
+   92 |                            PERFORM PROCESS-ENTER-KEY
+   93 >                        WHEN DFHPF3
+   94 |                            MOVE 'COADM01C' TO CDEMO-TO-PROGRAM
+   95 |                            PERFORM RETURN-TO-PREV-SCREEN
+/legacy/app/cbl/COUSR01C.cbl:96: error: 'DFHPF4' is not defined
+   94 |                            MOVE 'COADM01C' TO CDEMO-TO-PROGRAM
+   95 |                            PERFORM RETURN-TO-PREV-SCREEN
+   96 >                        WHEN DFHPF4
+   97 |                            PERFORM CLEAR-CURRENT-SCREEN
+   98 |                        WHEN OTHER
+/legacy/app/cbl/COUSR01C.cbl:107: error: 'EXEC' is a reserved word, but isn't supported
+  105 |            END-IF
+  106 | 
+  107 >            EXEC CICS RETURN
+  108 |                      TRANSID (WS-TRANID)
+  109 |                      COMMAREA (CARDDEMO-COMMAREA)
+/legacy/app/cbl/COUSR01C.cbl:107: error: syntax error, unexpected Identifier
+/legacy/app/cbl/COUSR01C.cbl:108: error: 'TRANSID' is not defined
+  106 | 
+  107 |            EXEC CICS RETURN
+  108 >                      TRANSID (WS-TRANID)
+  109 |                      COMMAREA (CARDDEMO-COMMAREA)
+  110 |            END-EXEC.
+/legacy/app/cbl/COUSR01C.cbl:108: error: 'TRANSID' is not a file name
+/legacy/app/cbl/COUSR01C.cbl:108: error: syntax error, unexpected (, expecting AT END or END or NOT AT END
+/legacy/app/cbl/COUSR01C.cbl:110: error: 'END-EXEC' is a reserved word, but isn't supported
+  108 |                      TRANSID (WS-TRANID)
+  109 |                      COMMAREA (CARDDEMO-COMMAREA)
+  110 >            END-EXEC.
+  111 | 
+  112 |       *----------------------------------------------------------------*
+/legacy/app/cbl/COUSR01C.cbl: in paragraph 'RETURN-TO-PREV-SCREEN':
+/legacy/app/cbl/COUSR01C.cbl:175: error: 'EXEC' is a reserved word, but isn't supported
+  173 |       *    MOVE SEC-USR-TYPE TO CDEMO-USER-TYPE
+  174 |            MOVE ZEROS        TO CDEMO-PGM-CONTEXT
+  175 >            EXEC CICS
+  176 |                XCTL PROGRAM(CDEMO-TO-PROGRAM)
+  177 |                COMMAREA(CARDDEMO-COMMAREA)
+/legacy/app/cbl/COUSR01C.cbl:175: error: 'EXEC' cannot be used here
+/legacy/app/cbl/COUSR01C.cbl:175: error: 'CICS' is not defined
+/legacy/app/cbl/COUSR01C.cbl:176: error: 'XCTL' is not defined
+  174 |            MOVE ZEROS        TO CDEMO-PGM-CONTEXT
+  175 |            EXEC CICS
+  176 >                XCTL PROGRAM(CDEMO-TO-PROGRAM)
+  177 |                COMMAREA(CARDDEMO-COMMAREA)
+  178 |            END-EXEC.
+/legacy/app/cbl/COUSR01C.cbl:176: error: syntax error, unexpected PROGRAM
+/legacy/app/cbl/COUSR01C.cbl:178: error: 'END-EXEC' is a reserved word, but isn't supported
+  176 |                XCTL PROGRAM(CDEMO-TO-PROGRAM)
+  177 |                COMMAREA(CARDDEMO-COMMAREA)
+  178 >            END-EXEC.
+  179 | 
+  180 | 
+/legacy/app/cbl/COUSR01C.cbl: in paragraph 'SEND-USRADD-SCREEN':
+/legacy/app/cbl/COUSR01C.cbl:190: error: 'EXEC' is a reserved word, but isn't supported
+  188 |            MOVE WS-MESSAGE TO ERRMSGO OF COUSR1AO
+  189 | 
+  190 >            EXEC CICS SEND
+  191 |                      MAP('COUSR1A')
+  192 |                      MAPSET('COUSR01')
+/legacy/app/cbl/COUSR01C.cbl:191: error: 'MAP' is not defined
+  189 | 
+  190 |            EXEC CICS SEND
+  191 >                      MAP('COUSR1A')
+  192 |                      MAPSET('COUSR01')
+  193 |                      FROM(COUSR1AO)
+/legacy/app/cbl/COUSR01C.cbl:191: error: 'MAP' is not a CD name
+/legacy/app/cbl/COUSR01C.cbl:191: error: syntax error, unexpected (, expecting EGI or EMI or ESI or Identifier
+/legacy/app/cbl/COUSR01C.cbl:196: error: 'END-EXEC' is a reserved word, but isn't supported
+  194 |                      ERASE
+  195 |                      CURSOR
+  196 >            END-EXEC.
+  197 | 
+  198 |       *----------------------------------------------------------------*
+/legacy/app/cbl/COUSR01C.cbl: in paragraph 'RECEIVE-USRADD-SCREEN':
+/legacy/app/cbl/COUSR01C.cbl:203: error: 'EXEC' is a reserved word, but isn't supported
+  201 |        RECEIVE-USRADD-SCREEN.
+  202 | 
+  203 >            EXEC CICS RECEIVE
+  204 |                      MAP('COUSR1A')
+  205 |                      MAPSET('COUSR01')
+/legacy/app/cbl/COUSR01C.cbl:203: error: syntax error, unexpected Identifier, expecting SECTION or .
+/legacy/app/cbl/COUSR01C.cbl:203: note: 'EXEC' is not a statement

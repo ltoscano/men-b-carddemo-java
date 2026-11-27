@@ -1,0 +1,170 @@
+/legacy/app/cpy/CUSTREC.cpy:6: error: unbalanced parentheses
+    4 |        01  CUSTOMER-RECORD.
+    5 |            05  CUST-ID                                 PIC 9(09).
+    6 > 		     05  CUST-FIRST-NAME                         PIC X(25).
+    7 | 		     05  CUST-MIDDLE-NAME                        PIC X(25).
+    8 | 		     05  CUST-LAST-NAME                          PIC X(25).
+/legacy/app/cpy/CUSTREC.cpy:6: error: invalid PICTURE character '2'
+/legacy/app/cpy/CUSTREC.cpy:7: error: syntax error, unexpected Literal
+    5 |            05  CUST-ID                                 PIC 9(09).
+    6 | 		     05  CUST-FIRST-NAME                         PIC X(25).
+    7 > 		     05  CUST-MIDDLE-NAME                        PIC X(25).
+    8 | 		     05  CUST-LAST-NAME                          PIC X(25).
+    9 | 		     05  CUST-ADDR-LINE-1                        PIC X(50).
+/legacy/app/cpy/CUSTREC.cpy:7: error: unbalanced parentheses
+/legacy/app/cpy/CUSTREC.cpy:7: error: invalid PICTURE character '2'
+/legacy/app/cpy/CUSTREC.cpy:8: error: unbalanced parentheses
+    6 | 		     05  CUST-FIRST-NAME                         PIC X(25).
+    7 | 		     05  CUST-MIDDLE-NAME                        PIC X(25).
+    8 > 		     05  CUST-LAST-NAME                          PIC X(25).
+    9 | 		     05  CUST-ADDR-LINE-1                        PIC X(50).
+   10 | 		     05  CUST-ADDR-LINE-2                        PIC X(50).
+/legacy/app/cpy/CUSTREC.cpy:8: error: invalid PICTURE character '2'
+/legacy/app/cpy/CUSTREC.cpy:9: error: unbalanced parentheses
+    7 | 		     05  CUST-MIDDLE-NAME                        PIC X(25).
+    8 | 		     05  CUST-LAST-NAME                          PIC X(25).
+    9 > 		     05  CUST-ADDR-LINE-1                        PIC X(50).
+   10 | 		     05  CUST-ADDR-LINE-2                        PIC X(50).
+   11 | 		     05  CUST-ADDR-LINE-3                        PIC X(50).
+/legacy/app/cpy/CUSTREC.cpy:9: error: invalid PICTURE character '5'
+/legacy/app/cpy/CUSTREC.cpy:10: error: unbalanced parentheses
+    8 | 		     05  CUST-LAST-NAME                          PIC X(25).
+    9 | 		     05  CUST-ADDR-LINE-1                        PIC X(50).
+   10 > 		     05  CUST-ADDR-LINE-2                        PIC X(50).
+   11 | 		     05  CUST-ADDR-LINE-3                        PIC X(50).
+   12 | 		     05  CUST-ADDR-STATE-CD                      PIC X(02).
+/legacy/app/cpy/CUSTREC.cpy:10: error: invalid PICTURE character '5'
+/legacy/app/cpy/CUSTREC.cpy:11: error: unbalanced parentheses
+    9 | 		     05  CUST-ADDR-LINE-1                        PIC X(50).
+   10 | 		     05  CUST-ADDR-LINE-2                        PIC X(50).
+   11 > 		     05  CUST-ADDR-LINE-3                        PIC X(50).
+   12 | 		     05  CUST-ADDR-STATE-CD                      PIC X(02).
+   13 | 		     05  CUST-ADDR-COUNTRY-CD                    PIC X(03).
+/legacy/app/cpy/CUSTREC.cpy:11: error: invalid PICTURE character '5'
+/legacy/app/cpy/CUSTREC.cpy:12: error: unbalanced parentheses
+   10 | 		     05  CUST-ADDR-LINE-2                        PIC X(50).
+   11 | 		     05  CUST-ADDR-LINE-3                        PIC X(50).
+   12 > 		     05  CUST-ADDR-STATE-CD                      PIC X(02).
+   13 | 		     05  CUST-ADDR-COUNTRY-CD                    PIC X(03).
+   14 | 		     05  CUST-ADDR-ZIP                           PIC X(10).
+/legacy/app/cpy/CUSTREC.cpy:13: error: unbalanced parentheses
+   11 | 		     05  CUST-ADDR-LINE-3                        PIC X(50).
+   12 | 		     05  CUST-ADDR-STATE-CD                      PIC X(02).
+   13 > 		     05  CUST-ADDR-COUNTRY-CD                    PIC X(03).
+   14 | 		     05  CUST-ADDR-ZIP                           PIC X(10).
+   15 | 		     05  CUST-PHONE-NUM-1                        PIC X(15).
+/legacy/app/cpy/CUSTREC.cpy:14: error: unbalanced parentheses
+   12 | 		     05  CUST-ADDR-STATE-CD                      PIC X(02).
+   13 | 		     05  CUST-ADDR-COUNTRY-CD                    PIC X(03).
+   14 > 		     05  CUST-ADDR-ZIP                           PIC X(10).
+   15 | 		     05  CUST-PHONE-NUM-1                        PIC X(15).
+   16 | 		     05  CUST-PHONE-NUM-2                        PIC X(15).
+/legacy/app/cpy/CUSTREC.cpy:14: error: 1 cannot follow A or X
+/legacy/app/cpy/CUSTREC.cpy:15: error: unbalanced parentheses
+   13 | 		     05  CUST-ADDR-COUNTRY-CD                    PIC X(03).
+   14 | 		     05  CUST-ADDR-ZIP                           PIC X(10).
+   15 > 		     05  CUST-PHONE-NUM-1                        PIC X(15).
+   16 | 		     05  CUST-PHONE-NUM-2                        PIC X(15).
+   17 | 		     05  CUST-SSN                                PIC 9(09).
+/legacy/app/cpy/CUSTREC.cpy:15: error: 1 cannot follow A or X
+/legacy/app/cpy/CUSTREC.cpy:16: error: unbalanced parentheses
+   14 | 		     05  CUST-ADDR-ZIP                           PIC X(10).
+   15 | 		     05  CUST-PHONE-NUM-1                        PIC X(15).
+   16 > 		     05  CUST-PHONE-NUM-2                        PIC X(15).
+   17 | 		     05  CUST-SSN                                PIC 9(09).
+   18 | 		     05  CUST-GOVT-ISSUED-ID                     PIC X(20).
+/legacy/app/cpy/CUSTREC.cpy:16: error: 1 cannot follow A or X
+/legacy/app/cpy/CUSTREC.cpy:17: error: unbalanced parentheses
+   15 | 		     05  CUST-PHONE-NUM-1                        PIC X(15).
+   16 | 		     05  CUST-PHONE-NUM-2                        PIC X(15).
+   17 > 		     05  CUST-SSN                                PIC 9(09).
+   18 | 		     05  CUST-GOVT-ISSUED-ID                     PIC X(20).
+   19 | 		     05  CUST-DOB-YYYYMMDD                       PIC X(10).
+/legacy/app/cpy/CUSTREC.cpy:18: error: unbalanced parentheses
+   16 | 		     05  CUST-PHONE-NUM-2                        PIC X(15).
+   17 | 		     05  CUST-SSN                                PIC 9(09).
+   18 > 		     05  CUST-GOVT-ISSUED-ID                     PIC X(20).
+   19 | 		     05  CUST-DOB-YYYYMMDD                       PIC X(10).
+   20 | 		     05  CUST-EFT-ACCOUNT-ID                     PIC X(10).
+/legacy/app/cpy/CUSTREC.cpy:18: error: invalid PICTURE character '2'
+/legacy/app/cpy/CUSTREC.cpy:19: error: unbalanced parentheses
+   17 | 		     05  CUST-SSN                                PIC 9(09).
+   18 | 		     05  CUST-GOVT-ISSUED-ID                     PIC X(20).
+   19 > 		     05  CUST-DOB-YYYYMMDD                       PIC X(10).
+   20 | 		     05  CUST-EFT-ACCOUNT-ID                     PIC X(10).
+   21 | 		     05  CUST-PRI-CARD-HOLDER-IND                PIC X(01).
+/legacy/app/cpy/CUSTREC.cpy:19: error: 1 cannot follow A or X
+/legacy/app/cpy/CUSTREC.cpy:20: error: unbalanced parentheses
+   18 | 		     05  CUST-GOVT-ISSUED-ID                     PIC X(20).
+   19 | 		     05  CUST-DOB-YYYYMMDD                       PIC X(10).
+   20 > 		     05  CUST-EFT-ACCOUNT-ID                     PIC X(10).
+   21 | 		     05  CUST-PRI-CARD-HOLDER-IND                PIC X(01).
+   22 | 		     05  CUST-FICO-CREDIT-SCORE                  PIC 9(03).
+/legacy/app/cpy/CUSTREC.cpy:20: error: 1 cannot follow A or X
+/legacy/app/cpy/CUSTREC.cpy:21: error: unbalanced parentheses
+   19 | 		     05  CUST-DOB-YYYYMMDD                       PIC X(10).
+   20 | 		     05  CUST-EFT-ACCOUNT-ID                     PIC X(10).
+   21 > 		     05  CUST-PRI-CARD-HOLDER-IND                PIC X(01).
+   22 | 		     05  CUST-FICO-CREDIT-SCORE                  PIC 9(03).
+   23 |              05  FILLER                                  PIC X(168)...
+/legacy/app/cpy/CUSTREC.cpy:22: error: unbalanced parentheses
+   20 | 		     05  CUST-EFT-ACCOUNT-ID                     PIC X(10).
+   21 | 		     05  CUST-PRI-CARD-HOLDER-IND                PIC X(01).
+   22 > 		     05  CUST-FICO-CREDIT-SCORE                  PIC 9(03).
+   23 |              05  FILLER                                  PIC X(168)...
+   24 |       *
+/legacy/app/cbl/CBSTM03A.CBL: in paragraph '5000-CREATE-STATEMENT':
+/legacy/app/cbl/CBSTM03A.CBL:464: error: 'CUST-MIDDLE-NAME' is not defined
+  462 |            STRING CUST-FIRST-NAME DELIMITED BY ' '
+  463 |                   ' ' DELIMITED BY SIZE
+  464 >                   CUST-MIDDLE-NAME DELIMITED BY ' '
+  465 |                   ' ' DELIMITED BY SIZE
+  466 |                   CUST-LAST-NAME DELIMITED BY ' '
+/legacy/app/cbl/CBSTM03A.CBL:466: error: 'CUST-LAST-NAME' is not defined
+  464 |                   CUST-MIDDLE-NAME DELIMITED BY ' '
+  465 |                   ' ' DELIMITED BY SIZE
+  466 >                   CUST-LAST-NAME DELIMITED BY ' '
+  467 |                   ' ' DELIMITED BY SIZE
+  468 |                   INTO ST-NAME
+/legacy/app/cbl/CBSTM03A.CBL:470: error: 'CUST-ADDR-LINE-1' is not defined
+  468 |                   INTO ST-NAME
+  469 |            END-STRING.
+  470 >            MOVE CUST-ADDR-LINE-1 TO ST-ADD1.
+  471 |            MOVE CUST-ADDR-LINE-2 TO ST-ADD2.
+  472 |            STRING CUST-ADDR-LINE-3 DELIMITED BY ' '
+/legacy/app/cbl/CBSTM03A.CBL:471: error: 'CUST-ADDR-LINE-2' is not defined
+  469 |            END-STRING.
+  470 |            MOVE CUST-ADDR-LINE-1 TO ST-ADD1.
+  471 >            MOVE CUST-ADDR-LINE-2 TO ST-ADD2.
+  472 |            STRING CUST-ADDR-LINE-3 DELIMITED BY ' '
+  473 |                   ' ' DELIMITED BY SIZE
+/legacy/app/cbl/CBSTM03A.CBL:472: error: 'CUST-ADDR-LINE-3' is not defined
+  470 |            MOVE CUST-ADDR-LINE-1 TO ST-ADD1.
+  471 |            MOVE CUST-ADDR-LINE-2 TO ST-ADD2.
+  472 >            STRING CUST-ADDR-LINE-3 DELIMITED BY ' '
+  473 |                   ' ' DELIMITED BY SIZE
+  474 |                   CUST-ADDR-STATE-CD DELIMITED BY ' '
+/legacy/app/cbl/CBSTM03A.CBL:474: error: 'CUST-ADDR-STATE-CD' is not defined
+  472 |            STRING CUST-ADDR-LINE-3 DELIMITED BY ' '
+  473 |                   ' ' DELIMITED BY SIZE
+  474 >                   CUST-ADDR-STATE-CD DELIMITED BY ' '
+  475 |                   ' ' DELIMITED BY SIZE
+  476 |                   CUST-ADDR-COUNTRY-CD DELIMITED BY ' '
+/legacy/app/cbl/CBSTM03A.CBL:476: error: 'CUST-ADDR-COUNTRY-CD' is not defined
+  474 |                   CUST-ADDR-STATE-CD DELIMITED BY ' '
+  475 |                   ' ' DELIMITED BY SIZE
+  476 >                   CUST-ADDR-COUNTRY-CD DELIMITED BY ' '
+  477 |                   ' ' DELIMITED BY SIZE
+  478 |                   CUST-ADDR-ZIP DELIMITED BY ' '
+/legacy/app/cbl/CBSTM03A.CBL:478: error: 'CUST-ADDR-ZIP' is not defined
+  476 |                   CUST-ADDR-COUNTRY-CD DELIMITED BY ' '
+  477 |                   ' ' DELIMITED BY SIZE
+  478 >                   CUST-ADDR-ZIP DELIMITED BY ' '
+  479 |                   ' ' DELIMITED BY SIZE
+  480 |                   INTO ST-ADD3
+/legacy/app/cbl/CBSTM03A.CBL:485: error: 'CUST-FICO-CREDIT-SCORE' is not defined
+  483 |            MOVE ACCT-ID TO ST-ACCT-ID.
+  484 |            MOVE ACCT-CURR-BAL TO ST-CURR-BAL.
+  485 >            MOVE CUST-FICO-CREDIT-SCORE TO ST-FICO-SCORE.
+  486 |            PERFORM 5200-WRITE-HTML-NMADBS THRU 5200-EXIT.
+  487 | 

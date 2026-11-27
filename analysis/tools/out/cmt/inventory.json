@@ -1,0 +1,1599 @@
+{
+  "schema_version": 1,
+  "analyzers": [
+    "paragraph_count"
+  ],
+  "units": [
+    {
+      "path": "CBACT01C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "CBACT01C",
+      "copybooks": [
+        "CODATECN",
+        "CVACT01Y"
+      ],
+      "copy_replacing": [],
+      "calls": [
+        "CEE3ABD",
+        "COBDATFT"
+      ],
+      "paragraphs": [
+        "0000-ACCTFILE-OPEN",
+        "1000-ACCTFILE-GET-NEXT",
+        "1100-DISPLAY-ACCT-RECORD",
+        "1300-POPUL-ACCT-RECORD",
+        "1350-WRITE-ACCT-RECORD",
+        "1400-POPUL-ARRAY-RECORD",
+        "1450-WRITE-ARRY-RECORD",
+        "1500-POPUL-VBRC-RECORD",
+        "1550-WRITE-VB1-RECORD",
+        "1575-WRITE-VB2-RECORD",
+        "2000-OUTFILE-OPEN",
+        "3000-ARRFILE-OPEN",
+        "4000-VBRFILE-OPEN",
+        "9000-ACCTFILE-CLOSE",
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM",
+        "END-IF",
+        "END-PERFORM",
+        "EXIT",
+        "FILE-CONTROL",
+        "GOBACK"
+      ],
+      "line_count": 430,
+      "byte_count": 17450,
+      "analyses": {
+        "paragraph_count": {
+          "count": 21
+        }
+      }
+    },
+    {
+      "path": "CBACT02C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "CBACT02C",
+      "copybooks": [
+        "CVACT02Y"
+      ],
+      "copy_replacing": [],
+      "calls": [
+        "CEE3ABD"
+      ],
+      "paragraphs": [
+        "0000-CARDFILE-OPEN",
+        "1000-CARDFILE-GET-NEXT",
+        "9000-CARDFILE-CLOSE",
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM",
+        "END-PERFORM",
+        "EXIT",
+        "FILE-CONTROL",
+        "GOBACK"
+      ],
+      "line_count": 178,
+      "byte_count": 14096,
+      "analyses": {
+        "paragraph_count": {
+          "count": 9
+        }
+      }
+    },
+    {
+      "path": "CBACT03C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "CBACT03C",
+      "copybooks": [
+        "CVACT03Y"
+      ],
+      "copy_replacing": [],
+      "calls": [
+        "CEE3ABD"
+      ],
+      "paragraphs": [
+        "0000-XREFFILE-OPEN",
+        "1000-XREFFILE-GET-NEXT",
+        "9000-XREFFILE-CLOSE",
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM",
+        "END-PERFORM",
+        "EXIT",
+        "FILE-CONTROL",
+        "GOBACK"
+      ],
+      "line_count": 178,
+      "byte_count": 14101,
+      "analyses": {
+        "paragraph_count": {
+          "count": 9
+        }
+      }
+    },
+    {
+      "path": "CBACT04C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "CBACT04C",
+      "copybooks": [
+        "CVACT01Y",
+        "CVACT03Y",
+        "CVTRA01Y",
+        "CVTRA02Y",
+        "CVTRA05Y"
+      ],
+      "copy_replacing": [],
+      "calls": [
+        "CEE3ABD"
+      ],
+      "paragraphs": [
+        "0000-TCATBALF-OPEN",
+        "0100-XREFFILE-OPEN",
+        "0200-DISCGRP-OPEN",
+        "0300-ACCTFILE-OPEN",
+        "0400-TRANFILE-OPEN",
+        "1000-TCATBALF-GET-NEXT",
+        "1050-UPDATE-ACCOUNT",
+        "1100-GET-ACCT-DATA",
+        "1110-GET-XREF-DATA",
+        "1200-A-GET-DEFAULT-INT-RATE",
+        "1200-GET-INTEREST-RATE",
+        "1300-B-WRITE-TX",
+        "1300-COMPUTE-INTEREST",
+        "1400-COMPUTE-FEES",
+        "9000-TCATBALF-CLOSE",
+        "9100-XREFFILE-CLOSE",
+        "9200-DISCGRP-CLOSE",
+        "9300-ACCTFILE-CLOSE",
+        "9400-TRANFILE-CLOSE",
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM",
+        "END-PERFORM",
+        "END-READ",
+        "END-STRING",
+        "EXIT",
+        "FILE-CONTROL",
+        "GOBACK",
+        "Z-GET-DB2-FORMAT-TIMESTAMP"
+      ],
+      "line_count": 652,
+      "byte_count": 52479,
+      "analyses": {
+        "paragraph_count": {
+          "count": 28
+        }
+      }
+    },
+    {
+      "path": "CBCUS01C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "CBCUS01C",
+      "copybooks": [
+        "CVCUS01Y"
+      ],
+      "copy_replacing": [],
+      "calls": [
+        "CEE3ABD"
+      ],
+      "paragraphs": [
+        "0000-CUSTFILE-OPEN",
+        "1000-CUSTFILE-GET-NEXT",
+        "9000-CUSTFILE-CLOSE",
+        "END-PERFORM",
+        "EXIT",
+        "FILE-CONTROL",
+        "GOBACK",
+        "Z-ABEND-PROGRAM",
+        "Z-DISPLAY-IO-STATUS"
+      ],
+      "line_count": 178,
+      "byte_count": 6914,
+      "analyses": {
+        "paragraph_count": {
+          "count": 9
+        }
+      }
+    },
+    {
+      "path": "CBEXPORT.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "CBEXPORT",
+      "copybooks": [
+        "CVACT01Y",
+        "CVACT02Y",
+        "CVACT03Y",
+        "CVCUS01Y",
+        "CVEXPORT",
+        "CVTRA05Y"
+      ],
+      "copy_replacing": [],
+      "calls": [
+        "CEE3ABD"
+      ],
+      "paragraphs": [
+        "0000-MAIN-PROCESSING",
+        "1000-INITIALIZE",
+        "1050-GENERATE-TIMESTAMP",
+        "1100-OPEN-FILES",
+        "2000-EXPORT-CUSTOMERS",
+        "2100-READ-CUSTOMER-RECORD",
+        "2200-CREATE-CUSTOMER-EXP-REC",
+        "3000-EXPORT-ACCOUNTS",
+        "3100-READ-ACCOUNT-RECORD",
+        "3200-CREATE-ACCOUNT-EXP-REC",
+        "4000-EXPORT-XREFS",
+        "4100-READ-XREF-RECORD",
+        "4200-CREATE-XREF-EXPORT-RECORD",
+        "5000-EXPORT-TRANSACTIONS",
+        "5100-READ-TRANSACTION-RECORD",
+        "5200-CREATE-TRAN-EXP-REC",
+        "5500-EXPORT-CARDS",
+        "5600-READ-CARD-RECORD",
+        "5700-CREATE-CARD-EXPORT-RECORD",
+        "6000-FINALIZE",
+        "9999-ABEND-PROGRAM",
+        "END-IF",
+        "FILE-CONTROL",
+        "GOBACK"
+      ],
+      "line_count": 582,
+      "byte_count": 24197,
+      "analyses": {
+        "paragraph_count": {
+          "count": 24
+        }
+      }
+    },
+    {
+      "path": "CBIMPORT.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "CBIMPORT",
+      "copybooks": [
+        "CVACT01Y",
+        "CVACT02Y",
+        "CVACT03Y",
+        "CVCUS01Y",
+        "CVEXPORT",
+        "CVTRA05Y"
+      ],
+      "copy_replacing": [],
+      "calls": [
+        "CEE3ABD"
+      ],
+      "paragraphs": [
+        "0000-MAIN-PROCESSING",
+        "1000-INITIALIZE",
+        "1100-OPEN-FILES",
+        "2000-PROCESS-EXPORT-FILE",
+        "2100-READ-EXPORT-RECORD",
+        "2200-PROCESS-RECORD-BY-TYPE",
+        "2300-PROCESS-CUSTOMER-RECORD",
+        "2400-PROCESS-ACCOUNT-RECORD",
+        "2500-PROCESS-XREF-RECORD",
+        "2600-PROCESS-TRAN-RECORD",
+        "2650-PROCESS-CARD-RECORD",
+        "2700-PROCESS-UNKNOWN-RECORD",
+        "2750-WRITE-ERROR",
+        "3000-VALIDATE-IMPORT",
+        "4000-FINALIZE",
+        "9999-ABEND-PROGRAM",
+        "END-EVALUATE",
+        "END-IF",
+        "END-PERFORM",
+        "FILE-CONTROL",
+        "GOBACK"
+      ],
+      "line_count": 487,
+      "byte_count": 20239,
+      "analyses": {
+        "paragraph_count": {
+          "count": 21
+        }
+      }
+    },
+    {
+      "path": "CBSTM03A.CBL",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "CBSTM03A",
+      "copybooks": [
+        "COSTM01",
+        "CUSTREC",
+        "CVACT01Y",
+        "CVACT03Y"
+      ],
+      "copy_replacing": [],
+      "calls": [
+        "CBSTM03B",
+        "CEE3ABD"
+      ],
+      "paragraphs": [
+        "0000-START",
+        "1000-MAINLINE",
+        "1000-XREFFILE-GET-NEXT",
+        "2000-CUSTFILE-GET",
+        "3000-ACCTFILE-GET",
+        "4000-TRNXFILE-GET",
+        "5000-CREATE-STATEMENT",
+        "5100-EXIT",
+        "5100-WRITE-HTML-HEADER",
+        "5200-EXIT",
+        "5200-WRITE-HTML-NMADBS",
+        "6000-WRITE-TRANS",
+        "8100-FILE-OPEN",
+        "8100-TRNXFILE-OPEN",
+        "8200-XREFFILE-OPEN",
+        "8300-CUSTFILE-OPEN",
+        "8400-ACCTFILE-OPEN",
+        "8500-READTRNX-READ",
+        "8599-EXIT",
+        "9100-TRNXFILE-CLOSE",
+        "9200-XREFFILE-CLOSE",
+        "9300-CUSTFILE-CLOSE",
+        "9400-ACCTFILE-CLOSE",
+        "9999-ABEND-PROGRAM",
+        "9999-GOBACK",
+        "END-EVALUATE",
+        "END-IF",
+        "END-PERFORM",
+        "END-STRING",
+        "EXIT",
+        "FILE-CONTROL",
+        "GOBACK"
+      ],
+      "line_count": 924,
+      "byte_count": 35574,
+      "analyses": {
+        "paragraph_count": {
+          "count": 32
+        }
+      }
+    },
+    {
+      "path": "CBSTM03B.CBL",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "CBSTM03B",
+      "copybooks": [],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "0000-START",
+        "1000-TRNXFILE-PROC",
+        "1900-EXIT",
+        "1999-EXIT",
+        "2000-XREFFILE-PROC",
+        "2900-EXIT",
+        "2999-EXIT",
+        "3000-CUSTFILE-PROC",
+        "3900-EXIT",
+        "3999-EXIT",
+        "4000-ACCTFILE-PROC",
+        "4900-EXIT",
+        "4999-EXIT",
+        "9999-GOBACK",
+        "END-IF",
+        "EXIT",
+        "FILE-CONTROL",
+        "GOBACK"
+      ],
+      "line_count": 230,
+      "byte_count": 6983,
+      "analyses": {
+        "paragraph_count": {
+          "count": 18
+        }
+      }
+    },
+    {
+      "path": "CBTRN01C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "CBTRN01C",
+      "copybooks": [
+        "CVACT01Y",
+        "CVACT02Y",
+        "CVACT03Y",
+        "CVCUS01Y",
+        "CVTRA05Y",
+        "CVTRA06Y"
+      ],
+      "copy_replacing": [],
+      "calls": [
+        "CEE3ABD"
+      ],
+      "paragraphs": [
+        "0000-DALYTRAN-OPEN",
+        "0100-CUSTFILE-OPEN",
+        "0200-XREFFILE-OPEN",
+        "0300-CARDFILE-OPEN",
+        "0400-ACCTFILE-OPEN",
+        "0500-TRANFILE-OPEN",
+        "1000-DALYTRAN-GET-NEXT",
+        "2000-LOOKUP-XREF",
+        "3000-READ-ACCOUNT",
+        "9000-DALYTRAN-CLOSE",
+        "9100-CUSTFILE-CLOSE",
+        "9200-XREFFILE-CLOSE",
+        "9300-CARDFILE-CLOSE",
+        "9400-ACCTFILE-CLOSE",
+        "9500-TRANFILE-CLOSE",
+        "END-PERFORM",
+        "END-READ",
+        "EXIT",
+        "FILE-CONTROL",
+        "GOBACK",
+        "MAIN-PARA",
+        "Z-ABEND-PROGRAM",
+        "Z-DISPLAY-IO-STATUS"
+      ],
+      "line_count": 494,
+      "byte_count": 17967,
+      "analyses": {
+        "paragraph_count": {
+          "count": 23
+        }
+      }
+    },
+    {
+      "path": "CBTRN02C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "CBTRN02C",
+      "copybooks": [
+        "CVACT01Y",
+        "CVACT03Y",
+        "CVTRA01Y",
+        "CVTRA05Y",
+        "CVTRA06Y"
+      ],
+      "copy_replacing": [],
+      "calls": [
+        "CEE3ABD"
+      ],
+      "paragraphs": [
+        "0000-DALYTRAN-OPEN",
+        "0100-TRANFILE-OPEN",
+        "0200-XREFFILE-OPEN",
+        "0300-DALYREJS-OPEN",
+        "0400-ACCTFILE-OPEN",
+        "0500-TCATBALF-OPEN",
+        "1000-DALYTRAN-GET-NEXT",
+        "1500-A-LOOKUP-XREF",
+        "1500-B-LOOKUP-ACCT",
+        "1500-VALIDATE-TRAN",
+        "2000-POST-TRANSACTION",
+        "2500-WRITE-REJECT-REC",
+        "2700-A-CREATE-TCATBAL-REC",
+        "2700-B-UPDATE-TCATBAL-REC",
+        "2700-UPDATE-TCATBAL",
+        "2800-UPDATE-ACCOUNT-REC",
+        "2900-WRITE-TRANSACTION-FILE",
+        "9000-DALYTRAN-CLOSE",
+        "9100-TRANFILE-CLOSE",
+        "9200-XREFFILE-CLOSE",
+        "9300-DALYREJS-CLOSE",
+        "9400-ACCTFILE-CLOSE",
+        "9500-TCATBALF-CLOSE",
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM",
+        "END-IF",
+        "END-PERFORM",
+        "END-READ",
+        "END-REWRITE",
+        "EXIT",
+        "FILE-CONTROL",
+        "GOBACK",
+        "Z-GET-DB2-FORMAT-TIMESTAMP"
+      ],
+      "line_count": 731,
+      "byte_count": 58890,
+      "analyses": {
+        "paragraph_count": {
+          "count": 33
+        }
+      }
+    },
+    {
+      "path": "CBTRN03C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "CBTRN03C",
+      "copybooks": [
+        "CVACT03Y",
+        "CVTRA03Y",
+        "CVTRA04Y",
+        "CVTRA05Y",
+        "CVTRA07Y"
+      ],
+      "copy_replacing": [],
+      "calls": [
+        "CEE3ABD"
+      ],
+      "paragraphs": [
+        "0000-TRANFILE-OPEN",
+        "0100-REPTFILE-OPEN",
+        "0200-CARDXREF-OPEN",
+        "0300-TRANTYPE-OPEN",
+        "0400-TRANCATG-OPEN",
+        "0500-DATEPARM-OPEN",
+        "0550-DATEPARM-READ",
+        "1000-TRANFILE-GET-NEXT",
+        "1100-WRITE-TRANSACTION-REPORT",
+        "1110-WRITE-GRAND-TOTALS",
+        "1110-WRITE-PAGE-TOTALS",
+        "1111-WRITE-REPORT-REC",
+        "1120-WRITE-ACCOUNT-TOTALS",
+        "1120-WRITE-DETAIL",
+        "1120-WRITE-HEADERS",
+        "1500-A-LOOKUP-XREF",
+        "1500-B-LOOKUP-TRANTYPE",
+        "1500-C-LOOKUP-TRANCATG",
+        "9000-TRANFILE-CLOSE",
+        "9100-REPTFILE-CLOSE",
+        "9200-CARDXREF-CLOSE",
+        "9300-TRANTYPE-CLOSE",
+        "9400-TRANCATG-CLOSE",
+        "9500-DATEPARM-CLOSE",
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM",
+        "END-PERFORM",
+        "EXIT",
+        "FILE-CONTROL",
+        "GOBACK"
+      ],
+      "line_count": 649,
+      "byte_count": 52239,
+      "analyses": {
+        "paragraph_count": {
+          "count": 30
+        }
+      }
+    },
+    {
+      "path": "COACTUPC.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COACTUPC",
+      "copybooks": [
+        "COACTUP",
+        "COCOM01Y",
+        "COTTL01Y",
+        "CSDAT01Y",
+        "CSLKPCDY",
+        "CSMSG01Y",
+        "CSMSG02Y",
+        "CSSETATY",
+        "CSSTRPFY",
+        "CSUSR01Y",
+        "CSUTLDPY",
+        "CSUTLDWY",
+        "CVACT01Y",
+        "CVACT03Y",
+        "CVCRD01Y",
+        "CVCUS01Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [
+        "CSSETATY"
+      ],
+      "calls": [],
+      "paragraphs": [
+        "0000-MAIN",
+        "0000-MAIN-EXIT",
+        "1000-PROCESS-INPUTS",
+        "1000-PROCESS-INPUTS-EXIT",
+        "1100-RECEIVE-MAP",
+        "1100-RECEIVE-MAP-EXIT",
+        "1200-EDIT-MAP-INPUTS",
+        "1200-EDIT-MAP-INPUTS-EXIT",
+        "1205-COMPARE-OLD-NEW",
+        "1205-COMPARE-OLD-NEW-EXIT",
+        "1210-EDIT-ACCOUNT",
+        "1210-EDIT-ACCOUNT-EXIT",
+        "1215-EDIT-MANDATORY",
+        "1215-EDIT-MANDATORY-EXIT",
+        "1220-EDIT-YESNO",
+        "1220-EDIT-YESNO-EXIT",
+        "1225-EDIT-ALPHA-REQD",
+        "1225-EDIT-ALPHA-REQD-EXIT",
+        "1230-EDIT-ALPHANUM-REQD",
+        "1230-EDIT-ALPHANUM-REQD-EXIT",
+        "1235-EDIT-ALPHA-OPT",
+        "1235-EDIT-ALPHA-OPT-EXIT",
+        "1240-EDIT-ALPHANUM-OPT",
+        "1240-EDIT-ALPHANUM-OPT-EXIT",
+        "1245-EDIT-NUM-REQD",
+        "1245-EDIT-NUM-REQD-EXIT",
+        "1250-EDIT-SIGNED-9V2",
+        "1250-EDIT-SIGNED-9V2-EXIT",
+        "1260-EDIT-US-PHONE-NUM",
+        "1260-EDIT-US-PHONE-NUM-EXIT",
+        "1265-EDIT-US-SSN",
+        "1265-EDIT-US-SSN-EXIT",
+        "1270-EDIT-US-STATE-CD",
+        "1270-EDIT-US-STATE-CD-EXIT",
+        "1275-EDIT-FICO-SCORE",
+        "1275-EDIT-FICO-SCORE-EXIT",
+        "1280-EDIT-US-STATE-ZIP-CD",
+        "1280-EDIT-US-STATE-ZIP-CD-EXIT",
+        "2000-DECIDE-ACTION",
+        "2000-DECIDE-ACTION-EXIT",
+        "3000-SEND-MAP",
+        "3000-SEND-MAP-EXIT",
+        "3100-SCREEN-INIT",
+        "3100-SCREEN-INIT-EXIT",
+        "3200-SETUP-SCREEN-VARS",
+        "3200-SETUP-SCREEN-VARS-EXIT",
+        "3201-SHOW-INITIAL-VALUES",
+        "3201-SHOW-INITIAL-VALUES-EXIT",
+        "3202-SHOW-ORIGINAL-VALUES",
+        "3202-SHOW-ORIGINAL-VALUES-EXIT",
+        "3203-SHOW-UPDATED-VALUES",
+        "3203-SHOW-UPDATED-VALUES-EXIT",
+        "3250-SETUP-INFOMSG",
+        "3250-SETUP-INFOMSG-EXIT",
+        "3300-SETUP-SCREEN-ATTRS",
+        "3300-SETUP-SCREEN-ATTRS-EXIT",
+        "3310-PROTECT-ALL-ATTRS",
+        "3310-PROTECT-ALL-ATTRS-EXIT",
+        "3320-UNPROTECT-FEW-ATTRS",
+        "3320-UNPROTECT-FEW-ATTRS-EXIT",
+        "3390-SETUP-INFOMSG-ATTRS",
+        "3390-SETUP-INFOMSG-ATTRS-EXIT",
+        "3400-SEND-SCREEN",
+        "3400-SEND-SCREEN-EXIT",
+        "9000-READ-ACCT",
+        "9000-READ-ACCT-EXIT",
+        "9200-GETCARDXREF-BYACCT",
+        "9200-GETCARDXREF-BYACCT-EXIT",
+        "9300-GETACCTDATA-BYACCT",
+        "9300-GETACCTDATA-BYACCT-EXIT",
+        "9400-GETCUSTDATA-BYCUST",
+        "9400-GETCUSTDATA-BYCUST-EXIT",
+        "9500-STORE-FETCHED-DATA",
+        "9500-STORE-FETCHED-DATA-EXIT",
+        "9600-WRITE-PROCESSING",
+        "9600-WRITE-PROCESSING-EXIT",
+        "9700-CHECK-CHANGE-IN-REC",
+        "9700-CHECK-CHANGE-IN-REC-EXIT",
+        "ABEND-ROUTINE",
+        "ABEND-ROUTINE-EXIT",
+        "COACTUPC",
+        "COMMON-RETURN",
+        "DATE-COMPILED",
+        "DATE-WRITTEN",
+        "EDIT-AREA-CODE",
+        "EDIT-US-PHONE-EXIT",
+        "EDIT-US-PHONE-LINENUM",
+        "EDIT-US-PHONE-PREFIX",
+        "END-EXEC",
+        "PROGRAM-ID",
+        "TODAY",
+        "WS-EDIT-US-PHONE-NUM"
+      ],
+      "line_count": 4236,
+      "byte_count": 182463,
+      "analyses": {
+        "paragraph_count": {
+          "count": 92
+        }
+      }
+    },
+    {
+      "path": "COACTVWC.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COACTVWC",
+      "copybooks": [
+        "COACTVW",
+        "COCOM01Y",
+        "COTTL01Y",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CSMSG02Y",
+        "CSSTRPFY",
+        "CSUSR01Y",
+        "CVACT01Y",
+        "CVACT02Y",
+        "CVACT03Y",
+        "CVCRD01Y",
+        "CVCUS01Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "0000-MAIN",
+        "0000-MAIN-EXIT",
+        "1000-SEND-MAP",
+        "1000-SEND-MAP-EXIT",
+        "1100-SCREEN-INIT",
+        "1100-SCREEN-INIT-EXIT",
+        "1200-SETUP-SCREEN-VARS",
+        "1200-SETUP-SCREEN-VARS-EXIT",
+        "1300-SETUP-SCREEN-ATTRS",
+        "1300-SETUP-SCREEN-ATTRS-EXIT",
+        "1400-SEND-SCREEN",
+        "1400-SEND-SCREEN-EXIT",
+        "2000-PROCESS-INPUTS",
+        "2000-PROCESS-INPUTS-EXIT",
+        "2100-RECEIVE-MAP",
+        "2100-RECEIVE-MAP-EXIT",
+        "2200-EDIT-MAP-INPUTS",
+        "2200-EDIT-MAP-INPUTS-EXIT",
+        "2210-EDIT-ACCOUNT",
+        "2210-EDIT-ACCOUNT-EXIT",
+        "9000-READ-ACCT",
+        "9000-READ-ACCT-EXIT",
+        "9200-GETCARDXREF-BYACCT",
+        "9200-GETCARDXREF-BYACCT-EXIT",
+        "9300-GETACCTDATA-BYACCT",
+        "9300-GETACCTDATA-BYACCT-EXIT",
+        "9400-GETCUSTDATA-BYCUST",
+        "9400-GETCUSTDATA-BYCUST-EXIT",
+        "ABEND-ROUTINE",
+        "COACTVWC",
+        "COMMON-RETURN",
+        "DATE-COMPILED",
+        "DATE-WRITTEN",
+        "PROGRAM-ID",
+        "SEND-LONG-TEXT",
+        "SEND-LONG-TEXT-EXIT",
+        "SEND-PLAIN-TEXT",
+        "SEND-PLAIN-TEXT-EXIT",
+        "TODAY"
+      ],
+      "line_count": 941,
+      "byte_count": 74764,
+      "analyses": {
+        "paragraph_count": {
+          "count": 39
+        }
+      }
+    },
+    {
+      "path": "COADM01C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COADM01C",
+      "copybooks": [
+        "COADM01",
+        "COADM02Y",
+        "COCOM01Y",
+        "COTTL01Y",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CSUSR01Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "BUILD-MENU-OPTIONS",
+        "END-EXEC",
+        "END-IF",
+        "END-PERFORM",
+        "MAIN-PARA",
+        "PGMIDERR-ERR-PARA",
+        "POPULATE-HEADER-INFO",
+        "PROCESS-ENTER-KEY",
+        "RECEIVE-MENU-SCREEN",
+        "RETURN-TO-SIGNON-SCREEN",
+        "SEND-MENU-SCREEN"
+      ],
+      "line_count": 288,
+      "byte_count": 22736,
+      "analyses": {
+        "paragraph_count": {
+          "count": 11
+        }
+      }
+    },
+    {
+      "path": "COBIL00C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COBIL00C",
+      "copybooks": [
+        "COBIL00",
+        "COCOM01Y",
+        "COTTL01Y",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CVACT01Y",
+        "CVACT03Y",
+        "CVTRA05Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "CLEAR-CURRENT-SCREEN",
+        "END-EVALUATE",
+        "END-EXEC",
+        "END-IF",
+        "ENDBR-TRANSACT-FILE",
+        "GET-CURRENT-TIMESTAMP",
+        "INITIALIZE-ALL-FIELDS",
+        "MAIN-PARA",
+        "POPULATE-HEADER-INFO",
+        "PROCESS-ENTER-KEY",
+        "READ-ACCTDAT-FILE",
+        "READ-CXACAIX-FILE",
+        "READPREV-TRANSACT-FILE",
+        "RECEIVE-BILLPAY-SCREEN",
+        "RETURN-TO-PREV-SCREEN",
+        "SEND-BILLPAY-SCREEN",
+        "STARTBR-TRANSACT-FILE",
+        "UPDATE-ACCTDAT-FILE",
+        "WRITE-TRANSACT-FILE"
+      ],
+      "line_count": 572,
+      "byte_count": 23426,
+      "analyses": {
+        "paragraph_count": {
+          "count": 19
+        }
+      }
+    },
+    {
+      "path": "COBSWAIT.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COBSWAIT",
+      "copybooks": [],
+      "copy_replacing": [],
+      "calls": [
+        "MVSWAIT"
+      ],
+      "paragraphs": [],
+      "line_count": 41,
+      "byte_count": 1979,
+      "analyses": {
+        "paragraph_count": {
+          "count": 0
+        }
+      }
+    },
+    {
+      "path": "COCRDLIC.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COCRDLIC",
+      "copybooks": [
+        "COCOM01Y",
+        "COCRDLI",
+        "COTTL01Y",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CSSTRPFY",
+        "CSUSR01Y",
+        "CVACT02Y",
+        "CVCRD01Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "0000-MAIN",
+        "0000-MAIN-EXIT",
+        "1000-SEND-MAP",
+        "1000-SEND-MAP-EXIT",
+        "1100-SCREEN-INIT",
+        "1100-SCREEN-INIT-EXIT",
+        "1200-SCREEN-ARRAY-INIT",
+        "1200-SCREEN-ARRAY-INIT-EXIT",
+        "1250-SETUP-ARRAY-ATTRIBS",
+        "1250-SETUP-ARRAY-ATTRIBS-EXIT",
+        "1300-SETUP-SCREEN-ATTRS",
+        "1300-SETUP-SCREEN-ATTRS-EXIT",
+        "1400-SETUP-MESSAGE",
+        "1400-SETUP-MESSAGE-EXIT",
+        "1500-SEND-SCREEN",
+        "1500-SEND-SCREEN-EXIT",
+        "2000-RECEIVE-MAP",
+        "2000-RECEIVE-MAP-EXIT",
+        "2100-RECEIVE-SCREEN",
+        "2100-RECEIVE-SCREEN-EXIT",
+        "2200-EDIT-INPUTS",
+        "2200-EDIT-INPUTS-EXIT",
+        "2210-EDIT-ACCOUNT",
+        "2210-EDIT-ACCOUNT-EXIT",
+        "2220-EDIT-CARD",
+        "2220-EDIT-CARD-EXIT",
+        "2250-EDIT-ARRAY",
+        "2250-EDIT-ARRAY-EXIT",
+        "9000-READ-FORWARD",
+        "9000-READ-FORWARD-EXIT",
+        "9100-READ-BACKWARDS",
+        "9100-READ-BACKWARDS-EXIT",
+        "9500-FILTER-RECORDS",
+        "9500-FILTER-RECORDS-EXIT",
+        "COCRDLIC",
+        "COMMON-RETURN",
+        "DATE-COMPILED",
+        "DATE-WRITTEN",
+        "PROGRAM-ID",
+        "SEND-LONG-TEXT",
+        "SEND-LONG-TEXT-EXIT",
+        "SEND-PLAIN-TEXT",
+        "SEND-PLAIN-TEXT-EXIT",
+        "TODAY",
+        "WS-EDIT-SELECT-ERROR-FLAGS"
+      ],
+      "line_count": 1459,
+      "byte_count": 117376,
+      "analyses": {
+        "paragraph_count": {
+          "count": 45
+        }
+      }
+    },
+    {
+      "path": "COCRDSLC.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COCRDSLC",
+      "copybooks": [
+        "COCOM01Y",
+        "COCRDSL",
+        "COTTL01Y",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CSMSG02Y",
+        "CSSTRPFY",
+        "CSUSR01Y",
+        "CVACT02Y",
+        "CVCRD01Y",
+        "CVCUS01Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "0000-MAIN",
+        "0000-MAIN-EXIT",
+        "1000-SEND-MAP",
+        "1000-SEND-MAP-EXIT",
+        "1100-SCREEN-INIT",
+        "1100-SCREEN-INIT-EXIT",
+        "1200-SETUP-SCREEN-VARS",
+        "1200-SETUP-SCREEN-VARS-EXIT",
+        "1300-SETUP-SCREEN-ATTRS",
+        "1300-SETUP-SCREEN-ATTRS-EXIT",
+        "1400-SEND-SCREEN",
+        "1400-SEND-SCREEN-EXIT",
+        "2000-PROCESS-INPUTS",
+        "2000-PROCESS-INPUTS-EXIT",
+        "2100-RECEIVE-MAP",
+        "2100-RECEIVE-MAP-EXIT",
+        "2200-EDIT-MAP-INPUTS",
+        "2200-EDIT-MAP-INPUTS-EXIT",
+        "2210-EDIT-ACCOUNT",
+        "2210-EDIT-ACCOUNT-EXIT",
+        "2220-EDIT-CARD",
+        "2220-EDIT-CARD-EXIT",
+        "9000-READ-DATA",
+        "9000-READ-DATA-EXIT",
+        "9100-GETCARD-BYACCTCARD",
+        "9100-GETCARD-BYACCTCARD-EXIT",
+        "9150-GETCARD-BYACCT",
+        "9150-GETCARD-BYACCT-EXIT",
+        "ABEND-ROUTINE",
+        "COCRDSLC",
+        "COMMON-RETURN",
+        "DATE-COMPILED",
+        "DATE-WRITTEN",
+        "EXIT",
+        "PROGRAM-ID",
+        "SEND-LONG-TEXT",
+        "SEND-LONG-TEXT-EXIT",
+        "SEND-PLAIN-TEXT",
+        "SEND-PLAIN-TEXT-EXIT",
+        "TODAY"
+      ],
+      "line_count": 887,
+      "byte_count": 71308,
+      "analyses": {
+        "paragraph_count": {
+          "count": 40
+        }
+      }
+    },
+    {
+      "path": "COCRDUPC.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COCRDUPC",
+      "copybooks": [
+        "COCOM01Y",
+        "COCRDUP",
+        "COTTL01Y",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CSMSG02Y",
+        "CSSTRPFY",
+        "CSUSR01Y",
+        "CVACT02Y",
+        "CVCRD01Y",
+        "CVCUS01Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "0000-MAIN",
+        "0000-MAIN-EXIT",
+        "1000-PROCESS-INPUTS",
+        "1000-PROCESS-INPUTS-EXIT",
+        "1100-RECEIVE-MAP",
+        "1100-RECEIVE-MAP-EXIT",
+        "1200-EDIT-MAP-INPUTS",
+        "1200-EDIT-MAP-INPUTS-EXIT",
+        "1210-EDIT-ACCOUNT",
+        "1210-EDIT-ACCOUNT-EXIT",
+        "1220-EDIT-CARD",
+        "1220-EDIT-CARD-EXIT",
+        "1230-EDIT-NAME",
+        "1230-EDIT-NAME-EXIT",
+        "1240-EDIT-CARDSTATUS",
+        "1240-EDIT-CARDSTATUS-EXIT",
+        "1250-EDIT-EXPIRY-MON",
+        "1250-EDIT-EXPIRY-MON-EXIT",
+        "1260-EDIT-EXPIRY-YEAR",
+        "1260-EDIT-EXPIRY-YEAR-EXIT",
+        "2000-DECIDE-ACTION",
+        "2000-DECIDE-ACTION-EXIT",
+        "3000-SEND-MAP",
+        "3000-SEND-MAP-EXIT",
+        "3100-SCREEN-INIT",
+        "3100-SCREEN-INIT-EXIT",
+        "3200-SETUP-SCREEN-VARS",
+        "3200-SETUP-SCREEN-VARS-EXIT",
+        "3250-SETUP-INFOMSG",
+        "3250-SETUP-INFOMSG-EXIT",
+        "3300-SETUP-SCREEN-ATTRS",
+        "3300-SETUP-SCREEN-ATTRS-EXIT",
+        "3400-SEND-SCREEN",
+        "3400-SEND-SCREEN-EXIT",
+        "9000-READ-DATA",
+        "9000-READ-DATA-EXIT",
+        "9100-GETCARD-BYACCTCARD",
+        "9100-GETCARD-BYACCTCARD-EXIT",
+        "9200-WRITE-PROCESSING",
+        "9200-WRITE-PROCESSING-EXIT",
+        "9300-CHECK-CHANGE-IN-REC",
+        "9300-CHECK-CHANGE-IN-REC-EXIT",
+        "ABEND-ROUTINE",
+        "ABEND-ROUTINE-EXIT",
+        "COCRDUPC",
+        "COMMON-RETURN",
+        "DATE-COMPILED",
+        "DATE-WRITTEN",
+        "END-EXEC",
+        "PROGRAM-ID",
+        "TODAY"
+      ],
+      "line_count": 1560,
+      "byte_count": 125961,
+      "analyses": {
+        "paragraph_count": {
+          "count": 51
+        }
+      }
+    },
+    {
+      "path": "COMEN01C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COMEN01C",
+      "copybooks": [
+        "COCOM01Y",
+        "COMEN01",
+        "COMEN02Y",
+        "COTTL01Y",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CSUSR01Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "BUILD-MENU-OPTIONS",
+        "END-EXEC",
+        "END-IF",
+        "END-PERFORM",
+        "MAIN-PARA",
+        "POPULATE-HEADER-INFO",
+        "PROCESS-ENTER-KEY",
+        "RECEIVE-MENU-SCREEN",
+        "RETURN-TO-SIGNON-SCREEN",
+        "SEND-MENU-SCREEN"
+      ],
+      "line_count": 308,
+      "byte_count": 12461,
+      "analyses": {
+        "paragraph_count": {
+          "count": 10
+        }
+      }
+    },
+    {
+      "path": "CORPT00C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "CORPT00C",
+      "copybooks": [
+        "COCOM01Y",
+        "CORPT00",
+        "COTTL01Y",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CVTRA05Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [
+        "CSUTLDTC"
+      ],
+      "paragraphs": [
+        "END-EVALUATE",
+        "END-EXEC",
+        "END-IF",
+        "INITIALIZE-ALL-FIELDS",
+        "MAIN-PARA",
+        "POPULATE-HEADER-INFO",
+        "PROCESS-ENTER-KEY",
+        "RECEIVE-TRNRPT-SCREEN",
+        "RETURN-TO-CICS",
+        "RETURN-TO-PREV-SCREEN",
+        "SEND-TRNRPT-SCREEN",
+        "SUBMIT-JOB-TO-INTRDR",
+        "WIRTE-JOBSUB-TDQ"
+      ],
+      "line_count": 649,
+      "byte_count": 28302,
+      "analyses": {
+        "paragraph_count": {
+          "count": 13
+        }
+      }
+    },
+    {
+      "path": "COSGN00C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COSGN00C",
+      "copybooks": [
+        "COCOM01Y",
+        "COSGN00",
+        "COTTL01Y",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CSUSR01Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "END-EVALUATE",
+        "END-EXEC",
+        "END-IF",
+        "MAIN-PARA",
+        "POPULATE-HEADER-INFO",
+        "PROCESS-ENTER-KEY",
+        "READ-USER-SEC-FILE",
+        "SEND-PLAIN-TEXT",
+        "SEND-SIGNON-SCREEN"
+      ],
+      "line_count": 260,
+      "byte_count": 10288,
+      "analyses": {
+        "paragraph_count": {
+          "count": 9
+        }
+      }
+    },
+    {
+      "path": "COTRN00C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COTRN00C",
+      "copybooks": [
+        "COCOM01Y",
+        "COTRN00",
+        "COTTL01Y",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CVTRA05Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "END-EVALUATE",
+        "END-EXEC",
+        "END-IF",
+        "ENDBR-TRANSACT-FILE",
+        "INITIALIZE-TRAN-DATA",
+        "MAIN-PARA",
+        "POPULATE-HEADER-INFO",
+        "POPULATE-TRAN-DATA",
+        "PROCESS-ENTER-KEY",
+        "PROCESS-PAGE-BACKWARD",
+        "PROCESS-PAGE-FORWARD",
+        "PROCESS-PF7-KEY",
+        "PROCESS-PF8-KEY",
+        "READNEXT-TRANSACT-FILE",
+        "READPREV-TRANSACT-FILE",
+        "RECEIVE-TRNLST-SCREEN",
+        "RETURN-TO-PREV-SCREEN",
+        "SEND-TRNLST-SCREEN",
+        "STARTBR-TRANSACT-FILE"
+      ],
+      "line_count": 699,
+      "byte_count": 29270,
+      "analyses": {
+        "paragraph_count": {
+          "count": 19
+        }
+      }
+    },
+    {
+      "path": "COTRN01C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COTRN01C",
+      "copybooks": [
+        "COCOM01Y",
+        "COTRN01",
+        "COTTL01Y",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CVTRA05Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "CLEAR-CURRENT-SCREEN",
+        "END-EVALUATE",
+        "END-EXEC",
+        "END-IF",
+        "INITIALIZE-ALL-FIELDS",
+        "MAIN-PARA",
+        "POPULATE-HEADER-INFO",
+        "PROCESS-ENTER-KEY",
+        "READ-TRANSACT-FILE",
+        "RECEIVE-TRNVIEW-SCREEN",
+        "RETURN-TO-PREV-SCREEN",
+        "SEND-TRNVIEW-SCREEN"
+      ],
+      "line_count": 330,
+      "byte_count": 14244,
+      "analyses": {
+        "paragraph_count": {
+          "count": 12
+        }
+      }
+    },
+    {
+      "path": "COTRN02C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COTRN02C",
+      "copybooks": [
+        "COCOM01Y",
+        "COTRN02",
+        "COTTL01Y",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CVACT01Y",
+        "CVACT03Y",
+        "CVTRA05Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [
+        "CSUTLDTC"
+      ],
+      "paragraphs": [
+        "ADD-TRANSACTION",
+        "CLEAR-CURRENT-SCREEN",
+        "COPY-LAST-TRAN-DATA",
+        "END-EVALUATE",
+        "END-EXEC",
+        "END-IF",
+        "ENDBR-TRANSACT-FILE",
+        "INITIALIZE-ALL-FIELDS",
+        "MAIN-PARA",
+        "POPULATE-HEADER-INFO",
+        "PROCESS-ENTER-KEY",
+        "READ-CCXREF-FILE",
+        "READ-CXACAIX-FILE",
+        "READPREV-TRANSACT-FILE",
+        "RECEIVE-TRNADD-SCREEN",
+        "RETURN-TO-PREV-SCREEN",
+        "SEND-TRNADD-SCREEN",
+        "STARTBR-TRANSACT-FILE",
+        "VALIDATE-INPUT-DATA-FIELDS",
+        "VALIDATE-INPUT-KEY-FIELDS",
+        "WRITE-TRANSACT-FILE"
+      ],
+      "line_count": 783,
+      "byte_count": 33665,
+      "analyses": {
+        "paragraph_count": {
+          "count": 21
+        }
+      }
+    },
+    {
+      "path": "COUSR00C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COUSR00C",
+      "copybooks": [
+        "COCOM01Y",
+        "COTTL01Y",
+        "COUSR00",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CSUSR01Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "END-EVALUATE",
+        "END-EXEC",
+        "END-IF",
+        "ENDBR-USER-SEC-FILE",
+        "INITIALIZE-USER-DATA",
+        "MAIN-PARA",
+        "POPULATE-HEADER-INFO",
+        "POPULATE-USER-DATA",
+        "PROCESS-ENTER-KEY",
+        "PROCESS-PAGE-BACKWARD",
+        "PROCESS-PAGE-FORWARD",
+        "PROCESS-PF7-KEY",
+        "PROCESS-PF8-KEY",
+        "READNEXT-USER-SEC-FILE",
+        "READPREV-USER-SEC-FILE",
+        "RECEIVE-USRLST-SCREEN",
+        "RETURN-TO-PREV-SCREEN",
+        "SEND-USRLST-SCREEN",
+        "STARTBR-USER-SEC-FILE"
+      ],
+      "line_count": 695,
+      "byte_count": 29285,
+      "analyses": {
+        "paragraph_count": {
+          "count": 19
+        }
+      }
+    },
+    {
+      "path": "COUSR01C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COUSR01C",
+      "copybooks": [
+        "COCOM01Y",
+        "COTTL01Y",
+        "COUSR01",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CSUSR01Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "CLEAR-CURRENT-SCREEN",
+        "END-EVALUATE",
+        "END-EXEC",
+        "END-IF",
+        "INITIALIZE-ALL-FIELDS",
+        "MAIN-PARA",
+        "POPULATE-HEADER-INFO",
+        "PROCESS-ENTER-KEY",
+        "RECEIVE-USRADD-SCREEN",
+        "RETURN-TO-PREV-SCREEN",
+        "SEND-USRADD-SCREEN",
+        "WRITE-USER-SEC-FILE"
+      ],
+      "line_count": 299,
+      "byte_count": 12571,
+      "analyses": {
+        "paragraph_count": {
+          "count": 12
+        }
+      }
+    },
+    {
+      "path": "COUSR02C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COUSR02C",
+      "copybooks": [
+        "COCOM01Y",
+        "COTTL01Y",
+        "COUSR02",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CSUSR01Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "CLEAR-CURRENT-SCREEN",
+        "END-EVALUATE",
+        "END-EXEC",
+        "END-IF",
+        "INITIALIZE-ALL-FIELDS",
+        "MAIN-PARA",
+        "POPULATE-HEADER-INFO",
+        "PROCESS-ENTER-KEY",
+        "READ-USER-SEC-FILE",
+        "RECEIVE-USRUPD-SCREEN",
+        "RETURN-TO-PREV-SCREEN",
+        "SEND-USRUPD-SCREEN",
+        "UPDATE-USER-INFO",
+        "UPDATE-USER-SEC-FILE"
+      ],
+      "line_count": 414,
+      "byte_count": 17611,
+      "analyses": {
+        "paragraph_count": {
+          "count": 14
+        }
+      }
+    },
+    {
+      "path": "COUSR03C.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "COUSR03C",
+      "copybooks": [
+        "COCOM01Y",
+        "COTTL01Y",
+        "COUSR03",
+        "CSDAT01Y",
+        "CSMSG01Y",
+        "CSUSR01Y",
+        "DFHAID",
+        "DFHBMSCA"
+      ],
+      "copy_replacing": [],
+      "calls": [],
+      "paragraphs": [
+        "CLEAR-CURRENT-SCREEN",
+        "DELETE-USER-INFO",
+        "DELETE-USER-SEC-FILE",
+        "END-EVALUATE",
+        "END-EXEC",
+        "END-IF",
+        "INITIALIZE-ALL-FIELDS",
+        "MAIN-PARA",
+        "POPULATE-HEADER-INFO",
+        "PROCESS-ENTER-KEY",
+        "READ-USER-SEC-FILE",
+        "RECEIVE-USRDEL-SCREEN",
+        "RETURN-TO-PREV-SCREEN",
+        "SEND-USRDEL-SCREEN"
+      ],
+      "line_count": 359,
+      "byte_count": 15038,
+      "analyses": {
+        "paragraph_count": {
+          "count": 14
+        }
+      }
+    },
+    {
+      "path": "CSUTLDTC.cbl",
+      "kind": "program",
+      "source_format": "fixed",
+      "program_id": "CSUTLDTC",
+      "copybooks": [],
+      "copy_replacing": [],
+      "calls": [
+        "CEEDAYS"
+      ],
+      "paragraphs": [
+        "A000-MAIN",
+        "A000-MAIN-EXIT"
+      ],
+      "line_count": 157,
+      "byte_count": 11608,
+      "analyses": {
+        "paragraph_count": {
+          "count": 2
+        }
+      }
+    }
+  ],
+  "metrics": {
+    "unit_count": 31,
+    "program_count": 31,
+    "copybook_count": 0,
+    "call_edges": 17,
+    "copy_edges": 214,
+    "unresolved_call_count": 4,
+    "unresolved_copybook_count": 2,
+    "unreferenced_programs": [
+      "CBACT01C",
+      "CBACT02C",
+      "CBACT03C",
+      "CBACT04C",
+      "CBCUS01C",
+      "CBEXPORT",
+      "CBIMPORT",
+      "CBSTM03A",
+      "CBTRN01C",
+      "CBTRN02C",
+      "CBTRN03C",
+      "COACTUPC",
+      "COACTVWC",
+      "COADM01C",
+      "COBIL00C",
+      "COBSWAIT",
+      "COCRDLIC",
+      "COCRDSLC",
+      "COCRDUPC",
+      "COMEN01C",
+      "CORPT00C",
+      "COSGN00C",
+      "COTRN00C",
+      "COTRN01C",
+      "COTRN02C",
+      "COUSR00C",
+      "COUSR01C",
+      "COUSR02C",
+      "COUSR03C"
+    ],
+    "unreferenced_copybooks": [],
+    "copybooks_using_replacing": [
+      "CSSETATY"
+    ],
+    "max_fan_out": 2,
+    "max_fan_in": 2
+  },
+  "unresolved": {
+    "copybooks": [
+      "DFHAID",
+      "DFHBMSCA"
+    ],
+    "calls": [
+      "CEE3ABD",
+      "CEEDAYS",
+      "COBDATFT",
+      "MVSWAIT"
+    ]
+  },
+  "reports": {}
+}

@@ -1,0 +1,4 @@
+per ogni file J in POSTTRAN.jcl INTCALC.jcl CREASTMT.JCL ACCTFILE.jcl (percorsi app/jcl/J, dal manifesto):
+java -cp class:antlr-4.13.2-complete.jar:commons-cli-1.4.jar Demo01 -file /legacy/app/jcl/J -include /legacy/app/proc -outcsv /work/J.csv
+(eseguito in menb-analysis-mapa:d05705a con cartella di lavoro scrivibile; l'output grezzo contiene UUID e orari e non e' deterministico,
+quindi si versiona solo la forma normalizzata: jcl_steps.tsv e jcl_dd.tsv)

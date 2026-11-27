@@ -1,0 +1,33 @@
+# programma	numero di istruzioni COPY nel sorgente
+# Contate con una ricerca testuale indipendente dagli strumenti: righe non commento (colonna 7 diversa da * e /) che contengono la parola COPY seguita da un nome.
+CBACT01C	2
+CBACT02C	1
+CBACT03C	1
+CBACT04C	5
+CBCUS01C	1
+CBEXPORT	6
+CBIMPORT	6
+CBSTM03A	4
+CBSTM03B	0
+CBTRN01C	6
+CBTRN02C	5
+CBTRN03C	5
+COACTUPC	56
+COACTVWC	15
+COADM01C	9
+COBIL00C	10
+COBSWAIT	0
+COCRDLIC	11
+COCRDSLC	13
+COCRDUPC	13
+COMEN01C	9
+CORPT00C	8
+COSGN00C	8
+COTRN00C	8
+COTRN01C	8
+COTRN02C	10
+COUSR00C	8
+COUSR01C	8
+COUSR02C	8
+COUSR03C	8
+CSUTLDTC	0

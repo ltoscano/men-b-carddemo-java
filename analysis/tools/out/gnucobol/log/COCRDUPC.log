@@ -1,0 +1,27 @@
+/legacy/app/cbl/COCRDUPC.cbl:327: error: DFHBMSCA: No such file or directory
+  325 | ..
+  326 |       *IBM SUPPLIED COPYBOOKS..
+  327 >        COPY DFHBMSCA...
+  328 |        COPY DFHAID...
+  329 | ..
+/legacy/app/cbl/COCRDUPC.cbl:328: error: DFHAID: No such file or directory
+  326 |       *IBM SUPPLIED COPYBOOKS..
+  327 |        COPY DFHBMSCA...
+  328 >        COPY DFHAID...
+  329 | ..
+  330 |       *COMMON COPYBOOKS..
+/legacy/app/cbl/COCRDUPC.cbl:364: error: 'EIBCALEN' is not defined
+  362 |        01  DFHCOMMAREA...
+  363 |          05  FILLER                                PIC X(1)..
+  364 >              OCCURS 1 TO 32767 TIMES DEPENDING ON EIBCALEN...
+  365 | ..
+  366 |        PROCEDURE DIVISION...
+/legacy/app/cbl/COCRDUPC.cbl: in paragraph '0000-MAIN':
+/legacy/app/cbl/COCRDUPC.cbl:370: error: 'EXEC' is a reserved word, but isn't supported
+  368 | ..
+  369 | ..
+  370 >            EXEC CICS HANDLE ABEND..
+  371 |                      LABEL(ABEND-ROUTINE)..
+  372 |            END-EXEC..
+/legacy/app/cbl/COCRDUPC.cbl:370: error: syntax error, unexpected Identifier, expecting SECTION or .
+/legacy/app/cbl/COCRDUPC.cbl:370: note: 'EXEC' is not a statement

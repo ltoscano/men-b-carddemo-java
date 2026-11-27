@@ -1,0 +1,27 @@
+/legacy/app/cbl/COACTVWC.cbl:221: error: DFHBMSCA: No such file or directory
+  219 | ..
+  220 |       *IBM SUPPLIED COPYBOOKS..
+  221 >        COPY DFHBMSCA...
+  222 |        COPY DFHAID...
+  223 | ..
+/legacy/app/cbl/COACTVWC.cbl:222: error: DFHAID: No such file or directory
+  220 |       *IBM SUPPLIED COPYBOOKS..
+  221 |        COPY DFHBMSCA...
+  222 >        COPY DFHAID...
+  223 | ..
+  224 |       *COMMON COPYBOOKS..
+/legacy/app/cbl/COACTVWC.cbl:259: error: 'EIBCALEN' is not defined
+  257 |        01  DFHCOMMAREA...
+  258 |          05  FILLER                                PIC X(1)..
+  259 >              OCCURS 1 TO 32767 TIMES DEPENDING ON EIBCALEN...
+  260 | ..
+  261 |        PROCEDURE DIVISION...
+/legacy/app/cbl/COACTVWC.cbl: in paragraph '0000-MAIN':
+/legacy/app/cbl/COACTVWC.cbl:264: error: 'EXEC' is a reserved word, but isn't supported
+  262 |        0000-MAIN...
+  263 | ..
+  264 >            EXEC CICS HANDLE ABEND..
+  265 |                      LABEL(ABEND-ROUTINE)..
+  266 |            END-EXEC..
+/legacy/app/cbl/COACTVWC.cbl:264: error: syntax error, unexpected Identifier, expecting SECTION or .
+/legacy/app/cbl/COACTVWC.cbl:264: note: 'EXEC' is not a statement

@@ -1,0 +1,5 @@
+# copybook	lunghezza totale del record (byte)	fonte
+CVACT01Y	300	somma dei campi di ACCOUNT-RECORD, e commento RECLN 300 nel copybook
+CVACT03Y	50	somma dei campi di CARD-XREF-RECORD (16+9+11+14)
+CVTRA05Y	350	somma dei campi di TRAN-RECORD
+CVEXPORT	500	RECORDSIZE(500 500) in app/jcl/CBEXPORT.jcl riga 33; commento "Total Record Length: 500 bytes"

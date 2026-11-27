@@ -1,0 +1,4 @@
+controllo: scc 
+  scc: 186 file contati, 54 non contati, 240 nel manifesto sotto app/
+  scc: 6 campioni contati a mano (righe totali e righe vuote) confrontati
+VERDETTO: pass
