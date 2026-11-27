@@ -29,6 +29,12 @@
   <properties>
     <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Versioni fissate dei controlli di #26. Enforcer: gestita da Spring Boot 4.2.0
+         (maven-enforcer-plugin.version). Checkstyle e ArchUnit non sono gestiti da Spring Boot:
+         ultime versioni stabili su Maven Central al 27 nov 2026. -->
+    <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
+    <checkstyle.version>14.4.0</checkstyle.version>
+    <archunit.version>1.5.1</archunit.version>
   </properties>
 
   <dependencyManagement>
@@ -53,6 +59,83 @@
         <artifactId>carddemo-batch</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.tngtech.archunit</groupId>
+        <artifactId>archunit</artifactId>
+        <version>${archunit.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- Divieto di tipi in virgola mobile e di var nel codice di produzione (vedi
+             quality/regole/checkstyle.xml). Le dipendenze di Checkstyle sono fissate qui. -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>${maven-checkstyle-plugin.version}</version>
+          <dependencies>
+            <dependency>
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>${checkstyle.version}</version>
+            </dependency>
+          </dependencies>
+          <executions>
+            <execution>
+              <id>tipi-vietati</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+              <configuration>
+                <configLocation>${project.parent.basedir}/quality/regole/checkstyle.xml</configLocation>
+                <includeTestSourceDirectory>false</includeTestSourceDirectory>
+                <consoleOutput>true</consoleOutput>
+                <failsOnError>true</failsOnError>
+                <failOnViolation>true</failOnViolation>
+                <violationSeverity>warning</violationSeverity>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <!-- Database incorporati vietati in ogni modulo, ambito e per via transitiva. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>${maven-enforcer-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>database-incorporati</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <searchTransitive>true</searchTransitive>
+                  <excludes>
+                    <exclude>com.h2database:*</exclude>
+                    <exclude>org.hsqldb:*</exclude>
+                    <exclude>hsqldb:*</exclude>
+                    <exclude>org.apache.derby:*</exclude>
+                    <exclude>derby:*</exclude>
+                  </excludes>
+                  <message>DATABASE-INCORPORATO-VIETATO</message>
+                </bannedDependencies>
+              </rules>
+              <fail>true</fail>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

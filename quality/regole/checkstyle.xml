@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+<!-- Divieto di tipi in virgola mobile e di var nel codice di produzione di domain, loader,
+     online, batch (#26). Si legge il sorgente, quindi si vedono solo i tipi dichiarati: per
+     questo var e' vietato. Tutte le violazioni sono errori. Nessuna esclusione. -->
+<module name="Checker">
+  <property name="severity" value="error"/>
+  <property name="fileExtensions" value="java"/>
+  <module name="TreeWalker">
+    <!-- Parole chiave double e float in ogni posizione: campi, parametri, ritorni, locali,
+         cast, array, Double.class. -->
+    <module name="IllegalToken">
+      <property name="tokens" value="LITERAL_DOUBLE, LITERAL_FLOAT"/>
+      <message key="illegal.token" value="FP-VIETATO: {0}"/>
+    </module>
+    <!-- Letterali in virgola mobile: 1.0, 1e3, 2f, 2d, 0x1p3. -->
+    <module name="IllegalToken">
+      <property name="tokens" value="NUM_DOUBLE, NUM_FLOAT"/>
+      <message key="illegal.token" value="FP-VIETATO: {0}"/>
+    </module>
+    <!-- Nomi di tipo e metodo in virgola mobile, anche qualificati (java.lang.Double),
+         come argomenti di tipo (List&lt;Double&gt;), import compresi. -->
+    <module name="IllegalTokenText">
+      <property name="tokens" value="IDENT"/>
+      <property name="format" value="^(Double|Float|doubleValue|floatValue|DoubleStream|DoubleSupplier|DoubleFunction|DoubleUnaryOperator|DoubleBinaryOperator)$"/>
+      <message key="illegal.token.text" value="FP-VIETATO: tipo o metodo in virgola mobile"/>
+    </module>
+    <!-- var: il tipo dedotto non e' visibile nel sorgente. -->
+    <module name="IllegalToken">
+      <property name="tokens" value="LITERAL_VAR"/>
+      <message key="illegal.token" value="VAR-VIETATO: {0}"/>
+    </module>
+  </module>
+</module>
