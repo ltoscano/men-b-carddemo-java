@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "graph-cics.schema.json",
+  "title": "Comandi EXEC CICS di CardDemo",
+  "description": "Formato di graph-cics.json (analysis/inventory-cics, issue #22). Un'occorrenza per ogni blocco EXEC CICS; un arco per ogni operando di bersaglio risolto (letterale o costante); i nodi nuovi (cics-mapset, cics-map, cics-file, cics-queue, external) stanno qui, gli altri (program, copybook, transaction, external gia' presenti) in graph.json, citati per identificativo. I tipi di nodo del grafo di #2 non si riusano per somiglianza di nome: il mapset COSGN00 non e' il copybook COSGN00, il file CICS USRSEC non e' un dataset dei JCL.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["versione_schema", "descrizione", "grafo_base", "estrattore", "nodi", "occorrenze", "archi"],
+  "properties": {
+    "versione_schema": { "const": 1 },
+    "descrizione": { "type": "string", "minLength": 1 },
+    "grafo_base": { "const": "docs/legacy-map/graph.json" },
+    "estrattore": { "type": "string", "minLength": 1 },
+    "nodi": { "type": "array", "items": { "$ref": "#/$defs/nodo" } },
+    "occorrenze": { "type": "array", "items": { "$ref": "#/$defs/occorrenza" } },
+    "archi": { "type": "array", "items": { "$ref": "#/$defs/arco" } }
+  },
+  "$defs": {
+    "percorso": { "type": "string", "pattern": "^app/[^\\s]+$" },
+    "riga": { "type": "integer", "minimum": 1 },
+    "nome": { "type": "string", "pattern": "^\\S(.*\\S)?$" },
+    "nodo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "tipo", "nome"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^(cics-mapset:[^/]+|cics-map:[^/]+/[^/]+|cics-file:[^/]+|cics-queue:(TD|TS)/[^/]+|external:.+)$" },
+        "tipo": { "enum": ["cics-mapset", "cics-map", "cics-file", "cics-queue", "external"] },
+        "nome": { "$ref": "#/$defs/nome" },
+        "mapset": { "$ref": "#/$defs/nome" },
+        "tipo_coda": { "enum": ["TD", "TS"] },
+        "origine": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        { "if": { "properties": { "tipo": { "const": "cics-map" } } }, "then": { "required": ["mapset"] }, "else": { "not": { "required": ["mapset"] } } },
+        { "if": { "properties": { "tipo": { "const": "cics-queue" } } }, "then": { "required": ["tipo_coda"] }, "else": { "not": { "required": ["tipo_coda"] } } },
+        { "if": { "properties": { "tipo": { "const": "external" } } }, "then": { "required": ["origine"] }, "else": { "not": { "required": ["origine"] } } }
+      ]
+    },
+    "opzione": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nome"],
+      "properties": {
+        "nome": { "type": "string", "pattern": "^[A-Z0-9][A-Z0-9-]*$" },
+        "argomento": { "type": "string", "minLength": 1 }
+      }
+    },
+    "bersaglio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ruolo", "opzione", "operando", "risoluzione"],
+      "properties": {
+        "ruolo": { "enum": ["PROGRAM", "TRANSID", "MAP", "MAPSET", "FILE", "QUEUE"] },
+        "opzione": { "enum": ["PROGRAM", "TRANSID", "MAP", "MAPSET", "FILE", "DATASET", "QUEUE", "QNAME"] },
+        "operando": { "type": "string", "minLength": 1 },
+        "risoluzione": { "enum": ["letterale", "costante", "non_risolto"] },
+        "nome": { "$ref": "#/$defs/nome" },
+        "valore": { "type": "string", "pattern": "^('[^']*'|\"[^\"]*\")$" },
+        "file_valore": { "$ref": "#/$defs/percorso" },
+        "riga_valore": { "$ref": "#/$defs/riga" },
+        "motivo": { "enum": ["in-copybook", "espressione", "valore-vuoto", "copy-non-risolta", "non-definito", "definito-piu-volte", "fuori-working-storage", "occurs", "senza-value-letterale", "modificato", "mapset-assente", "mapset-non-risolto", "tipo-coda-assente"] },
+        "modifica": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file", "riga"],
+          "properties": { "file": { "$ref": "#/$defs/percorso" }, "riga": { "$ref": "#/$defs/riga" } }
+        }
+      },
+      "allOf": [
+        { "if": { "properties": { "risoluzione": { "const": "letterale" } } },
+          "then": { "required": ["nome"], "not": { "anyOf": [{ "required": ["valore"] }, { "required": ["file_valore"] }, { "required": ["riga_valore"] }, { "required": ["motivo"] }, { "required": ["modifica"] }] } } },
+        { "if": { "properties": { "risoluzione": { "const": "costante" } } },
+          "then": { "required": ["nome", "valore", "file_valore", "riga_valore"], "not": { "anyOf": [{ "required": ["motivo"] }, { "required": ["modifica"] }] } } },
+        { "if": { "properties": { "risoluzione": { "const": "non_risolto" } } },
+          "then": { "required": ["motivo"], "not": { "anyOf": [{ "required": ["nome"] }, { "required": ["valore"] }, { "required": ["file_valore"] }, { "required": ["riga_valore"] }] } } },
+        { "if": { "properties": { "motivo": { "const": "modificato" } }, "required": ["motivo"] }, "then": { "required": ["modifica"] }, "else": { "not": { "required": ["modifica"] } } }
+      ]
+    },
+    "occorrenza": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "file", "riga", "riga_fine", "colonna", "da", "comando", "categoria", "opzioni", "bersagli"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^occ:app/[^\\s:]+:[1-9][0-9]*:[1-9][0-9]*$" },
+        "file": { "$ref": "#/$defs/percorso" },
+        "riga": { "$ref": "#/$defs/riga" },
+        "riga_fine": { "$ref": "#/$defs/riga" },
+        "colonna": { "type": "integer", "minimum": 8, "maximum": 72 },
+        "da": { "type": "string", "pattern": "^(program|copybook):.+$" },
+        "comando": { "type": "string", "pattern": "^[A-Z0-9][A-Z0-9-]*( [A-Z0-9][A-Z0-9-]*)?$" },
+        "categoria": { "enum": ["trasferimento", "mappe", "file", "coda", "transazione", "altro"] },
+        "opzioni": { "type": "array", "items": { "$ref": "#/$defs/opzione" } },
+        "bersagli": { "type": "array", "items": { "$ref": "#/$defs/bersaglio" } },
+        "modalita": { "enum": ["lettura", "lettura-update", "scrittura", "riscrittura", "cancellazione", "scorrimento-inizio", "scorrimento-avanti", "scorrimento-avanti-update", "scorrimento-indietro", "scorrimento-indietro-update", "scorrimento-fine", "scorrimento-riposizionamento", "rilascio"] },
+        "update": { "type": "boolean" },
+        "tipo_coda": { "enum": ["TD", "TS", "assente"] }
+      },
+      "allOf": [
+        { "if": { "properties": { "categoria": { "const": "file" } } }, "then": { "required": ["modalita", "update"] }, "else": { "not": { "anyOf": [{ "required": ["modalita"] }, { "required": ["update"] }] } } },
+        { "if": { "properties": { "categoria": { "const": "coda" } } }, "then": { "required": ["tipo_coda"] }, "else": { "not": { "required": ["tipo_coda"] } } },
+        { "if": { "properties": { "categoria": { "enum": ["transazione", "altro"] } } }, "then": { "properties": { "bersagli": { "maxItems": 0 } } } }
+      ]
+    },
+    "arco": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "occorrenza", "da", "a", "ruolo", "comando"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^occ:.+#(PROGRAM|TRANSID|MAP|MAPSET|FILE|QUEUE)$" },
+        "occorrenza": { "type": "string", "pattern": "^occ:.+$" },
+        "da": { "type": "string", "pattern": "^(program|copybook):.+$" },
+        "a": { "type": "string", "pattern": "^(program|transaction|external|cics-mapset|cics-map|cics-file|cics-queue):.+$" },
+        "ruolo": { "enum": ["PROGRAM", "TRANSID", "MAP", "MAPSET", "FILE", "QUEUE"] },
+        "comando": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        { "if": { "properties": { "ruolo": { "const": "PROGRAM" } } }, "then": { "properties": { "a": { "pattern": "^(program|external):" } } } },
+        { "if": { "properties": { "ruolo": { "const": "TRANSID" } } }, "then": { "properties": { "a": { "pattern": "^(transaction|external):" } } } },
+        { "if": { "properties": { "ruolo": { "const": "MAP" } } }, "then": { "properties": { "a": { "pattern": "^cics-map:" } } } },
+        { "if": { "properties": { "ruolo": { "const": "MAPSET" } } }, "then": { "properties": { "a": { "pattern": "^cics-mapset:" } } } },
+        { "if": { "properties": { "ruolo": { "const": "FILE" } } }, "then": { "properties": { "a": { "pattern": "^cics-file:" } } } },
+        { "if": { "properties": { "ruolo": { "const": "QUEUE" } } }, "then": { "properties": { "a": { "pattern": "^cics-queue:" } } } }
+      ]
+    }
+  }
+}

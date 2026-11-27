@@ -1,0 +1,6 @@
+path	type
+app/cbl/FIXCICS.cbl	cobol
+app/cbl/FIXCOPY2.cbl	cobol
+app/cbl/FIXTGT.cbl	cobol
+app/cpy/FIXCPY.cpy	copybook
+app/cbl/FIXRDEF.cbl	cobol
