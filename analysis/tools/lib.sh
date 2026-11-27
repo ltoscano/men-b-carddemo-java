@@ -69,7 +69,7 @@ record() { # record TOOL FILE TEXT
 # Nota di robustezza: queste funzioni sono chiamate anche dentro 'if' e con '||', dove 'set -e' non agisce; per questo
 # l'esito di ogni comando (sostituzioni di comando, pipeline, awk, find, sort) e' controllato esplicitamente e
 # propagato con 'return 1'. Non si usano sostituzioni di processo.
-VERDETTI="${VERDETTI:-$TOOLS_DIR/verdetti.tsv}"
+VERDETTI="$TOOLS_DIR/verdetti.tsv"   # sempre il file del repository: non si eredita dall'ambiente (check.sh lo sostituisce solo per le prove negative)
 
 # Cartella di out/ in cui un controllo scrive il proprio verdetto: dipende solo dal controllo e dallo strumento
 # (e' la stessa regola con cui run.sh organizza i verdetti); stampa la cartella, errore se la coppia non esiste.
@@ -140,6 +140,34 @@ verdict_set_check() {
 # Registra un verdetto scritto nella corsa corrente (variabile di shell WRITTEN, righe "percorso<TAB>controllo<TAB>strumento").
 verdict_record() { # verdict_record CARTELLA/NOME CONTROLLO [STRUMENTO]
   WRITTEN="${WRITTEN:-}$1"$'\t'"$2"$'\t'"${3:--}"$'\n'
+}
+
+# Azzera il registro delle scritture: run.sh lo chiama prima delle prove, cosi' un valore ereditato dall'ambiente non conta.
+verdict_register_reset() { WRITTEN=""; }
+
+# Verdetto calcolato: stampa il testo (intestazione + output del confronto, stesso formato di verdict_text) SOLO se il
+# confronto si e' concluso: codice 0 con ultima riga "VERDETTO: pass", oppure codice 1 con "VERDETTO: fail". Qualsiasi
+# altra cosa (docker che fallisce, eccezione dello script, risposta troncata) e' un errore operativo: ritorna 2 senza testo.
+verdict_compute() { # verdict_compute CHECK [TOOL] [argomenti di compare.py, es. --out DIR]
+  local check="$1" tool="${2:-}" body rc=0 last
+  shift; [ $# -eq 0 ] || shift
+  body="$(glue_run -- /analysis/tools/glue/compare.py $check $tool "$@" 2>&1)" || rc=$?
+  last="$(printf '%s\n' "$body" | tail -n 1)" || return 2
+  case "$rc:$last" in
+    "0:VERDETTO: pass"|"1:VERDETTO: fail") ;;
+    *) echo "confronto '$check $tool' non concluso (codice $rc, ultima riga '$last')" >&2; return 2 ;;
+  esac
+  printf 'controllo: %s %s\n%s\n' "$check" "$tool" "$body"
+}
+
+# Un file di verdetto e' valido solo se la prima riga e' l'intestazione "controllo: ..." e l'ultima e' una riga di esito.
+verdict_file_valid() { # verdict_file_valid FILE
+  local f="$1" first last
+  [ -f "$f" ] || return 1
+  first="$(head -n 1 "$f")" || return 1
+  last="$(tail -n 1 "$f")" || return 1
+  case "$first" in "controllo: "*) ;; *) return 1 ;; esac
+  case "$last" in "VERDETTO: pass"|"VERDETTO: fail") ;; *) return 1 ;; esac
 }
 
 # Errore se CARTELLA/NOME non e' dichiarato (usato da run.sh prima di scrivere un verdetto).

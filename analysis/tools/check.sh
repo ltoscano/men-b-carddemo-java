@@ -49,13 +49,14 @@ check_unavailable() {
 # reconcile HOSTOUT CONTOUT: ogni verdetto / prova dichiarato in verdetti.tsv deve esistere ed essere uguale al ricalcolato,
 # con il controllo e lo strumento dichiarati (non ricavati dal nome del file o dalla cartella in cui si trova).
 reconcile() {
-  local hout="$1" cout="$2" tbl path check tool n=0
+  local hout="$1" cout="$2" tbl path check tool text n=0
   tbl="$(verdict_table)" || return 1
   while IFS=$'\t' read -r path check tool; do
     [ "$tool" != "-" ] || tool=""
     [ -f "$hout/$path" ] || { echo "verdetto dovuto mancante: $path" >&2; return 1; }
-    verdict_text "$check" "$tool" --out "$cout" > "$tmp/re.txt" || return 1
-    [ -s "$tmp/re.txt" ] || { echo "ricalcolo del verdetto $path senza output" >&2; return 1; }
+    verdict_file_valid "$hout/$path" || { echo "verdetto salvato $path non valido (manca l'intestazione o la riga di esito pass/fail)" >&2; return 1; }
+    text="$(verdict_compute "$check" "$tool" --out "$cout")" || { echo "ricalcolo del verdetto $path non concluso (errore operativo): il file salvato non e' confermato" >&2; return 1; }
+    printf '%s\n' "$text" > "$tmp/re.txt" || return 1
     cmp -s "$hout/$path" "$tmp/re.txt" || { echo "verdetto salvato $path (ultima riga '$(tail -1 "$hout/$path")') diverso dal ricalcolato ('$(tail -1 "$tmp/re.txt")')" >&2; return 1; }
     n=$((n + 1))
   done <<< "$tbl"
@@ -107,6 +108,36 @@ log "   prova negativa ok: voce aggiunta alla dichiarazione + file residuo (verd
 if VERDETTI="$tmp/verdetti-bad.tsv" verdict_table > "$tmp/neg.out" 2>&1; then fail "PROVA NEGATIVA FALLITA: una voce con cartella sbagliata per il controllo e' accettata"; fi
 grep -qF -- "va nella cartella 'cb2xml', non in 'scc'" "$tmp/neg.out" || { cat "$tmp/neg.out" >&2; fail "prova negativa (cartella sbagliata): motivo inatteso"; }
 log "   prova negativa ok: voce con la cartella di un altro strumento rifiutata"
+
+# Prova negativa: il ricalcolo termina con errore (docker 42) e sul disco c'e' un file con la stessa diagnostica. Un errore
+# operativo non e' un verdetto: il controllo deve fallire qualunque cosa ci sia sul disco.
+mkdir -p "$tmp/wrap-docker"
+printf '#!/bin/sh\ncase "$*" in *compare.py*layout*--out*) echo "AUDIT: docker compare layout exit 42"; exit 42 ;; esac\nexec %s "$@"\n' "$(command -v docker)" > "$tmp/wrap-docker/docker"; chmod +x "$tmp/wrap-docker/docker"
+rm -rf "$tmp/setneg"; cp -R "$OUT" "$tmp/setneg"
+printf 'controllo: layout \nAUDIT: docker compare layout exit 42\n' > "$tmp/setneg/cb2xml/verdetto-layout.txt"
+if PATH="$tmp/wrap-docker:$PATH" reconcile "$tmp/setneg" "$(cont setneg)" > "$tmp/neg.out" 2>&1; then
+  fail "PROVA NEGATIVA FALLITA: ricalcolo terminato con errore + file residuo con la stessa diagnostica: il controllo e' verde"
+fi
+grep -qF -- "verdetto salvato cb2xml/verdetto-layout.txt non valido" "$tmp/neg.out" || { cat "$tmp/neg.out" >&2; fail "prova negativa (diagnostica residua): motivo inatteso"; }
+# Stesso guasto con un file residuo di formato valido ma non confermato dal ricalcolo: l'errore operativo non lo conferma.
+cp "$OUT/cb2xml/verdetto-layout.txt" "$tmp/setneg/cb2xml/verdetto-layout.txt"
+if PATH="$tmp/wrap-docker:$PATH" reconcile "$tmp/setneg" "$(cont setneg)" > "$tmp/neg.out" 2>&1; then
+  fail "PROVA NEGATIVA FALLITA: ricalcolo terminato con errore + verdetto salvato valido: il controllo e' verde"
+fi
+grep -qF -- "non concluso (errore operativo)" "$tmp/neg.out" || { cat "$tmp/neg.out" >&2; fail "prova negativa (ricalcolo con errore): motivo inatteso"; }
+if PATH="$tmp/wrap-docker:$PATH" verdict_compute layout "" --out "$(cont setneg)" > /dev/null 2>&1; then
+  fail "PROVA NEGATIVA FALLITA: verdict_compute presenta come verdetto un confronto terminato con errore"
+fi
+log "   prova negativa ok: ricalcolo terminato con errore (docker 42) + file residuo -> il controllo fallisce"
+
+# Prova negativa: registro delle scritture ereditato (pieno) e scrittura saltata. run.sh lo azzera prima delle prove.
+grep -q '^verdict_register_reset$' "$TOOLS_DIR/run.sh" || fail "run.sh non azzera il registro delle scritture (verdict_register_reset)"
+WRITTEN="$written_real"; verdict_register_reset
+if verdict_written_check > "$tmp/neg.out" 2>&1; then
+  fail "PROVA NEGATIVA FALLITA: registro ereditato e nessuna scrittura: i verdetti risultano scritti"
+fi
+grep -qF -- "verdetto dichiarato ma non scritto in questa corsa" "$tmp/neg.out" || { cat "$tmp/neg.out" >&2; fail "prova negativa (registro ereditato): motivo inatteso"; }
+log "   prova negativa ok: registro delle scritture ereditato + scrittura saltata -> il controllo fallisce"
 
 # Prove negative: un comando necessario al confronto che fallisce (esito 42) non puo' dare un insieme "completo",
 # ne' con l'insieme intatto ne' con un verdetto assente. Ogni comando e' sostituito da un finto che esce con 42.

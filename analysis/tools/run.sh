@@ -13,12 +13,13 @@ trial() { bash "$TOOLS_DIR/trials/$1.sh"; }
 
 # verdict CHECK [TOOL] [DIRECTORY-DEL-VERDETTO]: esegue il confronto e salva l'esito; ritorna 0 se pass, 1 se fail.
 verdict() {
-  local check="$1" tool="${2:-}" dir="${3:-${2:-}}" file rc=0
+  local check="$1" tool="${2:-}" dir="${3:-${2:-}}" file text rc=0
   [ -n "$dir" ] || dir="$check"
   mkdir -p "$OUT/$dir"
   file="$OUT/$dir/verdetto-$check.txt"
   verdict_require_declared "$dir/verdetto-$check.txt"
-  verdict_text "$check" "$tool" > "$file" || fail "scrittura del verdetto $dir/verdetto-$check.txt fallita"
+  text="$(verdict_compute "$check" "$tool")" || fail "confronto '$check $tool' non concluso: nessun verdetto scritto"
+  printf '%s\n' "$text" > "$file" || fail "scrittura del verdetto $dir/verdetto-$check.txt fallita"
   verdict_record "$dir/verdetto-$check.txt" "$check" "$tool"
   [ "$(tail -1 "$file")" = "VERDETTO: pass" ] || rc=1
   log "verdetto $check ${tool}: $(tail -1 "$file")"
@@ -26,6 +27,8 @@ verdict() {
 }
 
 mkdir -p "$OUT"
+# Registro delle scritture azzerato incondizionatamente: un valore ereditato dall'ambiente non deve contare.
+verdict_register_reset
 
 # --- conteggi
 trial 10-scc
@@ -33,7 +36,8 @@ verdict scc "" scc || true
 # Capacita' ripartizione-codice-commenti: i campioni a mano smentiscono scc. Il fallimento e' la prova richiesta
 # per una capacita' unavailable e si salva come tale (campioni, valori di scc e differenze).
 verdict_require_declared "scc/prova-fallita-ripartizione.txt"
-verdict_text scc-split > "$OUT/scc/prova-fallita-ripartizione.txt" || fail "scrittura di scc/prova-fallita-ripartizione.txt fallita"
+prova_text="$(verdict_compute scc-split)" || fail "confronto 'scc-split' non concluso: nessuna prova scritta"
+printf '%s\n' "$prova_text" > "$OUT/scc/prova-fallita-ripartizione.txt" || fail "scrittura di scc/prova-fallita-ripartizione.txt fallita"
 verdict_record "scc/prova-fallita-ripartizione.txt" scc-split ""
 log "prova del fallimento (ripartizione codice/commenti): $(tail -1 "$OUT/scc/prova-fallita-ripartizione.txt")"
 
