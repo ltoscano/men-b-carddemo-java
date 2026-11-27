@@ -113,3 +113,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T13:21:53Z,issue-15,esecutore-consuntivo,opus,orologio,prima fase fino al fermo: durata 841 s; 49 chiamate a strumenti; contatore token 203309
 2026-11-27T13:26:17Z,issue-4,esecutore-fine,opus,orologio,PR #29 aperta; SHA 811660e; rapporto: 8 criteri su 8 dichiarati soddisfatti; CI verde
 2026-11-27T13:26:19Z,issue-4,esecutore-consuntivo,opus,orologio,durata 2686 s; contatore token 409750; 193 chiamate a strumenti; PR #29: 49 file
+2026-11-27T13:26:23Z,pr-29,codex-inizio,codex,orologio,validazione giro 1
+2026-11-27T13:27:41Z,issue-2,esecutore-fine,sonnet,orologio,PR #30 aperta; SHA 0dd95d2; rapporto: tutti i criteri dichiarati soddisfatti; CI verde
+2026-11-27T13:27:44Z,issue-2,esecutore-consuntivo,sonnet,orologio,seconda fase dopo la ripresa: durata 2329 s; 76 chiamate a strumenti; contatore token 363642 (cumulativo)
