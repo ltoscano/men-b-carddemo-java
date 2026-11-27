@@ -14,7 +14,7 @@ Tutto gira in container: sull'host servono solo Docker e Git.
 | `./smoke.sh` | avvia l'applicazione con Docker Compose, controlla che risponda, ripulisce | [`sviluppo.md`](sviluppo.md) |
 | `./analysis/run.sh <nome>`, `--check`, `--all` | esegue un'analisi del legacy, o ne ricontrolla i risultati rigenerandoli da zero | questo file; ogni analisi ha il suo documento (sotto) |
 | `./oracle/run.sh <passo>`, `--check`, `--all` | compila ed esegue i programmi COBOL originali con GnuCOBOL: è il riferimento contro cui si misurerà il Java | [`../oracle/README.md`](../oracle/README.md) |
-| `./quality/regressioni-verify.sh`, `./quality/regressioni-regole.sh` | provano che `./verify.sh` e le regole sul codice falliscono quando devono | [`sviluppo.md`](sviluppo.md) |
+| `./quality/regressioni-verify.sh`, `./quality/regressioni-regole.sh`, `./quality/regressioni-copertura.sh` | provano che `./verify.sh` e le regole sul codice falliscono quando devono | [`sviluppo.md`](sviluppo.md) |
 | `paper/data/tlog.sh` | registra un evento con l'ora, per i tempi del paper | `CLAUDE.md`, sezione "Misura dei tempi" |
 
 ## Analisi del legacy (`analysis/`)
@@ -57,8 +57,8 @@ Documentazione: [`sviluppo.md`](sviluppo.md).
 | `compose.yaml`, `docker/` | database, servizio online, runner batch | #14 / PR #20 |
 | test di integrazione con PostgreSQL reale | Testcontainers; `quality/RapportoSurefire.java` controlla che il rapporto dei test sia di questa corsa e completo | #15 / PR #33 |
 | regole sul codice | dipendenze tra moduli, database in memoria vietati, numeri in virgola mobile e `var` vietati, test di architettura | #26 / PR #40 |
+| copertura dei test e analisi statica | JaCoCo (rapporto aggregato) e SpotBugs dentro `./verify.sh`; `quality/RapportiQualita.java` controlla che i rapporti siano di questa corsa, completi e prodotti con la configurazione fissata; regressioni in `./quality/regressioni-copertura.sh` (anche per sottoinsieme di casi, `--lista` per i nomi) | #27 / PR #48 |
 
-In arrivo: copertura dei test e analisi statica (issue #27, PR #48 in validazione).
 
 ## CI (`.github/workflows/`)
 
