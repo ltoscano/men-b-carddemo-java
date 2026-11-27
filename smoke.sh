@@ -46,11 +46,14 @@ fail() { err "$*"; exit 1; }
 # Esegue il comando con un limite di tempo senza dipendere da `timeout` (assente su macOS):
 # allo scadere SIGTERM, dopo altri 10 s SIGKILL. Restituisce il codice del comando, o 124
 # se il limite e' scaduto. Lo standard input del comando e' quello della funzione.
+LIMITED_PID=""
+LIMITED_WD=""
 limited() {
   local limit="$1"
   shift
   "$@" <&0 &
   local cmd_pid=$!
+  LIMITED_PID="${cmd_pid}"
   (
     sleep_pid=""
     trap 'if [ -n "${sleep_pid}" ]; then kill "${sleep_pid}" 2>/dev/null; fi; exit 0' TERM
@@ -67,11 +70,14 @@ limited() {
     exit 124
   ) </dev/null >/dev/null 2>&1 &
   local wd_pid=$!
+  LIMITED_WD="${wd_pid}"
   local rc=0
   local wd_rc=0
   wait "${cmd_pid}" || rc=$?
   kill -TERM "${wd_pid}" 2>/dev/null || true
   wait "${wd_pid}" || wd_rc=$?
+  LIMITED_PID=""
+  LIMITED_WD=""
   if [ "${wd_rc}" -eq 124 ]; then
     printf 'ERRORE [%s]: superato il limite di %ss: %s\n' "${STEP}" "${limit}" "$*" >&2
     return 124
@@ -155,6 +161,20 @@ on_exit() {
   local rc=$?
   local failed_step="${STEP}"
   trap - EXIT INT TERM
+  # Interrotto da un segnale durante un comando lungo: lo si ferma prima della pulizia,
+  # perche' non ricrei risorse mentre "down" le rimuove.
+  if [ -n "${LIMITED_PID}" ] && kill -0 "${LIMITED_PID}" 2>/dev/null; then
+    err "arresto del comando in corso (pid ${LIMITED_PID})"
+    kill -TERM "${LIMITED_PID}" 2>/dev/null || true
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+      kill -0 "${LIMITED_PID}" 2>/dev/null || break
+      sleep 1
+    done
+    kill -KILL "${LIMITED_PID}" 2>/dev/null || true
+  fi
+  if [ -n "${LIMITED_WD}" ]; then
+    kill -TERM "${LIMITED_WD}" 2>/dev/null || true
+  fi
   if [ "${CLEANUP_ARMED}" -eq 1 ]; then
     STEP="pulizia"
     if ! cleanup_project; then
