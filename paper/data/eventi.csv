@@ -377,3 +377,8 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T21:35:03Z,issue-36,ready,fable,orologio,specifica pubblicata; 6 rilievi accolti
 2026-11-27T21:35:03Z,issue-36,esecutore-inizio,opus,orologio,affidata
 2026-11-27T21:35:19Z,processo,richiesta-autore,autore,orologio,chiede se esiste un tracciato dei costi; e lo stato
+2026-11-27T21:35:56Z,processo,risposta-consegnata,fable,orologio,tracciato dei costi creato; stato alle 21:45 circa
+2026-11-27T21:37:26Z,processo,richiesta-autore,autore,orologio,chiede una spiegazione in parole semplici di quanto fatto
+2026-11-27T21:37:26Z,processo,risposta-consegnata,fable,orologio,spiegazione in parole semplici
+2026-11-27T21:39:56Z,processo,richiesta-autore,autore,orologio,i concetti della spiegazione semplice sono nel paper?
+2026-11-27T21:40:41Z,paper,aggiornamento,fable,orologio,sezione 1.1 in parole semplici; sintesi 5.1 e 5.2; titoli delle wave allineati al piano; codice proprio e costi dichiarati

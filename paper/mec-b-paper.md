@@ -14,9 +14,33 @@ Tre impegni verso il lettore:
 
 - **Replicabile.** Issue, prompt, comandi e versioni sono pubblicati integralmente; l'unico prerequisito per rieseguire tutto è Docker.
 - **Chiaro.** Non si presuppone esperienza di mainframe né di sviluppo agentico; i termini sono spiegati alla prima occorrenza.
-- **Reale.** Tempi e costi sono misurati, non stimati; errori, rework e interventi umani sono riportati come sono avvenuti.
+- **Reale.** I tempi sono misurati passo per passo, non stimati; errori, rework e interventi umani sono riportati come sono avvenuti. I costi sono raccolti solo in parte (token consumati dagli agenti, con i limiti dichiarati in `paper/data/costi.md`): dove un dato manca lo si dice.
 
-*(da completare: contesto del problema, lavori correlati, cosa questo lavoro misura e cosa no, come leggere il documento)*
+### 1.1 Il lavoro in parole semplici
+
+Questa sezione è per chi vuole capire l'insieme prima dei dettagli. Tutto ciò che dice è ripreso, con comandi e misure, nelle sezioni successive.
+
+**L'idea di fondo.** Tradurre un programma vecchio in uno nuovo è facile da fare male: "compila e sembra funzionare" non prova che faccia le stesse cose dell'originale. Per questo, prima di tradurre anche una sola riga, servono quattro cose: sapere esattamente com'è fatto il sistema vecchio; avere un modo per far girare i programmi originali e vedere che cosa producono; avere pronto il posto dove andrà il codice nuovo; avere controlli che si accorgano quando si sbaglia. La prima parte del lavoro, la più lunga, è stata costruire queste quattro cose. È la parte che di solito si salta.
+
+**Che cosa si costruisce prima di tradurre.**
+
+- *Una mappa del sistema vecchio.* Quali programmi esistono, chi chiama chi, quali file leggono e scrivono; com'è fatto ogni record di dati, campo per campo; come i byte di un campo diventano un numero o un testo; per i programmi a schermo, quali schermate mostrano e a quale programma passano il controllo.
+- *Un "originale funzionante" in un container.* I programmi COBOL di elaborazione notturna (*batch*) si compilano e girano su un computer qualsiasi con un compilatore libero, senza mainframe. È il termine di paragone: il Java dovrà produrre gli stessi risultati. In questo lavoro lo chiamiamo *oracle*.
+- *Lo scheletro dell'applicazione nuova.* Un'applicazione Java vuota che parte con un comando, con il suo database vero e con regole automatiche che impediscono errori tipici (per esempio usare numeri con la virgola imprecisi per gli importi).
+- *I controlli.* Ogni pezzo ha un comando che risponde alla domanda "è ancora giusto?", e che gira da solo a ogni modifica.
+
+**Come si lavora.** Ogni lavoro è piccolo e segue lo stesso giro, con tre ruoli affidati ad agenti AI e uno alla persona. Un agente scrive le istruzioni per un lavoro preciso. Un secondo lo esegue, da solo, in una copia separata. Un terzo, di un altro fornitore, prova a smontarlo: non legge le intenzioni, esegue i controlli e cerca un modo per far passare un lavoro sbagliato. Poi qualcuno decide se accettare, far correggere o respingere l'obiezione, e scrive il motivo in un registro. All'inizio decideva l'autore; dopo la prima ora ha delegato la decisione al primo agente, tenendo per sé il registro e il diritto di annullare.
+
+**Che cosa si è imparato fin qui.**
+
+- Il lavoro consegnato era quasi sempre giusto; i controlli che dovevano proteggerlo, no. Il terzo agente ha trovato più volte controlli che restavano verdi davanti a un errore. Senza qualcuno che prova ad aggirarli, non lo si vede.
+- Si è evitato almeno un errore serio: il compilatore leggeva al contrario il segno di alcuni importi, e un debito diventava un credito. Un Java "identico all'originale" sarebbe stato identico a un errore (passo 15).
+- Far criticare le istruzioni prima di eseguirle costa da tre a sei minuti e ne risparmia venti o trenta (passo 20).
+- Un critico avversariale non si ferma da solo: serve una regola scritta su quante volte interviene e su quali obiezioni non contano (passi 16, 18, 22).
+
+**Che cosa questo documento non è ancora.** Alla data dell'ultima revisione la preparazione non è conclusa e nessuna funzione dell'applicazione è stata tradotta. Le sezioni sulla traduzione sono vuote e lo dicono.
+
+*(da completare: contesto del problema, lavori correlati, cosa questo lavoro misura e cosa no)*
 
 ## 2. Metodo
 
@@ -91,6 +115,8 @@ Principio: si scrive codice proprio solo per incollare strumenti esistenti.
 Tre osservazioni per chi replica. Nessuno strumento ha coperto da solo un'esigenza intera: l'analisi si compone. Lo strumento più noto per i conteggi sbaglia proprio sul formato COBOL tradizionale, e lo si è scoperto solo contando a mano sei file. La ricognizione sul web aveva riportato una licenza sbagliata per ProLeap (quella di un progetto omonimo): le licenze vanno lette alla fonte.
 
 Tutti gli strumenti, l'oracle GnuCOBOL e l'applicazione migrata girano in container: l'unico prerequisito per riprodurre il lavoro è Docker.
+
+**Quanto codice proprio è servito, nonostante il principio.** Alla fine del primo giorno gli strumenti e i controlli scritti per questo progetto contano circa ventimila righe (misura del 27 novembre 2026, ore 21:30 UTC, su `main`: circa 13.300 nelle analisi del legacy, 5.100 nell'oracle, 1.100 nelle regressioni dei controlli Java, 1.000 nei quattro comandi principali; file di dati, attesi e documenti esclusi; comando e avvertenze in `docs/strumenti-creati.md`). Gli strumenti di terzi fanno l'analisi; il codice proprio li collega, ne rende confrontabili gli output e soprattutto ne controlla i risultati. Quanta parte sia collegamento e quanta controllo non è stato misurato. Il numero va tenuto presente da chi replica: "non reinventare" riduce il codice di analisi, non quello di verifica, e in questo lavoro il secondo è cresciuto a ogni obiezione del Validatore. L'elenco di ciò che è stato costruito, con il comando per lanciarlo, è in `docs/strumenti-creati.md`.
 
 *(da completare in Wave 0A/0B: per ogni strumento, comando eseguito, esito sul sorgente, motivo dell'adozione o dello scarto)*
 
@@ -421,28 +447,60 @@ Il limite di questa tabella va detto: i primi quattro passi non hanno un inizio 
 
 Dal clone di CardDemo (08:49:22) al momento in cui i primi due Esecutori hanno cominciato a lavorare (10:04:29) è passata **1 ora e 15 minuti** di calendario, di cui 20 minuti persi per il blocco di Codex.
 
-### 5.1 Wave 0A — mappa e golden oracle
+### 5.1 Wave 0A — mappa e oracle
+
+Stato al 27 novembre 2026, ore 21:30 UTC: in corso. Il racconto, nell'ordine in cui è avvenuto, è nei passi 7-22 della sezione 5.0; qui c'è che cosa esiste, con il comando per ottenerlo. Elenco completo in `docs/strumenti-creati.md`.
+
+| Che cosa | Comando | Dove si legge il risultato | Passi |
+| --- | --- | --- | --- |
+| Prova degli strumenti di analisi | `./analysis/run.sh tools --check` | `docs/legacy-map/strumenti.md` | 8, 11 |
+| Inventario e grafo delle dipendenze | `./analysis/run.sh inventory --check` | `docs/legacy-map/inventario.md` | 13, 15, 16, 19 |
+| Comandi CICS dei programmi a schermo | `./analysis/run.sh inventory-cics --check` | `docs/legacy-map/inventario-cics.md` | 20, 22 |
+| Contratto dati (posizione e tipo di ogni campo) | `./analysis/run.sh data-contract --check` | `docs/legacy-map/data-contract/` | 15, 16 |
+| Regole di codifica dei campi | `./analysis/run.sh data-codec --check` | `docs/legacy-map/data-contract/codifica.md` | 20, 21 |
+| Oracle: 12 programmi batch eseguibili | `./oracle/run.sh --all --check` | `oracle/README.md` | 15, 17, 20 |
+
+Manca ancora, per chiudere la wave: i dati di prova, gli output di riferimento dei programmi (*golden*), il grafo dei flussi batch, la descrizione del comportamento dei programmi a schermo.
+
+*(da completare alla chiusura della wave: issue, tempi aggregati, cosa si trasferisce ad altri sistemi)*
+
+### 5.2 Wave 0B — scheletro Java in container
+
+Stato al 27 novembre 2026, ore 21:30 UTC: quasi conclusa. Passi 8-10, 14, 15, 17, 19.
+
+| Che cosa | Comando | Passi |
+| --- | --- | --- |
+| Cinque moduli Java, compilazione e test con PostgreSQL reale | `./verify.sh` | 9, 10, 15 |
+| Applicazione avviata con Docker Compose e controllata | `./smoke.sh` | 14 |
+| Regole automatiche sul codice | dentro `./verify.sh`; regressioni in `./quality/regressioni-regole.sh` | 17, 19 |
+
+*(da completare alla chiusura della wave)*
+
+### 5.3 Wave 1 — dati
 *(da compilare)*
 
-### 5.2 Wave 0B — bootstrap Java
+### 5.4 Wave 2 — pilota: una fetta batch e una online
 *(da compilare)*
 
-### 5.3 Wave 1 — schema e loader
+### 5.5 Wave 3 — online
 *(da compilare)*
 
-### 5.4 Wave 2 — online
+### 5.6 Wave 4 — batch
 *(da compilare)*
 
-### 5.5 Wave 3 — batch
+### 5.7 Wave 5 — parità completa e rilascio
 *(da compilare)*
 
-### 5.6 Wave 4 — moduli opzionali e parità end-to-end
-*(da compilare)*
+### 5.8 Wave 6 — moduli opzionali
+*(da compilare, se eseguita)*
 
 ## 6. Risultati
 
 ### 6.1 Tempi
 *(da compilare da `paper/data/eventi.csv`: durata di ogni passo e di ogni issue; totale distinto in lavoro degli agenti, attesa e lavoro dell'autore, tempo perso, tempo di calendario; aggregati per wave)*
+
+### 6.1b Costi
+*(da compilare da `paper/data/costi.csv`. Oggi contiene i token delle sessioni del Validatore e i contatori degli Esecutori, con i limiti descritti in `paper/data/costi.md`; mancano la sessione principale e la conversione in denaro.)*
 
 ### 6.2 Qualità e parità
 *(da compilare: esiti dei test di parità, giri di validazione per PR, difetti trovati dal Validatore e non dall'Esecutore)*
