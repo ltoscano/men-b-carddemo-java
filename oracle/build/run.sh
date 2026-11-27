@@ -20,9 +20,15 @@ verify_legacy_volume
 log "immagine $IMAGE, volume $LEGACY_VOL"
 
 clean_dir "$out"
+# Percorso dell'elenco nel container calcolato prima, con l'esito controllato (giro 1 della PR #49: dentro
+# gli argomenti di orun un in_container fallito non fermava la build).
+elenco_c="$(in_container "$elenco")" || fail "percorso dell'elenco nel container non calcolabile"
 orun -v "$out:/out" -- timeout -k 10 "$ORACLE_TIMEOUT_COMPILE" \
-  sh /oracle/build/compile.sh tutto "$(in_container "$elenco")" /out \
+  sh /oracle/build/compile.sh tutto "$elenco_c" /out \
   || fail "compilazione fallita (dettagli in $(rel "$out")/log/)"
+# Numero di programmi compilati, letto prima dell'impronta con l'esito controllato.
+compilati="$(awk -F'\t' 'NR>1 {n++} END {print n+0}' "$out/compilazione.tsv")" \
+  || fail "lettura di $(rel "$out")/compilazione.tsv fallita (awk)"
 
 # Ultimo atto: l'impronta. Senza di essa i passi successivi rifiutano gli artefatti. Una build con un
 # elenco sostituito (BUILD_ELENCO) non e' la build dell'oracle e non riceve l'impronta.
@@ -30,4 +36,4 @@ if [ -z "${BUILD_ELENCO:-}" ]; then
   stamp="$(build_stamp "$out")" || fail "calcolo dell'impronta fallito"
   printf '%s\n' "$stamp" > "$out/IMPRONTA" || fail "scrittura dell'impronta fallita"
 fi
-log "compilati: $(awk -F'\t' 'NR>1' "$out/compilazione.tsv" | wc -l | tr -d ' ') programmi (dettagli in $(rel "$out")/compilazione.tsv)"
+log "compilati: $compilati programmi (dettagli in $(rel "$out")/compilazione.tsv)"
