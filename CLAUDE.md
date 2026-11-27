@@ -30,15 +30,19 @@ paper/figures/                                 grafici generati da paper/data/
 repo GitHub: ltoscano/men-b-carddemo-java (pubblico) — codice migrato, issue, PR e paper nello stesso repository
 ```
 
+Attenzione alle maiuscole: 5 programmi hanno estensione `.CBL` (tra cui `CBSTM03A` e `CBSTM03B`); su Linux un glob `*.cbl` li perde. Enumerare sempre senza distinzione di maiuscole e contro un manifesto esplicito.
+
 Baseline misurata (27 nov 2026): `app/cbl` 31 programmi / 20.650 righe; 44 `.cbl` / 30.175 righe contando i tre moduli opzionali; `app/cpy` 30 copybook / 2.786 righe; 17 mappe BMS / 4.472 righe; 38 JCL / 2.429 righe.
 
 ## Il metodo in breve
 
-Migrazione **ibrida**: il comportamento da preservare è brownfield, lo stack target è greenfield. Quindi due Fasi 0, in sequenza, prima di qualsiasi logica di business:
+Migrazione **ibrida**: il comportamento da preservare è brownfield, lo stack target è greenfield. Quindi due Fasi 0 prima di qualsiasi logica di business.
 
-1. **Wave 0A (brownfield, sola lettura):** inventario, grafo `COPY`/`CALL`/`EXEC PGM=`, contratto dati campo per campo, golden fixture e oracle.
-2. **Wave 0B (greenfield):** scheletro Java, Compose, moduli vuoti (`carddemo-domain`, `-loader`, `-online`, `-batch`, `-parity`), CI verde.
-3. **Wave 1** schema e loader → **Wave 2** online `CO*` ∥ **Wave 3** batch `CB*` → **Wave 4** moduli opzionali e parità end-to-end.
+**Fonte unica per wave, numerazione e dipendenze: `docs/piano-wave.md`.** In caso di discordanza con altri documenti (compreso `paper/piano-migrazione-carddemo-java.md`, che è la proposta iniziale) vale il piano. In sintesi:
+
+- **Wave 0A** (brownfield, sola lettura): strumenti, inventario, contratto dati, oracle GnuCOBOL, golden, matrice di comportamento online.
+- **Wave 0B** (greenfield, in parallelo a 0A): scheletro Java in container, Compose, cancelli di qualità, contratti condivisi.
+- **Wave 1** dati → **Wave 2** pilota (una fetta batch, una online) → **Wave 3** online ∥ **Wave 4** batch → **Wave 5** parità end-to-end e rilascio 1.0 → **Wave 6** moduli opzionali.
 
 ### Ruoli e modelli
 
@@ -53,7 +57,9 @@ Il Validatore è deliberatamente un modello di un altro fornitore: non condivide
 
 ### Coda di issue
 
-Etichette: `bootstrap`, `ready`, `in-progress`, `in-review`, `blocked`, `needs-spec-update`, più `wave-0`…`wave-4`.
+Etichette: `bootstrap`, `ready`, `in-progress`, `in-review`, `blocked`, `needs-spec-update`, più `wave-0`…`wave-6`.
+
+Una issue diventa `ready` solo dopo che Codex ha contestato **la specifica** (non solo, più tardi, la PR) e i rilievi sono stati accolti o respinti con motivo. Prompt, output integrale ed esito vanno in `paper/data/reviews/`.
 
 Ogni issue ha: Obiettivo · Dipendenze e perimetro (sorgenti COBOL di riferimento, cartelle target, fuori ambito) · Specifica · Invarianti di parità · Criteri di accettazione **eseguibili da un comando** · Strategia di rollback · Limiti per l'agente.
 
@@ -72,7 +78,7 @@ Nei worktree il submodule va inizializzato (`git submodule update --init`). Il r
 7. Parità significa stesso effetto, stesso ordine di chiave, stesso comportamento su riesecuzione — nessuna idempotenza o "miglioria" inventata.
 8. Ogni `COPY` del programma sorgente ha un corrispondente tradotto o un'esclusione esplicita.
 
-I quattro rischi su cui tarare il Validatore: aritmetica decimale e overpunch · stato pseudo-conversazionale `COMMAREA` (due tempi ENTER/REENTER) · chiavi e ordinamenti VSAM/AIX · logica nascosta nei `COPY`.
+I rischi su cui tarare il Validatore: aritmetica decimale, troncamento e overpunch · stato pseudo-conversazionale `COMMAREA` (due tempi ENTER/REENTER) · confini di transazione CICS (`READ UPDATE`, `SYNCPOINT`, rollback) · chiavi, duplicati e ordinamenti VSAM/AIX · ordine di collazione EBCDIC contro ASCII · logica nascosta nei `COPY` · differenze GnuCOBOL / z/OS che rendono falso l'oracle · effetti parziali prima di un abend.
 
 ## Non reinventare l'acqua calda
 
@@ -114,6 +120,7 @@ Sull'host sono comunque presenti `java` 21, `docker` 29.9, `cobc` 3.2, `gh` (aut
 Si aggiorna **man mano**, a ogni passo chiuso, non alla fine.
 
 - **Replicabile.** Ogni passo riporta ciò che serve per rifarlo: il comando esatto, il testo integrale dell'issue, il prompt dato all'Esecutore e al Validatore, versioni di modelli e strumenti. I materiali lunghi vanno in appendice o nel repository, con link stabile (commit, numero di issue/PR).
+- **Niente cade dal cielo.** Ogni passaggio è documentato in modo chiaro e semplice, nell'ordine in cui è avvenuto. Ogni decisione, strumento, numero, file o termine che compare nel paper è introdotto prima di essere usato: da dove viene, perché si è scelto, quali alternative si sono scartate. Se un passo dipende da uno precedente, lo dice. Un lettore non deve mai chiedersi "e questo da dove salta fuori?".
 - **Chiaro.** Scritto per chi non ha seguito il lavoro: ogni termine COBOL/mainframe o agentico è spiegato alla prima occorrenza, ogni passo dice *cosa si fa, perché, come si capisce che è riuscito*. Prosa piana, niente gergo da cronaca di sessione.
 - **Reale.** Si racconta ciò che è accaduto, compresi errori, vicoli ciechi e interventi umani. Niente esempi ripuliti a posteriori. Costi e tempi così come misurati.
 - **Trasferibile.** A ogni wave, una nota su cosa è specifico di CardDemo e cosa vale per un altro sistema legacy; dove serve, una lista di controllo riusabile.
