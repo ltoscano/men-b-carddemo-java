@@ -54,13 +54,17 @@ copie)
   ccp="$out/adattati/CUSTREC.cpy"; ccb="$out/adattati/CBSTM03A.CBL"
   # Contenuto della cartella delle copie.
   if [ -d "$out/adattati" ]; then
-    got="$(cd "$out/adattati" && ls -A | LC_ALL=C sort | tr '\n' ' ')"
-    [ "$got" = "CBSTM03A.CBL CUSTREC.cpy " ] || err "adattati/: contenuto '$got', atteso 'CBSTM03A.CBL CUSTREC.cpy '"
+    if ls -A "$out/adattati" > "$w/ada.txt"; then
+      got="$(LC_ALL=C sort "$w/ada.txt" | tr '\n' ' ')"
+      [ "$got" = "CBSTM03A.CBL CUSTREC.cpy " ] || err "adattati/: contenuto '$got', atteso 'CBSTM03A.CBL CUSTREC.cpy '"
+    else
+      err "adattati/: elenco dei file fallito"
+    fi
   else
     err "adattati/: cartella assente"
   fi
   # --- CUSTREC.cpy ---
-  if [ -f "$ccp" ]; then
+  if [ -f "$ccp" ] && [ -r "$ccp" ] && [ -r "$ocp" ]; then
     if expand -t 4 "$ocp" > "$w/riapplicata.cpy"; then
       if ! cmp -s "$w/riapplicata.cpy" "$ccp"; then
         err "CUSTREC.cpy: la copia e' diversa dalla riapplicazione indipendente (expand -t 4) sull'originale:"
@@ -69,11 +73,15 @@ copie)
     else
       err "CUSTREC.cpy: expand -t 4 sull'originale fallito"
     fi
-    n="$(grep -c "$TAB" "$ccp")"
-    [ "$n" -eq 0 ] || err "CUSTREC.cpy: TAB nella copia (righe: $(grep -n "$TAB" "$ccp" | cut -d: -f1 | tr '\n' ' '))"
+    # grep: 0 = trovato, 1 = nessuna riga, altro = errore di lettura (che non deve passare per "nessuna").
+    grep -n "$TAB" "$ccp" > "$w/tab-copia.txt"; rc=$?
+    if [ "$rc" -gt 1 ]; then err "CUSTREC.cpy: lettura della copia fallita (grep $rc)"
+    elif [ -s "$w/tab-copia.txt" ]; then err "CUSTREC.cpy: TAB nella copia (righe: $(cut -d: -f1 "$w/tab-copia.txt" | tr '\n' ' '))"; fi
     lunghe="$(awk 'substr($0, 73) ~ /[^ ]/ {printf "%d ", NR}' "$ccp")" || err "CUSTREC.cpy: lettura della copia fallita"
     [ -z "$lunghe" ] || err "CUSTREC.cpy: testo oltre la colonna 72 nelle righe: $lunghe"
-    tabo="$(grep -n "$TAB" "$ocp" | cut -d: -f1 | tr '\n' ' ' | sed 's/ $//')"
+    grep -n "$TAB" "$ocp" > "$w/tab-orig.txt"; rc=$?
+    [ "$rc" -le 1 ] || err "CUSTREC.cpy: lettura dell'originale fallita (grep $rc)"
+    tabo="$(cut -d: -f1 "$w/tab-orig.txt" | tr '\n' ' ' | sed 's/ $//')"
     [ "$tabo" = "$RIGHE_TAB" ] || err "CUSTREC.cpy: righe con TAB nell'originale '$tabo', attese '$RIGHE_TAB'"
     # Righe senza TAB nell'originale: identiche byte per byte nella copia; stesso numero di righe.
     diverse="$(awk -v T="$TAB" 'NR == FNR {o[FNR] = $0; no = FNR; next}
@@ -82,10 +90,10 @@ copie)
       || err "CUSTREC.cpy: confronto riga per riga fallito"
     [ -z "$diverse" ] || err "CUSTREC.cpy: righe senza TAB nell'originale cambiate nella copia: $diverse"
   else
-    err "CUSTREC.cpy: copia assente"
+    err "CUSTREC.cpy: copia o originale assente o illeggibile"
   fi
   # --- CBSTM03A.CBL ---
-  if [ -f "$ccb" ]; then
+  if [ -f "$ccb" ] && [ -r "$ccb" ] && [ -r "$ocb" ]; then
     awk 'NR == FNR {o[FNR] = $0; no = FNR; next}
       { c[FNR] = $0; nc = FNR }
       END {
@@ -111,14 +119,24 @@ copie)
       err "CBSTM03A.CBL: righe cambiate '$cambiate', attese '$RIGHE_ADATTATE'"
     fi
     for i in $RIGHE_VUOTE; do
-      [ -z "$(sed -n "${i}p" "$ccb")" ] && [ -z "$(sed -n "${i}p" "$ocb")" ] || err "CBSTM03A.CBL riga $i: attesa vuota nell'originale e nella copia"
+      if lc="$(sed -n "${i}p" "$ccb")" && lo="$(sed -n "${i}p" "$ocb")"; then
+        [ -z "$lc" ] && [ -z "$lo" ] || err "CBSTM03A.CBL riga $i: attesa vuota nell'originale e nella copia"
+      else
+        err "CBSTM03A.CBL riga $i: lettura fallita"
+      fi
     done
-    so="$(wc -c < "$ocb")"; sc="$(wc -c < "$ccb")"
-    [ "$so" -eq "$sc" ] || err "CBSTM03A.CBL: $sc byte, originale $so"
-    nb="$(cmp -l "$ocb" "$ccb" 2>/dev/null | wc -l)"
+    if so="$(wc -c < "$ocb")" && sc="$(wc -c < "$ccb")"; then
+      [ "$so" -eq "$sc" ] || err "CBSTM03A.CBL: $sc byte, originale $so"
+    else
+      err "CBSTM03A.CBL: dimensioni non leggibili"
+    fi
+    # cmp -l: 0 = uguali, 1 = diversi, altro = errore (anche EOF su uno dei due, cioe' lunghezze diverse).
+    cmp -l "$ocb" "$ccb" > "$w/cmp.txt" 2> "$w/cmp.err"; rc=$?
+    if [ "$rc" -gt 1 ] || [ -s "$w/cmp.err" ]; then err "CBSTM03A.CBL: confronto byte per byte non completo (cmp $rc: $(head -n 1 "$w/cmp.err"))"; fi
+    nb="$(wc -l < "$w/cmp.txt" | tr -d ' ')"
     [ "$nb" -eq 23 ] || err "CBSTM03A.CBL: $nb byte diversi dall'originale (cmp -l), attesi 23"
   else
-    err "CBSTM03A.CBL: copia assente"
+    err "CBSTM03A.CBL: copia o originale assente o illeggibile"
   fi
   fine "copie adattate conformi: CUSTREC.cpy (17 righe con TAB espanse a 4 colonne, identica a expand -t 4), CBSTM03A.CBL (23 righe commentate in colonna 7)"
   ;;
@@ -127,14 +145,18 @@ tracciato)
   out="$2"; logf="$out/log/CBSTM03A.log"
   [ -f "$logf" ] || { err "tracciato: log di compilazione di CBSTM03A assente"; fine ""; }
   # Argomenti della prima invocazione di cobc registrata dalla build.
-  awk '/^== cobc$/ {n++; next} /^== / {next} n == 1 && /^arg / {print substr($0, 5)}' "$logf" > "$w/arg.txt"
-  na="$(wc -l < "$w/arg.txt")"
-  coda="$(tail -n 4 "$w/arg.txt" | tr '\n' ' ')"
+  awk '/^== cobc$/ {n++; next} /^== / {next} n == 1 && /^arg / {print substr($0, 5)}' "$logf" > "$w/arg.txt" \
+    || { err "tracciato: lettura del log di compilazione fallita"; fine ""; }
+  na="$(wc -l < "$w/arg.txt")" && coda="$(tail -n 4 "$w/arg.txt" | tr '\n' ' ')" \
+    || { err "tracciato: lettura degli argomenti fallita"; fine ""; }
   [ "$coda" = "-c -o /out/obj/CBSTM03A.o /out/adattati/CBSTM03A.CBL " ] \
     || { err "tracciato: argomenti registrati inattesi in coda: '$coda'"; fine ""; }
-  head -n $((na - 4)) "$w/arg.txt" > "$w/opz.txt"
-  # shellcheck disable=SC2046
-  set -- $(cat "$w/opz.txt")
+  head -n $((na - 4)) "$w/arg.txt" > "$w/opz.txt" && opz="$(cat "$w/opz.txt")" \
+    || { err "tracciato: lettura degli argomenti fallita"; fine ""; }
+  # Gli argomenti prima di quelli strutturali: la cartella adattata in testa, poi le opzioni.
+  [ "$(sed -n 1p "$w/opz.txt")" = "-I/out/adattati" ] || { err "tracciato: il primo argomento registrato non e' -I/out/adattati"; fine ""; }
+  # shellcheck disable=SC2086
+  set -- $opz
   # La stessa compilazione, in sola analisi, con listato dei simboli ed elenco dei file letti.
   # shellcheck disable=SC2086
   if ! env -i $AMBIENTE_COBC timeout -k 10 300 cobc "$@" -fsyntax-only -t "$w/lista.lst" -ftsymbols \
@@ -198,7 +220,9 @@ zos)
   [ "$(wc -l < "$w/nomi.txt")" -eq 19 ] || err "zos: l'atteso non elenca 19 nomi"
   : > "$w/trovate.txt"
   while read -r nome; do
-    grep -n -i -E "(^|[^A-Za-z0-9-])$nome([^A-Za-z0-9-]|\$)" "$src" | cut -d: -f1 | sed "s/^/$nome$TAB/" >> "$w/trovate.txt"
+    grep -n -i -E "(^|[^A-Za-z0-9-])$nome([^A-Za-z0-9-]|\$)" "$src" > "$w/g.txt"; rc=$?
+    [ "$rc" -le 1 ] || err "zos: ricerca di $nome fallita (grep $rc)"
+    cut -d: -f1 "$w/g.txt" | sed "s/^/$nome$TAB/" >> "$w/trovate.txt"
   done < "$w/nomi.txt"
   LC_ALL=C sort "$w/trovate.txt" > "$w/trovate.s"
   awk -F"$TAB" '!/^#/ && $1 != "nome" {print $1 "\t" $2}' "$EXP/blocchi-zos.tsv" | LC_ALL=C sort > "$w/attese.s" \

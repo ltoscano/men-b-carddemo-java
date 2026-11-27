@@ -43,8 +43,11 @@ for v in TRNXFILE:trnxfile.txt XREFFILE:xreffile.txt CUSTFILE:custfile.txt ACCTF
   for r in "carico/$dd/IDXLOAD.txt:IDXLOAD $dd RECORD SCRITTI $n6" "rilettura/$dd/IDXDUMP.txt:IDXDUMP $dd RECORD LETTI $n6"; do
     rf="$out/${r%%:*}"; want="${r#*:}"
     [ -f "$rf" ] || fail "rapporto assente: $(rel "$rf")"
-    printf '== codice di uscita\n0\n== stdout\n%s\n' "$want" > "$out/atteso-rapporto.txt"
-    if [ "$(sed -n '1,4p' "$rf")" != "$(cat "$out/atteso-rapporto.txt")" ]; then
+    # Le prime 5 righe del rapporto: codice 0 e stdout fatto della sola riga attesa (la quinta e'
+    # l'inizio di stderr: nessuna riga di stdout in piu').
+    printf '== codice di uscita\n0\n== stdout\n%s\n== stderr\n' "$want" > "$out/atteso-rapporto.txt"
+    testa="$(sed -n '1,5p' "$rf")" || fail "lettura di $(rel "$rf") fallita"
+    if [ "$testa" != "$(cat "$out/atteso-rapporto.txt")" ]; then
       indent "$rf" >&2
       fail "caricamento di $dd: $(basename "$rf" .txt) non ha terminato con 0 e '$want'"
     fi

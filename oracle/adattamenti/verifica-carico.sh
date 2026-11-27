@@ -25,11 +25,13 @@ for v in TRNXFILE:trnxfile.txt:350:350 XREFFILE:xreffile.txt:50:36 CUSTFILE:cust
   [ -f "$bin" ] || { err "$dd: rilettura assente"; continue; }
   bad="$(awk -v T="$T" 'length($0) != T {printf "%d(%d) ", NR, length($0)}' "$txt")" || { err "$dd: lettura di $f fallita"; continue; }
   [ -z "$bad" ] || err "$dd: righe di $f con lunghezza diversa da $T: $bad"
-  n="$(wc -l < "$txt" | tr -d ' ')"
-  [ "$n" -gt 0 ] || err "$dd: $f vuoto"
+  n="$(wc -l < "$txt")" || { err "$dd: righe di $f non contabili"; continue; }
+  n="$(echo "$n" | tr -d ' ')"
+  [ "$n" -gt 0 ] || { err "$dd: $f vuoto"; continue; }
   # Atteso: ogni riga riempita con spazi fino a L byte, record contigui.
   awk -v L="$L" '{printf "%-" L "s", $0}' "$txt" > "$w/$dd.atteso" || { err "$dd: costruzione dell'atteso fallita"; continue; }
-  sb="$(wc -c < "$bin" | tr -d ' ')"
+  sb="$(wc -c < "$bin")" || { err "$dd: dimensione della rilettura non leggibile"; continue; }
+  sb="$(echo "$sb" | tr -d ' ')"
   [ "$sb" -eq $((n * L)) ] || err "$dd: riletti $sb byte, attesi $n record da $L byte ($((n * L)))"
   if ! cmp -s "$w/$dd.atteso" "$bin"; then
     # Primo byte diverso: record e posizione nel record.

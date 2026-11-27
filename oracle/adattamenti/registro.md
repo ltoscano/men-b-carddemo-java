@@ -155,6 +155,8 @@ Il segno è nell'ultimo carattere, con la convenzione EBCDIC dei dati del legacy
 | `oracle/avvio/expected/CBSTM03A.txt` | arresto senza file | come sopra; l'ordine delle 2 righe di libcob segue quello osservato nella prova 9 |
 | `expected/custrec-tracciato.tsv`, `expected/blocchi-zos.tsv` | tracciato di `CUSTREC`; occorrenze dei dati delle righe 266-291 | a mano dal copybook e dal sorgente, nello stesso commit |
 
+**Come si usa la tabella a mano** (`verifica-uscite.sh`, corretto dopo il giro 1 di validazione della PR #44). La struttura degli output è definita in un punto solo, dentro lo script: è ricavata dal sorgente e dal numero di movimenti di ciascun estratto (`MOVIMENTI="2 0 2"`), e dà, per ogni estratto e per ciascuno dei due file, il record e la posizione di ogni campo dinamico, di ogni chiusura e di ogni marcatore, oltre al numero di record dei due file. La tabella deve coprire **esattamente** quell'insieme in entrambe le direzioni: nessuna riga mancante, nessuna non prevista, nessuna duplicata. I metadati hanno una sintassi rigorosa: interi positivi, file e tipo ammessi, 8 colonne. Per i campi STRING dell'HTML, la chiusura deve cominciare subito dopo il campo e finire a fine record. `record.tsv` deve dichiarare gli stessi numeri. I due file si leggono per intero: la lunghezza letta deve essere la dimensione reale (`wc -c`), e un byte `0x01`, il separatore di lettura, rende il file non valido. Nella prima versione il controllo accettava una tabella incompleta, duplicata o malformata (tolta la riga del FICO di un estratto, restava verde) e leggeva i file solo fino al primo `0x01`.
+
 **Non verificato a mano:** il testo fisso dell'estratto (righe di trattini e di asterischi, intestazioni, etichette) e il markup HTML (le righe `HTML-L01`…`HTML-L80` e le parti fisse delle righe con campi). Sono nell'output registrato e il confronto byte per byte ne fissa il contenuto, ma nessuno li ha ricavati a mano.
 
 Comportamenti del sorgente visibili nell'output, ricavati a mano e confermati:
@@ -188,6 +190,15 @@ Ognuna deve fallire per il motivo dichiarato (sottostringa del messaggio d'error
 9. `ACCTFILE` assente: codice 99, distinto dal successo, e arresto uguale a `expected/senza-ACCTFILE.txt`.
 
 Prove dei controlli propri: campo di 4 byte nella copia (tracciato), copybook in più nella cartella delle copie (letto al posto di quello del legacy), `TIOTNJOB` letto alla riga 293 di una copia dell'originale, provenienza alterata o non dichiarata, record in più o in meno, campo oltre il record nella tabella a mano, ambiente atteso diverso, righe con TAB dell'originale diverse da 6-22, riga senza TAB cambiata, riga in più, 24 byte diversi, argomenti registrati inattesi, atteso del tracciato con la riga sbagliata o troncato, atteso delle occorrenze troncato, chiavi non crescenti nel caricamento, riga di testo più lunga del dichiarato, copia adattata cambiata dopo la build.
+
+Aggiunte nel giro di correzione della PR #44:
+
+- tabella a mano: senza il FICO HTML del terzo estratto; con una riga duplicata; con la lunghezza `75junk`; con il FICO del terzo estratto assegnato al record del secondo, che produce due difetti (manca la riga del terzo estratto, è duplicata quella del secondo); ridotta a una sola riga;
+- output: `HTMLFILE` con `0x01GARBAGE` in coda, che produce due difetti (separatore, dimensione reale); `STMTFILE` con un `0x01` all'interno;
+- copia di `CUSTREC` illeggibile; `cmp` che arriva alla fine di un solo file; log di `CBSTM03A` senza `-I/out/adattati` in testa;
+- rapporto di `IDXLOAD` con una riga di stdout in più.
+
+In `build --check` si aggiungono le prove sull'impronta con un file illeggibile: una copia adattata, un artefatto di `bin/`, un input della build.
 
 ## Limiti
 

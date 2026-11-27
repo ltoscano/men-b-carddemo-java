@@ -26,9 +26,10 @@ require_build
 # Solo per le prove negative: CP_LEGACY e CP_ATTESI (cartelle sotto oracle/) sostituiscono, per
 # verifica-copie.sh, la radice del legacy e la cartella degli attesi.
 cp_env() {
+  local c
   CPE=()
-  [ -z "${CP_LEGACY:-}" ] || CPE+=(-e "VERIFICA_LEGACY=$(in_container "$CP_LEGACY")")
-  [ -z "${CP_ATTESI:-}" ] || CPE+=(-e "VERIFICA_ATTESI=$(in_container "$CP_ATTESI")")
+  if [ -n "${CP_LEGACY:-}" ]; then c="$(in_container "$CP_LEGACY")" || fail "CP_LEGACY fuori da oracle/"; CPE+=(-e "VERIFICA_LEGACY=$c"); fi
+  if [ -n "${CP_ATTESI:-}" ]; then c="$(in_container "$CP_ATTESI")" || fail "CP_ATTESI fuori da oracle/"; CPE+=(-e "VERIFICA_ATTESI=$c"); fi
 }
 # copie_c AZIONE OUT: verifica-copie.sh nel container, con OUT (la build o una sua copia) su /out.
 copie_c() {
@@ -40,11 +41,16 @@ zos_c() {
   cp_env
   orun ${CPE[@]+"${CPE[@]}"} -- timeout -k 10 120 sh /oracle/adattamenti/verifica-copie.sh zos "$1"
 }
-origine_c() { orun -- timeout -k 10 120 sh /oracle/adattamenti/origine.sh "$(in_container "$1")"; }
+origine_c() {
+  local s; s="$(in_container "$1")" || return 1
+  orun -- timeout -k 10 120 sh /oracle/adattamenti/origine.sh "$s"
+}
 # uscite_c OSSERVATI [VERIFICA-A-MANO] [RECORD]: valori ricavati a mano contro STMTFILE e HTMLFILE.
 uscite_c() {
-  orun -- timeout -k 10 120 sh /oracle/adattamenti/verifica-uscite.sh "$(in_container "$1")" \
-    "$(in_container "${2:-$EXP/verifica-a-mano.tsv}")" "$(in_container "${3:-$EXP/record.tsv}")"
+  local o v r
+  o="$(in_container "$1")" && v="$(in_container "${2:-$EXP/verifica-a-mano.tsv}")" \
+    && r="$(in_container "${3:-$EXP/record.tsv}")" || return 1
+  orun -- timeout -k 10 120 sh /oracle/adattamenti/verifica-uscite.sh "$o" "$v" "$r"
 }
 
 # verifica OSSERVATI [ATTESI]: rapporto, ambiente, STMTFILE e HTMLFILE contro l'output registrato, piu'
@@ -117,7 +123,8 @@ log "7. prove negative"
 # --- 1. TAB espansi a 8 colonne (adatta.sh con LARGHEZZA_TAB=8): compilazione e tracciato falliscono.
 copia_build n1; rm -rf "$tmp/n1/adattati"
 cp "$DIR/adatta.sh" "$tmp/n1.adatta.sh"; mutate "$tmp/n1.adatta.sh" 's/^LARGHEZZA_TAB=4$/LARGHEZZA_TAB=8/'
-orun -v "$tmp/n1:/out" -- timeout -k 10 60 sh "$(in_container "$tmp/n1.adatta.sh")" /legacy /out/adattati > "$tmp/n1.log" 2>&1 \
+n1c="$(in_container "$tmp/n1.adatta.sh")" || fail "prova 1: percorso fuori da oracle/"
+orun -v "$tmp/n1:/out" -- timeout -k 10 60 sh "$n1c" /legacy /out/adattati > "$tmp/n1.log" 2>&1 \
   || { indent "$tmp/n1.log" >&2; fail "generazione delle copie a 8 colonne fallita"; }
 expect_fail "1. TAB a 8 colonne: la compilazione con gli argomenti della build fallisce" \
   "tracciato: compilazione di controllo di CBSTM03A fallita" copie_c tracciato "$tmp/n1"
@@ -181,7 +188,8 @@ expect_fail "8. FICO alterato nella tabella a mano (623 -> 624)" "DIFETTO: STMTF
 #     Caricatore che azzera il FICO dei clienti (byte 330-332 del record di CUSTFILE), compilato davvero.
 mkdir -p "$tmp/n8c/out"; cp "$ORACLE_ROOT/tests/IDXLOAD.cbl" "$tmp/n8c/IDXLOAD.cbl"
 mutate "$tmp/n8c/IDXLOAD.cbl" "s/^                 WRITE FD-CUSTFILE-REC\$/           MOVE '000' TO FD-CUST-DATA (321:3) WRITE FD-CUSTFILE-REC/"
-compila_variante n8c eseguibile "$(in_container "$tmp/n8c/IDXLOAD.cbl")" IDXLOAD
+n8cc="$(in_container "$tmp/n8c/IDXLOAD.cbl")" || fail "prova 8: percorso fuori da oracle/"
+compila_variante n8c eseguibile "$n8cc" IDXLOAD
 expect_fail "8. caricatore che azzera il FICO: la verifica del caricamento ferma lo scenario" \
   "CUSTFILE: contenuto riletto diverso dal file di testo: primo byte diverso nel record 1, posizione 330" \
   env ADATTAMENTI_BIN_DIR="$tmp/n8c/bin" ADATTAMENTI_OUT_DIR="$tmp/n8c/obs" bash "$DIR/run.sh"
@@ -208,7 +216,8 @@ expect_fail "copybook in piu' nella cartella delle copie adattate" "adattati/: c
 #     Dati dei blocchi di controllo letti fuori dall'intervallo (copia di prova dell'originale, riga 293).
 cp "$LEGACY/app/cbl/CBSTM03A.CBL" "$tmp/zos.cbl"
 mutate "$tmp/zos.cbl" '293s/OPEN OUTPUT STMT-FILE HTML-FILE\./DISPLAY TIOTNJOB OPEN OUTPUT STMT-FILE HTML-FILE./'
-expect_fail "TIOTNJOB letto alla riga 293" "fuori dalle righe 266-291: TIOTNJOB:293" zos_c "$(in_container "$tmp/zos.cbl")"
+zosc="$(in_container "$tmp/zos.cbl")" || fail "prova 'zos': percorso fuori da oracle/"
+expect_fail "TIOTNJOB letto alla riga 293" "fuori dalle righe 266-291: TIOTNJOB:293" zos_c "$zosc"
 #     Provenienza: un cliente dello scenario diverso dalla riga dichiarata.
 mkdir -p "$tmp/ori"; cp -R "$DIR/scenario" "$tmp/ori/scenario"
 mutate "$tmp/ori/scenario/custfile.txt" '3s/^000000050Aniya/000000050Anija/'
@@ -219,6 +228,30 @@ tail -c 80 "$tmp/obs/STMTFILE" >> "$tmp/rec/STMTFILE" || fail "preparazione dell
 expect_fail "STMTFILE con un record in piu'" "DIFETTO: STMTFILE: 4960 byte, attesi 61 record da 80 byte (4880)" uscite_c "$tmp/rec"
 head -c 23500 "$tmp/obs/HTMLFILE" > "$tmp/rec/HTMLFILE" || fail "preparazione della prova 'rec' fallita"
 expect_fail "HTMLFILE con un record in meno" "DIFETTO: HTMLFILE: 23500 byte, attesi 236 record da 100 byte (23600)" uscite_c "$tmp/rec"
+#     Tabella a mano incompleta, duplicata o malformata (rilievo 1, giro 1 della PR #44): deve coprire
+#     esattamente l'insieme dei campi definito in verifica-uscite.sh, per ogni estratto e ogni output.
+cp "$EXP/verifica-a-mano.tsv" "$tmp/vam-omessa.tsv"; mutate "$tmp/vam-omessa.tsv" '/^HTMLFILE	188	25	20	268	/d'
+expect_fail "tabella a mano senza il FICO HTML del terzo estratto" \
+  "manca la riga attesa: HTMLFILE record 188, campo (estratto 3, ST-FICO-SCORE)" uscite_c "$tmp/obs" "$tmp/vam-omessa.tsv"
+cp "$EXP/verifica-a-mano.tsv" "$tmp/vam-dup.tsv"; mutate "$tmp/vam-dup.tsv" '/^STMTFILE	11	21	20	623	/p'
+expect_fail "tabella a mano con una riga duplicata" "riga duplicata (estratto 1, ST-FICO-SCORE, STMTFILE record 11)" uscite_c "$tmp/obs" "$tmp/vam-dup.tsv"
+cp "$EXP/verifica-a-mano.tsv" "$tmp/vam-junk.tsv"; mutate "$tmp/vam-junk.tsv" '/^STMTFILE	2	1	75	/s/	75	/	75junk	/'
+expect_fail "tabella a mano con lunghezza '75junk'" "verifica-a-mano riga 3: metadati non validi" uscite_c "$tmp/obs" "$tmp/vam-junk.tsv"
+cp "$EXP/verifica-a-mano.tsv" "$tmp/vam-sposta.tsv"; mutate "$tmp/vam-sposta.tsv" '/^HTMLFILE	188	25	20	268	/s/^HTMLFILE	188	/HTMLFILE	124	/'
+expect_fail "FICO HTML del terzo estratto assegnato al record del secondo" \
+  "manca la riga attesa: HTMLFILE record 188, campo (estratto 3, ST-FICO-SCORE)" uscite_c "$tmp/obs" "$tmp/vam-sposta.tsv"
+expect_fail "FICO HTML del terzo estratto assegnato al record del secondo: duplicato" \
+  "riga duplicata (estratto 2, ST-FICO-SCORE, HTMLFILE record 124)" uscite_c "$tmp/obs" "$tmp/vam-sposta.tsv"
+head -n 2 "$EXP/verifica-a-mano.tsv" > "$tmp/vam-una.tsv" || fail "preparazione della prova 'vam-una' fallita"
+expect_fail "tabella a mano con una sola riga" "manca la riga attesa" uscite_c "$tmp/obs" "$tmp/vam-una.tsv"
+#     STMTFILE e HTMLFILE letti per intero (rilievo 2): byte dopo un 0x01 in coda, 0x01 all'interno.
+mkdir -p "$tmp/sep1" "$tmp/sep2"; cp "$tmp/obs/STMTFILE" "$tmp/obs/HTMLFILE" "$tmp/sep1/" && cp "$tmp/obs/STMTFILE" "$tmp/obs/HTMLFILE" "$tmp/sep2/" \
+  || fail "preparazione delle prove 'sep' fallita"
+printf '\001GARBAGE' >> "$tmp/sep1/HTMLFILE" || fail "preparazione della prova 'sep1' fallita"
+expect_fail "HTMLFILE con 0x01GARBAGE in coda: separatore" "DIFETTO: HTMLFILE contiene il byte 0x01" uscite_c "$tmp/sep1"
+expect_fail "HTMLFILE con 0x01GARBAGE in coda: dimensione reale" "DIFETTO: HTMLFILE: 23608 byte, attesi 236 record da 100 byte (23600)" uscite_c "$tmp/sep1"
+{ head -c 100 "$tmp/obs/STMTFILE"; printf '\001'; tail -c +102 "$tmp/obs/STMTFILE"; } > "$tmp/sep2/STMTFILE" || fail "preparazione della prova 'sep2' fallita"
+expect_fail "STMTFILE con un 0x01 al posto del byte 101" "DIFETTO: STMTFILE contiene il byte 0x01 (2 segmenti)" uscite_c "$tmp/sep2"
 cp "$EXP/verifica-a-mano.tsv" "$tmp/fuori.tsv"
 mutate "$tmp/fuori.tsv" '/^STMTFILE	2	1	75	/s/	75	/	81	/'
 expect_fail "tabella a mano con un campo oltre il record" "verifica-a-mano riga 3: valore o posizione fuori dal record" uscite_c "$tmp/obs" "$tmp/fuori.tsv"
@@ -240,6 +273,15 @@ expect_fail "riga 5 di CUSTREC (senza TAB) cambiata nella copia" "righe senza TA
 copia_build piu; mutate "$tmp/piu/adattati/CBSTM03A.CBL" '$a\
       * riga in piu'"'"
 expect_fail "riga in piu' in coda alla copia di CBSTM03A" "CBSTM03A.CBL: numero di righe" copie_c copie "$tmp/piu"
+expect_fail "riga in piu' in coda alla copia di CBSTM03A: cmp arriva alla fine di un solo file" \
+  "CBSTM03A.CBL: confronto byte per byte non completo" copie_c copie "$tmp/piu"
+copia_build ill; chmod 000 "$tmp/ill/adattati/CUSTREC.cpy" || fail "preparazione della prova 'ill' fallita"
+[ ! -r "$tmp/ill/adattati/CUSTREC.cpy" ] || fail "prova 'ill': la copia resta leggibile dopo chmod 000 (utente root?)"
+expect_fail "copia di CUSTREC illeggibile: la lettura fallita non passa per 'nessun TAB'" \
+  "CUSTREC.cpy: copia o originale assente o illeggibile" copie_c copie "$tmp/ill"
+chmod 644 "$tmp/ill/adattati/CUSTREC.cpy"
+copia_build pri; mutate "$tmp/pri/log/CBSTM03A.log" '/^arg -I\/out\/adattati$/d'
+expect_fail "log di CBSTM03A senza -I/out/adattati in testa" "tracciato: il primo argomento registrato non e' -I/out/adattati" copie_c tracciato "$tmp/pri"
 expect_fail "riga 293 commentata: 24 byte diversi" "24 byte diversi dall'originale (cmp -l), attesi 23" copie_c copie "$tmp/n4b"
 expect_fail "riga vuota 271 alterata: controllo delle righe vuote" "CBSTM03A.CBL riga 271: attesa vuota" copie_c copie "$tmp/n4d"
 #     Tracciato: argomenti registrati inattesi; atteso con la riga sbagliata o troncato.
@@ -265,6 +307,14 @@ expect_fail "custfile.txt con due chiavi scambiate" "caricamento di CUSTFILE: ID
 mkdir -p "$tmp/lun"; cp -R "$DIR/scenario" "$tmp/lun/scenario"; mutate "$tmp/lun/scenario/xreffile.txt" '1s/$/ /'
 expect_fail "xreffile.txt con la riga 1 lunga 37" "XREFFILE: righe di xreffile.txt con lunghezza diversa da 36: 1(37)" \
   env ADATTAMENTI_SCENARIO="$tmp/lun/scenario" ADATTAMENTI_OUT_DIR="$tmp/lun/obs" bash "$DIR/run.sh"
+#     Rapporto di IDXLOAD con una riga di stdout in piu' (involucro che esegue il vero IDXLOAD e aggiunge
+#     una riga): il controllo dei rapporti guarda lo stdout intero, non solo la sua prima riga.
+mkdir -p "$tmp/piurighe/bin"; cp "$BUILD_OUT"/bin/* "$tmp/piurighe/bin/" && mv "$tmp/piurighe/bin/IDXLOAD" "$tmp/piurighe/bin/IDXLOAD.vero" \
+  || fail "preparazione della prova 'piurighe' fallita"
+printf '#!/bin/sh\n/oracle-bin/IDXLOAD.vero "$@"; rc=$?\necho RIGA IN PIU\nexit $rc\n' > "$tmp/piurighe/bin/IDXLOAD" && chmod +x "$tmp/piurighe/bin/IDXLOAD" \
+  || fail "preparazione della prova 'piurighe' fallita"
+expect_fail "rapporto di IDXLOAD con una riga di stdout in piu'" "caricamento di TRNXFILE: IDXLOAD non ha terminato con 0" \
+  env ADATTAMENTI_BIN_DIR="$tmp/piurighe/bin" ADATTAMENTI_OUT_DIR="$tmp/piurighe/obs" bash "$DIR/run.sh"
 #     Copia adattata cambiata nella build dopo la build: lo scenario rifiuta gli artefatti.
 cp -R "$BUILD_OUT" "$tmp/bo"; mutate "$tmp/bo/adattati/CBSTM03A.CBL" '300s/8100-TRNXFILE-OPEN/8200-XREFFILE-OPEN/'
 expect_fail "copia adattata di CBSTM03A cambiata dopo la build" "artefatti della build cambiati" \

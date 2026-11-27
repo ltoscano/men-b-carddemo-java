@@ -182,6 +182,24 @@ expect_fail "copia adattata di CBSTM03A cancellata dopo la build" "CBSTM03A: cop
 expect_fail "copia adattata di CBSTM03A cancellata: impronta" "artefatti della build cambiati" verifica "$tmp/senzacopia.tsv" "$tmp/senzacopia"
 copia copiamod; mutate "$tmp/copiamod/adattati/CUSTREC.cpy" '6s/CUST-FIRST-NAME/CUST-FIRST-NAMX/'
 expect_fail "copia adattata di CUSTREC alterata dopo la build: impronta" "artefatti della build cambiati" verifica "$tmp/copiamod.tsv" "$tmp/copiamod"
+# Un file illeggibile fa fallire l'impronta (rilievo 3, giro 1 della PR #44): un artefatto di bin/, una copia
+# adattata, un input della build. build_stamp e' la chiamata con cui build/run.sh scrive IMPRONTA (se fallisce
+# la build fallisce); stamp_problem e' quella con cui i passi e questo controllo verificano l'impronta.
+illeggibile() { # illeggibile FILE: toglie ogni permesso e verifica che il file non sia piu' leggibile
+  chmod 000 "$1" || fail "chmod 000 su $(rel "$1") fallito"
+  [ ! -r "$1" ] || fail "$(rel "$1") resta leggibile dopo chmod 000 (utente root?): prova dell'impronta non eseguibile"
+}
+copia ill1; illeggibile "$tmp/ill1/adattati/CUSTREC.cpy"
+expect_fail "copia adattata illeggibile: build_stamp (scrittura di IMPRONTA) fallisce" "Permission denied" build_stamp "$tmp/ill1"
+expect_fail "copia adattata illeggibile: verifica dell'impronta" "DIFETTO: impronta: calcolo dell'impronta fallito" verifica "$tmp/ill1.tsv" "$tmp/ill1"
+copia ill2; illeggibile "$tmp/ill2/bin/CBACT01C"
+expect_fail "artefatto di bin/ illeggibile: build_stamp fallisce" "Permission denied" build_stamp "$tmp/ill2"
+expect_fail "artefatto di bin/ illeggibile: require_build dei passi lo rifiuta" "calcolo dell'impronta fallito" \
+  env ORACLE_BUILD_OUT="$tmp/ill2" bash -c '. "$ORACLE_ROOT/lib.sh"; require_build'
+cp "$ORACLE_ROOT/adattamenti/adatta.sh" "$tmp/ill3.sh"; illeggibile "$tmp/ill3.sh"
+expect_fail "input della build illeggibile: l'impronta degli input fallisce" "Permission denied" \
+  env INGRESSO_ILLEGGIBILE="$tmp/ill3.sh" bash -c '. "$ORACLE_ROOT/lib.sh"; build_inputs() { printf "%s\n" "$INGRESSO_ILLEGGIBILE"; }; fingerprint'
+chmod 644 "$tmp/ill1/adattati/CUSTREC.cpy" "$tmp/ill2/bin/CBACT01C" "$tmp/ill3.sh"
 # Se la generazione delle copie adattate fallisce, la build fallisce (compile.sh alterato: legacy inesistente).
 cp "$ORACLE_ROOT/build/compile.sh" "$tmp/adafail.compile.sh"
 mutate "$tmp/adafail.compile.sh" 's#sh /oracle/adattamenti/adatta\.sh /legacy #sh /oracle/adattamenti/adatta.sh /nonesiste #'
