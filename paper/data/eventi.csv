@@ -384,3 +384,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T21:40:41Z,paper,aggiornamento,fable,orologio,sezione 1.1 in parole semplici; sintesi 5.1 e 5.2; titoli delle wave allineati al piano; codice proprio e costi dichiarati
 2026-11-27T21:40:43Z,processo,risposta-consegnata,fable,orologio,confronto tra spiegazione e paper; paper integrato
 2026-11-27T21:44:03Z,processo,richiesta-autore,autore,orologio,la sezione 1.1 si riscrive più avanti
+2026-11-27T21:44:05Z,processo,risposta-consegnata,fable,orologio,annotata la riscrittura della sezione 1.1 per la revisione finale
+2026-11-27T22:05:12Z,issue-43,esecutore-fine,opus,orologio,giro di correzione consegnato; SHA b7aa5a3; 2792 prove; 81 asserzioni coperte; CI verde dichiarata
+2026-11-27T22:05:15Z,issue-43,esecutore-consuntivo,opus,orologio,giro di correzione: durata 2206 s; 79 chiamate a strumenti; contatore token 635289 (cumulativi)

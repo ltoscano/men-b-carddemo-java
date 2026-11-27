@@ -90,3 +90,4 @@ ora_utc,oggetto,ruolo,modello,token,tipo_contatore,fonte,note
 2026-11-27T21:29:52Z,pr50b,validatore,gpt-6.1-sol (Codex CLI 0.172),228341,totale della sessione,"riga ""tokens used"" del log di Codex; ora = ultima scrittura del log",
 2026-11-27T21:30:31Z,pr48b,validatore,gpt-6.1-sol (Codex CLI 0.172),181378,totale della sessione,"riga ""tokens used"" del log di Codex; ora = ultima scrittura del log",
 2026-11-27T21:33:56Z,spec36,validatore,gpt-6.1-sol (Codex CLI 0.172),185917,totale della sessione,"riga ""tokens used"" del log di Codex; ora = ultima scrittura del log",
+2026-11-27T22:05:15Z,issue-43,esecutore,opus,635289,cumulativo dichiarato,contatore riportato dall'ambiente alla fine della fase,
