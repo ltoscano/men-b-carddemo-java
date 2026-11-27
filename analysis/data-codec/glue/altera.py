@@ -104,6 +104,96 @@ def main(nome, mondo):
         r = _righe(p)
         r.insert(0, "COB_CONFIG_DIR=/tmp/altra")
         _scrivi(p, r)
+    # una prova per ogni regola di copertura
+    elif nome == "copertura-alternativa-tolta":
+        togli(v_o, lambda x: c(x)[:4] == ["display-con-segno", "S9(9)V9(2)", "decodifica", "30*6 35 30 34 37 37"])
+    elif nome == "copertura-fuori-tabella-tolta":
+        togli(v_z, lambda x: c(x)[:3] == ["display-con-segno", "S9(4)V9(2)", "decodifica"]
+              and c(x)[3] in ("F1 F2 F3 F4 F5 A9", "F1 F2 F3 F4 F5 60"), attese=2)
+    elif nome == "copertura-zero-negativo-tolto":
+        togli(v_o, lambda x: c(x)[:4] == ["display-con-segno", "S9(4)V9(2)", "decodifica", "30*5 7D"])
+    elif nome == "copertura-spazi-tolti":
+        togli(v_o, lambda x: c(x)[:4] == ["display-senza-segno", "9(1)", "decodifica", "20"])
+    elif nome == "copertura-non-numerico-tolto":
+        togli(v_o, lambda x: c(x)[:3] == ["display-senza-segno", "9(1)", "decodifica"] and c(x)[3] in ("41", "7B"), attese=2)
+    elif nome == "copertura-codice-non-ammesso-tolto":
+        togli(v_o, lambda x: c(x)[:4] == ["comp-3", "9(3)", "decodifica", "12 3D"])
+    elif nome == "copertura-semiottetto-tolto":
+        togli(v_z, lambda x: c(x)[:4] == ["comp-3", "9(3)", "decodifica", "1A 3F"])
+    elif nome == "copertura-oltre-picture-tolto":
+        togli(v_z, lambda x: c(x)[:3] == ["comp", "9(9)", "decodifica"] and c(x)[4] == "oltre-picture", attese=2)
+    elif nome == "copertura-riempimento-tolto":
+        togli(v_o, lambda x: c(x)[:3] == ["alfanumerico", "X(10)", "codifica"] and c(x)[3] == '"AB"')
+        togli(v_o, lambda x: c(x)[:4] == ["alfanumerico", "X(1)", "codifica", '""'])
+    elif nome == "copertura-campo-pieno-tolto":
+        togli(v_o, lambda x: c(x)[:4] == ["alfanumerico", "X(10)", "codifica", '"ABCDEFGHIJ"'])
+    elif nome == "copertura-non-rappresentabile-tolto":
+        togli(v_o, lambda x: c(x)[:3] == ["alfanumerico", "X(10)", "codifica"] and c(x)[4] == "errore", attese=2)
+    elif nome == "copertura-codifica-rifiutata-tolta":
+        togli(v_z, lambda x: c(x)[0] == "comp-3" and c(x)[2] == "codifica" and c(x)[4] == "errore")
+    elif nome == "copertura-codifica-ok-tolta":
+        togli(v_z, lambda x: c(x)[0] == "comp" and c(x)[2] == "codifica" and c(x)[4] == "ok", attese=4)
+    # struttura dei vettori
+    elif nome == "vettore-lunghezza-sbagliata":
+        cambia(v_o, lambda x: c(x)[:4] == ["comp", "9(3)", "decodifica", "00 7B"], lambda x: colonna(x, 3, "00 7B 00"))
+    elif nome == "vettore-non-valido-con-valore":
+        cambia(v_z, lambda x: c(x)[:4] == ["comp-3", "9(3)", "decodifica", "12 3C"], lambda x: colonna(x, 5, "123"))
+    elif nome == "vettore-valore-non-canonico":
+        cambia(v_o, lambda x: c(x)[:4] == ["display-con-segno", "S9(10)V9(2)", "decodifica", "30*7 31 32 33 34 7B"],
+               lambda x: colonna(x, 5, "123.4"))
+    # osservazioni della sonda
+    elif nome == "osservazione-add-alterata":
+        cambia(os.path.join(out, "sonde", "osservazioni.tsv"),
+               lambda x: "\tdisplay-con-segno:S9(10)V9(2)\t" in x and x.endswith("\t30*7 31 32 33 34 4A"),
+               lambda x: colonna(x, 5, "-00000000000000000123420000"))
+    elif nome == "osservazione-scritto-alterato":
+        cambia(os.path.join(out, "sonde", "osservazioni.tsv"),
+               lambda x: "\tdisplay-con-segno:S9(10)V9(2)\t" in x and x.endswith("\t30*7 31 32 33 34 4A"),
+               lambda x: colonna(x, 6, "30*7 31 32 33 34 41"))
+    elif nome == "osservazione-move-di-codifica-alterato":
+        cambia(os.path.join(out, "sonde", "osservazioni.tsv"),
+               lambda x: "\tcodifica\tdisplay-con-segno:S9(10)V9(2)\t" in x and "\t30*8 31 32 33 4D\t" in x,
+               lambda x: colonna(x, 6, "30*8 31 32 33 44"))
+    elif nome == "osservazione-di-un-altra-variante":
+        cambia(os.path.join(out, "sonde", "osservazioni.tsv"),
+               lambda x: "\tcomp:9(3)\t" in x and x.endswith("\t00 7B\t00 7B"),
+               lambda x: colonna(x, 2, "comp:9(9)"))
+    elif nome == "oltre-picture-move-alterato":
+        cambia(v_x, lambda x: c(x)[:2] == ["9(3)", "03 E8"], lambda x: colonna(x, 2, "999"))
+    elif nome == "oltre-picture-riscrittura-alterata":
+        cambia(v_x, lambda x: c(x)[:2] == ["9(9)", "FF*4"], lambda x: colonna(x, 4, "00 00 00 02"))
+    elif nome == "oltre-picture-osservazione-in-piu":
+        r = _righe(v_x)
+        r.insert(len(r) - 1, "9(3)\t00 01\t1\t1\t00 01\tcaso inventato")
+        _scrivi(v_x, r)
+    # documento e pagina
+    elif nome == "documento-senza-conclusione":
+        cambia(doc, lambda x: "Conclusione: `037-convenzione`" in x, lambda x: x.replace("Conclusione: `037-convenzione`", "Conclusione: 037"))
+    elif nome == "pagina-conclusione-alterata":
+        cambia(os.path.join(out, "pagina-esito.tsv"), lambda x: x.startswith("CONCLUSIONE\t"), lambda x: colonna(x, 3, "da-decidere-sui-dati"))
+    # contratti (per il censimento)
+    elif nome == "contratto-usage-senza-regola":
+        cambia(os.path.join(mondo, "contratti", "CVEXPORT.EXPORT-RECORD.tsv"), lambda x: x.startswith("EXP-CARD-CVV-CD\t"),
+               lambda x: colonna(x, 4, "COMP-5"))
+    elif nome == "contratto-lunghezza-incoerente":
+        cambia(os.path.join(mondo, "contratti", "CVEXPORT.EXPORT-RECORD.tsv"), lambda x: x.startswith("EXP-CARD-CVV-CD\t"),
+               lambda x: colonna(x, 9, "3"))
+    # legacy finto per pagina.py: CBEXPORT.cbl vero, un solo file EBCDIC costruito qui
+    elif nome in ("legacy-finto-byte-in-alfanumerico", "legacy-finto-file-senza-tracciato"):
+        if len(sys.argv) != 4:
+            raise SystemExit("serve la radice del legacy vero come terzo argomento")
+        os.makedirs(os.path.join(mondo, "legacy", "app", "cbl"))
+        os.makedirs(os.path.join(mondo, "legacy", "app", "data", "EBCDIC"))
+        with open(os.path.join(sys.argv[3], "app", "cbl", "CBEXPORT.cbl"), "rb") as f:
+            dati = f.read()
+        with open(os.path.join(mondo, "legacy", "app", "cbl", "CBEXPORT.cbl"), "wb") as f:
+            f.write(dati)
+        rec = bytearray([0x40]) * 500
+        rec[0] = 0xC3          # tipo di record 'C' in EBCDIC
+        rec[50] = 0xBA         # '[' in 037, 'Y acuto' in 1047, dentro EXP-CUST-FIRST-NAME (posizioni 44-68)
+        nomefile = "AWS.M2.CARDDEMO.EXPORT.DATA.PS" if nome == "legacy-finto-byte-in-alfanumerico" else "AWS.M2.CARDDEMO.CUSTDATA.PS"
+        with open(os.path.join(mondo, "legacy", "app", "data", "EBCDIC", nomefile), "wb") as f:
+            f.write(bytes(rec))
     elif nome == "censimento-alterato":
         cambia(os.path.join(out, "censimento.tsv"), lambda x: x.startswith("comp\t9(9)\t"), lambda x: colonna(x, 7, "4"))
     else:
@@ -112,6 +202,6 @@ def main(nome, mondo):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        raise SystemExit("uso: altera.py NOME MONDO")
-    main(*sys.argv[1:])
+    if len(sys.argv) not in (3, 4):
+        raise SystemExit("uso: altera.py NOME MONDO [LEGACY]")
+    main(sys.argv[1], sys.argv[2])

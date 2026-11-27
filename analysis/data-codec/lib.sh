@@ -47,7 +47,7 @@ dcod_sonde() {
   # cartella di lavoro accanto a OUT (sempre una cartella temporanea del chiamante, che la rimuove)
   w="$out/.lavoro-sonde"
   rm -rf "$w" "$out/sonde" || fail "impossibile ripulire $w"
-  mkdir -p "$w/build" "$w/run" "$out/sonde"
+  mkdir -p "$w/build" "$w/run" "$out/sonde" || fail "cartelle di lavoro della sonda non create"
   glue_run --rw "$w" -- /analysis/data-codec/glue/sonda.py ingresso /analysis/data-codec/vettori/oracle-gnucobol.tsv /work/ingresso.dat \
     || fail "ingresso della sonda non scritto"
   local extra=()
@@ -68,12 +68,12 @@ dcod_sonde() {
   cp "$w/run/CODECPRB.ambiente" "$out/sonde/ambiente.txt" || fail "ambiente della sonda non registrato"
   glue_run --rw "$out/sonde" -- /analysis/data-codec/glue/sonda.py leggi /work/rapporto.txt /work/osservazioni.tsv \
     || fail "lettura delle osservazioni della sonda fallita"
-  rm -rf "$w"
+  rm -rf "$w" || fail "cartella di lavoro della sonda non rimossa"
 }
 
 dcod_genera() {
   local out="$1" opz="${2:-}"
-  mkdir -p "$out"
+  mkdir -p "$out" || fail "cartella $out non creata"
   dcod_censimento "$out"
   dcod_pagina "$out"
   dcod_sonde "$out" "$opz"

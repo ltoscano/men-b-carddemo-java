@@ -56,9 +56,11 @@ log "4. prove negative su vettori, censimento, documento e osservazioni alterati
 # mondo NOME: copia di vettori, output rigenerato e documento in $tmp/m-NOME, poi l'alterazione
 mondo() {
   local m="$tmp/m-$1"
-  rm -rf "$m"; mkdir -p "$m"
-  cp -R "$DCOD_DIR/vettori" "$m/vettori" && cp -R "$tmp/gen" "$m/out" && cp "$DCOD_DOC" "$m/codifica.md" || return 1
-  glue_run --rw "$m" -- /analysis/data-codec/glue/altera.py "$1" /work > /dev/null || return 1
+  rm -rf "$m" && mkdir -p "$m" || return 1
+  cp -R "$DCOD_DIR/vettori" "$m/vettori" && cp -R "$tmp/gen" "$m/out" && cp "$DCOD_DOC" "$m/codifica.md" \
+    && cp -R "$DCOD_CONTRATTI" "$m/contratti" || return 1
+  ensure_legacy_volume
+  glue_run --rw "$m" --mount "$LEGACY_VOL:$DCOD_LEGACY:ro" -- /analysis/data-codec/glue/altera.py "$1" /work "$DCOD_LEGACY" > /dev/null || return 1
   echo "$m"
 }
 # negativa NOME "TESTO ATTESO": la verifica del mondo alterato deve uscire con 1 e contenere il testo atteso
@@ -90,6 +92,62 @@ negativa oltre-picture-add-alterato "ERRORE [oltre-picture] profilo oracle-gnuco
 negativa oltre-picture-osservazione-tolta "ERRORE [oltre-picture] profilo oracle-gnucobol categoria comp variante 9(3) byte FF FF: caso oltre la PICTURE senza osservazione dichiarata"
 negativa compilazione-senza-fsign "ERRORE [sonda] argomenti di compilazione della sonda"
 negativa ambiente-in-piu "ERRORE [sonda] ambiente della sonda"
+negativa copertura-alternativa-tolta "ERRORE [copertura] profilo oracle-gnucobol categoria display-con-segno variante S9(9)V9(2): manca la rappresentazione alternativa"
+negativa copertura-fuori-tabella-tolta "ERRORE [copertura] profilo zos-ebcdic categoria display-con-segno variante S9(4)V9(2): manca un byte fuori tabella"
+negativa copertura-zero-negativo-tolto "ERRORE [copertura] profilo oracle-gnucobol categoria display-con-segno variante S9(4)V9(2): manca lo zero negativo"
+negativa copertura-spazi-tolti "ERRORE [copertura] profilo oracle-gnucobol categoria display-senza-segno variante 9(1): manca il campo di spazi"
+negativa copertura-non-numerico-tolto "ERRORE [copertura] profilo oracle-gnucobol categoria display-senza-segno variante 9(1): manca un carattere non numerico"
+negativa copertura-codice-non-ammesso-tolto "ERRORE [copertura] profilo oracle-gnucobol categoria comp-3 variante 9(3): manca il codice di segno non ammesso D"
+negativa copertura-semiottetto-tolto "ERRORE [copertura] profilo zos-ebcdic categoria comp-3 variante 9(3): manca un semiottetto di cifra non valido"
+negativa copertura-oltre-picture-tolto "ERRORE [copertura] profilo zos-ebcdic categoria comp variante 9(9): manca un valore oltre la PICTURE"
+negativa copertura-riempimento-tolto "ERRORE [copertura] profilo oracle-gnucobol categoria alfanumerico: manca il riempimento a destra"
+negativa copertura-campo-pieno-tolto "ERRORE [copertura] profilo oracle-gnucobol categoria alfanumerico: manca il campo pieno"
+negativa copertura-non-rappresentabile-tolto "ERRORE [copertura] profilo oracle-gnucobol categoria alfanumerico: manca il carattere o il testo non rappresentabile"
+negativa copertura-codifica-rifiutata-tolta "ERRORE [copertura] profilo zos-ebcdic categoria comp-3: nessun vettore di codifica rifiutata"
+negativa copertura-codifica-ok-tolta "ERRORE [copertura] profilo zos-ebcdic categoria comp: nessun vettore di codifica di un valore nuovo"
+negativa vettore-lunghezza-sbagliata "3 byte d'ingresso, la variante 9(3) ne ha 2"
+negativa vettore-non-valido-con-valore "stato non-valido con un valore o dei byte attesi"
+negativa vettore-valore-non-canonico "valore '123.4' non canonico per la scala 2"
+negativa osservazione-add-alterata "ERRORE [sonda] profilo oracle-gnucobol categoria display-con-segno variante S9(10)V9(2) byte 30*7 31 32 33 34 4A: valore con ADD atteso -123.41, osservato -123.42"
+negativa osservazione-scritto-alterato "ERRORE [sonda] profilo oracle-gnucobol categoria display-con-segno variante S9(10)V9(2) byte 30*7 31 32 33 34 4A: byte scritti attesi 30*7 31 32 33 34 4A, osservati 30*7 31 32 33 34 41"
+negativa osservazione-move-di-codifica-alterato "ERRORE [sonda] profilo oracle-gnucobol categoria display-con-segno variante S9(10)V9(2) valore -12.34: byte del MOVE attesi 30*8 31 32 33 4D, osservati 30*8 31 32 33 44"
+negativa osservazione-di-un-altra-variante "ERRORE [sonda] profilo oracle-gnucobol categoria comp variante 9(3) byte 00 7B: l'osservazione della riga"
+negativa oltre-picture-move-alterato "ERRORE [oltre-picture] profilo oracle-gnucobol categoria comp variante 9(3) byte 03 E8: valore con MOVE atteso 999, osservato 1000"
+negativa oltre-picture-riscrittura-alterata "ERRORE [oltre-picture] profilo oracle-gnucobol categoria comp variante 9(9) byte FF*4: riscrittura attesa 00 00 00 02, osservata 00 00 00 01"
+negativa oltre-picture-osservazione-in-piu "ERRORE [oltre-picture] osservazione dichiarata senza un vettore oltre-picture corrispondente: ('9(3)', '00 01')"
+negativa documento-senza-conclusione "ERRORE [pagina] codifica.md non dichiara la conclusione 037-convenzione"
+negativa pagina-conclusione-alterata "ERRORE [pagina] conclusione da-decidere-sui-dati"
+# censimento sui contratti alterati: glue/censimento.py deve fallire per il motivo atteso
+negativa_cens() {
+  local m rc=0
+  m="$(mondo "$1")" || fail "alterazione $1 non applicata"
+  mkdir -p "$m/cens" || fail "cartella non creata"
+  glue_run --rw "$m/cens" --mount "$m/contratti:/contratti:ro" -- /analysis/data-codec/glue/censimento.py /contratti /work \
+    > "$tmp/n.txt" 2>&1 || rc=$?
+  [ "$rc" -ne 0 ] || { cat "$tmp/n.txt" >&2; fail "PROVA NEGATIVA FALLITA ($1): il censimento e' riuscito"; }
+  grep -qF -- "$2" "$tmp/n.txt" || { cat "$tmp/n.txt" >&2; fail "prova negativa ($1): il censimento e' fallito ma non per il motivo atteso ('$2')"; }
+  log "   ok: $1 -> censimento uscito con $rc: $2"
+}
+negativa_cens contratto-usage-senza-regola "ERRORE [censimento] CVEXPORT.EXPORT-RECORD EXP-CARD-CVV-CD: rappresentazione senza regola (PIC 9(03), USAGE COMP-5"
+negativa_cens contratto-lunghezza-incoerente "ERRORE [censimento] CVEXPORT.EXPORT-RECORD EXP-CARD-CVV-CD: la regola di comp 9(3) da' 2 byte, il contratto 3"
+# pagina di codici su un legacy finto (CBEXPORT.cbl vero, un file EBCDIC costruito con un byte distintivo)
+m="$(mondo legacy-finto-byte-in-alfanumerico)" || fail "legacy finto non costruito"
+mkdir -p "$m/pag" || fail "cartella non creata"
+glue_run --rw "$m/pag" --mount "$m/legacy:/finto:ro" --mount "$DCOD_CONTRATTI:/contratti:ro" -- \
+  /analysis/data-codec/glue/pagina.py /finto /contratti /work > "$tmp/n.txt" 2>&1 || { cat "$tmp/n.txt" >&2; fail "pagina.py sul legacy finto non eseguita"; }
+grep -qF "1 in campi alfanumerici -> da-decidere-sui-dati" "$tmp/n.txt" || { cat "$tmp/n.txt" >&2; fail "PROVA NEGATIVA FALLITA (legacy-finto-byte-in-alfanumerico): pagina.py non vede il byte nel campo alfanumerico"; }
+cp "$m/pag/pagina.tsv" "$m/pag/pagina-esito.tsv" "$m/out/" || fail "copia dell'esito della pagina fallita"
+rc=0; verifica "$m/vettori" "$m/out" "$m/codifica.md" > "$tmp/n.txt" 2>&1 || rc=$?
+attesa="ERRORE [pagina] AWS.M2.CARDDEMO.EXPORT.DATA.PS record 1 posizione 50: byte distintivo BA nel campo alfanumerico EXP-CUST-FIRST-NAME"
+[ "$rc" -eq 1 ] && grep -qF -- "$attesa" "$tmp/n.txt" || { cat "$tmp/n.txt" >&2; fail "PROVA NEGATIVA FALLITA (legacy-finto-byte-in-alfanumerico): uscita $rc, manca '$attesa'"; }
+log "   ok: legacy-finto-byte-in-alfanumerico -> pagina.py conclude da-decidere-sui-dati; verifica uscita 1: $attesa"
+m="$(mondo legacy-finto-file-senza-tracciato)" || fail "legacy finto non costruito"
+mkdir -p "$m/pag" || fail "cartella non creata"
+rc=0; glue_run --rw "$m/pag" --mount "$m/legacy:/finto:ro" --mount "$DCOD_CONTRATTI:/contratti:ro" -- \
+  /analysis/data-codec/glue/pagina.py /finto /contratti /work > "$tmp/n.txt" 2>&1 || rc=$?
+[ "$rc" -ne 0 ] && grep -qF "AWS.M2.CARDDEMO.CUSTDATA.PS: 1 byte distintivi in un file senza tracciato dichiarato" "$tmp/n.txt" \
+  || { cat "$tmp/n.txt" >&2; fail "PROVA NEGATIVA FALLITA (legacy-finto-file-senza-tracciato): uscita $rc"; }
+log "   ok: legacy-finto-file-senza-tracciato -> pagina.py uscita $rc: byte distintivo in un file senza tracciato dichiarato"
 # l'output versionato alterato deve risultare diverso da quello rigenerato
 m="$(mondo censimento-alterato)" || fail "alterazione censimento-alterato non applicata"
 if diff -r "$tmp/gen" "$m/out" > "$tmp/d.txt" 2>&1; then fail "PROVA NEGATIVA FALLITA (censimento-alterato): nessuna differenza con l'output rigenerato"; fi
@@ -114,7 +172,7 @@ log "   ok: sonda compilata senza -fsign=EBCDIC -> $(grep -c "^ERRORE \[sonda\] 
 # 5b. residuo: un'osservazione buona di una corsa precedente e una compilazione che fallisce
 mkdir -p "$tmp/res/out"
 cp -R "$tmp/gen/sonde" "$tmp/res/out/sonde" || fail "residuo non preparato"
-{ cat "$ORACLE_DIR/cobc.opts"; echo "-fopzione-inesistente-menb"; } > "$tmp/res/cobc.opts"
+{ cat "$ORACLE_DIR/cobc.opts" && echo "-fopzione-inesistente-menb"; } > "$tmp/res/cobc.opts" || fail "file delle opzioni del residuo non scritto"
 rc=0; ( dcod_sonde "$tmp/res/out" "$tmp/res/cobc.opts" ) > "$tmp/res.log" 2>&1 || rc=$?
 [ "$rc" -ne 0 ] || fail "PROVA NEGATIVA FALLITA (residuo): la sonda con una compilazione fallita e' risultata riuscita"
 grep -qF "compilazione della sonda CODECPRB fallita" "$tmp/res.log" || { cat "$tmp/res.log" >&2; fail "prova negativa (residuo): fallita ma non per la compilazione"; }

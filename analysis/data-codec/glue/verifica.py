@@ -256,8 +256,10 @@ def _cop_alfa(p, righe):
     if not any(v["operazione"] == "codifica" and v["stato"] == "ok"
                and len(valore_da_testo(v["ingresso"], True)) < int(v["variante"][2:-1]) for v in alfa):
         errore("copertura", f"profilo {p} categoria alfanumerico: manca il riempimento a destra")
-    if not any(v["operazione"] == "decodifica" and spazio not in _byte(v) and len(_byte(v)) > 1 for v in alfa):
-        errore("copertura", f"profilo {p} categoria alfanumerico: manca il campo pieno")
+    if not any(v["operazione"] == "codifica" and v["stato"] == "ok" and v["byte"] != "-"
+               and spazio not in da_esa(v["byte"]) and len(valore_da_testo(v["ingresso"], True)) == int(v["variante"][2:-1])
+               for v in alfa):
+        errore("copertura", f"profilo {p} categoria alfanumerico: manca il campo pieno (codifica di un testo lungo quanto il campo)")
     if not any(v["operazione"] == "codifica" and v["stato"] == "errore" for v in alfa):
         errore("copertura", f"profilo {p} categoria alfanumerico: manca il carattere o il testo non rappresentabile")
     if p == "zos-ebcdic":

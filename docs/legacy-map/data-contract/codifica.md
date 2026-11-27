@@ -14,7 +14,7 @@ Tutto si rigenera e si controlla in container:
 | `analysis/data-codec/glue/codec.py` | la colla: decodifica, ricodifica conservativa, codifica di un valore nuovo, nei due profili | scritta a mano |
 | `analysis/data-codec/vettori/oracle-gnucobol.tsv`, `zos-ebcdic.tsv` | vettori di prova: byte → validità, valore, byte di scrittura; valore → byte | scritti a mano, prima delle sonde |
 | `analysis/data-codec/vettori/oracle-oltre-picture.tsv` | ciò che GnuCOBOL fa con i binari oltre la `PICTURE` (osservazioni dichiarate) | trascritto dalla sonda, poi verificato a ogni controllo |
-| `analysis/data-codec/sonde/CODECPRB.cbl` | sonda COBOL del profilo `oracle-gnucobol` | scritta a mano |
+| `analysis/data-codec/sonde/CODECPRB.cbl` | sonda COBOL del profilo `oracle-gnucobol` (`ADDPRB.cbl`: programma per ispezionare a mano il C generato, non eseguito dai controlli) | scritta a mano |
 | `analysis/data-codec/out/censimento*.tsv` | censimento delle rappresentazioni | `glue/censimento.py` dai contratti |
 | `analysis/data-codec/out/pagina*.tsv` | byte che distinguono 037 da 1047 nei file EBCDIC | `glue/pagina.py` |
 | `analysis/data-codec/out/sonde/` | compilazione, rapporto, ambiente e osservazioni della sonda | `oracle/build/compile.sh` e `oracle/esegui.sh` |
@@ -203,7 +203,8 @@ La capienza fisica (per esempio 65535 in `9(3) COMP`, due byte) e il limite dell
 ### Binari oltre la PICTURE: previsione, osservazione, decisione
 
 - **Previsione iniziale.** Gli attesi del profilo `oracle-gnucobol` erano stati scritti prima di eseguire qualsiasi sonda, nel commit `aa22593`. Per i 10 casi `oltre-picture` prevedevano il valore intero, uguale per ogni operazione. La previsione veniva dal sorgente di GnuCOBOL 3.2 (`libcob/numeric.c`, `cob_decimal_set_binary`; `libcob/move.c`, `cob_move_binary_to_display`).
-- **Osservazione.** La prima esecuzione della sonda l'ha smentita in un caso su dieci: `9(9) COMP` con byte `FF FF FF FF` vale 4294967295 con `MOVE` ma **-1** con `ADD`. Riscrivere il valore di `ADD` nello stesso campo senza segno produce `00 00 00 01`. Negli altri nove casi `MOVE` e `ADD` danno lo stesso valore. Causa della differenza: **non verificata**.
+- **Osservazione.** La prima esecuzione della sonda l'ha smentita in un caso su dieci: `9(9) COMP` con byte `FF FF FF FF` vale 4294967295 con `MOVE` ma **-1** con `ADD`. Riscrivere il valore di `ADD` nello stesso campo senza segno produce `00 00 00 01`. Negli altri nove casi `MOVE` e `ADD` danno lo stesso valore.
+- **Causa, verificata sul C generato da cobc** (verifica manuale, non automatizzata nel controllo). Per `ADD F TO W` con `F PIC 9(9) COMP`, cobc genera `cob_add_int (&f_18, ((unsigned int)COB_BSWAP_32(*(int *)(b_17))), 0);`. `cob_add_int` riceve un `const int` (GnuCOBOL 3.2, `libcob/common.h` e `libcob/numeric.c`), quindi il valore senza segno 4294967295 diventa -1 nella conversione. Il `MOVE` passa invece per `cob_move_binary_to_display`, che legge l'intero senza segno a 64 bit. Comando per rifare la verifica, nell'immagine dell'oracle, su un programma di prova con quei due campi e quell'`ADD`: `env -i PATH=/usr/bin:/bin HOME=/tmp LC_ALL=C cobc -std=ibm -fbinary-truncate -fsingle-quote -fsign=EBCDIC -C -o ADDPRB.c ADDPRB.cbl`. Sono le opzioni di `oracle/cobc.opts` senza `-Wall` e `-I`, che non cambiano il codice generato. Il programma è `analysis/data-codec/sonde/ADDPRB.cbl`.
 - **Decisione** (voce 63 del registro delle approvazioni): in entrambi i profili la colla non assegna un valore a un binario oltre la `PICTURE`; conserva i byte e marca il campo `oltre-picture`. Ciò che fa l'oracle è dichiarato per operazione in `vettori/oracle-oltre-picture.tsv` ed è verificato dalla sonda a ogni controllo. I 10 attesi sono cambiati apertamente nel commit `11ba1dd`.
 
 | Variante | Byte | `MOVE` | `ADD` | Riscrittura (valore di `ADD`, stessa `PICTURE`) |
@@ -298,5 +299,5 @@ Il sorgente di GnuCOBOL citato è il tarball `gnucobol-3.2.tar.xz` di ftp.gnu.or
 
 - Il profilo `zos-ebcdic` non è osservato: è documentazione. Le opzioni `NUMCLS(PRIM)` e la pagina 037 sono assunzioni dichiarate.
 - La sonda osserva il valore con `MOVE` e con `ADD`. Altri usi (`COMPUTE` con espressioni, confronti, `DISPLAY`) non sono coperti; per i binari oltre la `PICTURE` la differenza fra operazioni è appunto il motivo per cui la colla non assegna valori.
-- La causa della differenza `MOVE`/`ADD` per `9(9) COMP` `FF FF FF FF` non è verificata.
+- La causa della differenza `MOVE`/`ADD` per `9(9) COMP` `FF FF FF FF` è stata verificata a mano sul C generato (`sonde/ADDPRB.cbl`): nessun controllo automatico la ripete.
 - I comandi della colla Python e `docker build` non hanno un limite di tempo proprio; compilazione (900 s) ed esecuzione della sonda (60 s per il programma, 180 s per lo script) sì.
