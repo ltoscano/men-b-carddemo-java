@@ -4,12 +4,12 @@ Prerequisiti sull'host: Docker e git. Nessun JDK o Maven locale.
 
 1. Clona con i submodule: `git clone --recurse-submodules <url>` (o `git submodule update --init`).
 2. Esegui `./verify.sh`: è l'unico comando di verifica, lo stesso della CI.
-3. Dentro `maven:3.9.16-eclipse-temurin-21` esegue `mvn -B verify` (compila e prova i cinque moduli).
-4. Poi, sempre in container, avvia i jar eseguibili (`*-exec.jar`): `carddemo-online` deve rispondere `UP` su `/actuator/health` entro 90 s; `carddemo-batch` deve terminare con codice 0.
+3. Dentro `maven:3.9.16-eclipse-temurin-21` cancella i `target/` precedenti ed esegue `mvn -B verify` (compila e prova i cinque moduli).
+4. Poi, sempre in container, avvia l'unico jar eseguibile (`*-exec.jar`) di ogni applicazione: `carddemo-online` deve rispondere con stato radice `UP` su `/actuator/health` entro 90 s (richieste con timeout, JSON validato); `carddemo-batch` deve terminare con codice 0 entro 120 s (`MENB_BATCH_TIMEOUT`). I processi che ignorano SIGTERM vengono uccisi con SIGKILL.
 5. Esito: codice 0 se tutto passa, diverso da 0 al primo errore.
 6. La cache delle dipendenze Maven sta nel volume Docker `menb-build-m2` (variabile `MENB_BUILD_CACHE_VOLUME` per cambiarlo); `docker volume rm menb-build-m2` la azzera.
 7. Il tempo di attesa della salute si regola con `MENB_HEALTH_TIMEOUT` (secondi).
-8. I file prodotti in `target/` tornano all'utente dell'host a fine corsa.
+8. A fine corsa solo le cartelle `target/` tornano all'utente dell'host; un errore di `chown` fa fallire la verifica.
 9. Moduli: `domain` (nessuna dipendenza), `loader`, `online`, `batch` (solo da `domain`), `parity` (da tutti). `online` e `batch` producono un jar ordinario e uno eseguibile con classificatore `exec`.
 10. Ispezione delle dipendenze: `docker run --rm -v menb-build-m2:/root/.m2 -v "$PWD":/workspace -w /workspace maven:3.9.16-eclipse-temurin-21 mvn -B dependency:tree`.
 
