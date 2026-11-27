@@ -332,3 +332,34 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T19:54:52Z,issue-43,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
 2026-11-27T19:55:58Z,issue-43,ready,fable,orologio,specifica pubblicata; 7 rilievi accolti
 2026-11-27T19:55:58Z,issue-43,esecutore-inizio,opus,orologio,affidata
+2026-11-27T19:56:04Z,processo,risposta-consegnata,fable,orologio,specifica #43 affidata
+2026-11-27T19:56:52Z,pr-49,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: **BOCCIATA — restano falsi verdi nel perimetro; incluso un rapporto dell’oracle infedele ai file realmente prodotti.**
+2026-11-27T19:57:37Z,pr-49,decisione,fable,orologio,validazione 1: cinque rilievi accolti (tre bloccanti)
+2026-11-27T19:57:37Z,issue-35,esecutore-inizio,opus,orologio,giro di correzione unico
+2026-11-27T19:59:52Z,pr-50,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: **BOCCIATA**
+2026-11-27T20:00:32Z,pr-50,decisione,fable,orologio,validazione 1: cinque rilievi accolti (quattro bloccanti)
+2026-11-27T20:00:32Z,issue-22,esecutore-inizio,opus,orologio,giro di correzione unico
+2026-11-27T20:01:27Z,paper,aggiornamento,fable,orologio,passi 19-22; tabelle 12-13
+2026-11-27T20:01:34Z,processo,risposta-consegnata,fable,orologio,PR #50 rinviata; paper aggiornato ai passi 19-22
+2026-11-27T20:46:03Z,issue-35,esecutore-fine,opus,orologio,giro di correzione consegnato; SHA 44f8c45; 172 prove negative nel passo build; CI verde dichiarata
+2026-11-27T20:46:06Z,issue-35,esecutore-consuntivo,opus,orologio,giro di correzione: durata 2882 s; 120 chiamate a strumenti; contatore token 568646 (cumulativi)
+2026-11-27T20:46:07Z,pr-49,codex-inizio,codex,orologio,validazione 2 di 2; in forma ristretta
+2026-11-27T20:51:20Z,issue-27,esecutore-fine,sonnet,orologio,giro di correzione consegnato; SHA 44540ad; 40 casi in 1187 s; un analysis-check ancora in corso alla consegna
+2026-11-27T20:51:23Z,issue-27,esecutore-consuntivo,sonnet,orologio,giro di correzione: durata 5690 s; 69 chiamate a strumenti; contatore token 419044 (cumulativi)
+2026-11-27T20:51:24Z,pr-48,codex-inizio,codex,orologio,validazione 2 di 2; in forma ristretta
+2026-11-27T20:55:59Z,issue-43,esecutore-fine,opus,orologio,PR #51 aperta; SHA faf2559; 23 sentinelle; 241 campi; 2557 prove negative; un analysis-check ancora in corso alla consegna
+2026-11-27T20:56:02Z,issue-43,esecutore-consuntivo,opus,orologio,durata 3578 s; 172 chiamate a strumenti; contatore token 462225
+2026-11-27T20:56:05Z,pr-51,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T21:00:11Z,pr-49,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0; verdetto: **BOCCIATA — resta un falso verde nel nuovo controllo delle righe `== codice`.**
+2026-11-27T21:00:12Z,issue-22,esecutore-fine,opus,orologio,giro di correzione consegnato; SHA c15a1df; mappa invariata; 125 voci di controllo; un analysis-check ancora in corso alla consegna
+2026-11-27T21:00:23Z,issue-22,esecutore-consuntivo,opus,orologio,giro di correzione: durata 3567 s; 82 chiamate a strumenti; contatore token 665860 (cumulativi)
+2026-11-27T21:00:23Z,pr-50,codex-inizio,codex,orologio,validazione 2 di 2; in forma ristretta
+2026-11-27T21:00:57Z,pr-49,merge,fable,orologio,PR #49 mergiata dopo due validazioni; due residui non bloccanti rinviati a #45; chiude #35
+2026-11-27T21:01:04Z,processo,risposta-consegnata,fable,orologio,PR #49 mergiata; PR #50 in validazione 2
+2026-11-27T21:19:51Z,processo,richiesta-autore,autore,orologio,chiede lo stato
+2026-11-27T21:20:01Z,processo,risposta-consegnata,fable,orologio,stato alle 21:19 UTC
+2026-11-27T21:24:50Z,processo,richiesta-autore,autore,orologio,quante wave ci sono
+2026-11-27T21:24:56Z,processo,risposta-consegnata,fable,orologio,elenco delle wave e posizione attuale
+2026-11-27T21:27:23Z,pr-51,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T21:28:04Z,pr-51,decisione,fable,orologio,validazione 1: sei rilievi accolti (uno bloccante)
+2026-11-27T21:28:04Z,issue-43,esecutore-inizio,opus,orologio,giro di correzione unico
