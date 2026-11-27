@@ -1,0 +1,6 @@
+/legacy/app/cbl/CBEXPORT.cbl:68: error: 'EXPORT-SEQUENCE-NUM' is not defined
+   66 |                ORGANIZATION IS INDEXED
+   67 |                ACCESS MODE IS SEQUENTIAL
+   68 >                RECORD KEY IS EXPORT-SEQUENCE-NUM
+   69 |                FILE STATUS IS WS-EXPORT-STATUS.
+   70 | 

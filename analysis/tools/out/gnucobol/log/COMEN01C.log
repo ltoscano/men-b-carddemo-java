@@ -1,0 +1,199 @@
+/legacy/app/cbl/COMEN01C.cbl:60: error: DFHAID: No such file or directory
+   58 |        COPY CSUSR01Y.
+   59 | 
+   60 >        COPY DFHAID.
+   61 |        COPY DFHBMSCA.
+   62 | 
+/legacy/app/cbl/COMEN01C.cbl:61: error: DFHBMSCA: No such file or directory
+   59 | 
+   60 |        COPY DFHAID.
+   61 >        COPY DFHBMSCA.
+   62 | 
+   63 |       *----------------------------------------------------------------*
+/legacy/app/cpy/COMEN02Y.cpy:93: warning: larger REDEFINES used [-Wdialect]
+   91 | 
+   92 | 
+   93 >          05 CDEMO-MENU-OPTIONS REDEFINES CDEMO-MENU-OPTIONS-DATA.
+   94 |            10 CDEMO-MENU-OPT OCCURS 12 TIMES.
+   95 |              15 CDEMO-MENU-OPT-NUM           PIC 9(02).
+/legacy/app/cpy/COMEN02Y.cpy:93: note: size of 'CDEMO-MENU-OPTIONS' larger than size of 'CDEMO-MENU-OPTIONS-DATA' [-Wdialect]
+/legacy/app/cbl/COMEN01C.cbl:69: error: 'EIBCALEN' is not defined
+   67 |        01  DFHCOMMAREA.
+   68 |          05  LK-COMMAREA                           PIC X(01)
+   69 >              OCCURS 1 TO 32767 TIMES DEPENDING ON EIBCALEN.
+   70 | 
+   71 |       *----------------------------------------------------------------*
+/legacy/app/cbl/COMEN01C.cbl: in paragraph 'MAIN-PARA':
+/legacy/app/cbl/COMEN01C.cbl:93: error: 'EIBAID' is not defined
+   91 |                ELSE
+   92 |                    PERFORM RECEIVE-MENU-SCREEN
+   93 >                    EVALUATE EIBAID
+   94 |                        WHEN DFHENTER
+   95 |                            PERFORM PROCESS-ENTER-KEY
+/legacy/app/cbl/COMEN01C.cbl:94: error: 'DFHENTER' is not defined
+   92 |                    PERFORM RECEIVE-MENU-SCREEN
+   93 |                    EVALUATE EIBAID
+   94 >                        WHEN DFHENTER
+   95 |                            PERFORM PROCESS-ENTER-KEY
+   96 |                        WHEN DFHPF3
+/legacy/app/cbl/COMEN01C.cbl:96: error: 'DFHPF3' is not defined
+   94 |                        WHEN DFHENTER
+   95 |                            PERFORM PROCESS-ENTER-KEY
+   96 >                        WHEN DFHPF3
+   97 |                            MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM
+   98 |                            PERFORM RETURN-TO-SIGNON-SCREEN
+/legacy/app/cbl/COMEN01C.cbl:107: error: 'EXEC' is a reserved word, but isn't supported
+  105 |            END-IF
+  106 | 
+  107 >            EXEC CICS RETURN
+  108 |                      TRANSID (WS-TRANID)
+  109 |                      COMMAREA (CARDDEMO-COMMAREA)
+/legacy/app/cbl/COMEN01C.cbl:107: error: syntax error, unexpected Identifier
+/legacy/app/cbl/COMEN01C.cbl:108: error: 'TRANSID' is not defined
+  106 | 
+  107 |            EXEC CICS RETURN
+  108 >                      TRANSID (WS-TRANID)
+  109 |                      COMMAREA (CARDDEMO-COMMAREA)
+  110 |            END-EXEC.
+/legacy/app/cbl/COMEN01C.cbl:108: error: 'TRANSID' is not a file name
+/legacy/app/cbl/COMEN01C.cbl:108: error: syntax error, unexpected (, expecting AT END or END or NOT AT END
+/legacy/app/cbl/COMEN01C.cbl:110: error: 'END-EXEC' is a reserved word, but isn't supported
+  108 |                      TRANSID (WS-TRANID)
+  109 |                      COMMAREA (CARDDEMO-COMMAREA)
+  110 >            END-EXEC.
+  111 | 
+  112 |       *----------------------------------------------------------------*
+/legacy/app/cbl/COMEN01C.cbl: in paragraph 'PROCESS-ENTER-KEY':
+/legacy/app/cbl/COMEN01C.cbl:121: warning: inline PERFORM without imperative statement used [-Wdialect]
+  119 |                    OPTIONI OF COMEN1AI(WS-IDX:1) NOT = SPACES OR
+  120 |                    WS-IDX = 1
+  121 >            END-PERFORM
+  122 |            MOVE OPTIONI OF COMEN1AI(1:WS-IDX) TO WS-OPTION-X
+  123 |            INSPECT WS-OPTION-X REPLACING ALL ' ' BY '0'
+/legacy/app/cbl/COMEN01C.cbl:148: error: 'EXEC' is a reserved word, but isn't supported
+  146 |               EVALUATE TRUE
+  147 |                 WHEN CDEMO-MENU-OPT-PGMNAME(WS-OPTION) = 'COPAUS0C'
+  148 >                    EXEC CICS INQUIRE
+  149 |                        PROGRAM(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))
+  150 |                        NOHANDLE
+/legacy/app/cbl/COMEN01C.cbl:148: error: 'EXEC' cannot be used here
+/legacy/app/cbl/COMEN01C.cbl:148: error: 'CICS' is not defined
+/legacy/app/cbl/COMEN01C.cbl:147: error: invalid expression: unfinished expression
+  145 |            IF NOT ERR-FLG-ON
+  146 |               EVALUATE TRUE
+  147 >                 WHEN CDEMO-MENU-OPT-PGMNAME(WS-OPTION) = 'COPAUS0C'
+  148 |                    EXEC CICS INQUIRE
+  149 |                        PROGRAM(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))
+/legacy/app/cbl/COMEN01C.cbl:149: error: syntax error, unexpected PROGRAM, expecting CONTROL or WINDOW or Identifier
+  147 |                 WHEN CDEMO-MENU-OPT-PGMNAME(WS-OPTION) = 'COPAUS0C'
+  148 |                    EXEC CICS INQUIRE
+  149 >                        PROGRAM(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))
+  150 |                        NOHANDLE
+  151 |                    END-EXEC
+/legacy/app/cbl/COMEN01C.cbl:151: error: 'END-EXEC' is a reserved word, but isn't supported
+  149 |                        PROGRAM(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))
+  150 |                        NOHANDLE
+  151 >                    END-EXEC
+  152 |                    IF EIBRESP = DFHRESP(NORMAL)
+  153 |                       MOVE WS-TRANID    TO CDEMO-FROM-TRANID
+/legacy/app/cbl/COMEN01C.cbl:152: error: 'EIBRESP' is not defined
+  150 |                        NOHANDLE
+  151 |                    END-EXEC
+  152 >                    IF EIBRESP = DFHRESP(NORMAL)
+  153 |                       MOVE WS-TRANID    TO CDEMO-FROM-TRANID
+  154 |                       MOVE WS-PGMNAME   TO CDEMO-FROM-PROGRAM
+/legacy/app/cbl/COMEN01C.cbl:152: error: 'NORMAL' cannot be used here
+/legacy/app/cbl/COMEN01C.cbl:152: error: 'DFHRESP' is not defined
+/legacy/app/cbl/COMEN01C.cbl:156: error: 'EXEC' is a reserved word, but isn't supported
+  154 |                       MOVE WS-PGMNAME   TO CDEMO-FROM-PROGRAM
+  155 |                       MOVE ZEROS        TO CDEMO-PGM-CONTEXT
+  156 >                       EXEC CICS XCTL
+  157 |                           PROGRAM(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))
+  158 |                           COMMAREA(CARDDEMO-COMMAREA)
+/legacy/app/cbl/COMEN01C.cbl:156: error: 'XCTL' is not defined
+/legacy/app/cbl/COMEN01C.cbl:157: error: syntax error, unexpected PROGRAM
+  155 |                       MOVE ZEROS        TO CDEMO-PGM-CONTEXT
+  156 |                       EXEC CICS XCTL
+  157 >                           PROGRAM(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))
+  158 |                           COMMAREA(CARDDEMO-COMMAREA)
+  159 |                       END-EXEC
+/legacy/app/cbl/COMEN01C.cbl:159: error: 'END-EXEC' is a reserved word, but isn't supported
+  157 |                           PROGRAM(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))
+  158 |                           COMMAREA(CARDDEMO-COMMAREA)
+  159 >                       END-EXEC
+  160 |                    ELSE
+  161 |                       MOVE SPACES             TO WS-MESSAGE
+/legacy/app/cbl/COMEN01C.cbl:162: error: 'DFHRED' is not defined
+  160 |                    ELSE
+  161 |                       MOVE SPACES             TO WS-MESSAGE
+  162 >                       MOVE DFHRED             TO ERRMSGC  OF COMEN1AO
+  163 |                       STRING 'This option '       DELIMITED BY SIZE
+  164 |                                CDEMO-MENU-OPT-NAME(WS-OPTION)
+/legacy/app/cbl/COMEN01C.cbl:171: error: 'DFHGREEN' is not defined
+  169 |                   WHEN CDEMO-MENU-OPT-PGMNAME(WS-OPTION)(1:5) = 'DUMMY'
+  170 |                      MOVE SPACES             TO WS-MESSAGE
+  171 >                      MOVE DFHGREEN           TO ERRMSGC  OF COMEN1AO
+  172 |                      STRING 'This option '       DELIMITED BY SIZE
+  173 |                              CDEMO-MENU-OPT-NAME(WS-OPTION)
+/legacy/app/cbl/COMEN01C.cbl:184: error: 'EXEC' is a reserved word, but isn't supported
+  182 |       *              MOVE SEC-USR-TYPE TO CDEMO-USER-TYPE
+  183 |                      MOVE ZEROS        TO CDEMO-PGM-CONTEXT
+  184 >                      EXEC CICS
+  185 |                          XCTL PROGRAM(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))
+  186 |                          COMMAREA(CARDDEMO-COMMAREA)
+/legacy/app/cbl/COMEN01C.cbl:185: error: syntax error, unexpected PROGRAM
+  183 |                      MOVE ZEROS        TO CDEMO-PGM-CONTEXT
+  184 |                      EXEC CICS
+  185 >                          XCTL PROGRAM(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))
+  186 |                          COMMAREA(CARDDEMO-COMMAREA)
+  187 |                      END-EXEC
+/legacy/app/cbl/COMEN01C.cbl:187: error: 'END-EXEC' is a reserved word, but isn't supported
+  185 |                          XCTL PROGRAM(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))
+  186 |                          COMMAREA(CARDDEMO-COMMAREA)
+  187 >                      END-EXEC
+  188 |               END-EVALUATE
+  189 | 
+/legacy/app/cbl/COMEN01C.cbl: in paragraph 'RETURN-TO-SIGNON-SCREEN':
+/legacy/app/cbl/COMEN01C.cbl:201: error: 'EXEC' is a reserved word, but isn't supported
+  199 |                MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM
+  200 |            END-IF
+  201 >            EXEC CICS
+  202 |                XCTL PROGRAM(CDEMO-TO-PROGRAM)
+  203 |            END-EXEC.
+/legacy/app/cbl/COMEN01C.cbl:201: error: syntax error, unexpected Identifier
+/legacy/app/cbl/COMEN01C.cbl:203: error: 'END-EXEC' is a reserved word, but isn't supported
+  201 |            EXEC CICS
+  202 |                XCTL PROGRAM(CDEMO-TO-PROGRAM)
+  203 >            END-EXEC.
+  204 | 
+  205 |       *----------------------------------------------------------------*
+/legacy/app/cbl/COMEN01C.cbl: in paragraph 'SEND-MENU-SCREEN':
+/legacy/app/cbl/COMEN01C.cbl:215: error: 'EXEC' is a reserved word, but isn't supported
+  213 |            MOVE WS-MESSAGE TO ERRMSGO OF COMEN1AO
+  214 | 
+  215 >            EXEC CICS SEND
+  216 |                      MAP('COMEN1A')
+  217 |                      MAPSET('COMEN01')
+/legacy/app/cbl/COMEN01C.cbl:216: error: 'MAP' is not defined
+  214 | 
+  215 |            EXEC CICS SEND
+  216 >                      MAP('COMEN1A')
+  217 |                      MAPSET('COMEN01')
+  218 |                      FROM(COMEN1AO)
+/legacy/app/cbl/COMEN01C.cbl:216: error: 'MAP' is not a CD name
+/legacy/app/cbl/COMEN01C.cbl:216: error: syntax error, unexpected (, expecting EGI or EMI or ESI or Identifier
+/legacy/app/cbl/COMEN01C.cbl:220: error: 'END-EXEC' is a reserved word, but isn't supported
+  218 |                      FROM(COMEN1AO)
+  219 |                      ERASE
+  220 >            END-EXEC.
+  221 | 
+  222 |       *----------------------------------------------------------------*
+/legacy/app/cbl/COMEN01C.cbl: in paragraph 'RECEIVE-MENU-SCREEN':
+/legacy/app/cbl/COMEN01C.cbl:227: error: 'EXEC' is a reserved word, but isn't supported
+  225 |        RECEIVE-MENU-SCREEN.
+  226 | 
+  227 >            EXEC CICS RECEIVE
+  228 |                      MAP('COMEN1A')
+  229 |                      MAPSET('COMEN01')
+/legacy/app/cbl/COMEN01C.cbl:227: error: syntax error, unexpected Identifier, expecting SECTION or .
+/legacy/app/cbl/COMEN01C.cbl:227: note: 'EXEC' is not a statement

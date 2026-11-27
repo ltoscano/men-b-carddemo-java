@@ -1,0 +1,3 @@
+controllo: call cmt
+  cmt: CALL attese trovate 3/3; trasferimenti EXEC CICS XCTL attesi visti: 0/2 (lo strumento non li vede)
+VERDETTO: pass

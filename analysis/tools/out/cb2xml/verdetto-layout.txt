@@ -1,0 +1,3 @@
+controllo: layout 
+  CVEXPORT: lunghezza cb2xml 500 byte; RECORDSIZE(max medio) in CBEXPORT.jcl = 500 500: nessuna differenza
+VERDETTO: pass

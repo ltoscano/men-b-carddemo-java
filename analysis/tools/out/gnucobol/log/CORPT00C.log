@@ -1,0 +1,81 @@
+/legacy/app/cbl/CORPT00C.cbl:148: error: DFHAID: No such file or directory
+  146 |        COPY CVTRA05Y.
+  147 | 
+  148 >        COPY DFHAID.
+  149 |        COPY DFHBMSCA.
+  150 | 
+/legacy/app/cbl/CORPT00C.cbl:149: error: DFHBMSCA: No such file or directory
+  147 | 
+  148 |        COPY DFHAID.
+  149 >        COPY DFHBMSCA.
+  150 | 
+  151 |       *----------------------------------------------------------------*
+/legacy/app/cbl/CORPT00C.cbl:126: warning: larger REDEFINES used [-Wdialect]
+  124 |          05 FILLER                     PIC X(80) VALUE
+  125 |          "/*EOF".
+  126 >         02 JOB-DATA-2 REDEFINES JOB-DATA-1.
+  127 |          05 JOB-LINES OCCURS 1000 TIMES PIC X(80).
+  128 | 
+/legacy/app/cbl/CORPT00C.cbl:126: note: size of 'JOB-DATA-2' larger than size of 'JOB-DATA-1' [-Wdialect]
+/legacy/app/cbl/CORPT00C.cbl:157: error: 'EIBCALEN' is not defined
+  155 |        01  DFHCOMMAREA.
+  156 |          05  LK-COMMAREA                           PIC X(01)
+  157 >              OCCURS 1 TO 32767 TIMES DEPENDING ON EIBCALEN.
+  158 | 
+  159 |       *----------------------------------------------------------------*
+/legacy/app/cbl/CORPT00C.cbl: in paragraph 'MAIN-PARA':
+/legacy/app/cbl/CORPT00C.cbl:184: error: 'EIBAID' is not defined
+  182 |                ELSE
+  183 |                    PERFORM RECEIVE-TRNRPT-SCREEN
+  184 >                    EVALUATE EIBAID
+  185 |                        WHEN DFHENTER
+  186 |                            PERFORM PROCESS-ENTER-KEY
+/legacy/app/cbl/CORPT00C.cbl:185: error: 'DFHENTER' is not defined
+  183 |                    PERFORM RECEIVE-TRNRPT-SCREEN
+  184 |                    EVALUATE EIBAID
+  185 >                        WHEN DFHENTER
+  186 |                            PERFORM PROCESS-ENTER-KEY
+  187 |                        WHEN DFHPF3
+/legacy/app/cbl/CORPT00C.cbl:187: error: 'DFHPF3' is not defined
+  185 |                        WHEN DFHENTER
+  186 |                            PERFORM PROCESS-ENTER-KEY
+  187 >                        WHEN DFHPF3
+  188 |                            MOVE 'COMEN01C' TO CDEMO-TO-PROGRAM
+  189 |                            PERFORM RETURN-TO-PREV-SCREEN
+/legacy/app/cbl/CORPT00C.cbl:199: error: 'EXEC' is a reserved word, but isn't supported
+  197 |            END-IF
+  198 | 
+  199 >            EXEC CICS RETURN
+  200 |                      TRANSID (WS-TRANID)
+  201 |                      COMMAREA (CARDDEMO-COMMAREA)
+/legacy/app/cbl/CORPT00C.cbl:199: error: syntax error, unexpected Identifier
+/legacy/app/cbl/CORPT00C.cbl:200: error: 'TRANSID' is not defined
+  198 | 
+  199 |            EXEC CICS RETURN
+  200 >                      TRANSID (WS-TRANID)
+  201 |                      COMMAREA (CARDDEMO-COMMAREA)
+  202 |            END-EXEC.
+/legacy/app/cbl/CORPT00C.cbl:200: error: 'TRANSID' is not a file name
+/legacy/app/cbl/CORPT00C.cbl:200: error: syntax error, unexpected (, expecting AT END or END or NOT AT END
+/legacy/app/cbl/CORPT00C.cbl:202: error: 'END-EXEC' is a reserved word, but isn't supported
+  200 |                      TRANSID (WS-TRANID)
+  201 |                      COMMAREA (CARDDEMO-COMMAREA)
+  202 >            END-EXEC.
+  203 | 
+  204 | 
+/legacy/app/cbl/CORPT00C.cbl: in paragraph 'PROCESS-ENTER-KEY':
+/legacy/app/cbl/CORPT00C.cbl:448: error: 'DFHGREEN' is not defined
+  446 | 
+  447 |                PERFORM INITIALIZE-ALL-FIELDS
+  448 >                MOVE DFHGREEN           TO ERRMSGC  OF CORPT0AO
+  449 |                STRING WS-REPORT-NAME   DELIMITED BY SPACE
+  450 |                  ' report submitted for printing ...'
+/legacy/app/cbl/CORPT00C.cbl: in paragraph 'WIRTE-JOBSUB-TDQ':
+/legacy/app/cbl/CORPT00C.cbl:517: error: 'EXEC' is a reserved word, but isn't supported
+  515 |        WIRTE-JOBSUB-TDQ.
+  516 | 
+  517 >            EXEC CICS WRITEQ TD
+  518 |              QUEUE ('JOBS')
+  519 |              FROM (JCL-RECORD)
+/legacy/app/cbl/CORPT00C.cbl:517: error: syntax error, unexpected Identifier, expecting SECTION or .
+/legacy/app/cbl/CORPT00C.cbl:517: note: 'EXEC' is not a statement

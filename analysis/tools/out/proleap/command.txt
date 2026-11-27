@@ -1,0 +1,5 @@
+per ogni programma P di app/cbl/ (elenco dal manifesto):
+java -cp glue:proleap-classes:proleap-lib/* CopyLister /legacy/<P>      (in menb-analysis-proleap:d1bfe75)
+CopyLister e' la colla in analysis/tools/docker/proleap/CopyLister.java: usa CobolLineReaderImpl e le altre classi di
+normalizzazione delle righe di ProLeap, poi il parser del suo preprocessore (CobolPreprocessorParser) e stampa
+riga, copybook e clausole REPLACING di ogni istruzione COPY. La ricerca dei copybook non e' coinvolta.

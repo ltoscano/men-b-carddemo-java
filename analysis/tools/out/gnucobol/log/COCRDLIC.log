@@ -1,0 +1,151 @@
+/legacy/app/cbl/COCRDLIC.cbl:267: error: DFHBMSCA: No such file or directory
+  265 | ..
+  266 |       *IBM SUPPLIED COPYBOOKS..
+  267 >        COPY DFHBMSCA...
+  268 |        COPY DFHAID...
+  269 | ..
+/legacy/app/cbl/COCRDLIC.cbl:268: error: DFHAID: No such file or directory
+  266 |       *IBM SUPPLIED COPYBOOKS..
+  267 |        COPY DFHBMSCA...
+  268 >        COPY DFHAID...
+  269 | ..
+  270 |       *COMMON COPYBOOKS..
+/legacy/app/cbl/COCRDLIC.cbl:252: warning: no previous data item of level 05 [-Wothers]
+  250 |       *  File Data Array         28 CHARS X 7 ROWS = 196..
+  251 |       ******************************************************************..
+  252 >          05 WS-SCREEN-DATA...
+  253 |             10 WS-ALL-ROWS                         PIC X(196)...
+  254 |             10 FILLER REDEFINES WS-ALL-ROWS...
+/legacy/app/cbl/COCRDLIC.cbl:295: error: 'EIBCALEN' is not defined
+  293 |        01  DFHCOMMAREA...
+  294 |          05  FILLER                                PIC X(1)..
+  295 >              OCCURS 1 TO 32767 TIMES DEPENDING ON EIBCALEN...
+  296 | ..
+  297 |        PROCEDURE DIVISION...
+/legacy/app/cbl/COCRDLIC.cbl: in paragraph '0000-MAIN':
+/legacy/app/cbl/COCRDLIC.cbl:402: error: 'EXEC' is a reserved word, but isn't supported
+  400 |               SET CDEMO-PGM-ENTER   TO TRUE..
+  401 |       *..
+  402 >               EXEC CICS XCTL..
+  403 |                         PROGRAM (LIT-MENUPGM)..
+  404 |                         COMMAREA(CARDDEMO-COMMAREA)..
+/legacy/app/cbl/COCRDLIC.cbl:402: error: 'EXEC' cannot be used here
+/legacy/app/cbl/COCRDLIC.cbl:402: error: 'CICS' is not defined
+/legacy/app/cbl/COCRDLIC.cbl:402: error: 'XCTL' is not defined
+/legacy/app/cbl/COCRDLIC.cbl:403: error: syntax error, unexpected PROGRAM
+  401 |       *..
+  402 |               EXEC CICS XCTL..
+  403 >                         PROGRAM (LIT-MENUPGM)..
+  404 |                         COMMAREA(CARDDEMO-COMMAREA)..
+  405 |               END-EXEC..
+/legacy/app/cbl/COCRDLIC.cbl:405: error: 'END-EXEC' is a reserved word, but isn't supported
+  403 |                         PROGRAM (LIT-MENUPGM)..
+  404 |                         COMMAREA(CARDDEMO-COMMAREA)..
+  405 >               END-EXEC..
+  406 |            END-IF..
+  407 |       *****************************************************************..
+/legacy/app/cbl/COCRDLIC.cbl:538: error: 'EXEC' is a reserved word, but isn't supported
+  536 |       *            CALL CARD DETAIL PROGRAM..
+  537 |       *..
+  538 >                    EXEC CICS XCTL..
+  539 |                         PROGRAM (CCARD-NEXT-PROG)..
+  540 |                         COMMAREA(CARDDEMO-COMMAREA)..
+/legacy/app/cbl/COCRDLIC.cbl:539: error: syntax error, unexpected PROGRAM
+  537 |       *..
+  538 |                    EXEC CICS XCTL..
+  539 >                         PROGRAM (CCARD-NEXT-PROG)..
+  540 |                         COMMAREA(CARDDEMO-COMMAREA)..
+  541 |                    END-EXEC..
+/legacy/app/cbl/COCRDLIC.cbl:541: error: 'END-EXEC' is a reserved word, but isn't supported
+  539 |                         PROGRAM (CCARD-NEXT-PROG)..
+  540 |                         COMMAREA(CARDDEMO-COMMAREA)..
+  541 >                    END-EXEC..
+  542 |       *****************************************************************..
+  543 |       *        TRANSFER TO CARD UPDATED PROGRAM..
+/legacy/app/cbl/COCRDLIC.cbl:566: error: 'EXEC' is a reserved word, but isn't supported
+  564 |       *            CALL CARD UPDATE PROGRAM..
+  565 |       *..
+  566 >                    EXEC CICS XCTL..
+  567 |                         PROGRAM (CCARD-NEXT-PROG)..
+  568 |                         COMMAREA(CARDDEMO-COMMAREA)..
+/legacy/app/cbl/COCRDLIC.cbl:567: error: syntax error, unexpected PROGRAM
+  565 |       *..
+  566 |                    EXEC CICS XCTL..
+  567 >                         PROGRAM (CCARD-NEXT-PROG)..
+  568 |                         COMMAREA(CARDDEMO-COMMAREA)..
+  569 |                    END-EXEC..
+/legacy/app/cbl/COCRDLIC.cbl:569: error: 'END-EXEC' is a reserved word, but isn't supported
+  567 |                         PROGRAM (CCARD-NEXT-PROG)..
+  568 |                         COMMAREA(CARDDEMO-COMMAREA)..
+  569 >                    END-EXEC..
+  570 | ..
+  571 |       *****************************************************************..
+/legacy/app/cbl/COCRDLIC.cbl: in paragraph 'COMMON-RETURN':
+/legacy/app/cbl/COCRDLIC.cbl:615: error: 'EXEC' is a reserved word, but isn't supported
+  613 | ..
+  614 | ..
+  615 >            EXEC CICS RETURN..
+  616 |                 TRANSID (LIT-THISTRANID)..
+  617 |                 COMMAREA (WS-COMMAREA)..
+/legacy/app/cbl/COCRDLIC.cbl:616: error: 'TRANSID' is not defined
+  614 | ..
+  615 |            EXEC CICS RETURN..
+  616 >                 TRANSID (LIT-THISTRANID)..
+  617 |                 COMMAREA (WS-COMMAREA)..
+  618 |                 LENGTH(LENGTH OF WS-COMMAREA)..
+/legacy/app/cbl/COCRDLIC.cbl:616: error: 'TRANSID' is not a file name
+/legacy/app/cbl/COCRDLIC.cbl:616: error: syntax error, unexpected (, expecting AT END or END or NOT AT END
+/legacy/app/cbl/COCRDLIC.cbl:619: error: 'END-EXEC' is a reserved word, but isn't supported
+  617 |                 COMMAREA (WS-COMMAREA)..
+  618 |                 LENGTH(LENGTH OF WS-COMMAREA)..
+  619 >            END-EXEC..
+  620 |            ...
+  621 |        0000-MAIN-EXIT...
+/legacy/app/cbl/COCRDLIC.cbl: in paragraph '1100-SCREEN-INIT':
+/legacy/app/cbl/COCRDLIC.cbl:671: error: 'DFHBMDAR' is not defined
+  669 |            SET WS-NO-INFO-MESSAGE      TO TRUE..
+  670 |            MOVE WS-INFO-MSG            TO INFOMSGO OF CCRDLIAO..
+  671 >            MOVE DFHBMDAR               TO INFOMSGC OF CCRDLIAO..
+  672 |            ...
+  673 | ..
+/legacy/app/cbl/COCRDLIC.cbl: in paragraph '1250-SETUP-ARRAY-ATTRIBS':
+/legacy/app/cbl/COCRDLIC.cbl:753: error: 'DFHBMPRF' is not defined
+  751 |            IF   WS-EACH-CARD(1)            EQUAL LOW-VALUES..
+  752 |            OR   FLG-PROTECT-SELECT-ROWS-YES..
+  753 >               MOVE DFHBMPRF                TO CRDSEL1A OF CCRDLIAI..
+  754 |            ELSE..
+  755 |               IF WS-ROW-CRDSELECT-ERROR(1) = '1'..
+/legacy/app/cbl/COCRDLIC.cbl:756: error: 'DFHRED' is not defined
+  754 |            ELSE..
+  755 |               IF WS-ROW-CRDSELECT-ERROR(1) = '1'..
+  756 >                  MOVE DFHRED               TO CRDSEL1C OF CCRDLIAO..
+  757 |                  IF WS-EDIT-SELECT(1) = SPACE OR LOW-VALUES..
+  758 |                     MOVE '*'               TO CRDSEL1O OF CCRDLIAO..
+/legacy/app/cbl/COCRDLIC.cbl:761: error: 'DFHBMFSE' is not defined
+  759 |                  END-IF..
+  760 |               END-IF..
+  761 >               MOVE DFHBMFSE                TO CRDSEL1A OF CCRDLIAI..
+  762 |            END-IF..
+  763 | ..
+/legacy/app/cbl/COCRDLIC.cbl:766: error: 'DFHBMPRO' is not defined
+  764 |            IF   WS-EACH-CARD(2)            EQUAL LOW-VALUES..
+  765 |            OR   FLG-PROTECT-SELECT-ROWS-YES..
+  766 >               MOVE DFHBMPRO                TO CRDSEL2A OF CCRDLIAI..
+  767 |            ELSE..
+  768 |               IF WS-ROW-CRDSELECT-ERROR(2) = '1'..
+/legacy/app/cbl/COCRDLIC.cbl: in paragraph '1400-SETUP-MESSAGE':
+/legacy/app/cbl/COCRDLIC.cbl:929: error: 'DFHNEUTR' is not defined
+  927 |            AND NOT WS-NO-RECORDS-FOUND..
+  928 |               MOVE WS-INFO-MSG        TO INFOMSGO OF CCRDLIAO..
+  929 >               MOVE DFHNEUTR           TO INFOMSGC OF CCRDLIAO..
+  930 |            END-IF..
+  931 | ..
+/legacy/app/cbl/COCRDLIC.cbl: in paragraph '1500-SEND-SCREEN':
+/legacy/app/cbl/COCRDLIC.cbl:939: error: 'EXEC' is a reserved word, but isn't supported
+  937 | ..
+  938 |        1500-SEND-SCREEN...
+  939 >            EXEC CICS SEND MAP(LIT-THISMAP)..
+  940 |                           MAPSET(LIT-THISMAPSET)..
+  941 |                           FROM(CCRDLIAO)..
+/legacy/app/cbl/COCRDLIC.cbl:939: error: syntax error, unexpected Identifier, expecting SECTION or .
+/legacy/app/cbl/COCRDLIC.cbl:939: note: 'EXEC' is not a statement

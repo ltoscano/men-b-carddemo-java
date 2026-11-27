@@ -1,0 +1,32 @@
+# programma	esito atteso (ok = nessun errore, errore = almeno un errore)	motivo (letto dal sorgente)
+COACTVWC	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COACTUPC	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COADM01C	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COBIL00C	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COCRDLIC	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COCRDSLC	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COCRDUPC	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COMEN01C	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+CORPT00C	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COSGN00C	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COTRN00C	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COTRN01C	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COTRN02C	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COUSR00C	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COUSR01C	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COUSR02C	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+COUSR03C	errore	contiene EXEC CICS e COPY DFHAID/DFHBMSCA: non eseguibili senza CICS (atteso, non aggirato)
+CBEXPORT	errore	RECORD KEY IS EXPORT-SEQUENCE-NUM (riga 68): il campo e' in WORKING-STORAGE (COPY CVEXPORT, riga 96), non nel record dell'FD (riga 92, PIC X(500))
+CBIMPORT	errore	RECORD KEY IS EXPORT-SEQUENCE-NUM (riga 40): stessa situazione di CBEXPORT
+CBSTM03A	errore	COPY CUSTREC (riga 55): il copybook CUSTREC.cpy ha caratteri TAB nelle righe da 6 in poi, che cobc non accetta nel formato fisso
+CBACT01C	ok	batch senza EXEC CICS, nessuna anomalia di sintassi rilevata leggendo il sorgente
+CBACT02C	ok	batch senza EXEC CICS, nessuna anomalia di sintassi rilevata leggendo il sorgente
+CBACT03C	ok	batch senza EXEC CICS, nessuna anomalia di sintassi rilevata leggendo il sorgente
+CBACT04C	ok	batch senza EXEC CICS, nessuna anomalia di sintassi rilevata leggendo il sorgente
+CBCUS01C	ok	batch senza EXEC CICS, nessuna anomalia di sintassi rilevata leggendo il sorgente
+CBSTM03B	ok	batch senza EXEC CICS, nessuna anomalia di sintassi rilevata leggendo il sorgente
+CBTRN01C	ok	batch senza EXEC CICS, nessuna anomalia di sintassi rilevata leggendo il sorgente
+CBTRN02C	ok	batch senza EXEC CICS, nessuna anomalia di sintassi rilevata leggendo il sorgente
+CBTRN03C	ok	batch senza EXEC CICS, nessuna anomalia di sintassi rilevata leggendo il sorgente
+COBSWAIT	ok	utilita' senza EXEC CICS, nessuna anomalia di sintassi rilevata leggendo il sorgente
+CSUTLDTC	ok	utilita' senza EXEC CICS, nessuna anomalia di sintassi rilevata leggendo il sorgente

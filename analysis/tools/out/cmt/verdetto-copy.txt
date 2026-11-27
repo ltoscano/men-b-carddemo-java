@@ -1,0 +1,7 @@
+controllo: copy cmt
+  cmt: occorrenze COPY riportate per 28 programmi, 214 righe in tutto
+  PROBLEMA: CBTRN02C: lo strumento non riporta il numero di riga delle occorrenze COPY (5 righe, 5 attese)
+  PROBLEMA: COACTUPC: lo strumento non riporta il numero di riga delle occorrenze COPY (18 righe, 56 attese)
+  PROBLEMA: COACTUPC: occorrenze COPY riportate 18, attese 56
+  PROBLEMA: COBIL00C: lo strumento non riporta il numero di riga delle occorrenze COPY (10 righe, 10 attese)
+VERDETTO: fail

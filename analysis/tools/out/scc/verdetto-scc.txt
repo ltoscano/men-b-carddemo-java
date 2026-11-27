@@ -1,0 +1,3 @@
+controllo: scc 
+  scc: 186 file contati, 54 non contati, 240 nel manifesto sotto app/
+VERDETTO: pass

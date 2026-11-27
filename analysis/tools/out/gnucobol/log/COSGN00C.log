@@ -1,0 +1,45 @@
+/legacy/app/cbl/COSGN00C.cbl:57: error: DFHAID: No such file or directory
+   55 |        COPY CSUSR01Y.
+   56 | 
+   57 >        COPY DFHAID.
+   58 |        COPY DFHBMSCA.
+   59 |       *COPY DFHATTR.
+/legacy/app/cbl/COSGN00C.cbl:58: error: DFHBMSCA: No such file or directory
+   56 | 
+   57 |        COPY DFHAID.
+   58 >        COPY DFHBMSCA.
+   59 |       *COPY DFHATTR.
+   60 | 
+/legacy/app/cbl/COSGN00C.cbl:67: error: 'EIBCALEN' is not defined
+   65 |        01  DFHCOMMAREA.
+   66 |          05  LK-COMMAREA                           PIC X(01)
+   67 >              OCCURS 1 TO 32767 TIMES DEPENDING ON EIBCALEN.
+   68 | 
+   69 |       *----------------------------------------------------------------*
+/legacy/app/cbl/COSGN00C.cbl: in paragraph 'MAIN-PARA':
+/legacy/app/cbl/COSGN00C.cbl:85: error: 'EIBAID' is not defined
+   83 |                PERFORM SEND-SIGNON-SCREEN
+   84 |            ELSE
+   85 >                EVALUATE EIBAID
+   86 |                    WHEN DFHENTER
+   87 |                        PERFORM PROCESS-ENTER-KEY
+/legacy/app/cbl/COSGN00C.cbl:86: error: 'DFHENTER' is not defined
+   84 |            ELSE
+   85 |                EVALUATE EIBAID
+   86 >                    WHEN DFHENTER
+   87 |                        PERFORM PROCESS-ENTER-KEY
+   88 |                    WHEN DFHPF3
+/legacy/app/cbl/COSGN00C.cbl:88: error: 'DFHPF3' is not defined
+   86 |                    WHEN DFHENTER
+   87 |                        PERFORM PROCESS-ENTER-KEY
+   88 >                    WHEN DFHPF3
+   89 |                        MOVE CCDA-MSG-THANK-YOU        TO WS-MESSAGE
+   90 |                        PERFORM SEND-PLAIN-TEXT
+/legacy/app/cbl/COSGN00C.cbl:98: error: 'EXEC' is a reserved word, but isn't supported
+   96 |            END-IF.
+   97 | 
+   98 >            EXEC CICS RETURN
+   99 |                      TRANSID (WS-TRANID)
+  100 |                      COMMAREA (CARDDEMO-COMMAREA)
+/legacy/app/cbl/COSGN00C.cbl:98: error: syntax error, unexpected Identifier, expecting SECTION or .
+/legacy/app/cbl/COSGN00C.cbl:98: note: 'EXEC' is not a statement

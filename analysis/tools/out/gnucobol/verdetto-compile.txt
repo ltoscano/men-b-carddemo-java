@@ -1,0 +1,3 @@
+controllo: compile 
+  cobc: 11 programmi senza errori, 20 con errori (tutti attesi)
+VERDETTO: pass

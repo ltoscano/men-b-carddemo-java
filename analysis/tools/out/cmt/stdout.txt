@@ -1,0 +1,3 @@
+Scanned 31 units (31 programs, 0 copybooks) into /out
+  analyzers: paragraph_count
+  4 unresolved CALLs, 2 unresolved copybooks

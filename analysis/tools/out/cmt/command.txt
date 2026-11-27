@@ -1,0 +1,2 @@
+cobol-migrate scan /legacy/app/cbl --copybook-path /legacy/app/cpy --copybook-path /legacy/app/cpy-bms --format json --format dot --output /out
+(l'intera cartella app/cbl contiene esattamente i programmi del manifesto: lo verifica check.sh)

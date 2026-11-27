@@ -1,0 +1,3 @@
+per ogni programma P di app/cbl/ (elenco dal manifesto, in programs.txt):
+cobc -fsyntax-only -std=ibm -I /legacy/app/cpy -I /legacy/app/cpy-bms /legacy/<P>
+(eseguito in menb-analysis-gnucobol:3.2; i sorgenti non vengono modificati né pre-elaborati)
