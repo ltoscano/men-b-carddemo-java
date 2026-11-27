@@ -40,6 +40,7 @@ Migrazione **ibrida**: il comportamento da preservare è brownfield, lo stack ta
 
 **Fonte unica per wave, numerazione e dipendenze: `docs/piano-wave.md`.** In caso di discordanza con altri documenti (compreso `paper/piano-migrazione-carddemo-java.md`, che è la proposta iniziale) vale il piano. In sintesi:
 
+- **Dal 27 nov 2026 (sera), per decisione dell'autore: prima il pilota.** Non si chiude tutta la Wave 0 prima di tradurre: si prepara ciò che serve al pilota batch (`CBACT01C`), lo si traduce e confronta, e il resto si prepara man mano. Il percorso e l'elenco di ciò che è rinviato sono nell'ultima sezione di `docs/piano-wave.md`, che prevale sulle righe qui sotto.
 - **Wave 0A** (brownfield, sola lettura): strumenti, inventario, contratto dati, oracle GnuCOBOL, golden, matrice di comportamento online.
 - **Wave 0B** (greenfield, in parallelo a 0A): scheletro Java in container, Compose, cancelli di qualità, contratti condivisi.
 - **Wave 1** dati → **Wave 2** pilota (una fetta batch, una online) → **Wave 3** online ∥ **Wave 4** batch → **Wave 5** parità end-to-end e rilascio 1.0 → **Wave 6** moduli opzionali.

@@ -415,3 +415,7 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T22:43:45Z,issue-16a,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
 2026-11-27T22:44:41Z,issue-54,ready,fable,orologio,specifica pubblicata; 8 rilievi accolti
 2026-11-27T22:44:41Z,issue-54,esecutore-inizio,opus,orologio,affidata
+2026-11-27T22:45:02Z,processo,risposta-consegnata,fable,orologio,issue #54 affidata; tre lavori in corso
+2026-11-27T22:50:55Z,processo,richiesta-autore,autore,orologio,costi: li valuta l'autore più avanti; chiede che cosa fare adesso e se la Wave 0 è chiusa
+2026-11-27T22:50:55Z,processo,risposta-consegnata,fable,orologio,Wave 0 non chiusa; una sola decisione richiesta all'autore
+2026-11-27T22:53:23Z,processo,richiesta-autore,autore,orologio,sceglie B: preparare solo ciò che serve al pilota; il resto man mano

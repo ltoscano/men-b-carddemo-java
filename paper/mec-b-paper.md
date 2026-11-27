@@ -480,6 +480,12 @@ Che cosa dicono questi numeri, e che cosa no.
 
 *Un agente in attesa costa.* Un Esecutore, finito il lavoro, è rimasto ad aspettare la CI riconsegnando più volte lo stesso rapporto. Da allora il prompt dice: una sola lettura dello stato della CI, un solo rapporto.
 
+**Passo 23 — L'autore cambia l'ordine: prima il pilota.** Alle 22:27 UTC, dopo tredici ore e mezza, l'autore ha chiesto quanto mancasse alla fine della preparazione. La risposta, dal piano: sei lavori in fila sul percorso critico, cioè almeno un'altra giornata (stima) prima di tradurre una riga. Il pianificatore ha proposto un'alternativa e l'autore l'ha scelta: preparare solo ciò che serve al primo programma, tradurlo, confrontarlo con l'originale, e fare il resto della preparazione man mano, subito prima del programma a cui serve.
+
+Il ragionamento della sezione 2.1 non cambia (si parte dal primo test di parità e si risale all'indietro): cambia fin dove ci si spinge prima di eseguirlo. Il piano iniziale costruiva i riferimenti per *tutti* i programmi prima di tradurne uno; la revisione li costruisce per *uno*. Ciò che si guadagna è sapere presto se il metodo regge sulla traduzione vera, che dopo un giorno intero di lavoro è ancora la cosa che non si sa. Ciò che si rischia è scoprire più tardi che a un programma serve qualcosa di non preparato.
+
+Per chi replica: la domanda "la preparazione è finita?" non ha una risposta naturale, perché si può sempre preparare meglio. Conviene fissare fin dall'inizio un pilota piccolo e far dipendere da quello, e solo da quello, ciò che si prepara prima. Qui lo si è capito a fine giornata.
+
 *(passi successivi: da compilare)*
 
 **Come si misurano i tempi.** Su richiesta dell'autore, da questo punto ogni passaggio è cronometrato nel momento in cui avviene. Un piccolo script, `paper/data/tlog.sh`, aggiunge una riga con l'ora corrente al registro `paper/data/eventi.csv`; il registro non si modifica mai, si aggiunge soltanto. Per i passi precedenti i tempi sono stati ricostruiti da fonti verificabili (date dei commit, date di creazione su GitHub, date dei file) e ogni riga dichiara la propria fonte.

@@ -233,3 +233,38 @@ Questa tabella sostituisce la colonna "Stato" delle tabelle precedenti, che rest
 | #16 | 0B-4: contratti condivisi | #26, #3, #23 | bloccata (aspetta le regole di codifica di #23) |
 
 Le issue sull'oracle condividono i file di `oracle/build/` e vanno in sequenza: #25 → #35 → #36 → #38. Le issue su `verify.sh` e sui POM vanno in sequenza: #27 → #34 → #28.
+
+## Revisione del 27 novembre 2026, 22:53 UTC: prima il pilota (decisione dell'autore)
+
+Alla fine del primo giorno l'autore ha scelto di **non chiudere la Wave 0 per intero prima di tradurre**. Si prepara subito solo ciò che serve al primo programma, lo si traduce e lo si confronta con l'originale; il resto della preparazione si fa man mano, subito prima del programma a cui serve. Motivo: oggi non si sa ancora se il metodo regge sulla traduzione vera, e conviene scoprirlo presto. Rischio accettato: accorgersi più tardi che a un programma serve qualcosa di non preparato; lo attenuano la mappa e l'oracle, che esistono già. Registro delle approvazioni, voce 86.
+
+Questa sezione prevale sulle precedenti dove differiscono. In particolare la condizione "la Wave 0A si chiude quando l'oracle rigenera tutti i golden" è sostituita dal percorso qui sotto.
+
+### Percorso al pilota batch (`READACCT` / `CBACT01C`), in fila
+
+| Passo | Issue | Stato |
+| --- | --- | --- |
+| 1. Dati di esempio decodificati e verificati | #5 | in corso |
+| 2. File dei conti caricato nell'oracle | #53 (ristretta al solo file dei conti) | bloccata da #5 e #36 |
+| 3. Output di riferimento di `CBACT01C` | #55 (divisa da #9) | bloccata da #53 |
+| 4. Tabella dei conti in PostgreSQL e suo caricamento | Wave 1, una sola tabella: da aprire | — |
+| 5. `CBACT01C` tradotto, con parità byte per byte | Wave 2, pilota batch: da aprire | — |
+
+In parallelo, senza dipendenze dal percorso: codifica dei campi in Java (#54, in corso), routine `MVSWAIT` (#36, in validazione).
+
+### Percorso al pilota online (`COSGN00C`, accesso)
+
+Matrice di comportamento del solo programma di accesso (#11), poi tabella degli utenti e traduzione. Parte dopo il pilota batch, o in parallelo se non si sovrappongono cartelle.
+
+### Rinviato, da fare subito prima di ciò a cui serve
+
+| Issue | Quando |
+| --- | --- |
+| #6 fixture mirate; #8 equivalenti delle utility mainframe; #9 golden degli altri job; #10 golden degli scenari concatenati | prima di ciascun job della wave batch |
+| #7 grafo dei flussi batch; #46 bersagli CICS in variabile | prima della wave batch e della wave online |
+| #38 `CBEXPORT`/`CBIMPORT`; #37 `CEEDAYS` | prima dei programmi che le usano |
+| #16 contratti condivisi rimanenti (importi, stato di conversazione, transazioni, ordinamento, errori) | ciascuno prima del primo programma che lo richiede |
+| #34 limiti di tempo e processi figli; #28 SonarQube; #45 residui degli script | quando non rallentano il percorso al pilota |
+| #12 chiusura della Wave 0A | sostituita da una revisione dopo il pilota |
+
+Dopo il pilota si rivede questo piano con i costi misurati di una traduzione vera.
