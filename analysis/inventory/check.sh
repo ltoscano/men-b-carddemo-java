@@ -78,7 +78,7 @@ neg() { # neg NOME KIND NEEDLE
   local name="$1" kind="$2" needle="$3" out rc=0
   out="$(psh "$gen" "python -I $(G mutate.py) $kind /work/docs/graph.json /work/m.json && python -I $(G verify.py) /work/m.json /work/tmp/counts.json /work/out /analysis/inventory/expected /docs/graph.schema.json" 2>&1)" || rc=$?
   [ "$rc" -ne 0 ] || { echo "$out" | tail -3 >&2; fail "PROVA NEGATIVA FALLITA ($name): il controllo e' rimasto verde"; }
-  echo "$out" | grep -q -- "$needle" || { echo "$out" | head -5 >&2; fail "prova negativa ($name): fallito ma non per il motivo atteso ('$needle')"; }
+  grep -q -- "$needle" <<<"$out" || { echo "$out" | head -5 >&2; fail "prova negativa ($name): fallito ma non per il motivo atteso ('$needle')"; }
   log "   ok: $name (exit $rc)"
 }
 neg "rimozione di tutte le COPY" drop-copy-category "COPY: app/cbl/CBACT01C.cbl: occorrenze nel grafo 0"
@@ -127,7 +127,7 @@ neg "nodo passo senza scheda EXEC" extra-step-node "senza scheda EXEC"
 log "5b. prova negativa: un attributo aggiunto allo schema e non elencato in ATTRS deve far fallire il controllo"
 py "$gen" -c "import json;s=json.load(open('/docs/graph.schema.json'));s['\$defs']['occ_dd']['properties']['nuovo_attributo']={'type':'string'};json.dump(s,open('/work/schema-plus.json','w'))"
 rc=0; out="$(psh "$gen" "python -I $(G verify.py) /work/docs/graph.json /work/tmp/counts.json /work/out /analysis/inventory/expected /work/schema-plus.json" 2>&1)" || rc=$?
-[ "$rc" -ne 0 ] && echo "$out" | grep -q "attributo dello schema non coperto: occ_dd.nuovo_attributo" || fail "PROVA NEGATIVA FALLITA: un attributo nuovo dello schema non fa fallire il controllo"
+[ "$rc" -ne 0 ] && grep -q "attributo dello schema non coperto: occ_dd.nuovo_attributo" <<<"$out" || fail "PROVA NEGATIVA FALLITA: un attributo nuovo dello schema non fa fallire il controllo"
 log "   ok: attributo nuovo non coperto rifiutato (exit $rc)"
 
 log "5c. prove negative sull'output di mapa (struttura e tipi di record, per ogni invocazione, anche per i file al livello B)"
@@ -138,7 +138,7 @@ negmapa() { # negmapa NOME FILE-JCL COMANDO-SU-DIR-COPIA NEEDLE
   ( cd "$tmp/mp/raw" && eval "$cmd" )
   out="$(psh "$tmp/mp" "python -I $(G normalize.py) mapa /work/raw /work/out" 2>&1)" || rc=$?
   [ "$rc" -ne 0 ] || fail "PROVA NEGATIVA FALLITA ($name): output di mapa non riconoscibile accettato"
-  echo "$out" | grep -q -- "$needle" || { echo "$out" | head -3 >&2; fail "prova negativa ($name): motivo inatteso ('$needle')"; }
+  grep -q -- "$needle" <<<"$out" || { echo "$out" | head -3 >&2; fail "prova negativa ($name): motivo inatteso ('$needle')"; }
   log "   ok: $name (exit $rc)"
 }
 T=app_app-transaction-type-db2_jcl_TRANEXTR.jcl
@@ -156,7 +156,7 @@ negproleap() { # negproleap NOME FILE-SORGENTE COMANDO-SU-DIR-COPIA NEEDLE
   ( cd "$tmp/pl/raw" && eval "$cmd" )
   out="$(psh "$tmp/pl" "python -I $(G normalize.py) proleap /work/copy-files.txt /work/raw /work/out" 2>&1)" || rc=$?
   [ "$rc" -ne 0 ] || fail "PROVA NEGATIVA FALLITA ($name): risposta di ProLeap non riconoscibile accettata"
-  echo "$out" | grep -q -- "$needle" || { echo "$out" | head -3 >&2; fail "prova negativa ($name): motivo inatteso ('$needle')"; }
+  grep -q -- "$needle" <<<"$out" || { echo "$out" | head -3 >&2; fail "prova negativa ($name): motivo inatteso ('$needle')"; }
   log "   ok: $name (exit $rc)"
 }
 C=app_cpy_CSUTLDPY.cpy
@@ -174,7 +174,7 @@ negcmt() { # negcmt NOME COMANDO-SU-DIR-COPIA NEEDLE
   ( cd "$tmp/cm/raw" && eval "$cmd" )
   out="$(psh "$tmp/cm" "python -I $(G normalize.py) cmt /work/raw /work/out" 2>&1)" || rc=$?
   [ "$rc" -ne 0 ] || fail "PROVA NEGATIVA FALLITA ($name): risposta di cobol-migration-toolkit non riconoscibile accettata"
-  echo "$out" | grep -q -- "$needle" || { echo "$out" | head -3 >&2; fail "prova negativa ($name): motivo inatteso ('$needle')"; }
+  grep -q -- "$needle" <<<"$out" || { echo "$out" | head -3 >&2; fail "prova negativa ($name): motivo inatteso ('$needle')"; }
   log "   ok: $name (exit $rc)"
 }
 negcmt "risposta di cobol-migration-toolkit mancante per una cartella" "rm app_cpy/inventory.json" "risposte mancanti"
@@ -187,7 +187,7 @@ negexp() { # negexp NOME FILE SED-EXPR NEEDLE
   if [ "$expr" = "rm" ]; then rm -f "$gen/exp/$file"; else sed -i.bak "$expr" "$gen/exp/$file" && rm -f "$gen/exp/$file.bak"; cmp -s "$gen/exp/$file" "$INV_DIR/expected/$file" && fail "prova negativa ($name): la mutazione dell'atteso non ha cambiato nulla"; fi
   out="$(psh "$gen" "python -I $(G verify.py) /work/docs/graph.json /work/tmp/counts.json /work/out /work/exp /docs/graph.schema.json" 2>&1)" || rc=$?
   [ "$rc" -ne 0 ] || fail "PROVA NEGATIVA FALLITA ($name): atteso alterato ma il controllo e' verde"
-  echo "$out" | grep -q -- "$needle" || { echo "$out" | head -5 >&2; fail "prova negativa ($name): fallito ma non per il motivo atteso ('$needle')"; }
+  grep -q -- "$needle" <<<"$out" || { echo "$out" | head -5 >&2; fail "prova negativa ($name): fallito ma non per il motivo atteso ('$needle')"; }
   log "   ok: $name (exit $rc)"
 }
 negexp "riga di una COPY attesa di CBTRN02C" edges_CBTRN02C.tsv 's/\t107\t/\t108\t/' "edges_CBTRN02C.tsv"
