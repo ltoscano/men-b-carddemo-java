@@ -74,26 +74,27 @@ mondo() {
 }
 # negativa TIPO "TESTO ATTESO": la verifica dell'alterazione deve fallire e contenere il testo atteso
 negativa() {
-  local m; m="$(mondo "$1")" || fail "alterazione $1 non applicata"
-  if verifica "$m/out" "$m/docs" "$m/docs" "$m/exp" > "$tmp/neg.txt" 2>&1; then
-    cat "$tmp/neg.txt" >&2; fail "PROVA NEGATIVA FALLITA ($1): la verifica non ha rilevato l'alterazione"
-  fi
+  local m rc=0; m="$(mondo "$1")" || fail "alterazione $1 non applicata"
+  verifica "$m/out" "$m/docs" "$m/docs" "$m/exp" > "$tmp/neg.txt" 2>&1 || rc=$?
+  [ "$rc" -eq 1 ] || { cat "$tmp/neg.txt" >&2; fail "PROVA NEGATIVA FALLITA ($1): la verifica e' uscita con $rc invece di 1"; }
   grep -qF -- "$2" "$tmp/neg.txt" || { cat "$tmp/neg.txt" >&2; fail "prova negativa ($1): la verifica e' fallita ma non per il motivo atteso ('$2')"; }
-  log "   ok: $1 -> $(grep -c '^ERRORE' "$tmp/neg.txt") errori, tra cui: $2"
+  log "   ok: $1 -> verifica uscita con $rc, $(grep -c '^ERRORE' "$tmp/neg.txt") errori, tra cui: $2"
 }
 # negativa_rig TIPO "TESTO ATTESO": l'output versionato alterato deve risultare diverso da quello rigenerato dal legacy
 negativa_rig() {
-  local m; m="$(mondo "$1")" || fail "alterazione $1 non applicata"
-  if confronta "$tmp/gen/out" "$tmp/gen/doc" "$m/out" "$m/docs"; then fail "PROVA NEGATIVA FALLITA ($1): il confronto con la rigenerazione non rileva l'alterazione"; fi
+  local m rc=0; m="$(mondo "$1")" || fail "alterazione $1 non applicata"
+  confronta "$tmp/gen/out" "$tmp/gen/doc" "$m/out" "$m/docs" || rc=$?
+  [ "$rc" -eq 1 ] || fail "PROVA NEGATIVA FALLITA ($1): il confronto con la rigenerazione e' uscito con $rc invece di 1"
   grep -qF -- "$2" "$tmp/diff.txt" || { head -20 "$tmp/diff.txt" >&2; fail "prova negativa ($1): differenza inattesa (cercato '$2')"; }
-  log "   ok: $1 -> confronto con la rigenerazione dal legacy fallito (${2//"$tmp"/<tmp>})"
+  log "   ok: $1 -> confronto con la rigenerazione dal legacy uscito con $rc (${2//"$tmp"/<tmp>})"
 }
 # negativa_rn TIPO: l'output grezzo alterato (derivati invariati) deve dare derivati diversi da quelli versionati
 negativa_rn() {
-  local m; m="$(mondo "$1")" || fail "alterazione $1 non applicata"
+  local m rc=0; m="$(mondo "$1")" || fail "alterazione $1 non applicata"
   rinormalizza "$m/out" "$tmp/rn-neg" > /dev/null 2>&1 || true
-  if confronta "$tmp/rn-neg/out" "$tmp/rn-neg/doc" "$DC_DIR/out" "$DC_DOCS"; then fail "PROVA NEGATIVA FALLITA ($1): derivati invariati nonostante il grezzo alterato"; fi
-  log "   ok: $1 -> RINORMALIZZAZIONE diversa dai derivati versionati"
+  confronta "$tmp/rn-neg/out" "$tmp/rn-neg/doc" "$DC_DIR/out" "$DC_DOCS" || rc=$?
+  [ "$rc" -eq 1 ] || fail "PROVA NEGATIVA FALLITA ($1): derivati rigenerati dal grezzo alterato uguali ai versionati (uscita $rc)"
+  log "   ok: $1 -> RINORMALIZZAZIONE dal grezzo alterato diversa dai derivati versionati (uscita $rc)"
 }
 
 # completezza (criterio 2)
