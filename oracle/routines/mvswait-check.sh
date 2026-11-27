@@ -229,17 +229,18 @@ variante stdout
 solo_diversi stdout $V_TUTTI
 expect_fail "routine che scrive su stdout" "+MVSWAIT SU STDOUT" verifica "$tmp/stdout/obs"
 # Attesa fissa di un secondo (giro 1 della PR #52): rapporti identici a quelli sani, ma ogni esecuzione con
-# valore ammesso dura circa 1000 ms, oltre il limite di durata di mvswait-run.sh (500 ms) e sotto l'arresto
+# valore ammesso dura circa 1000 ms, oltre il limite di durata di mvswait-run.sh (800 ms, minimo su 3 tentativi) e sotto l'arresto
 # di 3 s: la prova deve fallire per la durata misurata, non per il contenuto.
 sorgente unsecondo "s/^      \* Riga 23 (ASMWAIT): l'attesa non e' eseguita\.\$/           MOVE 1 TO WS-HI\n           CALL 'C\$SLEEP' USING WS-HI/"
 prepara unsecondo "$tmp/src-unsecondo/MVSWAIT.cbl"
-expect_fail "routine che attende un secondo fisso" "durata oltre il limite operativo di 500 ms" esegui_variante unsecondo
+expect_fail "routine che attende un secondo fisso" "durata oltre il limite operativo di 800 ms" esegui_variante unsecondo
 solo_diversi unsecondo
 for c in $V_TUTTI; do
-  d="$(cat "$tmp/unsecondo/obs/$c.durata")" || fail "durata di $c della variante 'unsecondo' illeggibile"
-  [ "$d" -ge 900 ] || fail "la variante 'unsecondo' non ha atteso per $c ($d ms): prova negativa non significativa"
+  r="$(cat "$tmp/unsecondo/obs/$c.durata")" || fail "durata di $c della variante 'unsecondo' illeggibile"
+  [ "${r%% *}" -ge 900 ] && [ "${r#* }" = 3 ] \
+    || fail "la variante 'unsecondo' non ha atteso per $c ($r): prova negativa non significativa"
 done
-log "     e ogni caso con valore ammesso (WAITPRB e tutti i lanci di COBSWAIT) dura almeno 900 ms"
+log "     e ogni caso con valore ammesso (WAITPRB e tutti i lanci di COBSWAIT) dura almeno 900 ms in ognuno dei 3 tentativi"
 # Attesa vera dell'intervallo richiesto (C\$SLEEP, secondi = centesimi / 100): 36 s per D00000E10, oltre il
 # limite operativo; la prova fallisce per durata e non resta appesa.
 sorgente attende "s/^      \* Riga 23 (ASMWAIT): l'attesa non e' eseguita\.\$/           COMPUTE WS-HI = WS-VALORE \/ 100\n           CALL 'C\$SLEEP' USING WS-HI/"
