@@ -40,7 +40,9 @@ Questa sezione è per chi vuole capire l'insieme prima dei dettagli. Tutto ciò 
 - Far criticare le istruzioni prima di eseguirle costa da tre a sei minuti e ne risparmia venti o trenta (passo 20).
 - Un critico avversariale non si ferma da solo: serve una regola scritta su quante volte interviene e su quali obiezioni non contano (passi 16, 18, 22).
 
-**Che cosa questo documento non è ancora.** Alla data dell'ultima revisione la preparazione non è conclusa e nessuna funzione dell'applicazione è stata tradotta. Le sezioni sulla traduzione sono vuote e lo dicono.
+- La preparazione non finisce da sola: si può sempre preparare meglio. A fine giornata l'autore ha cambiato l'ordine: si prepara solo ciò che serve al primo programma, lo si traduce, e il resto si prepara man mano (passo 23, sezione 2.2).
+
+**Che cosa questo documento non è ancora.** Alla data dell'ultima revisione nessuna funzione dell'applicazione è stata tradotta: è in corso la preparazione del primo programma. Le sezioni sulla traduzione sono vuote e lo dicono.
 
 *(da completare: contesto del problema, lavori correlati, cosa questo lavoro misura e cosa no)*
 
@@ -118,11 +120,60 @@ Le due metà non si toccano: la 0A legge soltanto il sorgente originale, la 0B s
 - i tre moduli opzionali restano fuori fino all'ultima wave, ma compaiono nella mappa, perché i menu dei programmi di base li richiamano;
 - ciò che il sorgente non determina non si inventa: dove una routine assembler dipende dalla memoria della macchina, o dove il compilatore libero dà due risposte per lo stesso dato, l'oracle si ferma o registra un'osservazione dichiarata, e non produce un valore (passi 17 e 21).
 
-**Quando la Wave 0 è finita.** Non "quando la mappa è completa", che non ha un termine, ma quando valgono due cose verificabili con un comando: l'oracle rigenera gli output di riferimento da zero, e l'applicazione vuota parte da un clone pulito. Tutto ciò che non serve a queste due frasi è stato rinviato.
+**Quando la Wave 0 è finita.** Non "quando la mappa è completa", che non ha un termine, ma quando valgono due cose verificabili con un comando: l'oracle rigenera gli output di riferimento da zero, e l'applicazione vuota parte da un clone pulito. Tutto ciò che non serve a queste due frasi è stato rinviato. Questa condizione è quella del piano iniziale: alla fine del primo giorno l'autore l'ha sostituita con una più stretta, descritta nella sezione 2.2.
 
 **Che cosa è costato, e che cosa ne ricava chi replica.** Il piano prevedeva 8 issue per la prima metà; contestato una prima volta sono diventate 12, e strada facendo 17 e oltre, quasi sempre perché un'issue conteneva due lavori indipendenti. Gli strumenti e i controlli scritti contano circa ventimila righe (sezione 4). Se la Wave 0 valga questo costo si potrà dire solo dopo il pilota (Wave 2), quando si vedrà quante traduzioni sbagliate i suoi controlli fermano. Fin qui l'unico dato è indiretto: nelle PR della Wave 0 il contenuto consegnato era quasi sempre giusto e i controlli quasi sempre da correggere (passo 22). Per un altro sistema legacy il grafico qui sopra si ridisegna allo stesso modo: si sceglie il primo test di parità più piccolo possibile e si risale a ciò che gli serve. Ciò che cambia sono i nodi (un altro linguaggio, altri archivi, un altro ambiente di esecuzione), non il verso delle frecce.
 
 Il piano completo, con le dipendenze tra le wave, è in `docs/piano-wave.md`.
+
+### 2.2 La revisione del piano: prima il pilota
+
+Questa sezione descrive un cambio di rotta deciso dall'autore alle 22:53 UTC del primo giorno (passo 23; registro delle approvazioni, voce 86). Va letta insieme alla 2.1: il ragionamento resta quello, cambia quanto ci si spinge nella preparazione prima di tradurre.
+
+**Il problema.** Dopo tredici ore e mezza di lavoro esistevano la mappa del sistema, l'oracle con dodici programmi eseguibili e l'applicazione Java vuota. Non era stata tradotta una riga. Per chiudere la preparazione secondo il piano iniziale mancavano sei lavori in fila, almeno un'altra giornata (stima del pianificatore, non una misura). E la domanda più importante era ancora senza risposta: il metodo regge quando si traduce davvero?
+
+**Le due strade.** Il pianificatore le ha presentate all'autore con le lettere A e B; l'autore ha scelto B.
+
+| | A: tutta la preparazione, poi si traduce (piano iniziale) | B: il minimo per un programma, poi si traduce (piano in vigore) |
+| --- | --- | --- |
+| Che cosa si prepara prima della prima traduzione | dati di prova, output di riferimento e routine esterne per *tutti* i programmi batch; descrizione del comportamento di *tutti* i programmi a schermo | le stesse cose, ma solo per il programma pilota `CBACT01C` |
+| Quando arriva il primo confronto tra Java e originale | dopo tutta la Wave 0 | dopo cinque lavori in fila (figura qui sotto) |
+| Che cosa si sa presto | che i riferimenti sono completi | se una traduzione supera il confronto, e quanto costa |
+| Rischio | preparare cose che la traduzione mostrerà inutili o sbagliate nella forma | scoprire tardi che a un programma serve qualcosa di non preparato |
+| Quando finisce la preparazione | quando tutti i riferimenti si rigenerano con un comando | non finisce in un momento solo: ogni programma ha la sua, subito prima |
+
+Il rischio di B è attenuato da ciò che esiste già: la mappa dice che cosa chiama ogni programma e quali file usa, e l'oracle compila già tutti i batch. Manca, programma per programma, l'ultimo tratto: i suoi dati d'ingresso e i suoi output di riferimento.
+
+**Il percorso al pilota.** Cinque lavori in fila, più due in parallelo che non li rallentano.
+
+```mermaid
+flowchart LR
+    A[1. Dati di esempio<br/>decodificati e verificati] --> B[2. File dei conti<br/>caricato nell'oracle]
+    B --> C[3. Output di riferimento<br/>di CBACT01C]
+    C --> E[5. CBACT01C in Java,<br/>confronto byte per byte]
+    D[4. Tabella dei conti<br/>in PostgreSQL] --> E
+    A --> D
+    P1[Codifica dei campi in Java] -.-> E
+    P2[Routine MVSWAIT<br/>nell'oracle] -.-> B
+```
+
+Il programma pilota è lo stesso da cui partiva il ragionamento della sezione 2.1: legge l'archivio dei conti e ne scrive il contenuto in tre file. È stato scelto perché è piccolo, non modifica dati, e attraversa comunque tutti i punti delicati di un batch: lettura di un archivio a chiave, campi numerici compressi, una routine esterna, file di uscita a lunghezza fissa e variabile.
+
+**Il criterio per decidere "ora o dopo".** È la parte che si trasferisce a un altro progetto. Un lavoro di preparazione si fa *ora* solo se il prossimo programma da tradurre non può essere tradotto o confrontato senza di esso. Ogni altro lavoro si rinvia, e il rinvio ha sempre un innesco scritto: "prima del programma X" o "prima della wave Y". Un rinvio senza innesco è un lavoro dimenticato.
+
+| Rinviato | Si fa subito prima di |
+| --- | --- |
+| Dati costruiti apposta, equivalenti delle utility mainframe, output di riferimento degli altri job | ciascun job della wave batch |
+| Grafo dei flussi batch; bersagli CICS scritti in variabili | la wave batch e la wave online |
+| Adattamento dei due programmi di esportazione e importazione; una routine di calendario | i programmi che le usano |
+| Contratti condivisi rimanenti (importi, stato di conversazione, transazioni, ordinamento, errori) | il primo programma che richiede ciascuno |
+| Rifiniture agli script di verifica, analisi statica aggiuntiva | quando non rallentano il percorso al pilota |
+
+**Che cosa non cambia.** I ruoli, la contestazione delle specifiche, le due validazioni, il registro. E la regola che vieta di scrivere logica di business senza riferimento, che ora si legge così: *nessun programma si traduce prima che il suo riferimento (dati d'ingresso, output dell'originale, tracciati dei suoi record) sia nel ramo principale e controllato.* Prima valeva per l'insieme, ora vale programma per programma.
+
+**Che cosa si farà dopo il pilota.** Si rivede il piano con i costi misurati di una traduzione vera: quanto tempo per il riferimento di un programma, quanto per la traduzione, quante validazioni. Sono i numeri che servono per decidere se le wave successive vanno fatte un programma alla volta o a gruppi.
+
+**Che cosa ne ricava chi replica.** La strada A è quella che un piano scritto a tavolino produce naturalmente, perché "prima si prepara, poi si esegue" sembra prudente. Qui ha portato a un giorno intero senza un solo confronto tra vecchio e nuovo. Conviene scegliere il pilota *prima* di scrivere il piano della preparazione, e far dipendere dal pilota ciò che si prepara. In questo lavoro lo si è capito a fine giornata, e il paper lo riporta nell'ordine in cui è accaduto: le sezioni 2.1 e 5.0 descrivono il piano A com'era, questa la correzione.
 
 ## 3. Oggetto della migrazione
 
@@ -520,7 +571,7 @@ Stato al 27 novembre 2026, ore 21:30 UTC: in corso. Il racconto, nell'ordine in 
 | Regole di codifica dei campi | `./analysis/run.sh data-codec --check` | `docs/legacy-map/data-contract/codifica.md` | 20, 21 |
 | Oracle: 12 programmi batch eseguibili | `./oracle/run.sh --all --check` | `oracle/README.md` | 15, 17, 20 |
 
-Manca ancora, per chiudere la wave: i dati di prova, gli output di riferimento dei programmi (*golden*), il grafo dei flussi batch, la descrizione del comportamento dei programmi a schermo.
+Dopo la revisione del piano (sezione 2.2) la wave non si chiude più tutta insieme. Per il pilota mancano: i dati di esempio decodificati, il file dei conti caricato nell'oracle, l'output di riferimento (*golden*) di `CBACT01C`. Il resto (output di riferimento degli altri programmi, grafo dei flussi batch, descrizione del comportamento dei programmi a schermo) è rinviato a subito prima del programma a cui serve.
 
 *(da completare alla chiusura della wave: issue, tempi aggregati, cosa si trasferisce ad altri sistemi)*
 
@@ -537,9 +588,13 @@ Stato al 27 novembre 2026, ore 21:30 UTC: quasi conclusa. Passi 8-10, 14, 15, 17
 *(da completare alla chiusura della wave)*
 
 ### 5.3 Wave 1 — dati
+Dopo la revisione del piano (sezione 2.2) la wave comincia da una sola tabella, quella dei conti, che serve al pilota. Le altre tabelle si aggiungono prima dei programmi che le usano.
+
 *(da compilare)*
 
 ### 5.4 Wave 2 — pilota: una fetta batch e una online
+Pilota batch: `CBACT01C`. Pilota online: il programma di accesso `COSGN00C`, dopo quello batch. Il percorso è nella sezione 2.2.
+
 *(da compilare)*
 
 ### 5.5 Wave 3 — online
@@ -570,7 +625,88 @@ Stato al 27 novembre 2026, ore 21:30 UTC: quasi conclusa. Passi 8-10, 14, 15, 17
 
 ## 7. Come replicarlo sul proprio sistema
 
-*(da compilare: percorso passo-passo generalizzato, lista di controllo per wave, cosa è specifico di CardDemo e cosa si trasferisce, prerequisiti e costi attesi)*
+Questa sezione è un elenco di lavoro: si aggiorna a ogni passo chiuso e sarà la base della versione finale. Ha due parti. La 7.1 raccoglie le lezioni, ciascuna con il fatto da cui viene e la regola che ne è nata. La 7.2 descrive il processo così com'è oggi, cioè il risultato di quelle regole messe in fila. Stato: fine del primo giorno, prima di qualsiasi traduzione.
+
+### 7.1 Lezioni raccolte fin qui
+
+Ogni riga dice che cosa è successo, in quale passo della sezione 5.0 lo si legge per intero, e quale regola di lavoro ne è uscita. Dove la regola non esiste ancora, è scritto.
+
+**Sulla preparazione e sul piano**
+
+| Lezione | Il fatto (passo) | Regola che ne è nata |
+| --- | --- | --- |
+| Si sceglie il pilota prima di pianificare la preparazione | Un giorno intero senza un confronto tra vecchio e nuovo (23) | Si prepara ora solo ciò senza cui il prossimo programma non si traduce o non si confronta; ogni rinvio ha un innesco scritto (sezione 2.2) |
+| Uno strumento va provato su tutto il sorgente, non su un campione | Lo strumento per il JCL, scelto su 4 file, falliva su 3 dei 46, una volta in silenzio (13) | Il campione controlla la correttezza; la copertura si misura su tutti i file |
+| Il riferimento va verificato prima di fidarsene | L'oracle leggeva al contrario il segno degli importi (15) | Ogni comportamento dell'oracle su cui poggia un confronto ha una prova con valori decodificati a mano dai byte |
+| Ciò che il sorgente non determina non si inventa | Una routine assembler dipendeva dalla memoria vicina (17); un campo binario dava due valori (21) | L'oracle si ferma con un codice riconoscibile o registra un'osservazione; non produce un valore scelto da noi |
+| Un errore noto di uno strumento non diventa un valore atteso | Un conteggio sbagliato registrato come "atteso" per far passare il controllo (11) | Se un controllo non passa si decide per iscritto se cambia la richiesta; non si aggiusta l'atteso |
+
+**Sulle specifiche**
+
+| Lezione | Il fatto (passo) | Regola che ne è nata |
+| --- | --- | --- |
+| Far criticare la specifica prima di eseguirla conviene | Da tre a sei minuti di critica contro venti o trenta di lavoro su una specifica irrealizzabile (7, 12, 20) | Un'issue diventa `ready` solo dopo la contestazione del Validatore, con ogni rilievo accolto o respinto per iscritto |
+| Una issue, un lavoro solo | Le issue con due lavori indipendenti sono quelle con più giri; la più grande è costata quasi cinque ore (12, 16, 19) | Le issue grandi si dividono prima di affidarle |
+| Un Esecutore che si ferma è un buon esito | Quattro fermi spontanei su criteri irrealizzabili o riferimenti ambigui, senza scorciatoie (13, 15, 17, 21) | Se il sorgente smentisce la specifica: fermarsi, commento tecnico, etichetta `needs-spec-update` |
+| La durata dei controlli va limitata nella specifica | Una validazione di 54 minuti, di cui 50 a eseguire uno script consegnato dalla PR (22) | Non ancora una regola scritta |
+
+**Sui controlli e sulla validazione**
+
+| Lezione | Il fatto (passo) | Regola che ne è nata |
+| --- | --- | --- |
+| Un controllo verde non prova nulla finché non lo si è visto fallire | Quattro controlli restavano verdi con l'output alterato (11); nessuna PR a rischio pieno è passata alla prima validazione (15, 22) | Ogni controllo ha la sua prova negativa; al Validatore si chiede esplicitamente di alterare gli output |
+| Il lavoro consegnato era quasi sempre giusto; i controlli no | Contenuti riconfermati a mano dal Validatore, difetti nei controlli (15, 22) | L'Esecutore fa un autocontrollo su quattro famiglie di difetto prima della PR. Effetto misurato: cambia il tipo di rilievi, non il numero di bocciature |
+| Chi valida deve eseguire, non solo leggere | Un difetto solo sospettato in lettura è stato dimostrato eseguendo (10) | Il Validatore lavora in un clone usa e getta, con Docker, e riesegue da sé i criteri |
+| Chi valida è di un altro fornitore e non condivide il contesto | I rilievi riguardavano ciò che l'Esecutore dava per buono (9, 11, 15) | Validatore di fornitore diverso, che riceve solo specifica, diff e test |
+| Un Validatore avversariale non si ferma da solo | Rilievi nuovi a ogni giro; un terzo giro costa quanto il primo (14, 16) | Al massimo due validazioni per PR. Non si chiede a uno script di difendersi da uno strumento che restituisce dati falsi ma ben formati |
+| Dopo la seconda bocciatura serve una regola, non un altro giro | Tre PR ferme al terzo giro (16) | Residuo non bloccante: merge e issue. Falso verde: correzione mirata, verificata dall'Approvatore rieseguendo il controesempio |
+| I controesempi devono essere eseguibili | Due verifiche dell'Approvatore in sette minuti l'una, rieseguendo gli script del Validatore (19) | Il prompt di validazione chiede comando, file modificato ed esito osservato |
+| Non tutto merita il Validatore | Una PR di solo testo dall'affidamento al merge in nove minuti (18) | Validazione proporzionata al rischio, con la classe scritta nell'issue; nel dubbio è rischio pieno |
+
+**Sull'organizzazione del lavoro**
+
+| Lezione | Il fatto (passo) | Regola che ne è nata |
+| --- | --- | --- |
+| Il tempo più lungo è l'attesa di una persona | 62 minuti di attesa su 98 per la prima PR; l'attesa ha fermato anche un'altra PR (10, 11) | Approvazione delegata al pianificatore, con un registro in sola aggiunta e diritto di annullare per l'autore |
+| Chi approva per delega non è indipendente | Il pianificatore ha respinto tre rilievi su specifiche scritte da lui (14, 22) | Nessun rilievo respinto senza un'evidenza verificata; a parità di dubbio ha ragione il Validatore; ogni dissenso è nel registro |
+| Conta il tempo fino al merge, non fino alla consegna | Consegna in 6 minuti e tre validazioni, contro consegna in 40 e due (14) | Il modello dell'Esecutore si sceglie sulla difficoltà dell'issue. È un'osservazione su due casi, non una misura |
+| Il parallelismo ha un costo | Con quattro o cinque validazioni insieme ciascuna passa da 8-13 minuti a 25-35; due PR verdi non fanno un ramo principale verde (15, 16) | Non più di tre validazioni in parallelo; prima del merge il ramo si riallinea e la CI si riesegue |
+| Un agente senza supervisione va avviato con cura | Venti minuti persi per un processo in attesa di input (7); un Esecutore in attesa che riconsegna lo stesso rapporto (22) | Input chiuso (`< /dev/null`); una sola lettura dello stato della CI, un solo rapporto |
+| Un agente non sopravvive alla sessione | Una correzione affidata a un Esecutore nuovo (19) | Tutto ciò che serve a riprendere un lavoro sta nell'issue e nella PR |
+| Chi tiene un registro tende a ricostruire | Ore scritte a memoria, in anticipo fino a 14 minuti (18) | L'ora si legge dall'orologio a ogni voce; le rettifiche si aggiungono, non si corregge il passato |
+
+### 7.2 Il processo, com'è oggi
+
+È il giro che ogni lavoro percorre. I numeri tra parentesi sono i passi della sezione 5.0 in cui la regola è nata; il testo vincolante per gli agenti è in `CLAUDE.md`, i prompt in `paper/data/prompts/`.
+
+**Prima di cominciare (una volta sola)**
+
+1. Si sceglie il programma pilota, il più piccolo che attraversi i punti delicati (23).
+2. Si provano gli strumenti di analisi su tutto il sorgente, con esiti controllati a mano su un campione (8, 11, 13).
+3. Si costruiscono il riferimento eseguibile (oracle) e lo scheletro del sistema nuovo, in container, ciascuno con un comando che dice se funziona (9-15).
+4. Si scrive che cosa richiede la conferma di una persona e che cosa è delegato (9, 10).
+
+**Per ogni lavoro**
+
+| # | Chi | Che cosa fa | Come si capisce che è riuscito |
+| --- | --- | --- | --- |
+| 1 | Pianificatore | Scrive l'issue: obiettivo, perimetro, criteri eseguibili da un comando, classe di rischio. Un lavoro solo | L'issue esiste, con etichetta `blocked` |
+| 2 | Validatore | Contesta la specifica leggendo il sorgente (sola lettura, 3-6 minuti) | Elenco di rilievi con evidenza |
+| 3 | Pianificatore | Accoglie o respinge ogni rilievo per iscritto; se emergono due lavori, divide | Etichetta `ready`, voce di registro |
+| 4 | Esecutore | Lavora in una copia isolata. Se il sorgente smentisce la specifica, si ferma. Prima della PR fa l'autocontrollo | PR aperta, CI verde, rapporto unico |
+| 5 | Validatore | Prima validazione, completa: riesegue i criteri in un clone pulito, altera gli output, consegna controesempi eseguibili | Verdetto con rilievi classificati |
+| 6 | Esecutore | Un solo giro di correzione: corregge e cerca lo stesso schema di difetto in tutto il lavoro | Nuovo SHA, CI verde |
+| 7 | Validatore | Seconda validazione, ristretta ai rilievi e al diff di correzione. È l'ultima | Verdetto |
+| 8 | Approvatore | Decide: merge; oppure merge con issue per i residui non bloccanti; oppure correzione mirata che verifica da sé | Voce di registro con motivo ed evidenze |
+| 9 | Pianificatore | Aggiorna catalogo degli strumenti, tempi, paper; sblocca le issue che dipendevano da questa | L'issue successiva è `ready` o in contestazione |
+
+Per i lavori a basso rischio (solo testo) i punti 5-7 sono sostituiti dalla lettura integrale del diff e dai criteri rieseguiti dall'Approvatore.
+
+**Che cosa richiede comunque una persona.** Cambiare l'obiettivo o il perimetro di una wave; un contrasto bloccante che resta dopo la correzione mirata; ogni azione irreversibile o che esce dal repository. In questo primo giorno l'autore è intervenuto sulle regole ai passi 9, 10, 16, 18 e 23; su una singola PR una volta sola, la prima (passo 10).
+
+**Che cosa manca a questo processo.** Non è ancora stato provato su una traduzione: tutti i lavori fin qui producevano strumenti, controlli o riferimenti. La sezione sarà rivista dopo il pilota.
+
+*(da completare: lista di controllo per wave, cosa è specifico di CardDemo e cosa si trasferisce, prerequisiti e costi attesi)*
 
 ## 8. Limiti e minacce alla validità
 

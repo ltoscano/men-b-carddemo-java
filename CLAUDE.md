@@ -71,7 +71,7 @@ Nei worktree il submodule va inizializzato (`git submodule update --init`). Il r
 
 ## Regole non negoziabili
 
-1. Nessun codice di business prima che la Fase 0 sia mergiata.
+1. Nessun codice di business prima che la Fase 0 sia mergiata. Dopo la decisione "prima il pilota" (registro, voce 86) si legge programma per programma: nessun programma si traduce prima che il suo riferimento (dati d'ingresso, output dell'originale, tracciati dei suoi record) sia su `main` e controllato.
 2. Una issue, un perimetro, un comando che dice se è finita. Diff minimo, zero refactoring non richiesto.
 3. Se il COBOL smentisce la specifica: fermarsi, commento tecnico, `needs-spec-update`. Mai adattare la realtà in silenzio.
 4. Mai due issue `in-progress` sulla stessa tabella o cartella. Ciclo batch giornaliero in sequenza stretta.

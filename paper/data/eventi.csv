@@ -419,3 +419,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T22:50:55Z,processo,richiesta-autore,autore,orologio,costi: li valuta l'autore più avanti; chiede che cosa fare adesso e se la Wave 0 è chiusa
 2026-11-27T22:50:55Z,processo,risposta-consegnata,fable,orologio,Wave 0 non chiusa; una sola decisione richiesta all'autore
 2026-11-27T22:53:23Z,processo,richiesta-autore,autore,orologio,sceglie B: preparare solo ciò che serve al pilota; il resto man mano
+2026-11-27T22:53:28Z,processo,risposta-consegnata,fable,orologio,decisione B applicata: piano; registro; issue; paper
+2026-11-27T22:56:03Z,paper,richiesta-autore,autore,orologio,aggiornare il paper con l'approccio B; chiarezza per narrazione; lezioni; processo
+2026-11-27T22:58:19Z,paper,fine,fable,orologio,sezioni 2.2; 7.1; 7.2; voce 87
