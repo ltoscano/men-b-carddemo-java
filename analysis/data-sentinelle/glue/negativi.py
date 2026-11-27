@@ -50,6 +50,32 @@ from controlli import VARIABILE, aree_contratto, ordina_contratto, verifica, vis
 from sentinella import COLONNE, componi, esa, leggi  # noqa: E402
 
 RE_DEC = re.compile(r"^ERRORE \[decodifica\] (\S+)@(\S+)/(\S+) #([0-9]+)(\([0-9,]+\))? (\S+): ")
+_DEC = "errori [decodifica] esattamente sui campi toccati (campo, valore atteso, valore ottenuto), nessun altro gruppo"
+DIAGNOSI = {
+    "scambio": _DEC, "confine": _DEC, "scala": _DEC, "segno": _DEC, "picture": _DEC, "tipo": _DEC,
+    "oltre": "[decodifica] rifiuto del codec CampoIncompleto sul campo spostato",
+    "vista": "[copertura] campi delle due viste senza atteso / atteso senza campo",
+    "campo-tolto": "[sorgente] dichiarazione saltata e [copertura] campo della vista senza atteso",
+    "atteso-duplicato": "[copertura] atteso duplicato nella sentinella",
+    "contratto-senza-sentinella": "[copertura] contratto senza sentinella",
+    "contratto-in-piu": "[copertura] contratto dei copybook senza coppia e senza sentinella",
+    "byte-alterato": "[decodifica] solo sul campo del byte alterato (ammesso [coerenza])",
+    "valore-alterato": "[decodifica] solo sul campo del valore alterato (ammesso [coerenza])",
+    "vista-mancante": "[copertura] vista (area REDEFINES del contratto) senza sentinella",
+    "vista-in-piu": "[copertura] vista di viste.tsv che non e' un'area REDEFINES del contratto",
+    "valori-uguali": "[unicita] stessi byte e stesso valore",
+    "riga-sbagliata": "[sorgente] alla riga dichiarata nome diverso o nessuna dichiarazione elementare",
+    "picture-sbagliata": "[sorgente] PICTURE del sorgente diversa da quella della sentinella",
+    "omogenei-scambiati": "[sorgente] righe non in ordine crescente",
+    "nomi-scambiati": "[sorgente] nome del sorgente diverso da quello della sentinella",
+    "errore-ripetuto": "solo [sorgente] righe non in ordine crescente (la decodifica passa)",
+    "lunghezza-sbagliata": "[sorgente] i campi finiscono prima della lunghezza dichiarata",
+    "fonte-sbagliata": "[sorgente] testo citato non alla riga dichiarata",
+    "segno-positivo": "[valori] campo con segno senza valore negativo nella vista",
+    "decimale-con-zero": "[valori] cifre decimali non tutte diverse da zero",
+    "cifra-mancante": "[valori] il valore non usa tutte le cifre della PICTURE",
+    "testo-vuoto": "[valori] valore tutto spazi o tutto zeri",
+}
 CATEGORIE_USAGE = {"display-senza-segno": "DISPLAY", "display-con-segno": "DISPLAY", "comp-3": "COMP-3", "comp": "COMP"}
 
 
@@ -657,7 +683,8 @@ def mutazioni_elenchi(b, contratti_dir):
     c = next(r for r in righe if r["campo"] == "EXP-CUST-MIDDLE-NAME")
     a["offset"], c["offset"] = c["offset"], a["offset"]
     scrivi_contratto(m, "CVEXPORT.EXPORT-RECORD", testa, righe)
-    b.prova("errore-ripetuto", "CVEXPORT.cpy 26-27 scambiati nella sentinella e nel contratto: la decodifica passa", m,
+    b.prova("errore-ripetuto", "CVEXPORT.EXPORT-RECORD: righe 26-27 di CVEXPORT.cpy scambiate nella sentinella e nel "
+            "contratto, la decodifica passa", m,
             attesa_testi("CVEXPORT.EXPORT-RECORD@EXPORT-CUSTOMER-DATA/EXPORT-CUSTOMER-DATA: righe non in ordine crescente",
                          gruppi=("sorgente",)))
 
@@ -692,10 +719,17 @@ def main(argv):
     na = {}
     for fam, _, _ in b.non_applicabili:
         na[fam] = na.get(fam, 0) + 1
-    print("riepilogo per famiglia (superate / fallite / non applicabili):")
+    contratti = sorted(os.listdir(sentinelle))
+    applicata = {}
+    for fam, nome, _, _ in b.esiti:
+        m = re.match(r"[A-Z0-9]+\.[A-Z0-9-]+", nome)
+        applicata.setdefault(fam, set()).add(m.group(0) if m else "?")
+    print("riepilogo per famiglia (superate / fallite / non applicabili; diagnosi attesa; contratti a cui e' applicata):")
     for fam in sorted(set(famiglie) | set(na)):
         sup, fal = famiglie.get(fam, [0, 0])
-        print(f"  {fam}: {sup} / {fal} / {na.get(fam, 0)}")
+        app = applicata.get(fam, set())
+        quali = "tutti i " + str(len(contratti)) if len(app) == len(contratti) else (", ".join(sorted(app)) or "nessuno")
+        print(f"  {fam}: {sup} / {fal} / {na.get(fam, 0)}; attesa: {DIAGNOSI.get(fam, '?')}; applicata a: {quali}")
     if fallite:
         print(f"prove negative: {len(fallite)} FALLITE su {len(b.esiti)}")
         raise SystemExit(1)
