@@ -181,12 +181,12 @@
             </goals>
             <configuration>
               <target>
-                    <available property="vietata.0" classname="org.h2.Driver" classpathref="maven.test.classpath" ignoresystemclasspath="true"/>
-                    <available property="vietata.1" classname="org.h2.jdbcx.JdbcDataSource" classpathref="maven.test.classpath" ignoresystemclasspath="true"/>
-                    <available property="vietata.2" classname="org.hsqldb.jdbc.JDBCDriver" classpathref="maven.test.classpath" ignoresystemclasspath="true"/>
-                    <available property="vietata.3" classname="org.hsqldb.jdbcDriver" classpathref="maven.test.classpath" ignoresystemclasspath="true"/>
-                    <available property="vietata.4" classname="org.apache.derby.jdbc.EmbeddedDriver" classpathref="maven.test.classpath" ignoresystemclasspath="true"/>
-                    <available property="vietata.5" classname="org.apache.derby.iapi.jdbc.AutoloadedDriver" classpathref="maven.test.classpath" ignoresystemclasspath="true"/>
+                    <available property="vietata.0" classname="org.h2.Driver" classpathref="maven.test.classpath"/>
+                    <available property="vietata.1" classname="org.h2.jdbcx.JdbcDataSource" classpathref="maven.test.classpath"/>
+                    <available property="vietata.2" classname="org.hsqldb.jdbc.JDBCDriver" classpathref="maven.test.classpath"/>
+                    <available property="vietata.3" classname="org.hsqldb.jdbcDriver" classpathref="maven.test.classpath"/>
+                    <available property="vietata.4" classname="org.apache.derby.jdbc.EmbeddedDriver" classpathref="maven.test.classpath"/>
+                    <available property="vietata.5" classname="org.apache.derby.iapi.jdbc.AutoloadedDriver" classpathref="maven.test.classpath"/>
                     <fail message="DATABASE-INCORPORATO-CLASSE-VIETATA: driver di database incorporato sul classpath di ${project.artifactId}">
                       <condition>
                         <or>
