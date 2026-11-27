@@ -80,8 +80,10 @@ public class RapportiQualita {
     static void jacoco(Path radice, String corsa, Path effettivi) throws IOException {
         List<Path> moduli = moduli(radice);
         controllaConfigMaven(radice);
+        controllaProfili(radice, moduli);
         Document eff = leggiEffettivi(effettivi);
         if (eff != null) {
+            controllaProprieta(eff);
             controllaConfigurazioneJacoco(eff, radice, corsa, moduli);
         }
         Set<String> sessioniAmmesse = new TreeSet<>();
@@ -430,8 +432,10 @@ public class RapportiQualita {
 
     static void spotbugs(Path radice, String corsa, long inizioSecondi, Path effettivi) throws IOException {
         controllaConfigMaven(radice);
+        controllaProfili(radice, moduli(radice));
         Document eff = leggiEffettivi(effettivi);
         if (eff != null) {
+            controllaProprieta(eff);
             controllaEsclusioni(radice, controllaConfigurazioneSpotbugs(eff, radice, moduli(radice)));
         }
         int analizzati = 0;
@@ -596,6 +600,67 @@ public class RapportiQualita {
         for (String f : new String[] {".mvn/maven.config", ".mvn/jvm.config"}) {
             if (Files.exists(radice.resolve(f))) {
                 errore("file " + f + " presente: puo' cambiare la configurazione dei plugin senza comparire nel POM effettivo");
+            }
+        }
+    }
+
+    /** Versioni fissate: le uniche proprieta' spotbugs.* e jacoco.* ammesse nei POM. */
+    static final Map<String, String> PROPRIETA_AMMESSE = Map.of("spotbugs.version", "4.10.5", "jacoco.version", "0.8.16");
+
+    /**
+     * Molti parametri dei plugin si impostano anche con una proprieta' del POM (spotbugs.onlyAnalyze,
+     * spotbugs.omitVisitors, spotbugs.maxRank, jacoco.skip...) senza comparire nella sezione
+     * configuration. Nelle properties del POM effettivo di ogni progetto, quindi, le uniche proprieta'
+     * il cui nome comincia per "spotbugs." o "jacoco." sono spotbugs.version e jacoco.version, con i
+     * valori fissati; ogni altra e' un errore che nomina proprieta' e modulo.
+     */
+    static void controllaProprieta(Document eff) {
+        for (Element prog : figli(eff.getDocumentElement(), "project")) {
+            String modulo = testoFiglio(prog, "artifactId");
+            Element props = figlio(prog, "properties");
+            if (props == null) {
+                continue;
+            }
+            NodeList nodi = props.getChildNodes();
+            for (int i = 0; i < nodi.getLength(); i++) {
+                if (nodi.item(i) instanceof Element e) {
+                    String nome = e.getTagName();
+                    if (!nome.startsWith("spotbugs.") && !nome.startsWith("jacoco.")) {
+                        continue;
+                    }
+                    String atteso = PROPRIETA_AMMESSE.get(nome);
+                    if (atteso == null) {
+                        errore("proprieta' non ammessa nel POM effettivo di " + modulo + ": " + nome + " = '" + e.getTextContent().trim()
+                                + "' (le uniche proprieta' spotbugs.* e jacoco.* ammesse sono " + new TreeSet<>(PROPRIETA_AMMESSE.keySet()) + ")");
+                    } else if (!atteso.equals(e.getTextContent().trim())) {
+                        errore("proprieta' " + nome + " nel POM effettivo di " + modulo + " vale '" + e.getTextContent().trim()
+                                + "' invece del valore fissato '" + atteso + "'");
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * I POM del progetto (padre e moduli) non possono contenere profili: un profilo attivato da una
+     * condizione che cambia durante la corsa (per esempio l'assenza di un file che la build stessa
+     * crea) e' attivo in mvn verify e spento quando si genera il POM effettivo, e il controllo
+     * leggerebbe un'altra configurazione. La regola e' l'assenza di profili, anche se innocui.
+     * Si leggono i POM sorgente con il parser XML: un commento che nomina la parola non conta.
+     */
+    static void controllaProfili(Path radice, List<Path> moduli) {
+        List<Path> pom = new ArrayList<>(List.of(radice.resolve("pom.xml")));
+        for (Path m : moduli) {
+            pom.add(m.resolve("pom.xml"));
+        }
+        for (Path p : pom) {
+            try {
+                Element r = leggiXml(p).getDocumentElement();
+                if (!figli(r, "profiles").isEmpty()) {
+                    errore("profili non ammessi in " + p + ": i POM del progetto non possono contenere <profiles>");
+                }
+            } catch (Exception e) {
+                errore("POM " + p + " non leggibile: " + e.getMessage());
             }
         }
     }
@@ -886,7 +951,9 @@ public class RapportiQualita {
     }
 
     static void errore(String messaggio) {
-        ERRORI.add(messaggio);
+        if (!ERRORI.contains(messaggio)) {
+            ERRORI.add(messaggio);
+        }
     }
 
     static void fatale(String messaggio) {

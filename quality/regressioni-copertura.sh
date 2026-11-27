@@ -32,6 +32,13 @@
 #                              configurazione di SpotBugs indebolita nel POM di un modulo (soglia High,
 #                              onlyAnalyze, omitVisitors) con un difetto che non vedrebbe: Maven verde,
 #                              verify.sh respinge la configurazione effettiva
+#   spotbugs-proprieta-onlyanalyze, -omitvisitors, -maxrank, jacoco-proprieta-skip
+#                              proprieta' del POM di un modulo che configurano un plugin fuori da
+#                              <configuration> (con un difetto che lo strumento indebolito non vede)
+#   profilo-attivazione-file, profilo-vuoto, profilo-commento
+#                              profili vietati nei POM del progetto: il controesempio (profilo attivo in
+#                              mvn verify e spento a build finita), un profilo vuoto; un commento che
+#                              nomina <profiles> non fa fallire nulla
 #   esclusione-*               file di esclusioni senza motivo, con motivo, senza <Match>, filtro diverso
 #                              da quello autorizzato (percorso autorizzato solo in un commento), commento
 #                              innocuo che nomina excludeFilterFile (build sana: passa)
@@ -591,6 +598,50 @@ indebolito() { # caso modulo file-caso configurazione marcatore
 indebolito spotbugs-soglia-high online spotbugs-medio '<threshold>High</threshold>' "threshold"
 indebolito spotbugs-ambito-ristretto online spotbugs-medio '<onlyAnalyze>io.github.ltoscano.carddemo.online.OnlineApplication</onlyAnalyze>' "onlyAnalyze"
 indebolito spotbugs-rilevatore-disattivato domain spotbugs-domain '<omitVisitors>FindNullDeref</omitVisitors>' "omitVisitors"
+
+# ---- 4a2. proprieta' del POM che configurano i plugin fuori dalla sezione configuration -----------
+# Maven resta verde (il difetto c'e' ma lo strumento non lo vede): verify.sh legge le properties del
+# POM effettivo e respinge ogni proprieta' spotbugs.* o jacoco.* diversa da spotbugs.version e jacoco.version.
+
+proprieta() { # caso modulo file-caso(o -) proprieta valore messaggio-finale
+  selezionato "$1" || return 0
+  mut_dopo "carddemo-$2/pom.xml" '</parent>' "  <properties><$4>$5</$4></properties>"
+  if [ "$3" != "-" ]; then
+    aggiungi_classe "carddemo-$2" "$3" ProvaRegole
+  fi
+  run_verify "$1" || exit 1
+  expect "$1" ko "BUILD SUCCESS" "proprieta' non ammessa nel POM effettivo di carddemo-$2: $4 = '$5'" "$6" "== VERIFICA FALLITA"
+  ripristina
+}
+proprieta spotbugs-proprieta-onlyanalyze online spotbugs-medio spotbugs.onlyAnalyze io.github.ltoscano.carddemo.online.package-info "ERRORE: rapporto di copertura JaCoCo non valido"
+proprieta spotbugs-proprieta-omitvisitors domain spotbugs-domain spotbugs.omitVisitors FindNullDeref "ERRORE: rapporto di copertura JaCoCo non valido"
+proprieta spotbugs-proprieta-maxrank online spotbugs-medio spotbugs.maxRank 1 "ERRORE: rapporto di copertura JaCoCo non valido"
+proprieta jacoco-proprieta-skip online - jacoco.skip true "ERRORE: rapporto di copertura JaCoCo non valido"
+
+# ---- 4a3. profili nei POM del progetto: vietati (la regola e' l'assenza) --------------------------
+# Un profilo attivato dall'assenza di un file che la build stessa crea e' attivo in mvn verify e spento
+# quando si genera il POM effettivo: il controllo leggerebbe un'altra configurazione.
+
+profilo() { # caso testo-da-inserire-dopo-</build> file-caso(o -) esito(ko|ok)
+  selezionato "$1" || return 0
+  mut_dopo carddemo-online/pom.xml '</build>' "$2"
+  if [ "$3" != "-" ]; then
+    aggiungi_classe carddemo-online "$3" ProvaRegole
+  fi
+  run_verify "$1" || exit 1
+  if [ "$4" = ko ]; then
+    expect "$1" ko "BUILD SUCCESS" "profili non ammessi in" "carddemo-online/pom.xml" "ERRORE: rapporto di copertura JaCoCo non valido" "== VERIFICA FALLITA"
+  else
+    expect "$1" ok "== verifica completata"
+  fi
+  ripristina
+}
+# il controesempio: profilo attivo in mvn verify (dopo la pulizia), spento a build finita, con soglia High e un difetto Medium
+profilo profilo-attivazione-file '  <profiles><profile><id>prova</id><activation><file><missing>${basedir}/target/spotbugsXml.xml</missing></file></activation><build><plugins><plugin><groupId>com.github.spotbugs</groupId><artifactId>spotbugs-maven-plugin</artifactId><configuration><threshold>High</threshold></configuration></plugin></plugins></build></profile></profiles>' spotbugs-medio ko
+# anche un profilo vuoto e innocuo: la regola e' l'assenza
+profilo profilo-vuoto '  <profiles><profile><id>innocuo</id></profile></profiles>' - ko
+# un commento che nomina <profiles> non conta
+profilo profilo-commento '  <!-- nessun <profiles> in questo POM -->' - ok
 
 # ---- 4b. file di esclusioni di SpotBugs ----------------------------------------------------
 
