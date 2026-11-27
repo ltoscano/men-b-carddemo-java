@@ -9,6 +9,13 @@
 #   eseguibile: cobc <opzioni> -c -o OUT/obj/<NOME>.o <sorgente>
 #               cobc -x -A -DMENB_ENTRY=<NOME> -o OUT/bin/<NOME> /oracle/launcher/avvia.c OUT/obj/<NOME>.o
 #               (il secondo comando compila solo il C dell'avviatore e collega).
+# Programmi adattati (elenco fisso ADATTATI, oggi solo CBSTM03A; issue #25, oracle/adattamenti/registro.md):
+# il sorgente compilato e' la copia di compilazione generata a ogni build da /oracle/adattamenti/adatta.sh
+# in OUT/adattati/, e davanti alle opzioni c'e' un solo argomento strutturale in piu', -IOUT/adattati,
+# perche' COPY CUSTREC trovi la copia adattata prima di /legacy/app/cpy (cobc cerca nelle cartelle -I
+# nell'ordine in cui sono date):
+#   adattato:   cobc -IOUT/adattati <opzioni> -c -o OUT/obj/<NOME>.o OUT/adattati/<sorgente>
+#               cobc -x -A -DMENB_ENTRY=<NOME> -o OUT/bin/<NOME> /oracle/launcher/avvia.c OUT/obj/<NOME>.o
 # Ogni invocazione di cobc passa da cobc_reg, che scrive nel log gli argomenti effettivi, uno per riga
 # ("== cobc", poi "arg <argomento>"), e poi esegue esattamente quegli argomenti.
 #
@@ -20,6 +27,7 @@
 #       runtime-config.txt (configurazione di runtime riportata da libcob).
 #       Esce con 1 se una compilazione fallisce.
 #   compile.sh uno TIPO SORGENTE NOME OUT [opzione cobc in piu'] [opzione C in piu' per l'avviatore]
+#                  [cartella dei copybook adattati, anteposta alle opzioni come -I<cartella>]
 #       compila un solo programma (usato dalle prove negative dei controlli, mai dalla build). Solo in
 #       questo modo UNO_OPZIONI puo' indicare un file di opzioni alterato al posto di /oracle/cobc.opts.
 set -u
@@ -28,7 +36,9 @@ OPTFILE=/oracle/cobc.opts
 if [ "${1:-}" = uno ] && [ -n "${UNO_OPZIONI:-}" ]; then OPTFILE="$UNO_OPZIONI"; fi
 LAUNCHER=/oracle/launcher/avvia.c
 # Programmi di prova (oracle/tests/), tutti eseguibili.
-PROVE="PARMECHO ABDUSING ABDNOARG M03BCALL DTCCALL SEGNOPRB PERFPRB DATFTPRB"
+PROVE="PARMECHO ABDUSING ABDNOARG M03BCALL DTCCALL SEGNOPRB PERFPRB DATFTPRB IDXLOAD IDXDUMP"
+# Programmi del legacy compilati da una copia adattata (oracle/adattamenti/registro.md).
+ADATTATI="CBSTM03A"
 
 die() { echo "compile.sh: $*" >&2; exit 1; }
 
@@ -55,21 +65,23 @@ cobc_reg() {
   return "$r"
 }
 
-# compila TIPO SORGENTE NOME OUT [cobc-extra] [c-extra]; scrive OUT/log/NOME.log; ritorna il codice di cobc
+# compila TIPO SORGENTE NOME OUT [cobc-extra] [c-extra] [cartella-adattati]; scrive OUT/log/NOME.log;
+# ritorna il codice di cobc. Con cartella-adattati il primo argomento di cobc e' -I<cartella-adattati>.
 compila() {
-  tipo="$1"; src="$2"; nome="$3"; out="$4"; xcob="${5:-}"; xc="${6:-}"
+  tipo="$1"; src="$2"; nome="$3"; out="$4"; xcob="${5:-}"; xc="${6:-}"; xpre=""
+  [ -z "${7:-}" ] || xpre="-I$7"
   mkdir -p "$out/bin" "$out/obj" "$out/log"
   logf="$out/log/$nome.log"
   : > "$logf"
   case "$tipo" in
     modulo)
       # shellcheck disable=SC2086
-      set -- $OPTS $xcob -m -o "$out/bin/$nome.so" "$src"
+      set -- $xpre $OPTS $xcob -m -o "$out/bin/$nome.so" "$src"
       cobc_reg "$@"; rc=$?
       ;;
     eseguibile)
       # shellcheck disable=SC2086
-      set -- $OPTS $xcob -c -o "$out/obj/$nome.o" "$src"
+      set -- $xpre $OPTS $xcob -c -o "$out/obj/$nome.o" "$src"
       cobc_reg "$@"; rc=$?
       if [ "$rc" -eq 0 ]; then
         if [ -n "$xc" ]; then
@@ -107,11 +119,23 @@ case "${1:-}" in
       compila modulo "$f" "$n" "$out"; rc=$?
       riga "$n" stub modulo "$out" "$rc"
     done
+    # Copie di compilazione dei programmi adattati, rigenerate a ogni build in una cartella nuova
+    # (adatta.sh rifiuta una cartella che esiste gia'). Se la generazione fallisce, la build fallisce.
+    adatta_log="$out/log/adattamenti.txt"
+    mkdir -p "$out/log" || die "impossibile creare $out/log"
+    sh /oracle/adattamenti/adatta.sh /legacy "$out/adattati" > "$adatta_log" 2>&1 \
+      || { cat "$adatta_log" >&2; die "generazione delle copie adattate fallita"; }
     # Programmi del legacy: righe non commento, intestazione esclusa.
     grep -v '^#' "$elenco" | tail -n +2 | while IFS="$(printf '\t')" read -r n src tipo motivo; do
       [ -n "$n" ] || continue
-      compila "$tipo" "/legacy/$src" "$n" "$out"; rc=$?
-      riga "$n" legacy "$tipo" "$out" "$rc"
+      case " $ADATTATI " in
+        *" $n "*)
+          compila "$tipo" "$out/adattati/$(basename "$src")" "$n" "$out" "" "" "$out/adattati"; rc=$?
+          riga "$n" adattato "$tipo" "$out" "$rc" ;;
+        *)
+          compila "$tipo" "/legacy/$src" "$n" "$out"; rc=$?
+          riga "$n" legacy "$tipo" "$out" "$rc" ;;
+      esac
     done
     for n in $PROVE; do
       compila eseguibile "/oracle/tests/$n.cbl" "$n" "$out"; rc=$?
@@ -147,8 +171,8 @@ case "${1:-}" in
     [ "$fl" -eq 0 ] || { awk -F'\t' 'NR>1 && $4!=0 {print "compile.sh: compilazione fallita: " $1}' "$out/compilazione.tsv" >&2; exit 1; }
     ;;
   uno)
-    [ $# -ge 5 ] || die "uso: compile.sh uno TIPO SORGENTE NOME OUT [opzione cobc] [opzione C]"
-    compila "$2" "$3" "$4" "$5" "${6:-}" "${7:-}" || { cat "$5/log/$4.log" >&2; exit 1; }
+    [ $# -ge 5 ] || die "uso: compile.sh uno TIPO SORGENTE NOME OUT [opzione cobc] [opzione C] [cartella adattati]"
+    compila "$2" "$3" "$4" "$5" "${6:-}" "${7:-}" "${8:-}" || { cat "$5/log/$4.log" >&2; exit 1; }
     ;;
-  *) die "uso: compile.sh tutto ELENCO.tsv OUT | compile.sh uno TIPO SORGENTE NOME OUT [opzione cobc] [opzione C]" ;;
+  *) die "uso: compile.sh tutto ELENCO.tsv OUT | compile.sh uno TIPO SORGENTE NOME OUT [opzione cobc] [opzione C] [cartella adattati]" ;;
 esac

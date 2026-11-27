@@ -1,0 +1,21 @@
+# Attesi scritti a mano leggendo app/jcl/TRANREPT.jcl (livello B: mapa riporta 2 passi su 3). Due passi hanno lo stesso nome STEP05R nel sorgente (righe 23 e 37): anomalia registrata, i passi si distinguono con #n.
+# STEP	id	riga	esecuzione	esegue	parm	fonte	bersaglio   DD	proprietario	riga	dd	dsn_sorgente	disp_sorgente	dataset	generazione	livello	fonte	dsn_risolto	disp_effettivo (colonne separate da tab)
+STEP	jcl-step:TRANREPT/STEP05R#1	23	PROC	REPROC		schede	proc:REPROC
+DD	jcl-step:TRANREPT/STEP05R#1	26	PRC001.FILEIN	AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS	SHR	dataset:AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS		passo	schede		
+DD	jcl-step:TRANREPT/STEP05R#1	29	PRC001.FILEOUT	AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)	(NEW,CATLG,DELETE)	dataset:AWS.M2.CARDDEMO.TRANSACT.BKUP	+1	passo	schede		
+STEP	jcl-step:TRANREPT/STEP05R#2	37	PGM	SORT		schede	utility:SORT
+DD	jcl-step:TRANREPT/STEP05R#2	38	SORTIN	AWS.M2.CARDDEMO.TRANSACT.BKUP(+1)	SHR	dataset:AWS.M2.CARDDEMO.TRANSACT.BKUP	+1	passo	schede		
+DD	jcl-step:TRANREPT/STEP05R#2	40	SYMNAMES			dataset:~INSTREAM		passo	schede		
+DD	jcl-step:TRANREPT/STEP05R#2	45	SYSIN			dataset:~INSTREAM		passo	schede		
+DD	jcl-step:TRANREPT/STEP05R#2	50	SYSOUT			dataset:~SYSOUT		passo	schede		
+DD	jcl-step:TRANREPT/STEP05R#2	51	SORTOUT	AWS.M2.CARDDEMO.TRANSACT.DALY(+1)	(NEW,CATLG,DELETE)	dataset:AWS.M2.CARDDEMO.TRANSACT.DALY	+1	passo	schede		
+STEP	jcl-step:TRANREPT/STEP10R	59	PGM	CBTRN03C		schede	program:CBTRN03C
+DD	jcl-step:TRANREPT/STEP10R	60	STEPLIB	AWS.M2.CARDDEMO.LOADLIB	SHR	dataset:AWS.M2.CARDDEMO.LOADLIB		passo	schede		
+DD	jcl-step:TRANREPT/STEP10R	62	SYSOUT			dataset:~SYSOUT		passo	schede		
+DD	jcl-step:TRANREPT/STEP10R	63	SYSPRINT			dataset:~SYSOUT		passo	schede		
+DD	jcl-step:TRANREPT/STEP10R	65	TRANFILE	AWS.M2.CARDDEMO.TRANSACT.DALY(+1)	SHR	dataset:AWS.M2.CARDDEMO.TRANSACT.DALY	+1	passo	schede		
+DD	jcl-step:TRANREPT/STEP10R	67	CARDXREF	AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS	SHR	dataset:AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS		passo	schede		
+DD	jcl-step:TRANREPT/STEP10R	69	TRANTYPE	AWS.M2.CARDDEMO.TRANTYPE.VSAM.KSDS	SHR	dataset:AWS.M2.CARDDEMO.TRANTYPE.VSAM.KSDS		passo	schede		
+DD	jcl-step:TRANREPT/STEP10R	71	TRANCATG	AWS.M2.CARDDEMO.TRANCATG.VSAM.KSDS	SHR	dataset:AWS.M2.CARDDEMO.TRANCATG.VSAM.KSDS		passo	schede		
+DD	jcl-step:TRANREPT/STEP10R	73	DATEPARM	AWS.M2.CARDDEMO.DATEPARM	SHR	dataset:AWS.M2.CARDDEMO.DATEPARM		passo	schede		
+DD	jcl-step:TRANREPT/STEP10R	76	TRANREPT	AWS.M2.CARDDEMO.TRANREPT(+1)	(NEW,CATLG,DELETE)	dataset:AWS.M2.CARDDEMO.TRANREPT	+1	passo	schede		

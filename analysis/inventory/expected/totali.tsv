@@ -1,0 +1,5 @@
+# Totali sul sorgente dei 46 file jcl del manifesto, contati a mano (somma delle righe EXEC e DD per file, verificata con awk). tipo, valore
+esecuzioni	119
+DD	480
+file_jcl	46
+transazioni_app_csd	18

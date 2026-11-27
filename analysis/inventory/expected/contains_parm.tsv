@@ -1,0 +1,3 @@
+# Attesi scritti a mano: PARM di app/jcl/INTCALC.jcl riga 22 (PARM='2022071800'); PARM vuoto di TXT2PDF1.JCL riga 25; nessun PARM in FTPJCL.JCL (la riga 31 e' un commento). tipo, id, riga, esecuzione, esegue, parm, fonte, bersaglio
+STEP	jcl-step:INTCALC/STEP15	22	PGM	CBACT04C	'2022071800'	mapa	program:CBACT04C
+STEP	jcl-step:TXT2PDF1/TXT2PDF	24	PGM	IKJEFT1B	('')	schede	utility:IKJEFT1B

@@ -1,0 +1,4 @@
+cobol	app/cbl/FIXPROG.cbl
+copybook	app/cpy/FIXCPY.cpy
+jcl	app/jcl/FIXJOB.jcl
+csd	app/csd/FIX.CSD

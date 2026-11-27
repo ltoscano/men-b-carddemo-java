@@ -1,0 +1,6 @@
+# Attesi scritti a mano leggendo app/csd/CARDDEMO.CSD (righe DEFINE TRANSACTION e PROGRAM). tipo, da, a, file, riga, dettaglio(riga_programma)
+TRANSAZIONE_PROGRAMMA	transaction:CAUP	program:COACTUPC	app/csd/CARDDEMO.CSD	306	308
+TRANSAZIONE_PROGRAMMA	transaction:CAVW	program:COACTVWC	app/csd/CARDDEMO.CSD	317	318
+TRANSAZIONE_PROGRAMMA	transaction:CA00	program:COADM01C	app/csd/CARDDEMO.CSD	327	328
+TRANSAZIONE_PROGRAMMA	transaction:CB00	program:COBIL00C	app/csd/CARDDEMO.CSD	337	338
+TRANSAZIONE_PROGRAMMA	transaction:CC00	program:COSGN00C	app/csd/CARDDEMO.CSD	378	379

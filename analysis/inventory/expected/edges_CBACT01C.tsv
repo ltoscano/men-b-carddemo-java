@@ -1,0 +1,5 @@
+# Attesi scritti a mano leggendo app/cbl/CBACT01C.cbl (COPY righe 89-90, CALL righe 231 e 410). COBDATFT e' app/asm/COBDATFT.asm. tipo, da, a, file, riga, dettaglio
+COPY	program:CBACT01C	copybook:CVACT01Y	app/cbl/CBACT01C.cbl	89	
+COPY	program:CBACT01C	copybook:CODATECN	app/cbl/CBACT01C.cbl	90	
+CALL	program:CBACT01C	asm:COBDATFT	app/cbl/CBACT01C.cbl	231	
+CALL	program:CBACT01C	external:CEE3ABD	app/cbl/CBACT01C.cbl	410	

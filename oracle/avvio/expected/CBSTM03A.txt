@@ -1,0 +1,14 @@
+== codice di uscita
+99
+== stdout
+ERROR OPENING TRNXFILE
+RETURN CODE: 35
+ABENDING PROGRAM
+== stderr
+Warning: program compiled against libxml 212 using older 209
+MENB-ORACLE CEE3ABD: ARRESTO ANOMALO SENZA ARGOMENTI
+libcob: warning: implicit CLOSE of HTML-FILE ('HTMLFILE')
+libcob: warning: implicit CLOSE of STMT-FILE ('STMTFILE')
+== file nella cartella di lavoro
+HTMLFILE 0
+STMTFILE 0

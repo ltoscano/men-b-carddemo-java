@@ -1,0 +1,6 @@
+# Anomalie del sorgente verificate a mano: file, riga, sottostringa che la riga deve contenere, descrizione
+app/jcl/CREASTMT.JCL	90	00,RECFM=FB), ATA.VSAM.KSDS	la riga di continuazione della DD STMTFILE contiene testo spurio dopo il blank (commento per JCL)
+app/jcl/TRANREPT.jcl	23	STEP05R EXEC PROC=REPROC	primo dei due passi con lo stesso nome STEP05R
+app/jcl/TRANREPT.jcl	37	STEP05R  EXEC PGM=SORT	secondo passo con lo stesso nome STEP05R
+app/proc/TRANREPT.prc	1	REPROC PROC	file .prc con la forma di un job: ridefinisce la procedura REPROC e contiene i passi di un job fino a PEND
+app/proc/TRANREPT.prc	79	PEND	PEND di chiusura della procedura nel file TRANREPT.prc
