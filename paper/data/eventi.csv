@@ -131,3 +131,8 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T13:51:45Z,pr-33,codex-inizio,codex,orologio,validazione giro 1
 2026-11-27T14:00:42Z,issue-4,esecutore-fine,opus,orologio,giro di correzione 1 consegnato; SHA 486d069; CI verde
 2026-11-27T14:00:44Z,issue-4,esecutore-consuntivo,opus,orologio,giro di correzione 1: durata 1266 s; 61 chiamate a strumenti; contatore token 517081 (cumulativo)
+2026-11-27T14:00:46Z,pr-29,codex-inizio,codex,orologio,validazione giro 2
+2026-11-27T14:02:11Z,pr-30,codex-fine,codex,orologio,giro 1; exit=0; token: 206.655
+2026-11-27T14:02:24Z,pr-31,codex-fine,codex,orologio,giro 1; exit=0; token: 94.177
+2026-11-27T14:02:55Z,pr-30,validazione-fine,fable,orologio,giro 1: BOCCIATA; 2 bloccanti e 3 importanti accolti
+2026-11-27T14:02:55Z,issue-2,esecutore-inizio,sonnet,orologio,giro di correzione 1
