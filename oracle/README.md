@@ -1,6 +1,6 @@
 # Oracle GnuCOBOL, parte 1 (#4)
 
-Immagine container in cui gli 11 programmi batch di CardDemo che compilano senza modifiche si compilano con GnuCOBOL e si avviano. È il primo pezzo dell'oracle: il comportamento di riferimento contro cui si misurerà il Java. Qui non si eseguono i programmi sui dati veri (#5 e successive) e delle routine esterne è implementata solo `COBDATFT` (#24, passo `routines`); l'unica lettura di dati originali è la sonda sul segno dei numeri (passo `segno`).
+Immagine container in cui gli 11 programmi batch di CardDemo che compilano senza modifiche, più `CBSTM03A` compilato da una copia adattata (#25, passo `adattamenti`), si compilano con GnuCOBOL e si avviano. È il primo pezzo dell'oracle: il comportamento di riferimento contro cui si misurerà il Java. Qui non si eseguono i programmi sui dati veri (#5 e successive) e delle routine esterne è implementata solo `COBDATFT` (#24, passo `routines`); le sole letture di dati originali sono la sonda sul segno dei numeri (passo `segno`) e le poche righe dello scenario di `CBSTM03A` (passo `adattamenti`).
 
 Sull'host servono solo Docker, Git e le utility POSIX. GnuCOBOL gira nel container.
 
@@ -18,10 +18,10 @@ git submodule update --init
 | `run.sh` | comando unico, estendibile per cartelle come `analysis/run.sh`: `<nome>` esegue `oracle/<nome>/run.sh`, `--check` esegue `check.sh`, `deps` dichiara le dipendenze, `--all` le rispetta. **Differenza:** con `--check` un passo senza `check.sh` è un errore |
 | `Dockerfile` | immagine `menb-oracle-gnucobol:3.2-<hash del Dockerfile>` |
 | `cobc.opts` | le opzioni di `cobc`, una per riga, ciascuna con il motivo; uguali per tutti i programmi |
-| `programs.tsv` | gli 11 programmi della build: sorgente, tipo (eseguibile o modulo), motivo del tipo letto nel sorgente |
+| `programs.tsv` | i 12 programmi del legacy della build: sorgente, tipo (eseguibile o modulo), motivo del tipo letto nel sorgente |
 | `launcher/avvia.c` | l'avviatore: il `main` di ogni eseguibile, costruisce l'area del `PARM` |
 | `stubs/` | `CEE3ABD` (stub), `COBDATFT` (equivalente della routine assembler, #24) e i segnaposto `MVSWAIT`, `CEEDAYS` |
-| `tests/` | programmi COBOL di prova: `PARMECHO`, `ABDUSING`, `ABDNOARG`, `M03BCALL`, `DTCCALL`, `SEGNOPRB`, `PERFPRB`, `DATFTPRB` |
+| `tests/` | programmi COBOL di prova: `PARMECHO`, `ABDUSING`, `ABDNOARG`, `M03BCALL`, `DTCCALL`, `SEGNOPRB`, `PERFPRB`, `DATFTPRB`, `IDXLOAD` e `IDXDUMP` (caricamento e rilettura dei file indicizzati di `CBSTM03B`, #25) |
 | `ambiente.sh` | (nel container) l'ambiente fissato: le sole variabili che ricevono `cobc` e i programmi |
 | `esegui.sh` | (nel container) avvia un eseguibile in una cartella vuota, nell'ambiente fissato, e scrive il rapporto (codice di uscita, stdout, stderr, file creati) e l'ambiente ricevuto dal programma |
 | `lib.sh` | funzioni comuni: immagine, volume del legacy, esecuzione nel container con limite di tempo, impronta della build, prove negative |
@@ -32,6 +32,7 @@ git submodule update --init
 | `segno/` | passo `segno`: lettura e scrittura di importi con segno dai dati originali; attesi in `segno/expected/` |
 | `dialetto/` | passo `dialetto`: sonda semantica su `perform-osvs`, un'impostazione del dialetto letta dalla configurazione del compilatore; attesi in `dialetto/expected/` |
 | `routines/` | passo `routines`: `COBDATFT` provata con il chiamante `DATFTPRB`; tabella dei casi determinati e non determinati in `routines/cobdatft-casi.md` (e `.tsv`), casi in `casi.tsv`, attesi in `routines/expected/` |
+| `adattamenti/` | `adatta.sh` genera a ogni build le copie di compilazione adattate di `CBSTM03A` (TAB di `CUSTREC` a 4 colonne, righe 266-291 commentate); passo `adattamenti`: verifica delle copie e scenario con quattro file indicizzati (`scenario/`), attesi in `adattamenti/expected/`. Tutto in `adattamenti/registro.md` |
 | `selftest/` | test automatico del comando unico (ordine, ciclo, dipendenza mancante, primo errore, controllo mancante) |
 
 Ogni `check.sh` rigenera da zero ciò che controlla, in una cartella nuova: nessun risultato di una corsa precedente viene preso per attuale. La build scrive per ultima `build/out/IMPRONTA`, l'impronta di tutti gli input (sorgenti dell'oracle, opzioni, elenco, strati dell'immagine, commit del legacy) e degli artefatti prodotti; i passi che usano gli artefatti la ricalcolano e rifiutano una build assente, interrotta, vecchia o con artefatti cambiati dopo la build. Il controllo della build verifica anche che `cobc.opts` contenga esattamente le opzioni fissate nel controllo, che **ogni invocazione di `cobc` abbia esattamente gli argomenti attesi** (registrati da `compile.sh` uno per riga, così come sono stati passati: le opzioni fissate più i soli argomenti strutturali del tipo, nient'altro, in quell'ordine) e che i passi dei criteri di accettazione esistano con i loro script. Tutti i confronti dei controlli sono esatti (righe e insiemi interi); l'unico confronto per sottostringa è il motivo atteso nelle prove negative (`expect_fail`), che identifica il messaggio di errore. Ogni programma gira con stdin vuoto e un limite di tempo (`ORACLE_TIMEOUT_RUN`, 60 s; compilazione `ORACLE_TIMEOUT_COMPILE`, 900 s), applicato con `timeout` dentro il container. Gli attesi sono scritti a mano leggendo il sorgente (i paragrafi di `OPEN`, `9910-DISPLAY-IO-STATUS`, `9999-ABEND-PROGRAM`); ogni controllo ha prove negative automatiche, alcune su esecuzioni reali alterate (avviatore con ordine dei byte invertito, stub che ritorna, eseguibili senza moduli).
@@ -80,7 +81,9 @@ eseguibile: cobc <opzioni> -c -o OUT/obj/<P>.o <sorgente>
             cobc -x -A -DMENB_ENTRY=<P> -o OUT/bin/<P> /oracle/launcher/avvia.c OUT/obj/<P>.o
 ```
 
-`build/check.sh` confronta, per ognuno dei 23 programmi compilati, gli argomenti effettivi di ogni invocazione con questo modello: un'opzione in più, in meno o in un altro ordine fa fallire il controllo (prova negativa reale: `CBACT04C` ricompilato con `-fno-binary-truncate` in coda, `CSUTLDTC` con `-fsign=ASCII` in coda). Nessuna opzione di controllo a tempo di esecuzione (`-debug`, `-fec`): su z/OS non c'è `SSRANGE` nel JCL di compilazione, e i controlli di GnuCOBOL fermerebbero programmi che su z/OS proseguono.
+Per `CBSTM03A` (#25) il primo argomento è `-I/out/adattati` e il sorgente è la copia adattata `/out/adattati/CBSTM03A.CBL` (`adattamenti/registro.md`); nessun altro programma ha quell'argomento.
+
+`build/check.sh` confronta, per ognuno dei 26 programmi compilati, gli argomenti effettivi di ogni invocazione con questo modello: un'opzione in più, in meno o in un altro ordine fa fallire il controllo (prova negativa reale: `CBACT04C` ricompilato con `-fno-binary-truncate` in coda, `CSUTLDTC` con `-fsign=ASCII` in coda). Nessuna opzione di controllo a tempo di esecuzione (`-debug`, `-fec`): su z/OS non c'è `SSRANGE` nel JCL di compilazione, e i controlli di GnuCOBOL fermerebbero programmi che su z/OS proseguono.
 
 Scelte che possono cambiare ciò che i programmi fanno:
 
@@ -104,6 +107,7 @@ Opzioni: per tutti quelle di `cobc.opts`. Avvertimenti: dal log di compilazione 
 | `CBACT03C` | eseguibile | `READXREF.jcl` | 0 |
 | `CBACT04C` | eseguibile | `INTCALC.jcl`, `PARM='2022071800'`; riceve l'area del PARM (`PROCEDURE DIVISION USING EXTERNAL-PARMS`) | 0 |
 | `CBCUS01C` | eseguibile | `READCUST.jcl` | 0 |
+| `CBSTM03A` | eseguibile, dalla copia adattata | `CREASTMT.JCL`, `STEP040 EXEC PGM=CBSTM03A`. L'originale non compila: si compila la copia di `adattamenti/adatta.sh` (`adattamenti/registro.md`) | 5: riga 237, `size of 'TIOT-INDEX' larger than size of 'BUMP-TIOT'`; righe 300, 303, 306, 309, `ALTER is obsolete in IBM COBOL` |
 | `CBSTM03B` | modulo | `PROCEDURE DIVISION USING LK-M03B-AREA`; `CALL 'CBSTM03B'` in `CBSTM03A` (righe 351, 377) | 0 |
 | `CBTRN01C` | eseguibile | `PROCEDURE DIVISION` senza `USING`; nessun JCL lo avvia e nessun programma lo chiama | 0 |
 | `CBTRN02C` | eseguibile | `POSTTRAN.jcl` | 1: riga 403, `precision of result may change with arithmetic-osvs` (il `COMPUTE WS-TEMP-BAL = ACCT-CURR-CYC-CREDIT - ACCT-CURR-CYC-DEBIT + DALYTRAN-AMT`) |
@@ -111,13 +115,14 @@ Opzioni: per tutti quelle di `cobc.opts`. Avvertimenti: dal log di compilazione 
 | `COBSWAIT` | eseguibile | `WAITSTEP.jcl` | 0 |
 | `CSUTLDTC` | modulo | `PROCEDURE DIVISION USING` con tre parametri; `CALL 'CSUTLDTC'` in `CORPT00C` (righe 392, 412) | 0 |
 
-Errori: 0 per tutti. La build compila anche lo stub `CEE3ABD`, `COBDATFT`, i due segnaposto e gli otto programmi di prova: 23 artefatti in `build/out/bin/`. Con `-fsign=EBCDIC` avvertimenti e attesi della prova di avvio non cambiano.
+Errori: 0 per tutti. La build compila anche lo stub `CEE3ABD`, `COBDATFT`, i due segnaposto e i dieci programmi di prova: 26 artefatti in `build/out/bin/`, più le due copie adattate in `build/out/adattati/`. Con `-fsign=EBCDIC` avvertimenti e attesi della prova di avvio non cambiano.
 
 ### Avvio senza file d'ingresso (passo `avvio`, verificato qui)
 
 Ogni eseguibile parte in una cartella vuota, senza variabili `DD_`, senza `PARM`, con stdin vuoto.
 
 - Gli 8 programmi con file stampano `START OF EXECUTION OF PROGRAM <P>`, tentano la prima `OPEN INPUT`, ricevono lo stato **35** (file assente), stampano `ERROR OPENING ...`, `FILE STATUS IS: NNNN0035`, `ABENDING PROGRAM` e chiamano `CEE3ABD`: codice di uscita **99**. Nessun file viene creato (la prima `OPEN` di ognuno è in ingresso).
+- `CBSTM03A` (copia adattata, #25) apre in uscita `STMTFILE` e `HTMLFILE` (creati vuoti nella cartella di lavoro), poi chiede a `CBSTM03B` l'apertura di `TRNXFILE`: ritorna `35`, stampa `ERROR OPENING TRNXFILE`, `RETURN CODE: 35`, `ABENDING PROGRAM` e chiama `CEE3ABD` senza argomenti: codice **99**. Su stderr libcob avverte della chiusura implicita dei due file aperti, nell'ordine inverso a quello di apertura (osservato).
 - `COBSWAIT` non ha file: legge `SYSIN` (vuoto) e chiama `MVSWAIT`, il segnaposto: codice **98**.
 - `CBSTM03B`, chiamato da `M03BCALL` con l'area di `CBSTM03A`: per ognuno dei quattro file l'apertura ritorna `35` in `LK-M03B-RC`; con un nome DD non gestito il codice resta quello impostato prima della chiamata. `M03BCALL` termina con 0.
 - `CSUTLDTC`, chiamato da `DTCCALL` con gli argomenti di `CORPT00C`: arriva alla chiamata di `CEEDAYS`, il segnaposto: codice **98**. Questa prova non è chiesta dalla specifica (che chiede il chiamante solo per `CBSTM03B`): è aggiunta perché altrimenti il modulo `CSUTLDTC` non sarebbe mai caricato da nessuna prova.
@@ -187,7 +192,7 @@ Con `-std=ibm` (`assign-clause external`, `filename-mapping yes`), `SELECT ... A
 - **Indicizzato**, `CBACT01C`, `SELECT ACCTFILE-FILE ASSIGN TO ACCTFILE`, `ORGANIZATION IS INDEXED` (in `READACCT.jcl`: `//ACCTFILE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS`):
   `DD_ACCTFILE=/dati/acctdata.bdb` → il programma apre il file Berkeley DB `/dati/acctdata.bdb`, che contiene dati e indici (con BDB non ci sono file `.idx` separati).
 
-Verificato qui per i file sequenziali: in `abend` il file è assegnato con `DD_ABDFILE` a un percorso fuori dalla cartella di lavoro e il record si trova lì; in `avviatore`, senza variabile, `PARMDUMP` si crea nella cartella corrente. Per i file indicizzati il nome si risolve con lo stesso meccanismo, ma qui nessun file indicizzato esiste davvero (le prove aprono solo file assenti, stato 35): l'apertura di un file indicizzato reale è lavoro di #5.
+Verificato qui per i file sequenziali: in `abend` il file è assegnato con `DD_ABDFILE` a un percorso fuori dalla cartella di lavoro e il record si trova lì; in `avviatore`, senza variabile, `PARMDUMP` si crea nella cartella corrente. Per i file indicizzati il nome si risolve con lo stesso meccanismo. File indicizzati reali si creano e si leggono solo nello scenario di `CBSTM03A` (passo `adattamenti`, #25): `IDXLOAD` li scrive, `IDXDUMP` e `CBSTM03B` li leggono, tutti con `DD_<nome>`; l'apertura sui dati completi è lavoro di #5.
 
 ## Differenze note tra GnuCOBOL ed Enterprise COBOL
 
@@ -203,7 +208,7 @@ Marcatura: **verificata qui** = un controllo di questa issue la dimostra; **misu
 | Ordine di collazione | ASCII qui, EBCDIC su z/OS: cambiano i confronti tra stringhe con cifre, lettere minuscole e maiuscole, l'ordine di `SORT` e l'ordine delle chiavi nei file indicizzati. Misurato in validazione: il confronto tra `'0'` e `'A'` si inverte con `-fdefault-colseq=EBCDIC`, ma l'ordine delle chiavi restituito da BDB (`0` prima di `A`) **non cambia** con quell'opzione | misurata in validazione; effetto sui programmi da verificare |
 | Chiavi alternative con duplicati | `CBACT04C` dichiara `ALTERNATE RECORD KEY IS FD-XREF-ACCT-ID` senza `WITH DUPLICATES`, mentre l'indice alternativo è definito `NONUNIQUEKEY` (`app/jcl/XREFFILE.jcl`, riga 75). Misurato in validazione: con BDB l'inserimento di un record con chiave alternativa già presente dà stato **22**. Come reagisce z/OS non è provato. Su z/OS l'indice alternativo ha anche una sua DD (path), che qui non esiste | GnuCOBOL misurata in validazione; da risolvere in #5; z/OS non verificabile |
 | Record variabili | `CBACT01C` scrive `VBRC-FILE` con `RECORDING MODE IS V`. GnuCOBOL (`COB_VARSEQ_FORMAT` 0) mette davanti a ogni record 2 byte di lunghezza big-endian, esclusa l'intestazione, più 2 byte X'00' (misurato in validazione: record `ABC` → `00 03 00 00 41 42 43`); su z/OS il descrittore (RDW) ha 4 byte e la lunghezza include il descrittore | formato GnuCOBOL misurato in validazione; equivalenza da verificare |
-| Codici di stato dei file | `OPEN INPUT` di un file assente, sequenziale o indicizzato: stato 35, osservato in 8 programmi e nei 4 file di `CBSTM03B`. Su z/OS, secondo la documentazione IBM, un dataset inesistente indicato in una DD con `DISP=SHR` ferma il passo prima dell'avvio del programma (errore di allocazione), e lo stato 35 si ha quando manca la DD: non verificabile qui. Gli altri stati (in particolare quelli specifici di VSAM) non sono stati provati | 35 verificata qui; resto da verificare |
+| Codici di stato dei file | `OPEN INPUT` di un file assente, sequenziale o indicizzato: stato 35, osservato in 8 programmi, nei 4 file di `CBSTM03B` e in `CBSTM03A` (avvio; prova negativa 9 di `adattamenti`). Su z/OS, secondo la documentazione IBM, un dataset inesistente indicato in una DD con `DISP=SHR` ferma il passo prima dell'avvio del programma (errore di allocazione), e lo stato 35 si ha quando manca la DD: non verificabile qui. Gli altri stati (in particolare quelli specifici di VSAM) non sono stati provati | 35 verificata qui; resto da verificare |
 | Arresto anomalo | Qui `CEE3ABD` chiude i file e termina con 99; il record già scritto resta su disco (anche senza chiusura, nel solo caso provato: vedi sezione CEE3ABD). Su z/OS cosa resta di un file aperto al momento di un abend (buffer non scritti) dipende dal metodo di accesso | GnuCOBOL verificata qui per il caso provato; z/OS non verificabile |
 | `NEXT SENTENCE` dentro `IF ... END-IF` | In `CBTRN03C` (riga 177). Su IBM salta dopo il punto successivo, oltre l'`END-IF`. Misurato in validazione: GnuCOBOL fa lo stesso nel caso provato | misurata in validazione per un caso; `CBTRN03C` da verificare |
 | Campi senza `VALUE` | `defaultbyte 0`: X'00' (misurato in validazione; con `-fdefaultbyte=init` sarebbero spazi per `PIC X` e `'0'` per `PIC 9`). Su z/OS il valore iniziale non specificato è imprevedibile secondo IBM | non verificabile la parità |
@@ -213,7 +218,8 @@ Marcatura: **verificata qui** = un controllo di questa issue la dimostra; **misu
 ## Limiti
 
 - La CI del repository esegue solo `./verify.sh`: questi controlli non girano in CI (il workflow è fuori dal perimetro di #4).
-- Nessun programma del legacy gira sui dati reali e nessun file indicizzato viene creato o letto (#5); dei dati si legge solo `dailytran.txt`, dalla sonda sul segno.
+- Nessun programma del legacy gira sui dati reali (#5). Dei dati si legge `dailytran.txt` (sonda sul segno) e, per lo scenario di `CBSTM03A`, 13 righe di `cardxref.txt`, `custdata.txt`, `acctdata.txt` e `dailytran.txt` caricate in quattro piccoli file indicizzati (`adattamenti/registro.md`).
+- `CBSTM03A` gira da una copia adattata: le righe di console delle righe 266-291 (nome del job e nomi DD letti dai blocchi di controllo di z/OS) non sono riprodotte (`adattamenti/registro.md`).
 - Il controllo degli argomenti di `cobc` legge ciò che `compile.sh` registra: dimostra che le invocazioni registrate sono quelle attese, e `compile.sh` registra gli argomenti nello stesso punto in cui li passa a `cobc`. Una modifica a `compile.sh` che registrasse argomenti diversi da quelli eseguiti non sarebbe vista da questo controllo; per il segno la sonda `SEGNOPRB` ne verifica comunque l'effetto, per gli altri effetti no.
 - `CEE3ABD` non riproduce il dump né la gestione delle condizioni di Language Environment.
 - I pacchetti sono fissati per versione su un archivio Debian corrente: se Debian ritira una di quelle versioni, la build dell'immagine fallisce (non è stato usato `snapshot.debian.org`).
