@@ -162,7 +162,44 @@ Durante questo passo l'autore ha cambiato due regole, ed è giusto dirlo perché
 
 Chi replica deve sapere cosa comporta questa scelta. Il pianificatore ha scritto la specifica, quindi non è un giudice indipendente: l'indipendenza resta affidata al Validatore, che è un modello di un altro fornitore. La persona non approva più ogni modifica una per una; controlla il registro e può annullare. È più veloce ed è meno prudente del metodo di partenza: la sezione sui limiti lo riprende.
 
-*(esito del giro di correzione: da compilare)*
+**Passo 10 — La PR #17 fino al merge: tre validazioni, un'ora di attesa.** La PR dello scheletro Java ha richiesto più lavoro a essere validata che a essere scritta.
+
+**Tabella 5 — Storia della PR #17** (ora UTC)
+
+| Fase | Chi | Inizio | Durata | Esito |
+| --- | --- | --- | ---: | --- |
+| Implementazione | Esecutore (Sonnet) | 10:04:31 | 5 min 47 s | PR aperta, CI verde |
+| Validazione 1 (sola lettura) | Codex | 10:11:28 | 2 min 48 s | bocciata: 1 bloccante, 3 importanti |
+| Correzione 1 | Esecutore | 10:16 | 5 min 4 s | 4 difetti corretti |
+| Validazione 2 (con Docker) | Codex | 10:20:26 | 9 min 8 s | bocciata: 2 importanti |
+| Correzione 2 | Esecutore | 10:30:06 | 3 min 37 s | 2 difetti corretti |
+| Validazione 3 (con Docker) | Codex | 10:34:06 | 6 min 33 s | bocciata: 1 importante, nuovo |
+| Attesa della decisione dell'autore | autore | 10:40:59 | 61 min 35 s | merge, con issue per il difetto residuo |
+| Merge | pianificatore | 11:42:37 | — | `main` a `789de0e` |
+
+Dall'avvio dell'Esecutore al merge: 1 ora e 38 minuti. Di questi, 33 minuti di lavoro degli agenti (14 dell'Esecutore, 19 del Validatore) e 62 di attesa di una persona.
+
+Tre cose da notare.
+
+*Il Validatore con Docker trova cose che in sola lettura non si vedono.* Nel secondo giro Codex ha reso un file non cancellabile e ha osservato lo script di verifica proseguire, avviare un programma vecchio e dichiarare tutto a posto. Leggendo il codice lo aveva solo sospettato; eseguendolo lo ha dimostrato. Il prezzo è il tempo: da meno di 3 minuti a 9.
+
+*Una correzione può introdurre un difetto.* Al terzo giro i due difetti erano chiusi, ma la correzione dell'arresto ne aveva creato uno nuovo: se il servizio impiega tra 9 e 10 secondi a fermarsi regolarmente, la verifica fallisce a torto. È un caso stretto, e sbaglia dal lato sicuro (segnala un errore che non c'è, non nasconde un errore che c'è).
+
+*La regola dei due giri ha funzionato, e ha mostrato il suo costo.* Esauriti i due giri, la decisione è passata all'autore, che ha scelto di mergiare e di aprire una issue (#19) per il difetto residuo. La scelta ha richiesto pochi secondi; l'attesa che la persona tornasse disponibile, un'ora. È il dato più netto di questa giornata: **il tempo più lungo non è stato speso da un agente, ma aspettando una persona.**
+
+Per questo l'autore ha allargato la delega: i contrasti che restano dopo il secondo giro li risolve il pianificatore con lo stesso criterio usato qui. Se ciò che resta non è bloccante e non può far passare per buono un lavoro sbagliato, si mergia e si apre una issue; altrimenti no. Ogni scelta va nel registro.
+
+**Passo 11 — La PR #18: strumenti provati, controlli che non controllano.** L'Esecutore di #1 ha lavorato 31 minuti e 14 secondi (203 chiamate a strumenti, 125 file): cinque volte e mezzo lo scheletro Java. Provare strumenti poco documentati costa molto più che scrivere codice noto.
+
+Ha adottato scc per i conteggi, GnuCOBOL per la diagnostica, ProLeap per le `COPY`, cobol-migration-toolkit per le `CALL`, cb2xml per i tracciati, mapa per il JCL. Ha scartato cobol-migration-toolkit per le `COPY` (in un programma vedeva 18 nomi dove il sorgente ha 56 inclusioni) e cobmix. I dettagli andranno nella sezione 4 quando la PR sarà mergiata.
+
+Ha anche scoperto tre fatti che cambiano il lavoro a valle: tre programmi batch non compilano con GnuCOBOL (`CBEXPORT`, `CBIMPORT`, `CBSTM03A`); nessuno strumento provato vede i passaggi di controllo tra programmi online; e una licenza che il pianificatore aveva riportato sbagliata dalla ricerca iniziale.
+
+Il Validatore (8 minuti e 13 secondi, con Docker) ha bocciato la PR. I comandi passavano tutti. Ma alterando gli output degli strumenti, quattro controlli restavano verdi: azzerando i conteggi di righe di codice, rinominando un campo in un tracciato, cambiando il tipo di un passo JCL, portando il numero di errori di compilazione da 39 a 9.999. Un banco di prova i cui controlli non si accorgono di un output sbagliato non prova nulla, ed è esattamente il difetto che questa issue doveva impedire. La PR è tornata all'Esecutore.
+
+*Cosa si trasferisce:* un test verde dice poco finché nessuno ha provato a farlo restare verde con dati sbagliati. Il modo più economico di scoprirlo è chiederlo esplicitamente a chi valida: "altera l'output e guarda se il controllo se ne accorge".
+
+*(esito: da compilare)*
 
 **Come si misurano i tempi.** Su richiesta dell'autore, da questo punto ogni passaggio è cronometrato nel momento in cui avviene. Un piccolo script, `paper/data/tlog.sh`, aggiunge una riga con l'ora corrente al registro `paper/data/eventi.csv`; il registro non si modifica mai, si aggiunge soltanto. Per i passi precedenti i tempi sono stati ricostruiti da fonti verificabili (date dei commit, date di creazione su GitHub, date dei file) e ogni riga dichiara la propria fonte.
 
