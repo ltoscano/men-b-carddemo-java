@@ -435,3 +435,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T23:49:30Z,pr-56,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0
 2026-11-27T23:50:04Z,pr-56,rinvio-esecutore,fable,orologio,7 rilievi accolti
 2026-11-27T23:50:04Z,pr-56,correzione-inizio,opus,orologio,giro unico
+2026-11-27T23:59:01Z,issue-54,esecutore-fine,opus,orologio,PR #57 aperta; SHA 0778d45; criteri 1-5 dichiarati; CI in attesa
+2026-11-27T23:59:07Z,pr-57,codex-inizio,codex,orologio,validazione 1 di 2
