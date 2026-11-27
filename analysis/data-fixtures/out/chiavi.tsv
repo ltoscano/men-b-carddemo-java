@@ -1,0 +1,28 @@
+file	chiave	definizione	fonte	record	distinti	unica
+app/data/ASCII/acctdata.txt	abbinamento	ACCT-ID	app/jcl/ACCTFILE.jcl:36	50	50	si
+app/data/ASCII/carddata.txt	abbinamento	CARD-NUM	app/jcl/CARDFILE.jcl:50	50	50	si
+app/data/ASCII/carddata.txt	alternativa	@16+11 CARD-ACCT-ID	chiavi.tsv	50	50	si
+app/data/ASCII/cardxref.txt	abbinamento	XREF-CARD-NUM	app/jcl/XREFFILE.jcl:39	50	50	si
+app/data/ASCII/cardxref.txt	alternativa	@25+11 XREF-ACCT-ID	chiavi.tsv	50	50	si
+app/data/ASCII/custdata.txt	abbinamento	CUST-ID	app/jcl/CUSTFILE.jcl:46	50	50	si
+app/data/ASCII/dailytran.txt	abbinamento	DALYTRAN-ID	scelta	300	300	si
+app/data/ASCII/discgrp.txt	abbinamento	DIS-ACCT-GROUP-ID+DIS-TRAN-TYPE-CD+DIS-TRAN-CAT-CD	app/jcl/DISCGRP.jcl:36	51	51	si
+app/data/ASCII/tcatbal.txt	abbinamento	TRANCAT-ACCT-ID+TRANCAT-TYPE-CD+TRANCAT-CD	app/jcl/TCATBALF.jcl:36	50	50	si
+app/data/ASCII/trancatg.txt	abbinamento	TRAN-TYPE-CD+TRAN-CAT-CD	app/jcl/TRANCATG.jcl:36	18	18	si
+app/data/ASCII/trantype.txt	abbinamento	TRAN-TYPE	app/jcl/TRANTYPE.jcl:36	7	7	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.ACCDATA.PS	abbinamento	ACCT-ID	app/jcl/ACCTFILE.jcl:36	50	50	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.ACCTDATA.PS	abbinamento	ACCT-ID	app/jcl/ACCTFILE.jcl:36	50	50	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.CARDDATA.PS	abbinamento	CARD-NUM	app/jcl/CARDFILE.jcl:50	50	50	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.CARDDATA.PS	alternativa	@16+11 CARD-ACCT-ID	chiavi.tsv	50	50	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.CARDXREF.PS	abbinamento	XREF-CARD-NUM	app/jcl/XREFFILE.jcl:39	50	50	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.CARDXREF.PS	alternativa	@25+11 XREF-ACCT-ID	chiavi.tsv	50	50	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.CUSTDATA.PS	abbinamento	CUST-ID	app/jcl/CUSTFILE.jcl:46	50	50	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.DALYTRAN.PS	abbinamento	DALYTRAN-ID	scelta	300	300	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.DALYTRAN.PS.INIT	abbinamento	TRAN-ID	app/jcl/TRANFILE.jcl:49	1	1	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.DALYTRAN.PS.INIT	alternativa	@304+26 TRAN-PROC-TS	chiavi.tsv	1	1	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.DISCGRP.PS	abbinamento	DIS-ACCT-GROUP-ID+DIS-TRAN-TYPE-CD+DIS-TRAN-CAT-CD	app/jcl/DISCGRP.jcl:36	51	51	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.EXPORT.DATA.PS	abbinamento	@28+4	app/jcl/CBEXPORT.jcl:30	500	500	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.TCATBALF.PS	abbinamento	TRANCAT-ACCT-ID+TRANCAT-TYPE-CD+TRANCAT-CD	app/jcl/TCATBALF.jcl:36	50	50	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.TRANCATG.PS	abbinamento	TRAN-TYPE-CD+TRAN-CAT-CD	app/jcl/TRANCATG.jcl:36	18	18	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.TRANTYPE.PS	abbinamento	TRAN-TYPE	app/jcl/TRANTYPE.jcl:36	7	7	si
+app/data/EBCDIC/AWS.M2.CARDDEMO.USRSEC.PS	abbinamento	SEC-USR-ID	app/jcl/DUSRSECJ.jcl:64	10	10	si

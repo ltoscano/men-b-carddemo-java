@@ -1,0 +1,9 @@
+# fixture di app/data/ASCII/trantype.txt (issue #5): contratto CVTRA03Y.TRAN-TYPE-RECORD, profilo oracle-gnucobol, 7 record
+# colonne: record, terminatore, byte del file, byte di riempimento, vista, poi un campo per colonna: nome|stato|valore|byte originali[|origine se non dal file]
+1	CRLF	60	0	base	TRAN-TYPE|valido|"01"|30 31	TRAN-TYPE-DESC|valido|"Purchase" " "*42|50 75 72 63 68 61 73 65 20*42	FILLER|valido|"0"*8|30*8
+2	CRLF	60	0	base	TRAN-TYPE|valido|"02"|30 32	TRAN-TYPE-DESC|valido|"Payment" " "*43|50 61 79 6D 65 6E 74 20*43	FILLER|valido|"0"*8|30*8
+3	CRLF	60	0	base	TRAN-TYPE|valido|"03"|30 33	TRAN-TYPE-DESC|valido|"Credit" " "*44|43 72 65 64 69 74 20*44	FILLER|valido|"0"*8|30*8
+4	CRLF	60	0	base	TRAN-TYPE|valido|"04"|30 34	TRAN-TYPE-DESC|valido|"Authorization" " "*37|41 75 74 68 6F 72 69 7A 61 74 69 6F 6E 20*37	FILLER|valido|"0"*8|30*8
+5	CRLF	60	0	base	TRAN-TYPE|valido|"05"|30 35	TRAN-TYPE-DESC|valido|"Refund" " "*44|52 65 66 75 6E 64 20*44	FILLER|valido|"0"*8|30*8
+6	CRLF	60	0	base	TRAN-TYPE|valido|"06"|30 36	TRAN-TYPE-DESC|valido|"Reversal" " "*42|52 65 76 65 72 73 61 6C 20*42	FILLER|valido|"0"*8|30*8
+7	LF	60	0	base	TRAN-TYPE|valido|"07"|30 37	TRAN-TYPE-DESC|valido|"Adjustment" " "*40|41 64 6A 75 73 74 6D 65 6E 74 20*40	FILLER|valido|"0"*8|30*8

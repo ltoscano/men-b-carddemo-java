@@ -1,0 +1,2 @@
+tipo	chiave	campo	ascii	ebcdic
+valore-diverso	49	ACCT-ADDR-ZIP	record 49: valido "A" "0"*9 [41 30*9]	record 49: valido "ZEROAPR   " [E9 C5 D9 D6 C1 D7 D9 40 40 40]

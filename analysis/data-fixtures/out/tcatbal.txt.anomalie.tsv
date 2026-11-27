@@ -1,0 +1,2 @@
+tipo	record	campo	dettaglio
+terminatore-minoritario	50	-	LF in un file con CRLF su 49 righe
