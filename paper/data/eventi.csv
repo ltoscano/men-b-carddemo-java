@@ -307,3 +307,9 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T18:07:19Z,pr-47,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
 2026-11-27T18:07:58Z,pr-47,decisione,fable,orologio,validazione 1: quattro rilievi accolti (due bloccanti)
 2026-11-27T18:07:58Z,issue-23,esecutore-inizio,opus,orologio,giro di correzione unico
+2026-11-27T18:20:46Z,issue-27,esecutore-fine,sonnet,orologio,PR #48 aperta; criteri dichiarati soddisfatti; 29 casi di regressione; CI verde dichiarata
+2026-11-27T18:20:48Z,issue-27,esecutore-consuntivo,sonnet,orologio,durata 4889 s; 123 chiamate a strumenti; contatore token 307545
+2026-11-27T18:20:54Z,pr-48,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T19:15:18Z,pr-48,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T19:16:15Z,pr-48,decisione,fable,orologio,validazione 1: quattro rilievi accolti (uno bloccante); uno respinto come limite; uno risolto nella specifica
+2026-11-27T19:16:15Z,issue-27,esecutore-inizio,sonnet,orologio,giro di correzione unico
