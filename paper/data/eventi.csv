@@ -281,3 +281,9 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T17:28:49Z,processo,risposta-consegnata,fable,orologio,PR #44 rinviata; decisione sui binari oltre la PICTURE; verifica PR #30 in corso
 2026-11-27T17:34:23Z,pr-30,verifica-fine,fable,orologio,verifica dell'Approvatore conclusa
 2026-11-27T17:35:03Z,pr-30,merge,fable,orologio,PR #30 mergiata dopo tre giri e verifica dell'Approvatore; chiude #2
+2026-11-27T17:36:04Z,processo,risposta-consegnata,fable,orologio,PR #30 mergiata; specifica #22 in contestazione
+2026-11-27T17:36:05Z,issue-22,specifica-scritta,fable,orologio,bozza riallineata a #2; issue divisa (bersagli in variabile a parte)
+2026-11-27T17:36:05Z,issue-22,codex-inizio,codex,orologio,contestazione della specifica; sola lettura
+2026-11-27T17:41:40Z,issue-22,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-27T17:42:41Z,issue-22,ready,fable,orologio,specifica pubblicata; 4 rilievi accolti; bersagli variabili in 46
+2026-11-27T17:42:41Z,issue-22,esecutore-inizio,opus,orologio,affidata
