@@ -7,7 +7,7 @@ Sull'host servono solo Docker, Git e le utility POSIX. GnuCOBOL gira nel contain
 ```
 git submodule update --init
 ./oracle/run.sh build              # immagine, volume del legacy, compilazione (circa 20 s con la cache di Docker)
-./oracle/run.sh --all --check      # tutti i controlli, con le prove negative (circa 2 minuti)
+./oracle/run.sh --all --check      # tutti i controlli, con le prove negative (circa 2,5 minuti)
 ./oracle/run.sh avvio --check      # un solo controllo
 ```
 
