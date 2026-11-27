@@ -1,0 +1,18 @@
+{
+ "versione_schema": 1,
+ "descrizione": "Grafo di base dei file di prova di inventory-cics, scritto a mano nello stesso formato di docs/legacy-map/graph.json, con i soli nodi e archi che servono.",
+ "livelli_jcl": {},
+ "nodi": [
+  {"id": "program:FIXCICS", "tipo": "program", "nome": "FIXCICS", "file": "app/cbl/FIXCICS.cbl", "modulo": "base"},
+  {"id": "program:FIXCOPY2", "tipo": "program", "nome": "FIXCOPY2", "file": "app/cbl/FIXCOPY2.cbl", "modulo": "base"},
+  {"id": "program:FIXTGT", "tipo": "program", "nome": "FIXTGT", "file": "app/cbl/FIXTGT.cbl", "modulo": "base"},
+  {"id": "copybook:FIXCPY", "tipo": "copybook", "nome": "FIXCPY", "file": "app/cpy/FIXCPY.cpy", "modulo": "base"},
+  {"id": "external:NOEXIST", "tipo": "external", "nome": "NOEXIST", "origine": "COPY non risolta: nessun copybook con questo nome nel manifesto"},
+  {"id": "external:EXTBASE", "tipo": "external", "nome": "EXTBASE", "origine": "nodo external gia' presente nel grafo di base"},
+  {"id": "transaction:FX01", "tipo": "transaction", "nome": "FX01", "file": "app/csd/FIX.CSD", "modulo": "base"}
+ ],
+ "archi": [
+  {"tipo": "COPY", "da": "program:FIXCICS", "a": "copybook:FIXCPY", "occorrenze": [{"file": "app/cbl/FIXCICS.cbl", "riga": 80}]},
+  {"tipo": "COPY", "da": "program:FIXCOPY2", "a": "external:NOEXIST", "occorrenze": [{"file": "app/cbl/FIXCOPY2.cbl", "riga": 6}]}
+ ]
+}
