@@ -376,3 +376,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T21:33:56Z,issue-36,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
 2026-11-27T21:35:03Z,issue-36,ready,fable,orologio,specifica pubblicata; 6 rilievi accolti
 2026-11-27T21:35:03Z,issue-36,esecutore-inizio,opus,orologio,affidata
+2026-11-27T21:35:19Z,processo,richiesta-autore,autore,orologio,chiede se esiste un tracciato dei costi; e lo stato
