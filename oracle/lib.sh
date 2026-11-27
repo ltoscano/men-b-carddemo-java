@@ -175,7 +175,8 @@ in_container() {
 # ricalcolano e rifiutano una build assente, interrotta, vecchia o con artefatti cambiati dopo la build.
 build_inputs() {
   printf '%s\n' "$ORACLE_ROOT/Dockerfile" "$ORACLE_ROOT/cobc.opts" "$ORACLE_ROOT/programs.tsv" \
-    "$ORACLE_ROOT/launcher/avvia.c" "$ORACLE_ROOT/build/compile.sh" "$ORACLE_ROOT/ambiente.sh"
+    "$ORACLE_ROOT/launcher/avvia.c" "$ORACLE_ROOT/build/compile.sh" "$ORACLE_ROOT/ambiente.sh" \
+    "$ORACLE_ROOT/adattamenti/adatta.sh"
   ls "$ORACLE_ROOT"/stubs/*.cbl "$ORACLE_ROOT"/tests/*.cbl
 }
 
@@ -206,10 +207,18 @@ config_alternativa() {
     || fail "creazione della configurazione alternativa fallita"
 }
 
+# Artefatti: i file di bin/ e le copie di compilazione adattate di adattati/ (issue #25), ciascuno con
+# l'hash del contenuto. Una copia adattata cambiata, aggiunta o tolta dopo la build invalida l'impronta.
 artifacts_hash() { # artifacts_hash CARTELLA-DELLA-BUILD
   [ -d "$1/bin" ] || { echo "nessun-artefatto"; return 0; }
-  (cd "$1/bin" && for f in $(ls -A | sort); do printf '%s %s\n' "$(git hash-object "$f")" "$f"; done) \
-    | git hash-object --stdin
+  {
+    (cd "$1/bin" && for f in $(ls -A | sort); do printf '%s %s\n' "$(git hash-object "$f")" "$f"; done) || return 1
+    if [ -d "$1/adattati" ]; then
+      (cd "$1/adattati" && for f in $(ls -A | sort); do printf '%s adattati/%s\n' "$(git hash-object "$f")" "$f"; done) || return 1
+    else
+      echo "nessuna-copia-adattata"
+    fi
+  } | git hash-object --stdin
 }
 
 build_stamp() { # build_stamp CARTELLA-DELLA-BUILD: il contenuto atteso di IMPRONTA

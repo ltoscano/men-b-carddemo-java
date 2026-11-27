@@ -3,10 +3,11 @@
 # 1. Rifa' la build (oracle/build/run.sh): l'output viene cancellato e rigenerato, quindi nessun
 #    artefatto di una corsa precedente puo' passare per attuale.
 # 2. Verifica (oracle/build/verifica.sh, nel container) contro gli ELENCHI FISSI qui sotto, con confronti
-#    esatti: gli 11 programmi nell'elenco della build con tipo e sorgente; per ognuno dei 23 programmi
-#    compilati (11 + stub e segnaposto + prove) una sola riga in compilazione.tsv, esito 0, nessun errore,
+#    esatti: i 12 programmi nell'elenco della build con tipo e sorgente; per ognuno dei 26 programmi
+#    compilati (12 + stub e segnaposto + prove) una sola riga in compilazione.tsv, esito 0, nessun errore,
 #    ARGOMENTI DI OGNI INVOCAZIONE DI cobc IDENTICI a quelli attesi (opzioni fissate piu' i soli argomenti
-#    strutturali del tipo), artefatto del tipo giusto; in bin/ nient'altro; opzioni.txt identico;
+#    strutturali del tipo; per CBSTM03A, adattato, anche -I/out/adattati in testa e la copia adattata come
+#    sorgente), artefatto del tipo giusto; in bin/ nient'altro; opzioni.txt identico;
 #    compilatore, gestore dei file indicizzati e pacchetti come fissati nel Dockerfile; impronta valida.
 # 3. Le opzioni di cobc.opts sono esattamente quelle fissate qui sotto (cambiarle richiede di cambiare
 #    anche il controllo).
@@ -22,22 +23,26 @@ legacy:CBACT03C:eseguibile:/legacy/app/cbl/CBACT03C.cbl legacy:CBACT04C:eseguibi
 legacy:CBCUS01C:eseguibile:/legacy/app/cbl/CBCUS01C.cbl legacy:CBSTM03B:modulo:/legacy/app/cbl/CBSTM03B.CBL
 legacy:CBTRN01C:eseguibile:/legacy/app/cbl/CBTRN01C.cbl legacy:CBTRN02C:eseguibile:/legacy/app/cbl/CBTRN02C.cbl
 legacy:CBTRN03C:eseguibile:/legacy/app/cbl/CBTRN03C.cbl legacy:COBSWAIT:eseguibile:/legacy/app/cbl/COBSWAIT.cbl
-legacy:CSUTLDTC:modulo:/legacy/app/cbl/CSUTLDTC.cbl"
-[ "$(echo $FISSO | wc -w | tr -d ' ')" -eq 11 ] || fail "l'elenco fisso del controllo non ha 11 voci"
+legacy:CSUTLDTC:modulo:/legacy/app/cbl/CSUTLDTC.cbl
+adattato:CBSTM03A:eseguibile:/legacy/app/cbl/CBSTM03A.CBL"
+# CBSTM03A (issue #25) non compila cosi' com'e': si compila la copia adattata (oracle/adattamenti/registro.md),
+# con -I/out/adattati come primo argomento di cobc. Gli altri 11 non devono avere quell'argomento.
+[ "$(echo $FISSO | wc -w | tr -d ' ')" -eq 12 ] || fail "l'elenco fisso del controllo non ha 12 voci"
 # Stub, segnaposto e programmi di prova: compilati con le stesse opzioni, verificati allo stesso modo.
 ACCESSORI="stub:CEE3ABD:modulo:/oracle/stubs/CEE3ABD.cbl stub:CEEDAYS:modulo:/oracle/stubs/CEEDAYS.cbl
 stub:COBDATFT:modulo:/oracle/stubs/COBDATFT.cbl stub:MVSWAIT:modulo:/oracle/stubs/MVSWAIT.cbl
 prova:PARMECHO:eseguibile:/oracle/tests/PARMECHO.cbl prova:ABDUSING:eseguibile:/oracle/tests/ABDUSING.cbl
 prova:ABDNOARG:eseguibile:/oracle/tests/ABDNOARG.cbl prova:M03BCALL:eseguibile:/oracle/tests/M03BCALL.cbl
 prova:DTCCALL:eseguibile:/oracle/tests/DTCCALL.cbl prova:SEGNOPRB:eseguibile:/oracle/tests/SEGNOPRB.cbl
-prova:PERFPRB:eseguibile:/oracle/tests/PERFPRB.cbl prova:DATFTPRB:eseguibile:/oracle/tests/DATFTPRB.cbl"
+prova:PERFPRB:eseguibile:/oracle/tests/PERFPRB.cbl prova:DATFTPRB:eseguibile:/oracle/tests/DATFTPRB.cbl
+prova:IDXLOAD:eseguibile:/oracle/tests/IDXLOAD.cbl prova:IDXDUMP:eseguibile:/oracle/tests/IDXDUMP.cbl"
 # Ambiente fissato (deve coincidere con oracle/ambiente.sh): variabili ricevute da cobc e dai programmi.
 AMB_COBC_FISSO="PATH=/usr/bin:/bin HOME=/tmp LC_ALL=C"
 AMB_RUN_FISSO="PATH=/usr/bin:/bin HOME=/tmp LC_ALL=C COB_LIBRARY_PATH=/oracle-bin"
 # Opzioni fissate, nell'ordine (motivi in oracle/cobc.opts e oracle/README.md).
 OPZIONI_FISSE="-std=ibm -fbinary-truncate -fsingle-quote -fsign=EBCDIC -Wall -I/legacy/app/cpy"
 # Passi dei criteri di accettazione: nome e dipendenza (- = nessuna). selftest ha solo check.sh.
-PASSI="build:- avvio:build avviatore:build abend:build segno:build dialetto:build routines:build selftest:-"
+PASSI="build:- avvio:build avviatore:build abend:build segno:build dialetto:build routines:build adattamenti:build selftest:-"
 
 tmp="$(mktmp)"
 trap 'rm -rf "$tmp"' EXIT
@@ -162,6 +167,28 @@ copia isam; mutate "$tmp/isam/ambiente.txt" 's/^indexed file handler     : BDB$/
 expect_fail "gestore dei file indicizzati diverso da BDB" "ambiente: manca la riga 'indexed file handler     : BDB'" verifica "$tmp/isam.tsv" "$tmp/isam"
 copia impr; mutate "$tmp/impr/IMPRONTA" '1s/^input ./input x/'
 expect_fail "impronta degli input alterata" "build non aggiornata" verifica "$tmp/impr.tsv" "$tmp/impr"
+
+# Programma adattato (CBSTM03A, issue #25): la copia adattata e la sua cartella -I sono solo sue.
+copia noada; mutate "$tmp/noada/log/CBSTM03A.log" '/^arg -I\/out\/adattati$/d'
+expect_fail "CBSTM03A registrato senza -I/out/adattati" "CBSTM03A: argomenti di cobc diversi" verifica "$tmp/noada.tsv" "$tmp/noada"
+copia orig; mutate "$tmp/orig/log/CBSTM03A.log" 's#^arg /out/adattati/CBSTM03A\.CBL$#arg /legacy/app/cbl/CBSTM03A.CBL#'
+expect_fail "CBSTM03A registrato come compilato dall'originale" "CBSTM03A: argomenti di cobc diversi" verifica "$tmp/orig.tsv" "$tmp/orig"
+# Un altro programma ricompilato davvero con la cartella delle copie adattate (in coda agli argomenti).
+copia altroada; ricompila altroada eseguibile /legacy/app/cbl/CBCUS01C.cbl CBCUS01C -I/out/adattati
+grep -qx 'arg -I/out/adattati' "$tmp/altroada/log/CBCUS01C.log" || fail "la ricompilazione 'altroada' non ha usato la cartella delle copie adattate"
+expect_fail "CBCUS01C ricompilato con -I/out/adattati" "CBCUS01C: argomenti di cobc diversi" verifica "$tmp/altroada.tsv" "$tmp/altroada"
+copia senzacopia; rm "$tmp/senzacopia/adattati/CBSTM03A.CBL"
+expect_fail "copia adattata di CBSTM03A cancellata dopo la build" "CBSTM03A: copia adattata assente" verifica "$tmp/senzacopia.tsv" "$tmp/senzacopia"
+expect_fail "copia adattata di CBSTM03A cancellata: impronta" "artefatti della build cambiati" verifica "$tmp/senzacopia.tsv" "$tmp/senzacopia"
+copia copiamod; mutate "$tmp/copiamod/adattati/CUSTREC.cpy" '6s/CUST-FIRST-NAME/CUST-FIRST-NAMX/'
+expect_fail "copia adattata di CUSTREC alterata dopo la build: impronta" "artefatti della build cambiati" verifica "$tmp/copiamod.tsv" "$tmp/copiamod"
+# Se la generazione delle copie adattate fallisce, la build fallisce (compile.sh alterato: legacy inesistente).
+cp "$ORACLE_ROOT/build/compile.sh" "$tmp/adafail.compile.sh"
+mutate "$tmp/adafail.compile.sh" 's#sh /oracle/adattamenti/adatta\.sh /legacy #sh /oracle/adattamenti/adatta.sh /nonesiste #'
+mkdir -p "$tmp/adafail"
+expect_fail "generazione delle copie adattate fallita: la build fallisce" "generazione delle copie adattate fallita" \
+  orun -v "$tmp/adafail:/out" -- timeout -k 10 "$ORACLE_TIMEOUT_COMPILE" \
+    sh "$(in_container "$tmp/adafail.compile.sh")" tutto /oracle/programs.tsv /out
 
 # Ambiente e configurazione del compilatore e del runtime.
 # verifica_container ELENCO OUT: la sola verifica nel container (senza impronta).
