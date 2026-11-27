@@ -139,6 +139,34 @@ elif kind == "external-origine":
     next(n for n in g["nodi"] if n["id"] == "external:CEE3ABD")["origine"] = "x"
 elif kind == "transaction-file":
     next(n for n in g["nodi"] if n["id"] == "transaction:CAUP")["modulo"] = "app-vsam-mq"
+elif kind == "extra-exec":                    # esecuzione falsa accanto a quella vera, stesso file e stessa riga (mutazione del Validatore, giro 3)
+    true_e = find("PASSO_ESEGUE", "jcl-step:ACCTFILE/STEP05", "utility:IDCAMS")
+    E.append({"tipo": "PASSO_ESEGUE", "da": "jcl-step:ACCTFILE/STEP05", "a": "program:CBACT01C", "occorrenze": [copy.deepcopy(true_e["occorrenze"][0])]})
+elif kind == "extra-exec-same-edge":          # la stessa occorrenza di esecuzione ripetuta dentro lo stesso arco
+    e = find("PASSO_ESEGUE", "jcl-step:ACCTFILE/STEP05", "utility:IDCAMS")
+    e["occorrenze"].append(copy.deepcopy(e["occorrenze"][0]))
+elif kind == "extra-dd":                      # una DD di INTCALC/STEP15 ripetuta su un altro dataset dello stesso passo
+    src_e = find("PASSO_DD", "jcl-step:INTCALC/STEP15", "dataset:~SYSOUT")
+    other = next(e for e in E if e["tipo"] == "PASSO_DD" and e["da"] == src_e["da"] and e["a"] != src_e["a"])
+    other["occorrenze"].append(copy.deepcopy(src_e["occorrenze"][0]))
+elif kind == "extra-contain":                 # appartenenza falsa di un passo a una procedura, stessa riga dell'appartenenza vera
+    true_e = find("JOB_PASSO", "jcl-job:INTCALC")
+    E.append({"tipo": "PROC_PASSO", "da": "proc:REPROC", "a": true_e["a"], "occorrenze": [copy.deepcopy(true_e["occorrenze"][0])]})
+elif kind == "exec-type-utility":             # COBSWAIT e' un programma COBOL del manifesto: nome giusto, tipo utility (mutazione del Validatore, giro 3)
+    find("PASSO_ESEGUE", "jcl-step:WAITSTEP/WAIT")["a"] = "utility:COBSWAIT"
+    g["nodi"].append({"id": "utility:COBSWAIT", "tipo": "utility", "nome": "COBSWAIT"})
+elif kind == "exec-type-external":            # REPROC e' una procedura del manifesto: nome giusto, tipo external
+    find("PASSO_ESEGUE", "jcl-step:PRTCATBL/STEP05R")["a"] = "external:REPROC"
+    g["nodi"].append({"id": "external:REPROC", "tipo": "external", "nome": "REPROC", "origine": "procedura non nel repository"})
+elif kind == "dup-node":                      # un nodo presente due volte
+    g["nodi"].append(copy.deepcopy(next(n for n in g["nodi"] if n["id"] == "jcl-step:WAITSTEP/WAIT")))
+elif kind == "dup-edge":                      # un arco presente due volte
+    E.append(copy.deepcopy(find("PASSO_ESEGUE", "jcl-step:ACCTFILE/STEP10", "utility:IDCAMS")))
+elif kind == "orphan-node":                   # un dataset che nessun arco usa
+    g["nodi"].append({"id": "dataset:AWS.M2.CARDDEMO.FANTASMA", "tipo": "dataset", "nome": "AWS.M2.CARDDEMO.FANTASMA", "classe": "reale"})
+elif kind == "extra-step-node":               # un passo in piu' senza scheda EXEC
+    g["nodi"].append({"id": "jcl-step:WAITSTEP/FINTO", "tipo": "jcl-step", "nome": "WAITSTEP/FINTO", "file": "app/jcl/WAITSTEP.jcl", "riga": 99,
+                      "ordinale": 7, "contenitore": "jcl-job:WAITSTEP", "fonte": "mapa"})
 else:
     raise SystemExit("mutazione sconosciuta: " + kind)
 with open(dst, "w", encoding="utf-8") as f:

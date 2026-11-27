@@ -113,6 +113,16 @@ neg "ordinale di un passo alterato" step-ordinale "senza passo o senza esecuzion
 neg "attributo simbolico su un dataset non simbolico" dataset-simbolico "simbolico"
 neg "origine di un nodo external alterata" external-origine "origine"
 neg "modulo di una transazione alterato" transaction-file "modulo"
+neg "esecuzione falsa accanto a quella vera, stesso file e riga (ACCTFILE/STEP05 -> CBACT01C)" extra-exec "2 occorrenze PASSO_ESEGUE per una sola scheda"
+neg "esecuzione ripetuta dentro lo stesso arco" extra-exec-same-edge "2 occorrenze PASSO_ESEGUE per una sola scheda"
+neg "DD ripetuta su un altro dataset dello stesso passo" extra-dd "occorrenze PASSO_DD/JOB_DD per una sola scheda"
+neg "appartenenza falsa di un passo a una procedura" extra-contain "occorrenze JOB_PASSO/PROC_PASSO per una sola scheda"
+neg "programma COBOL del manifesto eseguito come utility (COBSWAIT)" exec-type-utility "dicono program:COBSWAIT"
+neg "procedura del manifesto eseguita come external (REPROC)" exec-type-external "dicono proc:REPROC"
+neg "nodo presente due volte" dup-node "presente 2 volte nel grafo"
+neg "arco presente due volte" dup-edge "presente 2 volte nel grafo"
+neg "dataset senza nessun arco entrante" orphan-node "nessun arco entrante"
+neg "nodo passo senza scheda EXEC" extra-step-node "senza scheda EXEC"
 
 log "5b. prova negativa: un attributo aggiunto allo schema e non elencato in ATTRS deve far fallire il controllo"
 py "$gen" -c "import json;s=json.load(open('/docs/graph.schema.json'));s['\$defs']['occ_dd']['properties']['nuovo_attributo']={'type':'string'};json.dump(s,open('/work/schema-plus.json','w'))"
@@ -137,6 +147,38 @@ negmapa "CSV di TRANEXTR svuotato (senza il messaggio 'neither jobs nor procs')"
 negmapa "CSV di POSTTRAN con un record JOBSTEPDD troncato" app/jcl/POSTTRAN.jcl "awk 'BEGIN{FS=OFS=\",\"} /^JOBSTEPDD/ { if (!d) { print \$1,\$2,\$3; d=1; next } } {print}' app_jcl_POSTTRAN.jcl.csv > x.tmp; mv x.tmp app_jcl_POSTTRAN.jcl.csv" "record JOBSTEPDD con"
 negmapa "log di mapa di TRANEXTR troncato" app/app-transaction-type-db2/jcl/TRANEXTR.jcl "printf 'x\\n' > $T.stdout" "Processing complete"
 negmapa "CSV di mapa mancante" app/jcl/POSTTRAN.jcl "rm app_jcl_POSTTRAN.jcl.csv" "output o log mancante"
+
+log "5d. prove negative sulla risposta di ProLeap e di cobol-migration-toolkit (per ogni invocazione, anche dove non sono attese COPY o CALL)"
+negproleap() { # negproleap NOME FILE-SORGENTE COMANDO-SU-DIR-COPIA NEEDLE
+  local name="$1" f="$2" cmd="$3" needle="$4" out rc=0 n
+  n="$(echo "$f" | tr '/' '_')"
+  rm -rf "$tmp/pl" && mkdir -p "$tmp/pl/raw" "$tmp/pl/out" && cp "$gen/tmp/proleap"/* "$tmp/pl/raw/" && cp "$gen/tmp/copy-files.txt" "$tmp/pl/"
+  ( cd "$tmp/pl/raw" && eval "$cmd" )
+  out="$(psh "$tmp/pl" "python -I $(G normalize.py) proleap /work/copy-files.txt /work/raw /work/out" 2>&1)" || rc=$?
+  [ "$rc" -ne 0 ] || fail "PROVA NEGATIVA FALLITA ($name): risposta di ProLeap non riconoscibile accettata"
+  echo "$out" | grep -q -- "$needle" || { echo "$out" | head -3 >&2; fail "prova negativa ($name): motivo inatteso ('$needle')"; }
+  log "   ok: $name (exit $rc)"
+}
+C=app_cpy_CSUTLDPY.cpy
+head -1 "$gen/tmp/proleap/$C.tsv" | cmp -s - <(printf 'riga\tcopybook\tsostituzioni\n') || fail "la risposta di ProLeap su CSUTLDPY (senza COPY) non e' la sola intestazione"
+negproleap "risposta di ProLeap su CSUTLDPY (zero COPY attese) sostituita da testo" app/cpy/CSUTLDPY.cpy "printf 'TRUNCATED INVALID RESPONSE\\n' > $C.tsv" "intestazione"
+negproleap "risposta di ProLeap su CSUTLDPY vuota" app/cpy/CSUTLDPY.cpy ": > $C.tsv" "risposta vuota"
+negproleap "risposta di ProLeap su CSUTLDPY con intestazione e righe di dati sbagliate" app/cpy/CSUTLDPY.cpy "printf 'x\\ty\\tz\\n12\\tFOO\\t\\n' > $C.tsv" "intestazione"
+negproleap "risposta di ProLeap con riga di dati non riconoscibile" app/cbl/CBACT01C.cbl "printf 'garbage\\n' >> app_cbl_CBACT01C.cbl.tsv" "non riconoscibile"
+negproleap "risposta di ProLeap senza fine riga finale (troncata)" app/cbl/CBACT01C.cbl "printf %s \"\$(cat app_cbl_CBACT01C.cbl.tsv)\" > x.tmp; mv x.tmp app_cbl_CBACT01C.cbl.tsv" "troncata"
+negproleap "risposta di ProLeap mancante" app/cpy/CSUTLDPY.cpy "rm $C.tsv" "risposta mancante"
+negproleap "elenco dei file analizzati con un file in meno" app/cpy/CSUTLDPY.cpy "sed -i.bak '1d' ../copy-files.txt && rm -f ../copy-files.txt.bak" "elenco dei file"
+negcmt() { # negcmt NOME COMANDO-SU-DIR-COPIA NEEDLE
+  local name="$1" cmd="$2" needle="$3" out rc=0
+  rm -rf "$tmp/cm" && mkdir -p "$tmp/cm/raw" "$tmp/cm/out" && cp -R "$gen/tmp/cmt"/* "$tmp/cm/raw/"
+  ( cd "$tmp/cm/raw" && eval "$cmd" )
+  out="$(psh "$tmp/cm" "python -I $(G normalize.py) cmt /work/raw /work/out" 2>&1)" || rc=$?
+  [ "$rc" -ne 0 ] || fail "PROVA NEGATIVA FALLITA ($name): risposta di cobol-migration-toolkit non riconoscibile accettata"
+  echo "$out" | grep -q -- "$needle" || { echo "$out" | head -3 >&2; fail "prova negativa ($name): motivo inatteso ('$needle')"; }
+  log "   ok: $name (exit $rc)"
+}
+negcmt "risposta di cobol-migration-toolkit mancante per una cartella" "rm app_cpy/inventory.json" "risposte mancanti"
+negcmt "risposta di cobol-migration-toolkit senza 'units'" "printf '{}' > app_cpy/inventory.json" "non riconoscibile"
 
 log "6. prove negative sugli attesi scritti a mano (si altera l'atteso, il grafo resta quello vero)"
 negexp() { # negexp NOME FILE SED-EXPR NEEDLE

@@ -3,11 +3,13 @@
 
 Uso: normalize.py cmt RAWDIR OUTDIR     (RAWDIR/<cartella>/inventory.json, una per cartella scandita)
      normalize.py mapa RAWDIR OUTDIR    (RAWDIR/*.csv, uno per file JCL)
+     normalize.py proleap LISTA RAWDIR OUTDIR   (LISTA: file cobol e copybook del manifesto; RAWDIR/<percorso con _>.tsv, uno per file)
 """
 import csv
 import glob
 import json
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -18,8 +20,19 @@ def cmt(raw, out):
     by_stem = {stem(p): p for p in of_type("cobol", "copybook")}
     assert len(by_stem) == len(of_type("cobol", "copybook")), "nomi duplicati tra programmi e copybook"
     rows = []
+    # una risposta per ogni cartella di programmi e copybook del manifesto, ne' di piu' ne' di meno
+    want_dirs = {os.path.dirname(p).replace("/", "_") for p in of_type("cobol", "copybook")}
+    have_dirs = {os.path.basename(os.path.dirname(p)) for p in glob.glob(os.path.join(raw, "*", "inventory.json"))}
+    if want_dirs != have_dirs:
+        print(f"cmt: risposte mancanti {sorted(want_dirs - have_dirs)} o inattese {sorted(have_dirs - want_dirs)}", file=sys.stderr)
+        return 1
     for p in sorted(glob.glob(os.path.join(raw, "*", "inventory.json"))):
         inv = json.load(open(p, encoding="utf-8"))
+        if not isinstance(inv, dict) or not isinstance(inv.get("units"), list) or not all(
+                isinstance(u, dict) and isinstance(u.get("path"), str) and isinstance(u.get("calls", []), list)
+                and all(isinstance(c, str) and c for c in u.get("calls", [])) for u in inv["units"]):
+            print(f"cmt: {p}: risposta non riconoscibile (attesi 'units' con 'path' e 'calls')", file=sys.stderr)
+            return 1
         for u in inv["units"]:
             prog = stem(u["path"])
             if prog not in by_stem:
@@ -125,5 +138,64 @@ def mapa(raw, out):
     return 0
 
 
+PROLEAP_HEADER = "riga\tcopybook\tsostituzioni"
+
+
+def proleap_check(path, text):
+    """Valida UNA risposta di ProLeap (CopyLister): intestazione esatta, poi solo righe 'riga<TAB>copybook<TAB>sostituzioni'.
+    Ammessa anche con zero COPY (solo l'intestazione), mai vuota o non riconoscibile. Ritorna (righe, problemi)."""
+    problems, rows = [], []
+    if not text:
+        return rows, ["risposta vuota"]
+    if not text.endswith("\n"):
+        problems.append("risposta non terminata da fine riga (troncata?)")
+    lines = text.split("\n")
+    if lines and lines[-1] == "":
+        lines.pop()
+    if not lines or lines[0] != PROLEAP_HEADER:
+        problems.append(f"intestazione {lines[0][:40]!r} diversa da {PROLEAP_HEADER!r}" if lines else "nessuna riga")
+        return rows, problems
+    for i, ln in enumerate(lines[1:], start=2):
+        f = ln.split("\t")
+        if len(f) != 3 or not f[0].isdigit() or int(f[0]) < 1 or not re.fullmatch(r"[A-Za-z0-9#@$-]+", f[1]):
+            problems.append(f"riga {i} della risposta non riconoscibile: {ln[:40]!r}")
+            continue
+        rows.append((path, f[0], f[1], f[2]))
+    return rows, problems
+
+
+def proleap(lista, raw, out):
+    expected = of_type("cobol", "copybook")
+    listed = [l.rstrip("\n") for l in open(lista, encoding="utf-8") if l.strip()]
+    if sorted(listed) != sorted(expected):
+        print("proleap: l'elenco dei file analizzati non coincide con programmi e copybook del manifesto", file=sys.stderr)
+        return 1
+    rows, bad = [], 0
+    for p in listed:
+        tp = os.path.join(raw, p.replace("/", "_") + ".tsv")
+        if not os.path.isfile(tp):
+            print(f"proleap: {p}: risposta mancante", file=sys.stderr)
+            bad += 1
+            continue
+        try:
+            text = open(tp, encoding="utf-8", newline="").read()
+        except UnicodeDecodeError:
+            print(f"proleap: {p}: risposta illeggibile", file=sys.stderr)
+            bad += 1
+            continue
+        r, probs = proleap_check(p, text)
+        for pr in probs:
+            print(f"proleap: {p}: risposta non riconoscibile: {pr}", file=sys.stderr)
+        bad += bool(probs)
+        rows.extend(r)
+    if bad:
+        return 1
+    write_tsv(os.path.join(out, "copy.tsv"), ["file", "riga", "copybook", "sostituzioni"], rows)
+    return 0
+
+
 if __name__ == "__main__":
-    sys.exit({"cmt": cmt, "mapa": mapa}[sys.argv[1]](sys.argv[2], sys.argv[3]))
+    mode = sys.argv[1]
+    if mode == "proleap":
+        sys.exit(proleap(*sys.argv[2:5]))
+    sys.exit({"cmt": cmt, "mapa": mapa}[mode](*sys.argv[2:4]))

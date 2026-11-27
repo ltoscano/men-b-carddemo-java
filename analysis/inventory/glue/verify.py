@@ -41,6 +41,18 @@ for r in REQUIRED:
 if errors:
     sys.exit(1)
 
+# un dizionario per id o per chiave nasconderebbe un duplicato (l'ultimo sovrascrive il primo): si verifica prima l'unicita'
+for _id, _n in Counter(n["id"] for n in g["nodi"]).items():
+    if _n > 1:
+        err(f"nodo {_id}: presente {_n} volte nel grafo")
+for _k, _n in Counter((e["tipo"], e["da"], e["a"]) for e in edges).items():
+    if _n > 1:
+        err(f"arco {_k[0]} {_k[1]} -> {_k[2]}: presente {_n} volte nel grafo")
+for _t in ("cobol", "copybook", "asm", "proc", "jcl"):
+    for _s, _n in Counter(stem(p) for p in of_type(_t)).items():
+        if _n > 1:
+            err(f"manifesto: due file {_t} con lo stesso nome {_s}")
+
 # ------------------------------------------------------------------ 1. un nodo per ogni file sorgente del manifesto
 for p in of_type("cobol"):
     n = nodes.get("program:" + stem(p))
@@ -255,15 +267,24 @@ mapa_dd_rows = defaultdict(lambda: defaultdict(list))
 for r in read_tsv(os.path.join(OUT, "mapa_dd.tsv")):
     mapa_dd_rows[r["file"]][int(r["ordinale"])].append(r)
 step_by = {(n["file"], n["ordinale"]): n for n in g["nodi"] if n["tipo"] == "jcl-step"}
-exec_occ, dd_occ, contain_occ = {}, {}, {}
+# Tutte le occorrenze, senza sovrascritture: una scheda ha UNA sola occorrenza di ciascun tipo (esecuzione, appartenenza, DD).
+# Un'occorrenza in piu' sulla stessa riga e' un difetto, non qualcosa che l'ultima scrittura nasconde.
+_all = {"PASSO_ESEGUE": defaultdict(list), "PASSO_DD/JOB_DD": defaultdict(list), "JOB_PASSO/PROC_PASSO": defaultdict(list)}
 for e in edges:
     for o in e["occorrenze"]:
         if e["tipo"] == "PASSO_ESEGUE":
-            exec_occ[(o["file"], o["riga"])] = (e, o)
+            _all["PASSO_ESEGUE"][(o["file"], o["riga"])].append((e, o))
         elif e["tipo"] in ("PASSO_DD", "JOB_DD"):
-            dd_occ[(o["file"], o["riga"])] = (e, o)
+            _all["PASSO_DD/JOB_DD"][(o["file"], o["riga"])].append((e, o))
         elif e["tipo"] in ("JOB_PASSO", "PROC_PASSO"):
-            contain_occ[(o["file"], o["riga"])] = (e, o)
+            _all["JOB_PASSO/PROC_PASSO"][(o["file"], o["riga"])].append((e, o))
+for _label, _d in _all.items():
+    for _key, _lst in sorted(_d.items()):
+        if len(_lst) > 1:
+            err(f"JCL: {_key[0]}:{_key[1]}: {len(_lst)} occorrenze {_label} per una sola scheda ({', '.join(x[0]['da'] + ' -> ' + x[0]['a'] for x in _lst)})")
+exec_occ = {k: v[0] for k, v in _all["PASSO_ESEGUE"].items()}
+dd_occ = {k: v[0] for k, v in _all["PASSO_DD/JOB_DD"].items()}
+contain_occ = {k: v[0] for k, v in _all["JOB_PASSO/PROC_PASSO"].items()}
 
 
 def dataset_expected(c, risolto):
@@ -296,11 +317,14 @@ for p in of_type("jcl", "proc"):
             e, o = eo
             if st["riga"] != int(c["riga"]) or e["da"] != st["id"]:
                 err(f"JCL: {p}:{c['riga']}: il passo {st['id']} non e' quello della scheda")
-            if o["esecuzione"] != c["tipo_exec"] or o.get("parm", "") != c["parm"] or e["a"].split(":", 1)[1].upper() != c["esegue"].upper():
-                err(f"JCL: {p}:{c['riga']}: esecuzione {e['a']} {o['esecuzione']} parm {o.get('parm', '')!r}, la scheda dice {c['tipo_exec']} {c['esegue']} parm {c['parm']!r}")
-            tgt_ok = {"PGM": ("program:", "asm:", "utility:"), "PROC": ("proc:", "external:")}[c["tipo_exec"]]
-            if not e["a"].startswith(tgt_ok):
-                err(f"JCL: {p}:{c['riga']}: tipo di bersaglio {e['a']} incoerente con {c['tipo_exec']}")
+            # bersaglio completo (tipo compreso), dal nome della scheda e dal manifesto: PGM = programma COBOL, assembler o utilita'
+            # (non nel repository); PROC = procedura del manifesto o procedura esterna
+            if c["tipo_exec"] == "PGM":
+                want_t = ("program:" if c["esegue"] in prog_names else "asm:" if c["esegue"] in asm_names else "utility:") + c["esegue"]
+            else:
+                want_t = ("proc:" if c["esegue"].upper() in proc_names else "external:") + c["esegue"].upper()
+            if o["esecuzione"] != c["tipo_exec"] or o.get("parm", "") != c["parm"] or e["a"] != want_t:
+                err(f"JCL: {p}:{c['riga']}: esecuzione {e['a']} {o['esecuzione']} parm {o.get('parm', '')!r}, la scheda e il manifesto dicono {want_t} {c['tipo_exec']} parm {c['parm']!r}")
             co = contain_occ.get(key)
             if not co or co[0]["da"] != container or co[0]["a"] != st["id"]:
                 err(f"JCL: {p}:{c['riga']}: il passo non e' contenuto in {container}")
@@ -341,6 +365,19 @@ for p in of_type("jcl", "proc"):
                     err(f"JCL: {p}:{c['riga']}: dsn_risolto/disp_effettivo del grafo ({o.get('dsn_risolto', '')!r}, {o.get('disp_effettivo', '')!r}) diversi da mapa ({want_r!r}, {want_d!r})")
 for key in set(exec_occ) - seen_exec:
     err(f"JCL: esecuzione nel grafo a {key[0]}:{key[1]} senza scheda EXEC")
+for key in set(contain_occ) - seen_exec:
+    err(f"JCL: appartenenza al contenitore nel grafo a {key[0]}:{key[1]} senza scheda EXEC")
+card_steps = {(p, int(c["passo"])) for p in of_type("jcl", "proc") for c in cards[p] if c["scheda"] == "EXEC"}
+for k in set(step_by) - card_steps:
+    err(f"JCL: passo nel grafo {step_by[k]['id']} senza scheda EXEC")
+_steps_n = Counter((n["file"], n["ordinale"]) for n in g["nodi"] if n["tipo"] == "jcl-step")
+for k, _n in _steps_n.items():
+    if _n > 1:
+        err(f"JCL: {k[0]}: due passi con lo stesso ordinale {k[1]}")
+_inbound_ids = {e["a"] for e in edges}
+for n in g["nodi"]:
+    if n["tipo"] in ("dataset", "external", "utility") and n["id"] not in _inbound_ids:
+        err(f"nodo {n['id']}: nessun arco entrante (nodo senza origine)")
 for key in set(dd_occ) - seen_dd:
     err(f"JCL: DD nel grafo a {key[0]}:{key[1]} senza scheda DD")
 

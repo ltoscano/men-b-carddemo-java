@@ -48,10 +48,7 @@ inv_generate() {
   export LEGACY_VOL IMG_PROLEAP IMG_MAPA g
   { manifest_of cobol; manifest_of copybook; } > "$g/tmp/copy-files.txt"
   xargs -P "$INV_JOBS" -I{} bash "$INV_DIR/one.sh" proleap {} < "$g/tmp/copy-files.txt" || fail "ProLeap fallito"
-  printf 'file\triga\tcopybook\tsostituzioni\n' > "$g/out/copy.tsv"
-  while IFS= read -r f; do
-    cat "$g/tmp/proleap/$(echo "$f" | tr '/' '_').tsv" | awk -F'\t' -v p="$f" 'BEGIN{OFS="\t"} NR>1 {print p,$1,$2,$3}'
-  done < "$g/tmp/copy-files.txt" >> "$g/out/copy.tsv"
+  py "$g" "$(G normalize.py)" proleap /work/tmp/copy-files.txt /work/tmp/proleap /work/out || fail "normalizzazione di ProLeap fallita (risposta mancante o non riconoscibile)"
 
   # CALL statiche: nomi da cobol-migration-toolkit (una scansione per cartella di programmi e di copybook), righe dal localizzatore
   log "CALL: cobol-migration-toolkit per cartella, poi localizzatore"
