@@ -7,12 +7,24 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Build e test in container
+      - name: Build e test in container (con test di integrazione PostgreSQL)
         run: ./verify.sh
+      - name: Nessun container di test rimasto
+        if: always()
+        run: |
+          set -euo pipefail
+          label=menb.verify.run
+          containers="$(docker ps -a -q --filter "label=${label}")"
+          if [ -n "${containers}" ]; then
+            echo "Container di test rimasti: ${containers}"
+            exit 1
+          fi
+          echo "nessun container con l'etichetta ${label}"
 
   smoke:
     runs-on: ubuntu-latest
