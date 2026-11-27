@@ -364,13 +364,13 @@ atteso_fallimento db-servicemix-derby "enforcer, bundle ripubblicato" "${ENF} (d
 
 # controllo sulle classi: coordinata non elencata (enforcer spento da riga di comando), driver caricabile
 mut_dip carddemo-parity hsqldb-classi
-atteso_fallimento db-classi-hsqldb "controllo sulle classi" "maven-antrun-plugin:3.2.0:run (classi-database-vietate)" "DATABASE-INCORPORATO-CLASSE-VIETATA" "on project carddemo-parity" -- validate -Denforcer.skip=true
+atteso_fallimento db-classi-hsqldb "controllo sulle classi" "maven-antrun-plugin:3.2.0:run (classi-database-vietate)" "DATABASE-INCORPORATO-CLASSE-VIETATA" "on project carddemo-parity" -- process-test-classes -Denforcer.skip=true
 
 # driver noto sotto coordinate non elencate (it.menb:prova-driver, repository locale di prova), Enforcer acceso
 prova_driver() { # nome modulo
   mut_repo "$2"
   mut_dip "$2" "$1"
-  atteso_fallimento "$1" "controllo sulle classi, classpath effettivo di $2" "maven-antrun-plugin:3.2.0:run (classi-database-vietate)" "DATABASE-INCORPORATO-CLASSE-VIETATA" "on project $2" -- validate
+  atteso_fallimento "$1" "controllo sulle classi, classpath effettivo di $2" "maven-antrun-plugin:3.2.0:run (classi-database-vietate)" "DATABASE-INCORPORATO-CLASSE-VIETATA" "on project $2" -- process-test-classes
 }
 prova_driver classi-online-optional carddemo-online
 prova_driver classi-online-test carddemo-online
