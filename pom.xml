@@ -29,6 +29,12 @@
   <properties>
     <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Versioni fissate dei controlli di #26. Enforcer: gestita da Spring Boot 4.2.0
+         (maven-enforcer-plugin.version). Checkstyle e ArchUnit non sono gestiti da Spring Boot:
+         ultime versioni stabili su Maven Central al 27 nov 2026. -->
+    <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
+    <checkstyle.version>14.4.0</checkstyle.version>
+    <archunit.version>1.5.1</archunit.version>
   </properties>
 
   <dependencyManagement>
@@ -53,6 +59,151 @@
         <artifactId>carddemo-batch</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.tngtech.archunit</groupId>
+        <artifactId>archunit</artifactId>
+        <version>${archunit.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- Divieto di tipi in virgola mobile e di var nel codice di produzione (vedi
+             quality/regole/checkstyle.xml). Le dipendenze di Checkstyle sono fissate qui. -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>${maven-checkstyle-plugin.version}</version>
+          <dependencies>
+            <dependency>
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>${checkstyle.version}</version>
+            </dependency>
+          </dependencies>
+          <executions>
+            <execution>
+              <id>tipi-vietati</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+              <configuration>
+                <configLocation>${project.parent.basedir}/quality/regole/checkstyle.xml</configLocation>
+                <includeTestSourceDirectory>false</includeTestSourceDirectory>
+                <consoleOutput>true</consoleOutput>
+                <failsOnError>true</failsOnError>
+                <failOnViolation>true</failOnViolation>
+                <violationSeverity>warning</violationSeverity>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <!-- Database incorporati vietati in ogni modulo e ambito. Due esecuzioni: la ricerca
+           transitiva non vede le dipendenze dirette optional, quella diretta si'. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>${maven-enforcer-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>database-incorporati</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <searchTransitive>true</searchTransitive>
+                  <excludes>
+                    <exclude>com.h2database:*</exclude>
+                    <exclude>org.hsqldb:*</exclude>
+                    <exclude>hsqldb:*</exclude>
+                    <exclude>org.apache.derby:*</exclude>
+                    <exclude>derby:*</exclude>
+                    <exclude>org.apache.servicemix.bundles:org.apache.servicemix.bundles.hsqldb*</exclude>
+                    <exclude>org.apache.servicemix.bundles:org.apache.servicemix.bundles.derby*</exclude>
+                    <exclude>org.apache.servicemix.bundles:org.apache.servicemix.bundles.h2*</exclude>
+                  </excludes>
+                  <message>DATABASE-INCORPORATO-VIETATO</message>
+                </bannedDependencies>
+              </rules>
+              <fail>true</fail>
+            </configuration>
+          </execution>
+          <execution>
+            <id>database-incorporati-diretti</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <searchTransitive>false</searchTransitive>
+                  <excludes>
+                    <exclude>com.h2database:*</exclude>
+                    <exclude>org.hsqldb:*</exclude>
+                    <exclude>hsqldb:*</exclude>
+                    <exclude>org.apache.derby:*</exclude>
+                    <exclude>derby:*</exclude>
+                    <exclude>org.apache.servicemix.bundles:org.apache.servicemix.bundles.hsqldb*</exclude>
+                    <exclude>org.apache.servicemix.bundles:org.apache.servicemix.bundles.derby*</exclude>
+                    <exclude>org.apache.servicemix.bundles:org.apache.servicemix.bundles.h2*</exclude>
+                  </excludes>
+                  <message>DATABASE-INCORPORATO-VIETATO</message>
+                </bannedDependencies>
+              </rules>
+              <fail>true</fail>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- Driver di database incorporati vietati sul classpath effettivo di ogni modulo
+           (compile, runtime, provided, optional, test), qualunque coordinata li porti. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>${maven-antrun-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>classi-database-vietate</id>
+            <phase>process-test-classes</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                    <available property="vietata.0" classname="org.h2.Driver" classpathref="maven.test.classpath"/>
+                    <available property="vietata.1" classname="org.h2.jdbcx.JdbcDataSource" classpathref="maven.test.classpath"/>
+                    <available property="vietata.2" classname="org.hsqldb.jdbc.JDBCDriver" classpathref="maven.test.classpath"/>
+                    <available property="vietata.3" classname="org.hsqldb.jdbcDriver" classpathref="maven.test.classpath"/>
+                    <available property="vietata.4" classname="org.apache.derby.jdbc.EmbeddedDriver" classpathref="maven.test.classpath"/>
+                    <available property="vietata.5" classname="org.apache.derby.iapi.jdbc.AutoloadedDriver" classpathref="maven.test.classpath"/>
+                    <fail message="DATABASE-INCORPORATO-CLASSE-VIETATA: driver di database incorporato sul classpath di ${project.artifactId}">
+                      <condition>
+                        <or>
+                        <isset property="vietata.0"/>
+                        <isset property="vietata.1"/>
+                        <isset property="vietata.2"/>
+                        <isset property="vietata.3"/>
+                        <isset property="vietata.4"/>
+                        <isset property="vietata.5"/>
+                        </or>
+                      </condition>
+                    </fail>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

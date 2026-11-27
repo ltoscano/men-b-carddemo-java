@@ -1,0 +1,7 @@
+  <!-- PROVA-REGOLE-26 -->
+  <repositories>
+    <repository>
+      <id>prova-locale</id>
+      <url>file:///workspace/quality/regole/casi/repo-locale</url>
+    </repository>
+  </repositories>

@@ -8,6 +8,8 @@ ARG MODULE
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 WORKDIR /build
 COPY pom.xml ./
+# Configurazione dei controlli di #26 (Checkstyle gira nella fase validate di mvn package).
+COPY quality/regole quality/regole
 COPY carddemo-domain carddemo-domain
 COPY carddemo-loader carddemo-loader
 COPY carddemo-online carddemo-online
