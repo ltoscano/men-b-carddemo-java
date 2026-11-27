@@ -181,3 +181,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T15:08:01Z,P15,fine,fable,orologio,17 rilievi (7 bloccanti); #24 ristretta e #26 pronte; aperte #36 #37 #38
 2026-11-27T15:08:01Z,issue-24,esecutore-inizio,opus,orologio,worktree isolato
 2026-11-27T15:08:01Z,issue-26,esecutore-inizio,sonnet,orologio,worktree isolato
+2026-11-27T15:08:44Z,processo,risposta-consegnata,fable,orologio,Esecutori in corso: #2 #3 #21 (correzione); #24; #26
+2026-11-27T15:17:32Z,issue-21,esecutore-fine,sonnet,orologio,giro di correzione 2 consegnato; SHA ceeddcf; CI verde
+2026-11-27T15:17:35Z,issue-21,esecutore-consuntivo,sonnet,orologio,giro di correzione 2: durata 1033 s; 32 chiamate a strumenti; contatore token 238129 (cumulativo)
