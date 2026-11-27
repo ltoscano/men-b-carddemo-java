@@ -46,24 +46,27 @@ check_unavailable() {
   done
 }
 
-# reconcile HOSTOUT CONTOUT: ogni verdetto / prova salvata deve coincidere con quello ricalcolato dagli output
+# reconcile HOSTOUT CONTOUT: ogni verdetto / prova dichiarato in verdetti.tsv deve esistere ed essere uguale al ricalcolato,
+# con il controllo e lo strumento dichiarati (non ricavati dal nome del file o dalla cartella in cui si trova).
 reconcile() {
-  local hout="$1" cout="$2" f dir name check tool n=0
-  for f in "$hout"/*/verdetto-*.txt "$hout"/*/prova-fallita-*.txt; do
-    dir="$(basename "$(dirname "$f")")"; name="$(basename "$f" .txt)"
-    case "$name" in verdetto-*) check="${name#verdetto-}" ;; prova-fallita-ripartizione) check="scc-split" ;; *) echo "file di verdetto sconosciuto: $f" >&2; return 1 ;; esac
-    case "$dir" in cmt|cobmix|proleap) tool="$dir" ;; *) tool="" ;; esac
-    verdict_text "$check" "$tool" --out "$cout" > "$tmp/re.txt"
-    cmp -s "$f" "$tmp/re.txt" || { echo "verdetto salvato $dir/$name.txt (ultima riga '$(tail -1 "$f")') diverso dal ricalcolato ('$(tail -1 "$tmp/re.txt")')" >&2; return 1; }
+  local hout="$1" cout="$2" tbl path check tool n=0
+  tbl="$(verdict_table)" || return 1
+  while IFS=$'\t' read -r path check tool; do
+    [ "$tool" != "-" ] || tool=""
+    [ -f "$hout/$path" ] || { echo "verdetto dovuto mancante: $path" >&2; return 1; }
+    verdict_text "$check" "$tool" --out "$cout" > "$tmp/re.txt" || return 1
+    [ -s "$tmp/re.txt" ] || { echo "ricalcolo del verdetto $path senza output" >&2; return 1; }
+    cmp -s "$hout/$path" "$tmp/re.txt" || { echo "verdetto salvato $path (ultima riga '$(tail -1 "$hout/$path")') diverso dal ricalcolato ('$(tail -1 "$tmp/re.txt")')" >&2; return 1; }
     n=$((n + 1))
-  done
+  done <<< "$tbl"
   echo "   $n verdetti/prove salvati coincidono con il ricalcolo"
 }
 
 # --- 0. completezza dei verdetti: l'insieme esatto dei file presenti coincide con quello dichiarato in verdetti.tsv
 log "0. insieme dei file di verdetto e di prova fallita uguale a quello dichiarato (verdetti.tsv)"
 verdict_set_check "$OUT" || fail "verdetti presenti diversi da quelli dichiarati in analysis/tools/verdetti.tsv"
-n_decl="$(verdict_declared | wc -l | tr -d ' ')"
+decl_all="$(verdict_declared)" || fail "dichiarazione dei verdetti non valida"
+n_decl="$(printf '%s\n' "$decl_all" | wc -l | tr -d ' ')"
 log "   $n_decl file dichiarati, tutti presenti e nessun altro"
 # Prove negative automatiche, su copie in cartella temporanea: mancante, nome sconosciuto, verdetto valido sotto un altro strumento.
 set_negative() { # set_negative NOME ATTESO -- comando di alterazione (cwd = copia di out)
@@ -81,6 +84,51 @@ set_negative "prova fallita della ripartizione cancellata" "verdetto dovuto manc
 set_negative "nome di verdetto sconosciuto" "file di verdetto non dovuto: scc/verdetto-sconosciuto.txt" -- cp scc/verdetto-scc.txt scc/verdetto-sconosciuto.txt
 set_negative "verdetto valido copiato sotto un altro strumento" "file di verdetto non dovuto: cmt/verdetto-layout.txt" -- cp cb2xml/verdetto-layout.txt cmt/verdetto-layout.txt
 set_negative "verdetto spostato sotto un altro strumento" "verdetto dovuto mancante: cb2xml/verdetto-layout.txt" -- mv cb2xml/verdetto-layout.txt mapa/verdetto-layout.txt
+
+# Prova negativa: voce aggiunta alla dichiarazione (valida per la regola) + file residuo preesistente, che il solo confronto
+# dei file presenti accetterebbe. Deve fallire il confronto con i verdetti scritti nella corsa e il ricalcolo per strumento.
+written_real="$(verdict_table)" || fail "dichiarazione dei verdetti non valida"
+rm -rf "$tmp/setneg"; cp -R "$OUT" "$tmp/setneg"
+cp "$tmp/setneg/cmt/verdetto-call.txt" "$tmp/setneg/cobmix/verdetto-call.txt"
+{ cat "$VERDETTI"; printf 'cobmix\tverdetto-call.txt\tcall\tcobmix\n'; } > "$tmp/verdetti-extra.tsv"
+VERDETTI="$tmp/verdetti-extra.tsv" verdict_set_check "$tmp/setneg" > /dev/null 2>&1 \
+  || fail "prova negativa (voce aggiunta + residuo): il confronto dei soli file presenti avrebbe dovuto accettare il caso (premessa della prova)"
+if VERDETTI="$tmp/verdetti-extra.tsv" verdict_written_check "$written_real" > "$tmp/neg.out" 2>&1; then
+  fail "PROVA NEGATIVA FALLITA (voce aggiunta + residuo): i verdetti scritti nella corsa non coincidono con la dichiarazione ma il controllo e' verde"
+fi
+grep -qF -- "verdetto dichiarato ma non scritto in questa corsa: cobmix/verdetto-call.txt" "$tmp/neg.out" || { cat "$tmp/neg.out" >&2; fail "prova negativa (voce aggiunta + residuo): motivo inatteso"; }
+if VERDETTI="$tmp/verdetti-extra.tsv" reconcile "$tmp/setneg" "$(cont setneg)" > "$tmp/neg.out" 2>&1; then
+  fail "PROVA NEGATIVA FALLITA (voce aggiunta + residuo): il verdetto copiato da un altro strumento supera il ricalcolo"
+fi
+grep -qF -- "cobmix/verdetto-call.txt" "$tmp/neg.out" || { cat "$tmp/neg.out" >&2; fail "prova negativa (voce aggiunta + residuo, ricalcolo): motivo inatteso"; }
+log "   prova negativa ok: voce aggiunta alla dichiarazione + file residuo (verdetti scritti in corsa e ricalcolo per strumento)"
+# Voce con cartella sbagliata per il controllo (verdetto di cb2xml dichiarato sotto scc): rifiutata dalla dichiarazione stessa.
+{ cat "$VERDETTI"; printf 'scc\tverdetto-layout.txt\tlayout\t-\n'; } > "$tmp/verdetti-bad.tsv"
+if VERDETTI="$tmp/verdetti-bad.tsv" verdict_table > "$tmp/neg.out" 2>&1; then fail "PROVA NEGATIVA FALLITA: una voce con cartella sbagliata per il controllo e' accettata"; fi
+grep -qF -- "va nella cartella 'cb2xml', non in 'scc'" "$tmp/neg.out" || { cat "$tmp/neg.out" >&2; fail "prova negativa (cartella sbagliata): motivo inatteso"; }
+log "   prova negativa ok: voce con la cartella di un altro strumento rifiutata"
+
+# Prove negative: un comando necessario al confronto che fallisce (esito 42) non puo' dare un insieme "completo",
+# ne' con l'insieme intatto ne' con un verdetto assente. Ogni comando e' sostituito da un finto che esce con 42.
+for cmd in find sed sort awk cut uniq; do
+  mkdir -p "$tmp/wrap-$cmd"
+  printf '#!/bin/sh\nexit 42\n' > "$tmp/wrap-$cmd/$cmd"; chmod +x "$tmp/wrap-$cmd/$cmd"
+done
+rm -rf "$tmp/setneg"; cp -R "$OUT" "$tmp/setneg"; rm "$tmp/setneg/gnucobol/verdetto-compile.txt"
+for cmd in find sed sort awk cut uniq; do
+  if PATH="$tmp/wrap-$cmd:$PATH" verdict_set_check "$OUT" > /dev/null 2>&1; then
+    fail "PROVA NEGATIVA FALLITA: con '$cmd' che fallisce l'insieme dei verdetti presenti e' dichiarato completo"
+  fi
+  if PATH="$tmp/wrap-$cmd:$PATH" verdict_set_check "$tmp/setneg" > /dev/null 2>&1; then
+    fail "PROVA NEGATIVA FALLITA: con '$cmd' che fallisce e un verdetto assente l'insieme e' accettato"
+  fi
+done
+for cmd in awk cut uniq sort; do
+  if PATH="$tmp/wrap-$cmd:$PATH" verdict_written_check "$written_real" > /dev/null 2>&1; then
+    fail "PROVA NEGATIVA FALLITA: con '$cmd' che fallisce i verdetti scritti nella corsa sono dichiarati completi"
+  fi
+done
+log "   prova negativa ok: un comando del confronto che fallisce (find sed sort awk cut uniq) non produce mai un insieme accettato"
 
 # --- 1. capacita' dichiarate e controlli degli strumenti adottati
 log "1. controlli a campione per ogni capacita' dichiarata in capabilities.tsv"
