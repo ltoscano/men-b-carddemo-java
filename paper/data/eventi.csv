@@ -123,3 +123,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T13:38:34Z,pr-29,codex-fine,codex,orologio,giro 1; exit=0; token: 220.275
 2026-11-27T13:39:12Z,pr-29,validazione-fine,fable,orologio,giro 1: BOCCIATA; 1 bloccante (opzioni) e 1 importante (segno)
 2026-11-27T13:39:12Z,issue-4,esecutore-inizio,opus,orologio,giro di correzione 1
+2026-11-27T13:43:37Z,issue-3,esecutore-fine,opus,orologio,PR #32 aperta; SHA 46bc43d; rapporto: 7 criteri su 7 dichiarati soddisfatti; CI verde
+2026-11-27T13:43:44Z,issue-3,esecutore-consuntivo,opus,orologio,durata 3722 s; contatore token 607216; 177 chiamate a strumenti; PR #32: 254 file
