@@ -195,3 +195,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T15:31:26Z,issue-26,esecutore-fermo,sonnet,orologio,needs-spec-update: i controlli nel ciclo Maven girano anche nella build delle immagini e la configurazione non e nel contesto Docker
 2026-11-27T15:31:30Z,issue-26,specifica-aggiornata,fable,orologio,voce 46 del registro
 2026-11-27T15:31:30Z,issue-26,esecutore-inizio,sonnet,orologio,ripresa dopo l'aggiornamento della specifica
+2026-11-27T15:31:52Z,processo,richiesta-autore,autore,orologio,massimo 2 validazioni avversariali per PR; tenere aggiornato il registro
+2026-11-27T15:31:52Z,issue-26,esecutore-consuntivo,sonnet,orologio,prima fase fino al fermo: durata 1349 s; 55 chiamate a strumenti; contatore token 164594
