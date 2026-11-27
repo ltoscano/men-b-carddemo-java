@@ -402,3 +402,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T22:32:45Z,issue-5,esecutore-inizio,opus,orologio,affidata
 2026-11-27T22:33:03Z,issue-27,esecutore-fine,sonnet,orologio,correzione mirata consegnata; SHA a86f60f; 47 casi in 1631 s; analysis-check in corso alla consegna
 2026-11-27T22:33:03Z,issue-27,esecutore-consuntivo,sonnet,orologio,correzione mirata: durata 3583 s; 33 chiamate a strumenti; contatore token 459127 (cumulativi)
+2026-11-27T22:33:07Z,pr-48,verifica-inizio,fable,orologio,controesempi di Codex (proprietà e profilo) e criteri su clone pulito
+2026-11-27T22:33:07Z,processo,risposta-consegnata,fable,orologio,PR #51 mergiata; #5 affidata; verifica della PR #48 in corso
