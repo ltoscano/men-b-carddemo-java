@@ -87,7 +87,7 @@ Dal 27 nov 2026 l'autore ha delegato a Fable l'approvazione e il merge delle PR,
 
 **Una PR si mergia solo se valgono tutte:**
 1. la CI sullo SHA finale è verde;
-2. il Validatore (Codex) ha eseguito da sé i criteri di accettazione su un clone pulito e nel suo ultimo giro non resta aperto alcun rilievo bloccante;
+2. il Validatore (Codex) ha eseguito da sé i criteri di accettazione su un clone pulito e nel suo ultimo giro non resta aperto alcun rilievo bloccante (per le PR a basso rischio vedi "Validazione proporzionata al rischio");
 3. ogni rilievo del Validatore ha un esito scritto: corretto, respinto con motivo verificato sul sorgente, o rinviato a una issue esistente o nuova;
 4. il diff è nel perimetro della specifica;
 5. sono state fatte **al massimo due validazioni avversariali** (regola dell'autore, 27 nov 2026, 15:35 UTC): prima validazione, un giro di correzione, seconda validazione, che è l'ultima. Niente terzo giro di Codex.
@@ -98,6 +98,13 @@ Dal 27 nov 2026 l'autore ha delegato a Fable l'approvazione e il merge delle PR,
 - in ogni caso la voce di registro dice cosa chiedeva il Validatore, cosa si è deciso, perché, e dove è finito ciò che resta.
 
 **Fin dove arriva la sfiducia negli script (regola nata dalla PR #20).** Uno script di verifica deve accorgersi di un comando che fallisce, di un'attesa che non finisce, di una risposta malformata o incompleta, di un risultato rimasto da una corsa precedente. Non gli si chiede di difendersi da uno strumento che restituisce dati falsi ma ben formati con esito positivo (per esempio un `docker` sostituito che dichiara assente una risorsa presente): la difesa userebbe lo stesso strumento e non avrebbe fine. Un rilievo di questo secondo tipo si registra come limite dichiarato, non blocca il merge, e nei prompt di validazione non si chiede di cercarlo.
+
+**Validazione proporzionata al rischio** (decisione dell'autore, 27 nov 2026, 16:10 UTC).
+- *Rischio pieno, Codex obbligatorio*: la PR tocca `oracle/`, golden, parità, schema o dati, logica di business Java, script di verifica (`verify.sh`, `smoke.sh`, `quality/`, `check.sh` e colla di `analysis/`), CI, Dockerfile o Compose. Nel dubbio è rischio pieno.
+- *Basso rischio, senza Codex*: solo documentazione, testi e motivazioni, correzioni che non cambiano alcun valore atteso né alcun controllo. Bastano CI verde e la lettura integrale del diff da parte di Fable, che riesegue i criteri di accettazione su un clone pulito. La voce di registro dichiara "senza Codex" e la classe di rischio.
+- La classe si scrive nell'issue quando passa a `ready`. Se il diff della PR esce dalla classe dichiarata, torna a rischio pieno.
+
+**Per andare più veloci senza abbassare la guardia** (stessa data): l'Esecutore esegue prima della PR un autocontrollo sulle quattro famiglie di difetto ricorrenti (`paper/data/prompts/esecutore.md`); la seconda validazione è ristretta ai rilievi della prima e al diff di correzione (`paper/data/prompts/validatore-pr.md`); non più di tre validazioni Codex in parallelo; le issue grandi si dividono prima di affidarle.
 
 Per far bastare due validazioni: la prima deve essere completa (il prompt elenca tutte le verifiche attese, comprese le mutazioni), e nel giro di correzione l'Esecutore cerca in tutto il lavoro lo stesso schema di difetto, non solo il caso segnalato.
 

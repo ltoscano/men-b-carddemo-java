@@ -212,3 +212,7 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T15:52:04Z,pr-32,codex-fine,codex,orologio,giro 3; exit=0; token: 171.206
 2026-11-27T15:53:03Z,pr-32,decisione,fable,orologio,giro 3 APPROVATA CON RISERVE; rilievo minore rinviato a #41; ramo allineato a main; attesa CI integrata
 2026-11-27T15:57:47Z,pr-32,merge,fable,orologio,PR #32 mergiata dopo il giro 3 e CI integrata verde su f9d7888; chiude #3; residuo in #41
+2026-11-27T15:58:41Z,processo,richiesta-autore,autore,orologio,come velocizzare
+2026-11-27T15:58:41Z,processo,risposta-consegnata,fable,orologio,proposte per velocizzare: tre leve; una richiede decisione dell'autore
+2026-11-27T15:59:39Z,pr-40,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T15:59:41Z,processo,richiesta-autore,autore,orologio,approvate le tre leve per velocizzare; compresa la validazione proporzionata al rischio

@@ -34,3 +34,18 @@ Fai queste verifiche, nell'ordine:
 6. Ciò che la specifica chiede e la PR non consegna.
 
 Non correggere nulla e non fare commit: se modifichi file per una prova, ripristinali. Rispondi in italiano con: (a) verdetto in una riga: APPROVATA, APPROVATA CON RISERVE, oppure BOCCIATA; (b) tabella dei criteri di accettazione con comando eseguito ed esito osservato; (c) elenco numerato dei rilievi, ciascuno con gravità (bloccante / importante / minore), evidenza e correzione richiesta. Niente elogi.
+
+---
+
+## Seconda validazione, in forma ristretta (dal 27 novembre 2026, 16:10 UTC)
+
+Motivo: fino a qui la seconda validazione rifaceva tutto e durava quanto la prima (24-34 minuti). Ora verifica solo ciò che è cambiato. Al materiale si aggiungono `.validazione/giro-1.md` (il verdetto della prima validazione) e `.validazione/diff-correzione.patch` (il diff tra lo SHA validato e quello attuale). Al prompt di base si sostituisce questo:
+
+> Sei il Validatore avversariale di una pull request, alla seconda e ultima validazione. Non hai altro contesto oltre a questa cartella. Materiale: `.validazione/specifica.md`, `.validazione/giro-1.md` (i tuoi rilievi della prima validazione), `.validazione/diff-correzione.patch` (ciò che è cambiato da allora).
+> Fai solo questo: (1) per ogni rilievo della prima validazione riesegui il suo controesempio e di' se è chiuso; (2) leggi per intero il diff di correzione e cerca difetti introdotti da quelle modifiche, con prove dove servono; (3) verifica che il diff di correzione resti nel perimetro; (4) esegui una volta i comandi dei criteri di accettazione. Non ripetere le verifiche della prima validazione su parti non modificate.
+> Rispondi in italiano con: verdetto in una riga (APPROVATA, APPROVATA CON RISERVE, BOCCIATA); tabella rilievo per rilievo (chiuso / non chiuso, comando, esito); elenco dei rilievi nuovi con gravità, evidenza e correzione richiesta. Non correggere nulla e non fare commit.
+
+## Quando Codex non serve (dal 27 novembre 2026, 16:10 UTC)
+
+Decisione dell'autore: la validazione è proporzionata al rischio. Le classi sono in `CLAUDE.md`, sezione "Approvazione delegata".
+
