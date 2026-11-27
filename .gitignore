@@ -9,3 +9,4 @@ build/
 .claude/settings.local.json
 .worktrees/
 .codex-review/
+.claude/

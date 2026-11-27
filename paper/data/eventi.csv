@@ -56,3 +56,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T10:44:28Z,pr-18,codex-fine,codex,orologio,giro 1; exit=0; token: 134.846
 2026-11-27T11:42:34Z,pr-17,decisione-autore,autore,orologio,mergiare e aprire una issue per il falso rosso
 2026-11-27T11:43:02Z,processo,richiesta-autore,autore,orologio,i prossimi contrasti li gestisce Fable con lo stesso pragmatismo; registro aggiornato sulle scelte
+2026-11-27T11:43:41Z,pr-18,validazione-fine,fable,orologio,giro 1: BOCCIATA; 6 rilievi (5 importanti); rinviata all'Esecutore
+2026-11-27T11:43:41Z,issue-1,esecutore-inizio,sonnet,orologio,giro di correzione 1
