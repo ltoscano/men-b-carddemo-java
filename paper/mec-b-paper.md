@@ -70,19 +70,25 @@ Principio: si scrive codice proprio solo per incollare strumenti esistenti.
 
 **Ricognizione preliminare (27 novembre 2026, ricerca web, nessuno strumento ancora provato sul sorgente).** SonarQube analizza il COBOL solo a partire dalla Enterprise Edition; senza licenza resta utilizzabile per il Java. Non è emerso un analizzatore di qualità open source per il COBOL di maturità paragonabile: l'analisi preliminare va composta da strumenti più piccoli.
 
-**Tabella 2 — Strumenti candidati**
+**Tabella 2 — Strumenti: esito delle prove** (issue #1, PR #18; dettagli e comandi in `docs/legacy-map/strumenti.md`)
 
-| Esigenza | Candidato | Licenza / costo | Esito |
+| Esigenza | Strumento | Licenza | Esito |
 | --- | --- | --- | --- |
-| Qualità COBOL | SonarQube | COBOL da Enterprise Edition | scartato: nessuna licenza |
-| Compilazione, cross-reference, oracle batch | GnuCOBOL 3.2 | GPL | adottato |
-| Grafi `CALL` / `COPY` | cobol-migration-toolkit | da verificare | *(Wave 0A)* |
-| AST, CFG, gerarchia copybook | cobmix, ProLeap, Koopa | ProLeap parser: MIT (verificato alla fonte; la ricognizione iniziale aveva riportato AGPL-3, che è la licenza di un altro progetto dallo stesso nome); altri da verificare | *(Wave 0A)* |
-| Copybook → schema e lettura record | cb2xml, JRecord | da verificare | *(Wave 0A)* |
-| Analisi JCL | mapa | da verificare | *(Wave 0A)* |
-| Metriche di base | scc | open source | *(Wave 0A)* |
-| Esecuzione dei programmi CICS | nessun emulatore open source pronto all'uso individuato | — | oracle online = matrice di comportamento |
+| Qualità COBOL | SonarQube | COBOL da Enterprise Edition | scartato prima della prova: nessuna licenza |
+| File, righe totali, righe vuote | scc 4.1.0 | MIT | **adottato**: coincide con i conteggi a mano |
+| Ripartizione codice / commenti | scc 4.1.0 | MIT | **scartato**: in un COBOL con numeri di sequenza vede 30 commenti su 51, in un assembler 0 su 16. Capacità non disponibile |
+| Compilazione e diagnostica | GnuCOBOL 3.2 | GPL-3+ | **adottato**: 11 programmi batch senza errori; 3 batch con errori dovuti al sorgente; i 17 online non compilabili, come atteso |
+| Inclusioni `COPY`, con riga e sostituzioni | cobol-migration-toolkit 0.8.0 | Apache-2.0 | **scartato** per questo uso: riporta solo i nomi (18 contro 56 occorrenze in un programma) |
+| | cobmix 0.1.2 | non accertata | **scartato**: nessuna riga né sostituzioni |
+| | ProLeap COBOL parser | MIT | **adottato**, tramite circa 60 righe di colla Java (è una libreria senza comando) |
+| Chiamate `CALL` | cobol-migration-toolkit 0.8.0 | Apache-2.0 | **adottato** |
+| Passaggi di controllo CICS (`XCTL`, `LINK`) | tutti i precedenti | — | **nessuno li vede**: serve un ripiego nell'issue #2 |
+| Copybook → tracciato | cb2xml 1.01.08 | LGPL-2.1 | **adottato** |
+| Analisi JCL | mapa | MIT | **adottato**; non riporta `PARM=` né i comandi in-stream |
+| Riserve | Koopa, JRecord | — | non provati: non è servito |
 | Qualità Java | SonarQube Community Build, JaCoCo, SpotBugs, ArchUnit, PIT | open source | *(Wave 0B)* |
+
+Tre osservazioni per chi replica. Nessuno strumento ha coperto da solo un'esigenza intera: l'analisi si compone. Lo strumento più noto per i conteggi sbaglia proprio sul formato COBOL tradizionale, e lo si è scoperto solo contando a mano sei file. La ricognizione sul web aveva riportato una licenza sbagliata per ProLeap (quella di un progetto omonimo): le licenze vanno lette alla fonte.
 
 Tutti gli strumenti, l'oracle GnuCOBOL e l'applicazione migrata girano in container: l'unico prerequisito per riprodurre il lavoro è Docker.
 
@@ -199,7 +205,26 @@ Il Validatore (8 minuti e 13 secondi, con Docker) ha bocciato la PR. I comandi p
 
 *Cosa si trasferisce:* un test verde dice poco finché nessuno ha provato a farlo restare verde con dati sbagliati. Il modo più economico di scoprirlo è chiederlo esplicitamente a chi valida: "altera l'output e guarda se il controllo se ne accorge".
 
-*(esito: da compilare)*
+Dopo due giri di correzione e tre validazioni la PR è stata approvata con riserve e mergiata. Nel terzo giro Codex ha provato 14 alterazioni: 13 facevano fallire il controllo. L'ultima (cancellare uno dei file di esito) no: è diventata l'issue #21.
+
+**Tabella 6 — Storia della PR #18** (ora UTC)
+
+| Fase | Chi | Inizio | Durata | Esito |
+| --- | --- | --- | ---: | --- |
+| Implementazione | Esecutore (Sonnet) | 10:04:29 | 31 min 14 s | PR aperta |
+| Validazione 1 | Codex | 10:36:15 | 8 min 13 s | bocciata: 5 importanti, 1 minore |
+| Attesa | — | 10:44:28 | 59 min 13 s | il pianificatore era fermo sulla decisione per la PR #17 |
+| Correzione 1 | Esecutore | 11:43:41 | 8 min 29 s | 6 rilievi corretti |
+| Validazione 2 | Codex | 11:52:14 | 12 min 17 s | bocciata: 1 importante, 2 minori |
+| Correzione 2 | Esecutore | 12:05 | 10 min 45 s | 3 rilievi corretti; specifica modificata |
+| Validazione 3 | Codex | 12:16:21 | 13 min 17 s | approvata con riserve |
+| Merge | pianificatore | 12:30:19 | — | `main` a `d1ece0d` |
+
+Dall'avvio al merge: 2 ore e 26 minuti. Lavoro degli agenti: 84 minuti (50 dell'Esecutore, 34 del Validatore). Attesa: 59 minuti, e non per questa PR: il pianificatore aspettava la risposta dell'autore su un'altra. È un secondo costo dell'attesa di una persona: blocca anche il lavoro che non la riguarda. Con la delega, la terza validazione e il merge sono distanti 41 secondi.
+
+Un punto di metodo. Al secondo giro l'Esecutore aveva scoperto che scc sbaglia la ripartizione tra codice e commenti, e aveva risolto registrando l'errore come "atteso", così che il controllo passasse. Il Validatore lo ha respinto: un errore noto resta un errore. La soluzione corretta è stata cambiare la specifica, dividendo la capacità in due e dichiarando non disponibile la parte che lo strumento non sa fare. **Quando un controllo non passa, la tentazione è aggiustare l'atteso; va invece deciso, per iscritto, se cambia la richiesta.**
+
+*(passi successivi: da compilare)*
 
 **Come si misurano i tempi.** Su richiesta dell'autore, da questo punto ogni passaggio è cronometrato nel momento in cui avviene. Un piccolo script, `paper/data/tlog.sh`, aggiunge una riga con l'ora corrente al registro `paper/data/eventi.csv`; il registro non si modifica mai, si aggiunge soltanto. Per i passi precedenti i tempi sono stati ricostruiti da fonti verificabili (date dei commit, date di creazione su GitHub, date dei file) e ogni riga dichiara la propria fonte.
 

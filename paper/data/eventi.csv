@@ -79,3 +79,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T12:29:33Z,pr-20,codex-inizio,codex,orologio,validazione giro 1
 2026-11-27T12:29:38Z,pr-18,codex-fine,codex,orologio,giro 3; exit=0; token: 117.435
 2026-11-27T12:30:16Z,pr-18,approvazione,fable,orologio,giro 3: APPROVATA CON RISERVE; un rilievo minore rinviato a nuova issue
+2026-11-27T12:31:46Z,P12,inizio,fable,orologio,riallineamento delle specifiche #2 #3 #4 all'esito di #1
+2026-11-27T12:31:46Z,P12,contestazione-inizio,codex,orologio,specifiche di #2 #3 #4

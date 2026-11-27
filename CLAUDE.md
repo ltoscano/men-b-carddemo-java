@@ -111,18 +111,23 @@ Prima di scrivere un tool di analisi, verificare se ne esiste uno. Si scrive cod
 
 **SonarQube non analizza il COBOL senza licenza**: l'analizzatore COBOL parte dalla Enterprise Edition (verificato sulla documentazione Sonar il 27 nov 2026). L'utente non ha licenza: Sonar si usa solo sul Java (Community Build, in container). Non esiste un equivalente open source maturo per il COBOL: l'analisi preliminare si compone da strumenti più piccoli.
 
-| Esigenza | Candidati open source | Stato |
+| Esigenza | Strumento | Stato (esito di #1, dettagli in `docs/legacy-map/strumenti.md`) |
 | --- | --- | --- |
-| Sintassi, warning, cross-reference, esecuzione batch come oracle | **GnuCOBOL 3.2** (`cobc`) | adottato; immagine propria con versione fissata |
-| Inventario e grafi `CALL` / `COPY` | `cobol-migration-toolkit` (Python, basato su regex) | da provare su CardDemo in Wave 0A |
-| AST, CFG, gerarchia copybook, overlay di memoria | `cobmix` (Python), ProLeap COBOL parser (Java, MIT; da non confondere con `proleap/proleap-cobol`, che è AGPL-3), Koopa | da provare in Wave 0A |
-| Copybook → schema, lettura record in Java | cb2xml, JRecord | da provare in Wave 0A |
-| Analisi JCL | `mapa` | da provare in Wave 0A |
-| Conteggi e complessità di base | scc | da usare via container |
-| Qualità lato Java | SonarQube Community Build, JaCoCo, SpotBugs, ArchUnit, PIT | Wave 0B |
-| Integrazione | Testcontainers | Wave 0B |
+| File, righe totali, righe vuote | scc 4.1.0 | adottato |
+| Ripartizione codice / commenti | — | **non disponibile**: scc sbaglia su COBOL con numeri di sequenza e assembler |
+| Compilazione, diagnostica, oracle batch | GnuCOBOL 3.2 | adottato; `CBEXPORT`, `CBIMPORT`, `CBSTM03A` non compilano così come sono (vedi #4) |
+| `COPY` con riga e `REPLACING` | ProLeap COBOL parser (MIT) + colla Java | adottato |
+| `CALL` statiche | cobol-migration-toolkit 0.8.0 | adottato (scartato per le `COPY`) |
+| Comandi `EXEC CICS` | — | nessuno strumento li vede: ripiego in #2 |
+| Copybook → tracciato | cb2xml 1.01.08 | adottato (posizioni a base 1; `OCCURS` per elemento) |
+| JCL | mapa | adottato (non riporta `PARM=` né `SYSIN *`) |
+| Scartati / non provati | cobmix (scartato); Koopa, JRecord (non provati) | |
+| Qualità lato Java | SonarQube Community Build, JaCoCo, SpotBugs, ArchUnit, PIT | #15 |
+| Integrazione | Testcontainers | #15 |
 
-Criterio di adozione: lo strumento gira su CardDemo senza modifiche al sorgente e il suo output è controllato a campione contro il codice. Maturità e licenza dei candidati **non sono ancora verificate**: una prova fallita si registra nel paper come strumento scartato.
+Comandi: `./analysis/run.sh --all` e `--all --check` (analisi del legacy), `./verify.sh` (build e test Java). Una nuova analisi è una nuova cartella `analysis/<nome>/` con `run.sh`, `check.sh`, `deps`. Su macOS il legacy va letto da un volume Docker sensibile alle maiuscole, non da un bind mount (`analysis/lib/common.sh`).
+
+Criterio di adozione: lo strumento gira su CardDemo senza modifiche al sorgente e il suo output è controllato a campione contro attesi scritti a mano. Un controllo vale solo se fallisce quando si altera l'output: ogni controllo ha la sua prova negativa. Un errore noto di uno strumento non diventa mai un valore atteso.
 
 Limite noto: GnuCOBOL non esegue `EXEC CICS` e non è emerso un emulatore CICS open source pronto all'uso (OpenKicks dichiara compatibilità GnuCOBOL ma la licenza è da verificare). L'oracle eseguibile copre i batch; per l'online l'oracle è una matrice di comportamento derivata dal sorgente e recensita dal Validatore. Va dichiarato nel paper.
 
