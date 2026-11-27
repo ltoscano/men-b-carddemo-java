@@ -109,6 +109,39 @@ expect_fail "routine che non si ferma nei casi non determinati" "N4: rapporto di
 sorgente uscita1 "s/^           IF LK-COOUTYPE = '1'\$/           IF LK-COOUTYPE = 'Z'/"
 variante uscita1 "$tmp/src-uscita1/COBDATFT.cbl"
 expect_fail "routine che formatta ingresso 2 con uscita 1" "N3: rapporto diverso dall'atteso" verifica "$tmp/uscita1/obs"
+#    - riga 36: la routine non distingue piu' i 14 byte noti del pool dei letterali (CLC di 20 byte).
+#      Si ferma per ogni '-' nel quinto byte della data (la classificazione troppo ampia del giro 1 della
+#      PR #39): D1E e D1F, determinati, finirebbero in 97;
+sorgente byte6 "s/^           IF LK-COINPDT(5:14) = '-INVALID INPUT'\$/           IF LK-COINPDT(5:1) = '-'/"
+variante byte6 "$tmp/src-byte6/COBDATFT.cbl"
+expect_fail "routine che si ferma per ogni '-' nel quinto byte (caso D1E)" "D1E: rapporto diverso dall'atteso" verifica "$tmp/byte6/obs"
+expect_fail "routine che si ferma per ogni '-' nel quinto byte (caso D1F)" "D1F: rapporto diverso dall'atteso" verifica "$tmp/byte6/obs"
+#      confronta solo 13 dei 14 byte noti: D1F, diverso solo nel quattordicesimo, finirebbe in 97;
+sorgente prefisso13 "s/^           IF LK-COINPDT(5:14) = '-INVALID INPUT'\$/           IF LK-COINPDT(5:13) = '-INVALID INPU'/"
+variante prefisso13 "$tmp/src-prefisso13/COBDATFT.cbl"
+expect_fail "routine che confronta solo 13 byte del pool (caso D1F)" "D1F: rapporto diverso dall'atteso" verifica "$tmp/prefisso13/obs"
+#      non si ferma mai alla riga 36: N5 (prefisso noto uguale, esito dipendente dai 6 byte ignoti)
+#      verrebbe formattato con codice 0.
+sorgente prefisso0 "s/^           IF LK-COINPDT(5:14) = '-INVALID INPUT'\$/           IF LK-COINPDT(5:14) = SPACES/"
+variante prefisso0 "$tmp/src-prefisso0/COBDATFT.cbl"
+expect_fail "routine che non si ferma con il prefisso -INVALID INPUT (caso N5)" "N5: rapporto diverso dall'atteso" verifica "$tmp/prefisso0/obs"
+#    - attesi dei casi nuovi o cambiati alterati: D1E (un byte della data d'uscita), N5 (codice 97 -> 0).
+mkdir -p "$tmp/att3"; cp "$EXP"/* "$tmp/att3/"
+mutate "$tmp/att3/D1E.txt" 's/^\(DOPO  31 323032352d30332d3137a5a5a5a5a5a5a5a5a5a5 31 323032352d\)2d/\130/'
+expect_fail "atteso di D1E con il byte 28 alterato" "D1E: rapporto diverso dall'atteso" verifica "$tmp/obs" "$tmp/att3"
+mkdir -p "$tmp/att4"; cp "$EXP"/* "$tmp/att4/"
+mutate "$tmp/att4/N5.txt" '2s/^97$/0/'
+expect_fail "atteso di N5 con codice 0" "N5: rapporto diverso dall'atteso" verifica "$tmp/obs" "$tmp/att4"
+expect_fail "atteso di N5 con codice 0: diverge dalla tabella" "N5: l atteso scritto a mano diverge dalla tabella (C2) alla riga 2" \
+  bash "$DIR/coerenza.sh" "$TAB" "$CASI" "$tmp/att4"
+cp "$CASI" "$tmp/casi-n5.tsv"
+mutate "$tmp/casi-n5.tsv" 's/^N5	11ABCD-INVALID INPUT	C2$/N5	11ABCD-INVALID INPUT	C1/'
+expect_fail "casi: N5 dichiarato della combinazione C1" "N5: dichiarato C1, ma per la tabella il PARM 11ABCD-INVALID INPUT e della combinazione C2" \
+  bash "$DIR/coerenza.sh" "$TAB" "$tmp/casi-n5.tsv" "$EXP"
+cp "$CASI" "$tmp/casi-d1f.tsv"
+mutate "$tmp/casi-d1f.tsv" 's/^D1F	11ABCD-INVALID INPUX	C1$/D1F	11ABCD-INVALID INPUX	C2/'
+expect_fail "casi: D1F dichiarato della combinazione C2" "D1F: dichiarato C2, ma per la tabella il PARM 11ABCD-INVALID INPUX e della combinazione C1" \
+  bash "$DIR/coerenza.sh" "$TAB" "$tmp/casi-d1f.tsv" "$EXP"
 #    - nella tabella: C5 dichiarata determinata (con le scritture di C4), o N3 dichiarato del caso C4.
 cp "$TAB" "$tmp/tab-c5.tsv"
 mutate "$tmp/tab-c5.tsv" 's/^C5	2	1	-	non-determinato	-	-	/C5	2	1	-	determinato	23-26<2-5;27-28<7-8;29-30<10-11	1-22;31-80	/'
@@ -149,8 +182,8 @@ log "   e con il segnaposto ogni caso termina con 98: il modulo caricato e' quel
 
 # f) Tabella che non copre le combinazioni una e una sola volta.
 cp "$TAB" "$tmp/tab-doppia.tsv"
-mutate "$tmp/tab-doppia.tsv" 's/^C1	1	non-2	byte6!=-	/C1	1	non-2	-	/'
-expect_fail "tabella: C1 senza condizione sul byte 6 (si sovrappone a C2)" "tabella: piu righe per ingresso 1, uscita 1, byte 6 -" \
+mutate "$tmp/tab-doppia.tsv" 's/^C1	1	non-2	byte6-19!=-INVALID INPUT	/C1	1	non-2	-	/'
+expect_fail "tabella: C1 senza condizione sui byte 6-19 (si sovrappone a C2)" "tabella: piu righe per ingresso 1, uscita 1, byte 6-19 -INVALID INPUT" \
   bash "$DIR/coerenza.sh" "$tmp/tab-doppia.tsv" "$CASI" "$EXP"
 cp "$TAB" "$tmp/tab-byte.tsv"
 mutate "$tmp/tab-byte.tsv" '/^C4	/s/	1-22;31-80	/	1-22;30-80	/'

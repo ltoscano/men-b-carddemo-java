@@ -3,7 +3,8 @@
 # Uso: coerenza.sh TABELLA.tsv CASI.tsv CARTELLA-ATTESI
 # Gira sull'host (bash e awk, nessun programma compilato). Verifica:
 #  1. la tabella: righe ben formate; per ogni combinazione di selettori (tipo d'ingresso 1, 2, altro;
-#     tipo d'uscita 1, 2, altro; quinto byte della data '-' o altro) una e una sola riga; per le righe
+#     tipo d'uscita 1, 2, altro; byte 6-19 dell'area uguali a '-INVALID INPUT', diversi solo nell'ultimo
+#     byte, diversi nel primo) una e una sola riga; per le righe
 #     determinate scritture e byte conservati coprono esattamente i byte 1-80, senza sovrapposizioni;
 #     per le non determinate nessuna scrittura;
 #  2. ogni caso di prova: PARM valido; la riga della tabella che gli corrisponde e' quella dichiarata;
@@ -31,7 +32,9 @@ function sel(s, v) {
   if (s ~ /^non-[12]$/) return (v != substr(s, 5, 1))
   return (v == s)
 }
-function cond(c, b6) { if (c == "-") return 1; if (c == "byte6=-") return (b6 == "-"); return (b6 != "-") }
+# p = byte 6-19 dell area (14 caratteri; un byte di riempimento X-A5 vale "~", diverso da ogni carattere
+# del prefisso), confrontati con i 14 byte noti del pool dei letterali.
+function cond(c, p) { if (c == "-") return 1; if (c == "byte6-19=" PREF) return (p == PREF); return (p != PREF) }
 # Riga della tabella che corrisponde ai selettori; "" se nessuna, "*" se piu di una.
 function riga(ti, tu, b6,   i, r) {
   r = ""
@@ -48,6 +51,7 @@ function fmt(a,   s, k) {
 }
 BEGIN {
   for (i = 32; i < 127; i++) H[sprintf("%c", i)] = sprintf("%02x", i)
+  PREF = "-INVALID INPUT"
   W = "Warning: program compiled against libxml 212 using older 209"
   MSG = "MENB-ORACLE COBDATFT: caso non riproducibile dall" sprintf("%c", 39) "oracle"
   # 1. Tabella.
@@ -60,7 +64,7 @@ BEGIN {
     nr++; C[nr] = f[1]; TI[nr] = f[2]; TU[nr] = f[3]; CO[nr] = f[4]; ES[nr] = f[5]; SC[nr] = f[6]; CS[nr] = f[7]
     if (f[1] in IDX) err("tabella: combinazione ripetuta: " f[1]); IDX[f[1]] = nr
     for (j = 2; j <= 3; j++) if (f[j] !~ /^([12]|non-[12]|altro|qualsiasi)$/) err("tabella " f[1] ": selettore non valido: " f[j])
-    if (f[4] !~ /^(-|byte6=-|byte6!=-)$/) err("tabella " f[1] ": condizione non valida: " f[4])
+    if (f[4] != "-" && f[4] != "byte6-19=" PREF && f[4] != "byte6-19!=" PREF) err("tabella " f[1] ": condizione non valida: " f[4])
     if (f[8] !~ /^[0-9]+(-[0-9]+)?(,[0-9]+(-[0-9]+)?)*$/) err("tabella " f[1] ": righe dell assembler non valide: " f[8])
     if (f[5] == "non-determinato") {
       if (f[6] != "-" || f[7] != "-") err("tabella " f[1] ": un caso non determinato non ha scritture ne byte conservati")
@@ -89,11 +93,11 @@ BEGIN {
   close(tab)
   if (nr == 0) err("tabella: nessuna riga")
   # Ogni combinazione di selettori ha una e una sola riga.
-  split("1 2 x", V, " ")
-  for (a = 1; a <= 3; a++) for (b = 1; b <= 3; b++) for (c = 1; c <= 2; c++) {
-    b6 = (c == 1) ? "-" : "x"; r = riga(V[a], V[b], b6)
-    if (r == "") err("tabella: nessuna riga per ingresso " V[a] ", uscita " V[b] ", byte 6 " b6)
-    else if (r == "*") err("tabella: piu righe per ingresso " V[a] ", uscita " V[b] ", byte 6 " b6)
+  split("1 2 x", V, " "); Q[1] = PREF; Q[2] = "-INVALID INPUX"; Q[3] = "xINVALID INPUT"
+  for (a = 1; a <= 3; a++) for (b = 1; b <= 3; b++) for (c = 1; c <= 3; c++) {
+    b6 = Q[c]; r = riga(V[a], V[b], b6)
+    if (r == "") err("tabella: nessuna riga per ingresso " V[a] ", uscita " V[b] ", byte 6-19 " b6)
+    else if (r == "*") err("tabella: piu righe per ingresso " V[a] ", uscita " V[b] ", byte 6-19 " b6)
   }
   # 2-3. Casi e attesi.
   hdr = 0; nnd = 0
@@ -105,9 +109,10 @@ BEGIN {
     caso = f[1]; parm = f[2]
     if (caso in VISTO) err("casi: caso ripetuto: " caso); VISTO[caso] = 1
     if (length(parm) < 2 || length(parm) > 22) { err(caso ": PARM di lunghezza " length(parm) " (ammessa 2-22)"); continue }
-    ok = 1; for (k = 1; k <= length(parm); k++) if (hex(substr(parm, k, 1)) == "" || substr(parm, k, 1) == " ") ok = 0
-    if (!ok) { err(caso ": PARM con caratteri non stampabili o spazi"); continue }
-    b6 = (length(parm) >= 7) ? substr(parm, 7, 1) : "fill"
+    ok = 1; for (k = 1; k <= length(parm); k++) if (hex(substr(parm, k, 1)) == "") ok = 0
+    if (substr(parm, 1, 1) == " " || substr(parm, length(parm), 1) == " ") ok = 0
+    if (!ok) { err(caso ": PARM con caratteri non stampabili o spazi iniziali o finali"); continue }
+    b6 = substr(parm, 7, 14); while (length(b6) < 14) b6 = b6 "~"
     r = riga(substr(parm, 1, 1), substr(parm, 2, 1), b6)
     if (r == "" || r == "*") { err(caso ": nessuna riga (o piu righe) della tabella per il PARM " parm); continue }
     if (C[r] != f[3]) { err(caso ": dichiarato " f[3] ", ma per la tabella il PARM " parm " e della combinazione " C[r]); continue }

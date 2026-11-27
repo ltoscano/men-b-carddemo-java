@@ -7,9 +7,9 @@
       * Riproduce solo cio' che le istruzioni determinano byte per byte
       * (issue #24, voce 42 del registro). Tabella dei casi, con le
       * righe dell'assembler: oracle/routines/cobdatft-casi.md e .tsv.
-      * - Tipo d'ingresso '1', tipo d'uscita diverso da '2', quinto byte
-      *   della data d'ingresso diverso da '-': AAAAMMGG -> AAAA-MM-GG
-      *   nei primi 10 byte della data d'uscita (righe 40-44).
+      * - Tipo d'ingresso '1', tipo d'uscita diverso da '2', byte 5-18
+      *   della data d'ingresso diversi da '-INVALID INPUT': AAAAMMGG ->
+      *   AAAA-MM-GG nei primi 10 byte della data d'uscita (righe 40-44).
       * - Tipo d'ingresso '2', tipo d'uscita diverso da '1':
       *   AAAA?MM?GG -> AAAAMMGG nei primi 8 byte (righe 51-53).
       * - Nessun controllo del calendario ne' delle cifre: l'assembler
@@ -21,9 +21,10 @@
       * - ogni ramo che arriva a GOTOERR (riga 56): MVC COERMSG copia 38
       *   byte da un letterale di 13; i 25 byte oltre il letterale
       *   dipendono dalla memoria del programma assemblato;
-      * - tipo '1' con quinto byte della data uguale a '-' (riga 36):
-      *   CLC confronta 20 byte (lunghezza di COINPDT) con il letterale
-      *   di un byte C'-' e con i 19 byte che lo seguono in memoria.
+      * - tipo '1' con byte 5-18 della data uguali a '-INVALID INPUT'
+      *   (riga 36): CLC confronta 20 byte (lunghezza di COINPDT) con il
+      *   pool dei letterali, C'-' seguito da C'INVALID INPUT' (14 byte
+      *   noti) e da 6 byte che dipendono dalla memoria.
       *****************************************************************
        IDENTIFICATION DIVISION.
        PROGRAM-ID. COBDATFT.
@@ -51,11 +52,12 @@
            GOBACK.
 
        VALIDIN1.
-      * Riga 36: CLC COINPDT+4,=C'-' (20 byte). Il primo byte del
-      * secondo operando e' '-': se il quinto byte della data e'
-      * diverso, il confronto e' "diverso" qualunque cosa segua; se e'
-      * uguale, l'esito dipende dai 19 byte dopo il letterale.
-           IF LK-COINPDT(5:1) = '-'
+      * Riga 36: CLC COINPDT+4,=C'-' (20 byte). Il secondo operando
+      * e' il pool dei letterali: C'-' e subito dopo C'INVALID INPUT'
+      * (14 byte noti), poi 6 byte ignoti. Se i byte 5-18 della data
+      * differiscono dai 14 noti il confronto e' "diverso" qualunque
+      * cosa segua; se coincidono l'esito dipende dai 6 byte ignoti.
+           IF LK-COINPDT(5:14) = '-INVALID INPUT'
                PERFORM NON-RIPRODUCIBILE
            END-IF
       * Righe 38-39: CLI COOUTYPE,C'2' -> GOTOERR.

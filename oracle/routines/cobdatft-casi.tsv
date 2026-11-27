@@ -3,15 +3,17 @@
 # d'ingresso; 22 tipo d'uscita; 23-42 data d'uscita; 43-80 messaggio di errore).
 #   tipo_ingresso, tipo_uscita: un carattere, oppure non-<c> (qualsiasi byte diverso da <c>), oppure
 #                               altro (diverso da 1 e da 2), oppure qualsiasi
-#   condizione:  - (nessuna) | byte6=- | byte6!=-   (byte 6 dell'area = quinto byte della data d'ingresso)
+#   condizione:  - (nessuna) | byte6-19=-INVALID INPUT | byte6-19!=-INVALID INPUT
+#                (byte 6-19 dell'area = byte 5-18 della data d'ingresso, confrontati con i 14 byte noti del
+#                pool dei letterali: C'-' seguito da C'INVALID INPUT')
 #   esito:       determinato (codice di ritorno 0, area come descritto) | non-determinato (arresto con 97)
 #   scritture:   byte scritti dalla routine, separati da ';': A-B<C-D copia i byte C-D nei byte A-B;
 #                A=hh scrive nel byte A il valore esadecimale hh; - se nessuno
 #   conservati:  byte che la routine non tocca (intervalli separati da ';'); - per i non determinati
 #   righe_asm:   righe di app/asm/COBDATFT.asm che giustificano l'esito
 combinazione	tipo_ingresso	tipo_uscita	condizione	esito	scritture	conservati	righe_asm	motivo
-C1	1	non-2	byte6!=-	determinato	23-26<2-5;27=2d;28-29<6-7;30=2d;31-32<8-9	1-22;33-80	30-31,36-37,38-39,40-45,59-62	AAAAMMGG -> AAAA-MM-GG nei byte 1-10 della data d'uscita; CLC di riga 36 diverso gia' al primo byte
-C2	1	non-2	byte6=-	non-determinato	-	-	36-37	CLC di 20 byte (L'COINPDT) contro =C'-' piu' 19 byte oltre il letterale: esito dipendente dalla memoria
+C1	1	non-2	byte6-19!=-INVALID INPUT	determinato	23-26<2-5;27=2d;28-29<6-7;30=2d;31-32<8-9	1-22;33-80	30-31,36-37,38-39,40-45,59-62	AAAAMMGG -> AAAA-MM-GG nei byte 1-10 della data d'uscita; CLC di riga 36 diverso entro i 14 byte noti del pool
+C2	1	non-2	byte6-19=-INVALID INPUT	non-determinato	-	-	36-37	CLC di 20 byte (L'COINPDT): i 14 byte noti del pool coincidono, l'esito dipende dai 6 byte ignoti che seguono
 C3	1	2	-	non-determinato	-	-	36-39,56	porta sempre a GOTOERR (o esito di riga 36 indeterminato): MVC di 38 byte da un letterale di 13
 C4	2	non-1	-	determinato	23-26<2-5;27-28<7-8;29-30<10-11	1-22;31-80	32-33,49-50,51-54,59-62	AAAA?MM?GG -> AAAAMMGG nei byte 1-8 della data d'uscita; separatori non controllati (righe 47-48 commentate)
 C5	2	1	-	non-determinato	-	-	49-50,56	GOTOERR: MVC di 38 byte da un letterale di 13

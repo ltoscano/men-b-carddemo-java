@@ -1,7 +1,7 @@
 == codice di uscita
 97
 == stdout
-PRIMA 31 323032352d30332d3137a5a5a5a5a5a5a5a5a5a5 31 a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5 a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5
+PRIMA 31 414243442d494e56414c494420494e505554a5a5 31 a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5 a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5
 == stderr
 Warning: program compiled against libxml 212 using older 209
 MENB-ORACLE COBDATFT: caso non riproducibile dall'oracle
