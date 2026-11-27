@@ -244,3 +244,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T16:27:09Z,pr-40,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0; verdetto: BOCCIATA
 2026-11-27T16:27:43Z,pr-40,decisione,fable,orologio,validazione 2: un rilievo con falso verde; correzione mirata; poi verifica di Fable
 2026-11-27T16:27:43Z,issue-26,esecutore-inizio,sonnet,orologio,correzione mirata dopo la seconda validazione
+2026-11-27T16:27:55Z,pr-30,codex-fine,codex,orologio,giro 3; exit=0; token: 180.097
+2026-11-27T16:28:53Z,pr-30,decisione,fable,orologio,giro 3 BOCCIATA: tre falsi verdi del controllo; correzione mirata; poi verifica di Fable
+2026-11-27T16:28:53Z,issue-2,esecutore-inizio,sonnet,orologio,correzione mirata dopo il giro 3 (nuovo Esecutore; il precedente non è più disponibile)
