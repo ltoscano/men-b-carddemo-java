@@ -28,8 +28,8 @@ import sys
 from decimal import Decimal
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from comune import (CATEGORIE, COLONNE_VETTORI, STATI_CODIFICA, STATI_DECODIFICA, a_esa, da_esa,  # noqa: E402
-                    forma_canonica, leggi_tsv, valore_a_testo, valore_da_testo)
+from comune import (CATEGORIE, COLONNE_VETTORI, STATI_CODIFICA, STATI_DECODIFICA, a_esa, casi_esaustivi,  # noqa: E402
+                    da_esa, forma_canonica, leggi_tsv, valore_a_testo, valore_da_testo)
 
 PREFISSI_FONTE = {"oracle-gnucobol": ("GC-",), "zos-ebcdic": ("IBM-", "CP037", "ICU-", "ZOS-")}
 # Byte di guardia attorno al campo nel record di prova: una lunghezza sbagliata li include o perde un byte del campo.
@@ -45,6 +45,9 @@ TABELLA_SEGNO = {
     "oracle-gnucobol": [ord(c) for c in "{ABCDEFGHI}JKLMNOPQR"],
     "zos-ebcdic": [0xC0 + d for d in range(10)] + [0xD0 + d for d in range(10)],
 }
+# Rappresentazioni alternative ammesse nell'ultimo byte: la cifra semplice (oracle: cob_check_numdisp) o la zona F
+# (z/OS: NUMPROC(NOPFD), NUMCLS(PRIM)), positive. Con la tabella fanno 30 forme ammesse per variante e profilo.
+CIFRE_SEMPLICI = {"oracle-gnucobol": list(range(0x30, 0x3A)), "zos-ebcdic": list(range(0xF0, 0xFA))}
 ERRORI = []
 
 
@@ -193,14 +196,33 @@ def _cifra(p, x):
     return 0x30 <= x <= 0x39 if p == "oracle-gnucobol" else 0xF0 <= x <= 0xF9
 
 
+def _cifre_corpo(p, b):
+    """Cifre di un corpo DISPLAY tutto valido (None se un byte non e' una cifra del profilo)."""
+    if not all(_cifra(p, x) for x in b):
+        return None
+    return {x & 0x0F for x in b}
+
+
+def _cop_cifre_corpo(p, cat, var, rv, corpo):
+    viste = set()
+    for v in rv:
+        if v["stato"] == "valido":
+            c = _cifre_corpo(p, corpo(_byte(v)))
+            viste |= c or set()
+    for d in range(10):
+        if d not in viste:
+            errore("copertura", f"profilo {p} categoria {cat} variante {var}: manca la cifra {d} nel corpo")
+
+
 def _cop_segno(p, cat, var, g, rv):
     corpo_ok = [v for v in rv if all(_cifra(p, x) for x in _byte(v)[:-1])]
     for s in TABELLA_SEGNO[p]:
         if not any(_byte(v)[-1] == s and v["stato"] == "valido" for v in corpo_ok):
             errore("copertura", f"profilo {p} categoria {cat} variante {var}: manca la riga {s:02X} della tabella del segno")
-    alternativa = [v for v in corpo_ok if v["stato"] == "valido" and _cifra(p, _byte(v)[-1])]
-    if not alternativa:
-        errore("copertura", f"profilo {p} categoria {cat} variante {var}: manca la rappresentazione alternativa (cifra senza segno)")
+    for s in CIFRE_SEMPLICI[p]:
+        if not any(_byte(v)[-1] == s and v["stato"] == "valido" for v in corpo_ok):
+            errore("copertura", f"profilo {p} categoria {cat} variante {var}: manca la cifra semplice {s:02X} "
+                                f"(rappresentazione alternativa ammessa)")
     fuori = [v for v in corpo_ok if v["stato"] == "non-valido" and _byte(v)[-1] not in TABELLA_SEGNO[p]
              and not _cifra(p, _byte(v)[-1])]
     if not fuori:
@@ -209,6 +231,7 @@ def _cop_segno(p, cat, var, g, rv):
     zero = 0x30 if p == "oracle-gnucobol" else 0xF0
     if not any(_byte(v)[-1] == zero_neg and set(_byte(v)[:-1]) == {zero} and v["stato"] == "valido" for v in rv):
         errore("copertura", f"profilo {p} categoria {cat} variante {var}: manca lo zero negativo")
+    _cop_cifre_corpo(p, cat, var, rv, lambda b: b[:-1])
 
 
 def _cop_senza_segno(p, cat, var, g, rv):
@@ -220,19 +243,47 @@ def _cop_senza_segno(p, cat, var, g, rv):
     if not any(v["stato"] == "non-valido" and set(_byte(v)) != {spazio} and any(not _cifra(p, x) and x != spazio for x in _byte(v))
                for v in rv):
         errore("copertura", f"profilo {p} categoria {cat} variante {var}: manca un carattere non numerico")
+    _cop_cifre_corpo(p, cat, var, rv, lambda b: b)
 
 
 def _cop_packed(p, cat, var, g, rv):
-    accettati, rifiutati = ([0xC, 0xD, 0xF], [0xA, 0xB, 0xE]) if g.segno else ([0xF], [0xC, 0xD])
-    cifre_ok = lambda b: all((x >> 4) <= 9 and (x & 0xF) <= 9 for x in b[:-1]) and (b[-1] >> 4) <= 9  # noqa: E731
-    for s in accettati:
-        if not any(v["stato"] == "valido" and (_byte(v)[-1] & 0xF) == s and cifre_ok(_byte(v)) for v in rv):
-            errore("copertura", f"profilo {p} categoria {cat} variante {var}: manca il codice di segno accettato {s:X}")
-    for s in rifiutati:
-        if not any(v["stato"] == "non-valido" and (_byte(v)[-1] & 0xF) == s and cifre_ok(_byte(v)) for v in rv):
-            errore("copertura", f"profilo {p} categoria {cat} variante {var}: manca il codice di segno non ammesso {s:X}")
-    if not any(v["stato"] == "non-valido" and (_byte(v)[-1] & 0xF) in accettati and not cifre_ok(_byte(v)) for v in rv):
-        errore("copertura", f"profilo {p} categoria {cat} variante {var}: manca un semiottetto di cifra non valido")
+    """Tutte le righe della regola: i 16 codici di segno, le cifre 0-9 e i semiottetti A-F nelle posizioni di
+    cifra, e (precisione pari) i 16 valori del semiottetto di riempimento."""
+    accettati = [0xC, 0xD, 0xF] if g.segno else [0xF]
+    cifre_pic = g.intere + g.decimali
+    pari = cifre_pic % 2 == 0
+
+    def parti(b):
+        s = []
+        for x in b:
+            s += [x >> 4, x & 0xF]
+        return (s[0] if pari else None), s[1 if pari else 0:-1], s[-1]
+
+    for v in rv:
+        v["_parti"] = parti(_byte(v))
+    tutte_ok = lambda pt: all(c <= 9 for c in pt[1]) and (pt[0] is None or pt[0] <= 9)  # noqa: E731
+    for s in range(16):
+        ok = any((v["stato"] == ("valido" if s in accettati else "non-valido")) and v["_parti"][2] == s
+                 and tutte_ok(v["_parti"]) for v in rv)
+        if not ok:
+            tipo = "accettato" if s in accettati else "non ammesso"
+            errore("copertura", f"profilo {p} categoria {cat} variante {var}: manca il codice di segno {tipo} {s:X}")
+    viste = set()
+    for v in rv:
+        if v["stato"] == "valido":
+            viste |= set(v["_parti"][1])
+    for d in range(10):
+        if d not in viste:
+            errore("copertura", f"profilo {p} categoria {cat} variante {var}: manca la cifra {d} nei semiottetti di cifra")
+    for x in range(0xA, 0x10):
+        if not any(v["stato"] == "non-valido" and v["_parti"][2] in accettati and x in v["_parti"][1]
+                   and (v["_parti"][0] is None or v["_parti"][0] == 0) for v in rv):
+            errore("copertura", f"profilo {p} categoria {cat} variante {var}: manca il semiottetto di cifra non valido {x:X}")
+    if pari:
+        for x in range(16):
+            if not any(v["_parti"][0] == x and v["_parti"][2] in accettati and all(c <= 9 for c in v["_parti"][1])
+                       for v in rv):
+                errore("copertura", f"profilo {p} categoria {cat} variante {var}: manca il semiottetto di riempimento {x:X}")
 
 
 def _cop_binario(p, cat, var, g, rv):
@@ -266,6 +317,87 @@ def _cop_alfa(p, righe):
         for x in (0x5F, 0xAD, 0xB0, 0xBA, 0xBB, 0xBD):
             if not any(v["operazione"] == "decodifica" and x in _byte(v) for v in alfa):
                 errore("copertura", f"profilo {p} categoria alfanumerico: manca il byte {x:02X} che distingue 037 da 1047")
+    visti = set()
+    for v in alfa:
+        if v["operazione"] == "decodifica" and v["stato"] == "valido":
+            visti |= set(_byte(v))
+    for x in range(256):
+        if x not in visti:
+            errore("copertura", f"profilo {p} categoria alfanumerico: manca il byte {x:02X} in un vettore di decodifica")
+
+
+# --- casi esaustivi dei DISPLAY: la regola scritta qui a mano, indipendente dal codec -----------------------------------
+
+def attesa_esaustiva(p, cat, var, ingresso, decimali):
+    """(stato, valore) prescritti dalla regola per un DISPLAY: corpo di sole cifre del profilo; ultimo byte di un campo
+    con segno nella tabella o cifra semplice. Il valore si calcola dalle cifre e dal segno della tabella."""
+    con_segno = cat == "display-con-segno"
+    corpo, ultimo = (ingresso[:-1], ingresso[-1]) if con_segno else (ingresso, None)
+    if not all(_cifra(p, x) for x in corpo):
+        return "non-valido", None
+    cifre = [x & 0x0F for x in corpo]
+    segno = 1
+    if con_segno:
+        tab = TABELLA_SEGNO[p]
+        if ultimo in tab:
+            i = tab.index(ultimo)
+            cifre.append(i % 10)
+            segno = 1 if i < 10 else -1
+        elif ultimo in CIFRE_SEMPLICI[p]:
+            cifre.append(ultimo & 0x0F)
+        else:
+            return "non-valido", None
+    n = int("".join(str(c) for c in cifre))
+    return "valido", Decimal(segno * n).scaleb(-decimali)
+
+
+def controlla_esaustivi_codec(codec):
+    n = 0
+    for p in ("oracle-gnucobol", "zos-ebcdic"):
+        for idc, pos, cat, var, b, ingresso in casi_esaustivi(p):
+            g = codec.geometria(cat, var)
+            stato, valore = attesa_esaustiva(p, cat, var, ingresso, g.decimali)
+            id_ = f"profilo {p} categoria {cat} variante {var} byte {a_esa(ingresso)} ({pos} {b:02X})"
+            n += 1
+            try:
+                r = codec.decodifica(p, cat, var, ingresso, 0)
+            except Exception as e:  # noqa: BLE001
+                errore("esaustivo", f"{id_}: eccezione {type(e).__name__}: {e}")
+                continue
+            if r.stato != stato:
+                errore("esaustivo", f"{id_}: stato atteso {stato}, ottenuto {r.stato}")
+            elif r.valore != valore:
+                errore("esaustivo", f"{id_}: valore atteso {valore}, ottenuto {r.valore}")
+    return n
+
+
+# --- geometria: un campo che non sta tutto nel record non diventa mai un valore ------------------------------------------
+
+def controlla_geometria(codec, vettori):
+    """Per ogni vettore di decodifica: record troncato di un byte, record vuoto, campo che scavalca la fine, offset oltre la
+    fine, offset negativo. La colla deve rifiutare con CampoIncompleto prima di convertire."""
+    n = 0
+    for p, righe in vettori.items():
+        for v in righe:
+            if v["operazione"] != "decodifica":
+                continue
+            b = da_esa(v["ingresso"])
+            casi = [("record troncato di un byte", b[:-1], 0), ("record vuoto", b"", 0),
+                    ("campo che scavalca la fine", b, 1), ("offset oltre la fine", b, len(b) + 1),
+                    ("offset negativo", b + b, -1)]
+            for nome, rec, off in casi:
+                n += 1
+                id_ = chi(p, v, f" byte {v['ingresso']}")
+                try:
+                    r = codec.decodifica(p, v["categoria"], v["variante"], rec, off)
+                except getattr(codec, "CampoIncompleto", ()) as e:  # noqa: F841
+                    continue
+                except Exception as e:  # noqa: BLE001
+                    errore("geometria", f"{id_} ({nome}): atteso CampoIncompleto, ottenuta l'eccezione {type(e).__name__}: {e}")
+                    continue
+                errore("geometria", f"{id_} ({nome}): atteso CampoIncompleto, ottenuto stato {r.stato} valore "
+                                    f"{'-' if r.valore is None else r.valore}")
+    return n
 
 
 # --- codec contro i vettori ----------------------------------------------------------------------------------------
@@ -421,6 +553,28 @@ def controlla_sonda(vettori, oltre_path, out_sonde, opzioni):
                 errore("oltre-picture", f"{id_}: riscrittura attesa {t['riscrittura']}, osservata {o['scritto']}")
     for k in sorted(set(oltre_k) - usati_oltre):
         errore("oltre-picture", f"osservazione dichiarata senza un vettore oltre-picture corrispondente: {k}")
+    # casi esaustivi: ogni valore 0-255 dell'ultimo byte o del primo byte del corpo, attesi dalla regola scritta a mano
+    for idc, pos, cat, var, b, ingresso in casi_esaustivi("oracle-gnucobol", solo_sonda=True):
+        decimali = int(var.split("V9(")[1][:-1]) if "V9(" in var else 0
+        stato, valore = attesa_esaustiva("oracle-gnucobol", cat, var, ingresso, decimali)
+        id_ = f"profilo oracle-gnucobol categoria {cat} variante {var} byte {a_esa(ingresso)} ({pos} {b:02X})"
+        o = per_riga.get(idc)
+        if o is None:
+            errore("sonda", f"{id_}: nessuna osservazione della sonda (caso esaustivo {idc})")
+            continue
+        usate.add(idc)
+        n += 1
+        if o["variante"] != f"{cat}:{var}" or o["operazione"] != "decodifica":
+            errore("sonda", f"{id_}: l'osservazione del caso {idc} e' di {o['operazione']} {o['variante']}")
+            continue
+        attesa = "S" if stato == "valido" else "N"
+        if o["classe"] != attesa:
+            nomi = {"S": "valido", "N": "non-valido"}
+            errore("sonda", f"{id_}: IS NUMERIC atteso {nomi[attesa]}, osservato {nomi.get(o['classe'], o['classe'])}")
+        elif stato == "valido":
+            for col, nome in (("valore_move", "MOVE"), ("valore_add", "ADD")):
+                if not _uguali_num(o[col], valore):
+                    errore("sonda", f"{id_}: valore con {nome} atteso {valore}, osservato {_mostra(o[col])}")
     for k in sorted(set(per_riga) - usate):
         errore("sonda", f"osservazione della riga {k} senza un vettore corrispondente")
     _controlla_compilazione(out_sonde, opzioni)
@@ -501,6 +655,8 @@ def main(argv):
     vettori = carica_vettori(vett, codec, fonti)
     controlla_copertura(vettori, censimento, codec)
     n_codec = controlla_codec(codec, vettori)
+    n_esaustivi = controlla_esaustivi_codec(codec)
+    n_geometria = controlla_geometria(codec, vettori)
     n_sonda = controlla_sonda(vettori, os.path.join(vett, "oracle-oltre-picture.tsv"), os.path.join(out, "sonde"), opzioni)
     controlla_documento(testo, censimento)
     controlla_pagina(out, testo)
@@ -510,6 +666,7 @@ def main(argv):
         return 1
     print(f"verifica riuscita: {len(censimento)} varianti coperte; {n_codec} vettori sul codec "
           f"({len(vettori['oracle-gnucobol'])} oracle-gnucobol, {len(vettori['zos-ebcdic'])} zos-ebcdic); "
+          f"{n_esaustivi} casi esaustivi dei DISPLAY sul codec; {n_geometria} campi incompleti rifiutati; "
           f"{n_sonda} osservazioni della sonda coincidono con gli attesi; pagina 037 per convenzione")
     return 0
 

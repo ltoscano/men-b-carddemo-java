@@ -284,3 +284,116 @@ comp	S9(10)V9(2)	decodifica	80 00*7	oltre-picture	-	-	-	GC-SRC-BINARY	estremo fi
 comp	S9(10)V9(2)	codifica	-0.01	ok	-	FF*8	FF*8	GC-SRC-BINARY
 comp	S9(10)V9(2)	codifica	-9999999999.99	ok	-	FF FF FF 17 2B 5A F0 01	FF FF FF 17 2B 5A F0 01	GC-SRC-BINARY	estremo della PICTURE
 comp	S9(10)V9(2)	codifica	12345678901.23	errore	-	-	00 00 00 36 9D 55 F4 CB	GC-README-BINARI	-fbinary-truncate: 2345678901.23
+# --- Righe aggiunte nel giro di correzione 1 della PR #47 (rilievi 1 e 3 del Validatore), scritte a mano PRIMA di
+# rieseguire la sonda, con le stesse fonti delle righe precedenti. Coprono tutte le righe di ogni regola:
+# le 30 forme ammesse dell'ultimo byte (20 della tabella + 10 cifre semplici), tutte le cifre 0-9 nel corpo dei DISPLAY,
+# tutti i 16 codici di segno e i 16 valori del semiottetto di riempimento dei COMP-3, tutte le cifre 0-9 e A-F nelle
+# posizioni di cifra dei COMP-3, tutti i 256 byte di un alfanumerico.
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 30	valido	123.40	30*7 31 32 33 34 7B	-	GC-SRC-NUMDISP	cifra semplice 0
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 31	valido	123.41	30*7 31 32 33 34 41	-	GC-SRC-NUMDISP	cifra semplice 1
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 32	valido	123.42	30*7 31 32 33 34 42	-	GC-SRC-NUMDISP	cifra semplice 2
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 33	valido	123.43	30*7 31 32 33 34 43	-	GC-SRC-NUMDISP	cifra semplice 3
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 35	valido	123.45	30*7 31 32 33 34 45	-	GC-SRC-NUMDISP	cifra semplice 5
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 36	valido	123.46	30*7 31 32 33 34 46	-	GC-SRC-NUMDISP	cifra semplice 6
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 37	valido	123.47	30*7 31 32 33 34 47	-	GC-SRC-NUMDISP	cifra semplice 7
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 38	valido	123.48	30*7 31 32 33 34 48	-	GC-SRC-NUMDISP	cifra semplice 8
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 39	valido	123.49	30*7 31 32 33 34 49	-	GC-SRC-NUMDISP	cifra semplice 9
+display-con-segno	S9(10)V9(2)	decodifica	35 36 37 38 35 36 37 38 35 36 37 7B	valido	5678567856.70	35 36 37 38 35 36 37 38 35 36 37 7B	-	GC-SRC-NUMDISP	cifre 5-8 nel corpo
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 30	valido	504.70	30*6 35 30 34 37 7B	-	GC-SRC-NUMDISP	cifra semplice 0
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 31	valido	504.71	30*6 35 30 34 37 41	-	GC-SRC-NUMDISP	cifra semplice 1
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 32	valido	504.72	30*6 35 30 34 37 42	-	GC-SRC-NUMDISP	cifra semplice 2
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 33	valido	504.73	30*6 35 30 34 37 43	-	GC-SRC-NUMDISP	cifra semplice 3
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 34	valido	504.74	30*6 35 30 34 37 44	-	GC-SRC-NUMDISP	cifra semplice 4
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 35	valido	504.75	30*6 35 30 34 37 45	-	GC-SRC-NUMDISP	cifra semplice 5
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 36	valido	504.76	30*6 35 30 34 37 46	-	GC-SRC-NUMDISP	cifra semplice 6
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 38	valido	504.78	30*6 35 30 34 37 48	-	GC-SRC-NUMDISP	cifra semplice 8
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 39	valido	504.79	30*6 35 30 34 37 49	-	GC-SRC-NUMDISP	cifra semplice 9
+display-con-segno	S9(9)V9(2)	decodifica	32 33 36 38 32 33 36 38 32 33 7B	valido	236823682.30	32 33 36 38 32 33 36 38 32 33 7B	-	GC-SRC-NUMDISP	cifre 2, 3, 6, 8 nel corpo
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 30	valido	1234.50	31 32 33 34 35 7B	-	GC-SRC-NUMDISP	cifra semplice 0
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 31	valido	1234.51	31 32 33 34 35 41	-	GC-SRC-NUMDISP	cifra semplice 1
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 32	valido	1234.52	31 32 33 34 35 42	-	GC-SRC-NUMDISP	cifra semplice 2
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 33	valido	1234.53	31 32 33 34 35 43	-	GC-SRC-NUMDISP	cifra semplice 3
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 34	valido	1234.54	31 32 33 34 35 44	-	GC-SRC-NUMDISP	cifra semplice 4
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 35	valido	1234.55	31 32 33 34 35 45	-	GC-SRC-NUMDISP	cifra semplice 5
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 36	valido	1234.56	31 32 33 34 35 46	-	GC-SRC-NUMDISP	cifra semplice 6
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 37	valido	1234.57	31 32 33 34 35 47	-	GC-SRC-NUMDISP	cifra semplice 7
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 38	valido	1234.58	31 32 33 34 35 48	-	GC-SRC-NUMDISP	cifra semplice 8
+display-con-segno	S9(4)V9(2)	decodifica	36 37 38 36 37 7B	valido	6786.70	36 37 38 36 37 7B	-	GC-SRC-NUMDISP	cifre 6-8 nel corpo
+display-senza-segno	9(1)	decodifica	31	valido	1	31	-	GC-SRC-NUMDISP
+display-senza-segno	9(1)	decodifica	32	valido	2	32	-	GC-SRC-NUMDISP
+display-senza-segno	9(1)	decodifica	33	valido	3	33	-	GC-SRC-NUMDISP
+display-senza-segno	9(1)	decodifica	34	valido	4	34	-	GC-SRC-NUMDISP
+display-senza-segno	9(1)	decodifica	36	valido	6	36	-	GC-SRC-NUMDISP
+display-senza-segno	9(1)	decodifica	37	valido	7	37	-	GC-SRC-NUMDISP
+display-senza-segno	9(1)	decodifica	38	valido	8	38	-	GC-SRC-NUMDISP
+display-senza-segno	9(3)	decodifica	34 35 36	valido	456	34 35 36	-	GC-SRC-NUMDISP
+display-senza-segno	9(3)	decodifica	37 38 30	valido	780	37 38 30	-	GC-SRC-NUMDISP
+display-senza-segno	9(4)	decodifica	35 36 37 38	valido	5678	35 36 37 38	-	GC-SRC-NUMDISP
+display-senza-segno	9(7)	decodifica	38 39 30 31 32 33 30	valido	8901230	38 39 30 31 32 33 30	-	GC-SRC-NUMDISP
+display-senza-segno	9(16)	decodifica	35 36 37 38 35 36 37 38 35 36 37 38 35 36 37 38	valido	5678567856785678	35 36 37 38 35 36 37 38 35 36 37 38 35 36 37 38	-	GC-SRC-NUMDISP
+comp-3	9(3)	decodifica	12 30	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 0
+comp-3	9(3)	decodifica	12 31	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 1
+comp-3	9(3)	decodifica	12 32	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 2
+comp-3	9(3)	decodifica	12 33	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 3
+comp-3	9(3)	decodifica	12 34	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 4
+comp-3	9(3)	decodifica	12 35	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 5
+comp-3	9(3)	decodifica	12 36	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 6
+comp-3	9(3)	decodifica	12 37	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 7
+comp-3	9(3)	decodifica	12 38	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 8
+comp-3	9(3)	decodifica	12 39	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 9
+comp-3	9(3)	decodifica	12 3A	non-valido	-	-	-	GC-SRC-PACKED	codice di segno A in un campo senza segno
+comp-3	9(3)	decodifica	12 3B	non-valido	-	-	-	GC-SRC-PACKED	codice di segno B in un campo senza segno
+comp-3	9(3)	decodifica	12 3E	non-valido	-	-	-	GC-SRC-PACKED	codice di segno E in un campo senza segno
+comp-3	9(3)	decodifica	45 6F	valido	456	45 6F	-	GC-SRC-PACKED	cifre 4-6
+comp-3	9(3)	decodifica	78 0F	valido	780	78 0F	-	GC-SRC-PACKED	cifre 7, 8, 0
+comp-3	9(3)	decodifica	1B 3F	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra B
+comp-3	9(3)	decodifica	1C 3F	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra C
+comp-3	9(3)	decodifica	1D 3F	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra D
+comp-3	9(3)	decodifica	1E 3F	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra E
+comp-3	9(3)	decodifica	1F 3F	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra F
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 60	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 0
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 61	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 1
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 62	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 2
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 63	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 3
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 64	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 4
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 65	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 5
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 66	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 6
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 67	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 7
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 68	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 8
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 69	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 9
+comp-3	S9(9)V9(2)	decodifica	00 00 07 78 87 8C	valido	7788.78	00 00 07 78 87 8C	-	GC-SRC-PACKED	cifre 7 e 8
+comp-3	S9(9)V9(2)	decodifica	00 00 0B 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra B
+comp-3	S9(9)V9(2)	decodifica	00 00 0C 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra C
+comp-3	S9(9)V9(2)	decodifica	00 00 0D 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra D
+comp-3	S9(9)V9(2)	decodifica	00 00 0E 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra E
+comp-3	S9(9)V9(2)	decodifica	00 00 0F 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra F
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 60	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 0
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 61	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 1
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 62	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 2
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 63	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 3
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 64	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 4
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 65	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 5
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 66	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 6
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 67	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 7
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 68	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 8
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 69	non-valido	-	-	-	GC-SRC-PACKED	codice di segno 9
+comp-3	S9(10)V9(2)	decodifica	00 00 00 07 78 87 8C	valido	7788.78	00 00 00 07 78 87 8C	-	GC-SRC-PACKED	cifre 7 e 8
+comp-3	S9(10)V9(2)	decodifica	00 00 00 0A 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra A
+comp-3	S9(10)V9(2)	decodifica	00 00 00 0C 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra C
+comp-3	S9(10)V9(2)	decodifica	00 00 00 0D 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra D
+comp-3	S9(10)V9(2)	decodifica	00 00 00 0E 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra E
+comp-3	S9(10)V9(2)	decodifica	00 00 00 0F 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra F
+comp-3	S9(10)V9(2)	decodifica	20 00 00 01 23 45 6C	valido	1234.56	00 00 00 01 23 45 6C	-	GC-SRC-PACKED	riempimento 2: cifra valida, ignorata
+comp-3	S9(10)V9(2)	decodifica	30 00 00 01 23 45 6C	valido	1234.56	00 00 00 01 23 45 6C	-	GC-SRC-PACKED	riempimento 3
+comp-3	S9(10)V9(2)	decodifica	40 00 00 01 23 45 6C	valido	1234.56	00 00 00 01 23 45 6C	-	GC-SRC-PACKED	riempimento 4
+comp-3	S9(10)V9(2)	decodifica	50 00 00 01 23 45 6C	valido	1234.56	00 00 00 01 23 45 6C	-	GC-SRC-PACKED	riempimento 5
+comp-3	S9(10)V9(2)	decodifica	60 00 00 01 23 45 6C	valido	1234.56	00 00 00 01 23 45 6C	-	GC-SRC-PACKED	riempimento 6
+comp-3	S9(10)V9(2)	decodifica	70 00 00 01 23 45 6C	valido	1234.56	00 00 00 01 23 45 6C	-	GC-SRC-PACKED	riempimento 7
+comp-3	S9(10)V9(2)	decodifica	80 00 00 01 23 45 6C	valido	1234.56	00 00 00 01 23 45 6C	-	GC-SRC-PACKED	riempimento 8
+comp-3	S9(10)V9(2)	decodifica	90 00 00 01 23 45 6C	valido	1234.56	00 00 00 01 23 45 6C	-	GC-SRC-PACKED	riempimento 9
+comp-3	S9(10)V9(2)	decodifica	A0 00 00 01 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	riempimento A
+comp-3	S9(10)V9(2)	decodifica	B0 00 00 01 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	riempimento B
+comp-3	S9(10)V9(2)	decodifica	C0 00 00 01 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	riempimento C
+comp-3	S9(10)V9(2)	decodifica	D0 00 00 01 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	riempimento D
+comp-3	S9(10)V9(2)	decodifica	E0 00 00 01 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	riempimento E
+alfanumerico	X(289)	decodifica	00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F 20 21 22 23 24 25 26 27 28 29 2A 2B 2C 2D 2E 2F 30 31 32 33 34 35 36 37 38 39 3A 3B 3C 3D 3E 3F 40 41 42 43 44 45 46 47 48 49 4A 4B 4C 4D 4E 4F 50 51 52 53 54 55 56 57 58 59 5A 5B 5C 5D 5E 5F 60 61 62 63 64 65 66 67 68 69 6A 6B 6C 6D 6E 6F 70 71 72 73 74 75 76 77 78 79 7A 7B 7C 7D 7E 7F 80 81 82 83 84 85 86 87 88 89 8A 8B 8C 8D 8E 8F 90 91 92 93 94 95 96 97 98 99 9A 9B 9C 9D 9E 9F A0 A1 A2 A3 A4 A5 A6 A7 A8 A9 AA AB AC AD AE AF B0 B1 B2 B3 B4 B5 B6 B7 B8 B9 BA BB BC BD BE BF C0 C1 C2 C3 C4 C5 C6 C7 C8 C9 CA CB CC CD CE CF D0 D1 D2 D3 D4 D5 D6 D7 D8 D9 DA DB DC DD DE DF E0 E1 E2 E3 E4 E5 E6 E7 E8 E9 EA EB EC ED EE EF F0 F1 F2 F3 F4 F5 F6 F7 F8 F9 FA FB FC FD FE FF 20*33	valido	"\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008\u0009\u000a\u000b\u000c\u000d\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f\u0020\u0021\u0022\u0023\u0024\u0025\u0026\u0027\u0028\u0029\u002a\u002b\u002c\u002d\u002e\u002f\u0030\u0031\u0032\u0033\u0034\u0035\u0036\u0037\u0038\u0039\u003a\u003b\u003c\u003d\u003e\u003f\u0040\u0041\u0042\u0043\u0044\u0045\u0046\u0047\u0048\u0049\u004a\u004b\u004c\u004d\u004e\u004f\u0050\u0051\u0052\u0053\u0054\u0055\u0056\u0057\u0058\u0059\u005a\u005b\u005c\u005d\u005e\u005f\u0060\u0061\u0062\u0063\u0064\u0065\u0066\u0067\u0068\u0069\u006a\u006b\u006c\u006d\u006e\u006f\u0070\u0071\u0072\u0073\u0074\u0075\u0076\u0077\u0078\u0079\u007a\u007b\u007c\u007d\u007e\u007f\u0080\u0081\u0082\u0083\u0084\u0085\u0086\u0087\u0088\u0089\u008a\u008b\u008c\u008d\u008e\u008f\u0090\u0091\u0092\u0093\u0094\u0095\u0096\u0097\u0098\u0099\u009a\u009b\u009c\u009d\u009e\u009f\u00a0\u00a1\u00a2\u00a3\u00a4\u00a5\u00a6\u00a7\u00a8\u00a9\u00aa\u00ab\u00ac\u00ad\u00ae\u00af\u00b0\u00b1\u00b2\u00b3\u00b4\u00b5\u00b6\u00b7\u00b8\u00b9\u00ba\u00bb\u00bc\u00bd\u00be\u00bf\u00c0\u00c1\u00c2\u00c3\u00c4\u00c5\u00c6\u00c7\u00c8\u00c9\u00ca\u00cb\u00cc\u00cd\u00ce\u00cf\u00d0\u00d1\u00d2\u00d3\u00d4\u00d5\u00d6\u00d7\u00d8\u00d9\u00da\u00db\u00dc\u00dd\u00de\u00df\u00e0\u00e1\u00e2\u00e3\u00e4\u00e5\u00e6\u00e7\u00e8\u00e9\u00ea\u00eb\u00ec\u00ed\u00ee\u00ef\u00f0\u00f1\u00f2\u00f3\u00f4\u00f5\u00f6\u00f7\u00f8\u00f9\u00fa\u00fb\u00fc\u00fd\u00fe\u00ff" " "*33	00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13 14 15 16 17 18 19 1A 1B 1C 1D 1E 1F 20 21 22 23 24 25 26 27 28 29 2A 2B 2C 2D 2E 2F 30 31 32 33 34 35 36 37 38 39 3A 3B 3C 3D 3E 3F 40 41 42 43 44 45 46 47 48 49 4A 4B 4C 4D 4E 4F 50 51 52 53 54 55 56 57 58 59 5A 5B 5C 5D 5E 5F 60 61 62 63 64 65 66 67 68 69 6A 6B 6C 6D 6E 6F 70 71 72 73 74 75 76 77 78 79 7A 7B 7C 7D 7E 7F 80 81 82 83 84 85 86 87 88 89 8A 8B 8C 8D 8E 8F 90 91 92 93 94 95 96 97 98 99 9A 9B 9C 9D 9E 9F A0 A1 A2 A3 A4 A5 A6 A7 A8 A9 AA AB AC AD AE AF B0 B1 B2 B3 B4 B5 B6 B7 B8 B9 BA BB BC BD BE BF C0 C1 C2 C3 C4 C5 C6 C7 C8 C9 CA CB CC CD CE CF D0 D1 D2 D3 D4 D5 D6 D7 D8 D9 DA DB DC DD DE DF E0 E1 E2 E3 E4 E5 E6 E7 E8 E9 EA EB EC ED EE EF F0 F1 F2 F3 F4 F5 F6 F7 F8 F9 FA FB FC FD FE FF 20*33	-	GC-ALFA-BYTE	tutti i 256 byte: ciascuno e' il carattere con lo stesso codice

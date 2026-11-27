@@ -7,9 +7,10 @@ nell'ambiente dell'oracle.
 
 Tre operazioni distinte:
   decodifica(profilo, categoria, variante, record, offset) -> Risultato(stato, valore, originali)
-      stato: valido | non-valido | oltre-picture | non-determinato. Il valore e' None se il campo non e'
-      valido (o se il profilo non lo determina); i byte originali sono sempre conservati. Nessun valore
-      inventato, nessuna normalizzazione in lettura, nessun record scartato.
+      stato: valido | non-valido | oltre-picture. Il valore e' None se il campo non e' valido; i byte
+      originali sono sempre conservati. Nessun valore inventato, nessuna normalizzazione in lettura, nessun
+      record scartato. Prima di ogni conversione si verifica che il campo stia tutto nel record: offset
+      negativo, oltre la fine o campo troncato -> CampoIncompleto (nessuno stato, nessun valore).
   ricodifica(risultato) -> bytes
       ricodifica conservativa: restituisce i byte originali, tali e quali (uno zero negativo resta tale,
       una rappresentazione alternativa ammessa resta com'e').
@@ -31,6 +32,10 @@ Risultato = namedtuple("Risultato", "stato valore originali")
 
 class CodificaErrore(ValueError):
     pass
+
+
+class CampoIncompleto(CodificaErrore):
+    """Il campo non sta tutto nel record (offset fuori intervallo o byte mancanti): nessuna conversione."""
 
 
 # --- geometria: dalla variante (PICTURE normalizzata) a lunghezza, scala, segno -----------------------------
@@ -254,9 +259,9 @@ def _dec_packed(profilo, g, b):
         return Risultato("non-valido", None, b)
     if any(c != 0 for c in riempimento):
         # GnuCOBOL: cifra valida, ignorata nel valore (cob_decimal_set_packed salta il primo semiottetto).
-        # z/OS: la documentazione consultata non lo determina.
+        # z/OS: i quattro bit iniziali di un packed a precisione pari devono essere 0 (APAR PI96135): non valido.
         if profilo == "zos-ebcdic":
-            return Risultato("non-determinato", None, b)
+            return Risultato("non-valido", None, b)
     n = int("".join(str(c) for c in cifre))
     return Risultato("valido", _valore(accettati[codice] * n, g), b)
 
@@ -301,6 +306,11 @@ def _profilo(p):
 def decodifica(profilo, categoria, variante, record, offset=0):
     _profilo(profilo)
     g = geometria(categoria, variante)
+    if not isinstance(offset, int) or isinstance(offset, bool) or offset < 0:
+        raise CampoIncompleto(f"offset {offset!r} fuori intervallo")
+    if offset + g.lunghezza > len(record):
+        raise CampoIncompleto(f"campo {categoria} {variante} di {g.lunghezza} byte all'offset {offset}: "
+                              f"il record ne ha {len(record)}")
     b = bytes(record[offset:offset + g.lunghezza])
     if categoria == "alfanumerico":
         r = _dec_alfa(profilo, b)

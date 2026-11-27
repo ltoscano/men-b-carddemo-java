@@ -4,7 +4,8 @@
       scrive il file letto dalla sonda (DD_CODECIN): un record fisso di 553 byte per ogni riga di
       decodifica e per ogni riga di codifica con un 'move' atteso. Non usa il codec: copia i byte
       d'ingresso dei vettori, o scrive il valore nuovo come S9(20)V9(6) SIGN LEADING SEPARATE (numerici)
-      o come testo ISO-8859-1 (alfanumerici).
+      o come testo ISO-8859-1 (alfanumerici). In coda, i casi esaustivi della sonda (comune.casi_esaustivi):
+      ogni valore 0-255 dell'ultimo byte e del primo byte del corpo per alcuni DISPLAY, id da 900001.
   sonda.py leggi RAPPORTO.txt OUT.tsv
       estrae dal rapporto di oracle/esegui.sh (sezione stdout) le righe della sonda e scrive le
       osservazioni, una per vettore; fallisce se manca la riga finale FINE, se il conteggio non torna,
@@ -14,7 +15,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from comune import a_esa, da_esa, leggi_tsv, scrivi_tsv, valore_da_testo  # noqa: E402
+from comune import a_esa, casi_esaustivi, da_esa, leggi_tsv, scrivi_tsv, valore_da_testo  # noqa: E402
 
 LUNG_REC = 6 + 1 + 40 + 3 + 3 + 500
 
@@ -58,7 +59,14 @@ def ingresso(vettori, out):
             assert len(rec) == LUNG_REC
             f.write(rec)
             n += 1
-    print(f"ingresso della sonda: {n} record")
+        e = 0
+        for idc, _pos, cat, var, _b, dati in casi_esaustivi("oracle-gnucobol", solo_sonda=True):
+            rec = (b"%06d" % idc) + b"D" + f"{cat}:{var}".encode("ascii").ljust(40) \
+                + (b"%03d" % len(dati)) + (b"%03d" % len(dati)) + dati.ljust(500, b" ")
+            assert len(rec) == LUNG_REC
+            f.write(rec)
+            e += 1
+    print(f"ingresso della sonda: {n} record dai vettori, {e} casi esaustivi")
 
 
 def leggi(rapporto, out):

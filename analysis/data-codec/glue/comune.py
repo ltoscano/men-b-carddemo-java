@@ -10,7 +10,42 @@ from decimal import Decimal, InvalidOperation
 
 PROFILI = ("oracle-gnucobol", "zos-ebcdic")
 CATEGORIE = ("alfanumerico", "display-senza-segno", "display-con-segno", "comp-3", "comp")
-STATI_DECODIFICA = ("valido", "non-valido", "oltre-picture", "non-determinato")
+STATI_DECODIFICA = ("valido", "non-valido", "oltre-picture")
+
+# --- casi esaustivi -----------------------------------------------------------------------------------------
+# Per i DISPLAY, oltre ai vettori: ogni valore 0-255 dell'ultimo byte (campi con segno) e del primo byte del
+# corpo, con il resto del campo fisso. Gli attesi non stanno qui: li calcola verifica.py dalla regola scritta a
+# mano (tabella del segno, cifre). La sonda ne esegue un sottoinsieme fisso (SONDA_ESAUSTIVI).
+ID_ESAUSTIVI = 900000
+VARIANTI_DISPLAY = [("display-senza-segno", f"9({n})", n) for n in (1, 3, 4, 7, 9, 11, 16)] + \
+                   [("display-con-segno", v, n) for v, n in (("S9(4)V9(2)", 6), ("S9(9)V9(2)", 11), ("S9(10)V9(2)", 12))]
+SONDA_ESAUSTIVI = {("segno", "display-con-segno", "S9(4)V9(2)"), ("segno", "display-con-segno", "S9(9)V9(2)"),
+                   ("segno", "display-con-segno", "S9(10)V9(2)"), ("corpo", "display-senza-segno", "9(4)"),
+                   ("corpo", "display-con-segno", "S9(4)V9(2)")}
+UNO = {"oracle-gnucobol": 0x31, "zos-ebcdic": 0xF1}           # cifra 1 del corpo fisso
+ZERO_POSITIVO = {"oracle-gnucobol": 0x7B, "zos-ebcdic": 0xC0}  # ultimo byte fisso dei casi sul corpo
+
+
+def casi_esaustivi(profilo, solo_sonda=False):
+    """Lista di (id, posizione, categoria, variante, byte_provato, ingresso). id stabile per (posizione, variante, byte)."""
+    out = []
+    k = 0
+    for posizione in ("segno", "corpo"):
+        for cat, var, n in VARIANTI_DISPLAY:
+            if posizione == "segno" and cat != "display-con-segno":
+                continue
+            for b in range(256):
+                k += 1
+                if solo_sonda and (posizione, cat, var) not in SONDA_ESAUSTIVI:
+                    continue
+                if posizione == "segno":
+                    ingresso = bytes([UNO[profilo]]) * (n - 1) + bytes([b])
+                elif cat == "display-con-segno":
+                    ingresso = bytes([b]) + bytes([UNO[profilo]]) * (n - 2) + bytes([ZERO_POSITIVO[profilo]])
+                else:
+                    ingresso = bytes([b]) + bytes([UNO[profilo]]) * (n - 1)
+                out.append((ID_ESAUSTIVI + k, posizione, cat, var, b, ingresso))
+    return out
 STATI_CODIFICA = ("ok", "errore")
 COLONNE_VETTORI = ("categoria", "variante", "operazione", "ingresso", "stato", "valore", "byte", "move", "fonte", "nota")
 

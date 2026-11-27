@@ -116,11 +116,14 @@ I vettori di un profilo citano solo fonti di quel profilo (`GC-…` per l'oracle
 
 ## Operazioni della colla
 
-- **Decodifica** (`codec.decodifica`) restituisce lo stato (`valido`, `non-valido`, `oltre-picture`, `non-determinato`), il valore e **sempre** i byte originali. Nessun valore inventato: se lo stato non è `valido` il valore è assente. Nessuna normalizzazione in lettura, nessun record scartato. I valori numerici sono `Decimal` con la scala della `PICTURE`.
+- **Decodifica** (`codec.decodifica`) restituisce lo stato (`valido`, `non-valido`, `oltre-picture`), il valore e **sempre** i byte originali. Nessun valore inventato: se lo stato non è `valido` il valore è assente. Nessuna normalizzazione in lettura, nessun record scartato. I valori numerici sono `Decimal` con la scala della `PICTURE`.
+- **Campo incompleto** (rilievo 2 del giro 1 della PR #47). Prima di qualsiasi conversione la decodifica verifica che il campo stia tutto nel record: offset intero e non negativo, `offset + lunghezza ≤ lunghezza del record`. Se non è così solleva `CampoIncompleto` (sottoclasse di `CodificaErrore`), senza stato e senza valore. Un record troncato, vuoto o un offset oltre la fine non diventano mai un numero, nemmeno zero. Il controllo lo prova, per ogni vettore di decodifica dei due profili, con cinque casi: record troncato di un byte, record vuoto, campo che scavalca la fine, offset oltre la fine, offset negativo.
 - **Ricodifica conservativa** (`codec.ricodifica`) restituisce i byte originali tali e quali: uno zero negativo (`}` nell'oracle, zona `D` su z/OS, `D` in un packed) resta tale, una rappresentazione alternativa ammessa resta com'è. Il controllo lo verifica su ogni vettore di decodifica.
 - **Codifica di un valore nuovo** (`codec.codifica`) produce la rappresentazione prescritta dal profilo. Rifiuta con un errore esplicito ciò che non è rappresentabile: valore oltre la `PICTURE`, decimali oltre la scala, negativo in un campo senza segno, testo più lungo del campo, carattere fuori dalla pagina di codici. Non tronca e non arrotonda in silenzio. Il troncamento che farebbe un `MOVE` COBOL è registrato a parte nei vettori (colonna `move`) e osservato dalla sonda: è un comportamento del COBOL, non una regola della colla.
 
 **Valori numerici non validi** (voce 20 del registro): la decodifica conserva i byte, marca il campo `non-valido` e non gli assegna alcun valore; non converte in zero, non scarta il record.
+
+**Validità della rappresentazione e risultato di un'operazione sono due cose diverse.** Lo stato dice soltanto se i byte sono una codifica ammessa del tipo, come stabilisce il controllo di classe o la regola documentata. Che cosa ottenga un'operazione COBOL su un dato non valido è un'altra domanda. Nell'oracle è osservato e registrato a parte (sezione "Comportamento osservato di GnuCOBOL su dati non validi"); su z/OS non è documentato. Che il risultato di un'operazione sia incerto non rende "non determinata" la validità.
 
 ## Alfanumerico (`PIC X(n)`)
 
@@ -165,6 +168,14 @@ Lunghezza i+d byte, punto decimale implicito prima delle ultime d cifre. Il segn
 
 Fonti: oracle `GC-README-SEGNO` (convenzione EBCDIC di `-fsign=EBCDIC`) e `GC-SRC-SEGNO`; z/OS `IBM-PG63-NUMPROC` (zona C positivo o zero, D negativo).
 
+Oltre alle 20 righe della tabella, l'ultimo byte ammette altre 10 forme, positive. Le **30 forme ammesse** per variante e profilo sono quindi:
+
+| Cifra | `oracle-gnucobol`: cifra semplice | `zos-ebcdic`: zona F |
+| --- | --- | --- |
+| 0 … 9 | X'30' … X'39' (`GC-SRC-NUMDISP`) | X'F0' … X'F9' (`IBM-PG62-CLASSE`, con `NUMPROC(NOPFD)` e `NUMCLS(PRIM)`) |
+
+Ogni forma ammessa ha un vettore in ognuna delle tre varianti con segno, nei due profili (180 righe). In scrittura le forme alternative diventano la riga positiva della tabella. Ogni altro valore dell'ultimo byte è non valido. Oltre ai vettori, il controllo prova sulla colla i 256 valori dell'ultimo byte e del primo byte del corpo, per ogni variante `DISPLAY` nei due profili, contro la regola riscritta a mano in `verifica.py` (casi esaustivi, `comune.casi_esaustivi`). Nel profilo dell'oracle la sonda esegue gli stessi casi per l'ultimo byte delle tre varianti con segno e per il primo byte del corpo di `9(4)` e `S9(4)V9(2)`: 1280 osservazioni confrontate con la stessa regola.
+
 | | `oracle-gnucobol` | `zos-ebcdic` |
 | --- | --- | --- |
 | Rappresentazione alternativa ammessa | ultimo byte cifra semplice X'30'-X'39': valida, positiva (`GC-SRC-NUMDISP`) | zona F nell'ultimo byte: valida, positiva con `NUMPROC(NOPFD)` (`IBM-PG62-CLASSE`) |
@@ -181,8 +192,10 @@ Due cifre per byte; l'ultimo semiottetto è il codice del segno. Lunghezza (i+d)
 | --- | --- | --- |
 | Codici accettati, campo con segno | C (+), D (−), F (+) (`GC-SRC-PACKED`: `hostsign` di `-std=ibm`) | C (+), D (−), F (+) (`IBM-PG62-CLASSE`, `NUMPROC(NOPFD)` e `NUMCLS(PRIM)`) |
 | Codici accettati, campo senza segno | solo F | solo F |
-| Codici non ammessi | A, B, E (con segno); C, D (senza segno); semiottetto di cifra > 9 | uguale |
-| Semiottetto di riempimento diverso da 0 (cifra valida) | valido, ignorato nel valore (`GC-SRC-PACKED`) | `non-determinato`: la documentazione consultata non lo stabilisce (`ZOS-NONDOC`); nessun valore |
+| Codici non ammessi | 0-9, A, B, E (con segno); 0-9, A-E (senza segno) | uguale |
+| Semiottetti di cifra | 0-9; A-F non validi | uguale |
+| Semiottetto di riempimento 1-9 | valido, ignorato nel valore (`GC-SRC-PACKED`) | **non valido**: i quattro bit iniziali di un packed a precisione pari devono essere 0 (`IBM-APAR-PI96135`); nessun valore |
+| Semiottetto di riempimento A-F | non valido | non valido |
 | Scrittura | C positivo o zero, D negativo, F senza segno; riempimento 0 | uguale (`IBM-PG63-NUMPROC`) |
 | Zero negativo | `…0D` vale 0, si conserva; il valore nuovo 0 si scrive `…0C` | uguale |
 
@@ -241,15 +254,17 @@ Conclusione: `037-convenzione`. I dati non distinguono le due pagine; si adotta 
 
 ## Vettori di prova
 
-I vettori sono scritti a mano, un file per profilo, una riga per caso. In decodifica: byte → stato, valore, byte di scrittura del valore. In codifica: valore → byte della colla (o errore) e byte del `MOVE` COBOL. Il formato è descritto in testa a ogni file. Totali: 267 righe `oracle-gnucobol`, 257 `zos-ebcdic`. Una riga z/OS (`9(4)`, quattro spazi) è stata aggiunta dopo che il controllo di copertura ne ha segnalato la mancanza. Il controllo elenca ciò che manca rispetto alla copertura minima, per ogni profilo:
+I vettori sono scritti a mano, un file per profilo, una riga per caso. In decodifica: byte → stato, valore, byte di scrittura del valore. In codifica: valore → byte della colla (o errore) e byte del `MOVE` COBOL. Il formato è descritto in testa a ogni file. Totali: 375 righe `oracle-gnucobol` e 366 `zos-ebcdic`. Nella prima versione erano 267 e 257, poi una riga z/OS è stata aggiunta (`9(4)`, quattro spazi); le altre righe sono state aggiunte nel giro di correzione 1 della PR #47 e sono marcate in coda ai file. Il criterio della copertura è **tutte le righe di ogni regola**, non un rappresentante per famiglia. Il controllo elenca ogni riga mancante, per ogni profilo:
 
 - ogni variante del censimento ha almeno un vettore di decodifica;
-- segno nell'ultima cifra, per ogni variante: tutte le 20 righe della tabella, la rappresentazione alternativa, almeno un byte fuori tabella, lo zero negativo;
-- `COMP-3`, per ogni variante: ogni codice di segno accettato, ogni codice non ammesso, un semiottetto di cifra non valido;
+- `DISPLAY` con segno, per ogni variante: le 30 forme ammesse dell'ultimo byte (20 della tabella e 10 alternative), almeno un byte fuori tabella, lo zero negativo, le cifre 0-9 nel corpo. Gli altri valori dell'ultimo byte sono provati dai casi esaustivi;
+- `DISPLAY` senza segno, per ogni variante: le cifre 0-9, un campo di spazi, un carattere non numerico. Gli altri valori del primo byte sono provati dai casi esaustivi;
+- `COMP-3`, per ogni variante: i 16 codici di segno (accettati validi, gli altri non validi), le cifre 0-9 e i semiottetti A-F nelle posizioni di cifra; per la precisione pari, i 16 valori del semiottetto di riempimento;
 - binario, per ogni variante: zero, estremi della `PICTURE`, estremi fisici (positivi e negativi se con segno), almeno un caso oltre la `PICTURE`;
-- `DISPLAY` senza segno, per ogni variante: cifre valide, campo di spazi, un carattere non numerico;
-- alfanumerico: riempimento a destra, campo pieno, testo o carattere non rappresentabile; nel profilo z/OS ciascuno dei sei byte che distinguono 037 da 1047;
+- alfanumerico: tutti i 256 byte in un vettore di decodifica; riempimento a destra; campo pieno; testo o carattere non rappresentabile; nel profilo z/OS ciascuno dei sei byte che distinguono 037 da 1047. Il vettore z/OS dei 256 byte ha il valore trascritto da ICU, una fonte indipendente dal codec;
 - per categoria: almeno una codifica riuscita e, per i numerici, almeno una rifiutata.
+
+Casi `non-determinato` (rilievo 3 del giro 1). La prima versione ne aveva uno solo: il semiottetto di riempimento `1` di un packed z/OS a precisione pari, con fonte `ZOS-NONDOC`. Ora è `non-valido`, con fonte `IBM-APAR-PI96135`. Non resta alcun caso non determinato, e lo stato `non-determinato` e la fonte `ZOS-NONDOC` sono stati tolti. Restano tre vettori di codifica z/OS con colonna `move` vuota, perché la documentazione consultata non dà il troncamento delle cifre alte in un `MOVE` verso un `DISPLAY` o un `COMP-3`. Manca la pagina "Alignment rules" del Language Reference, che non sono riuscito a leggere. Sono `12345` in `9(4)`, `12345678901.00` in `S9(10)V9(2)` e `1000` in `COMP-3 9(3)`. Non sono stati di validità: la colla rifiuta comunque quei valori.
 
 La colla si verifica decodificando il campo **dentro un record**, con otto byte di guardia prima e dopo: una lunghezza sbagliata include un byte di guardia o ne perde uno del campo, e cambia valore o stato invece di essere rifiutata per struttura.
 
@@ -291,7 +306,9 @@ Nessuna libreria di decodifica adottata: la colla è scritta in Python (standard
 | `CP037` | pagina di codici IBM 037, tabella del codec `cp037` della libreria standard di Python 3.12 (dalla tabella di mappatura Unicode di CP037) |
 | `ICU-1047` | pagina di codici IBM 1047, ICU `ibm-1047_P100-1995.ucm` (repository unicode-org/icu-data), usata solo per trovare i sei byte che la distinguono da 037 |
 | `ZOS-ARCH` | IBM z/Architecture Principles of Operation (SA22-7832): interi binari big-endian, con segno in complemento a due. Citata e non riletta in questa issue; "Formats for numeric data" conferma che il bit più a sinistra porta il segno |
-| `ZOS-NONDOC` | caso non determinato dalla documentazione consultata: la colla non assegna un valore (stato `non-determinato`) |
+| `IBM-APAR-PI96135` | IBM APAR PI96135, Enterprise COBOL for z/OS 6.2, `NUMCHECK(PAC)`: un `PACKED-DECIMAL` di lunghezza pari "must contain 0s in the leftmost four bits to be considered a valid PACKED-DECIMAL data item" |
+| `IBM-LR64-MOVE` | IBM Enterprise COBOL for z/OS 6.4, Language Reference, "Elementary move rules": se il ricevente numerico è senza segno, nel `MOVE` si usa il valore assoluto del mittente |
+| `ICU-037` | pagina di codici IBM 037, ICU `ibm-37_P100-1995.ucm` (repository unicode-org/icu, `icu4c/source/data/mappings`, SHA-256 `e9ad7c15…d8ba`). Da qui è trascritto il valore atteso del vettore z/OS con tutti i 256 byte: è una tabella indipendente dal codec `cp037` di Python, e coincide con quella byte per byte |
 
 Il sorgente di GnuCOBOL citato è il tarball `gnucobol-3.2.tar.xz` di ftp.gnu.org (SHA-256 `3bb48af46ced4779facf41fdc2ee60e4ccb86eaa99d010b36685315df39c2ee2`), letto fuori dal repository. L'immagine dell'oracle usa il pacchetto Debian `3.2-3`, che può avere patch: il riferimento per il profilo `oracle-gnucobol` resta la sonda, non il sorgente.
 
