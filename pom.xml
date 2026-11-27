@@ -166,6 +166,44 @@
           </execution>
         </executions>
       </plugin>
+      <!-- Driver di database incorporati vietati sul classpath effettivo di ogni modulo
+           (compile, runtime, provided, optional, test), qualunque coordinata li porti. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>${maven-antrun-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>classi-database-vietate</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                    <available property="vietata.0" classname="org.h2.Driver" classpathref="maven.test.classpath" ignoresystemclasspath="true"/>
+                    <available property="vietata.1" classname="org.h2.jdbcx.JdbcDataSource" classpathref="maven.test.classpath" ignoresystemclasspath="true"/>
+                    <available property="vietata.2" classname="org.hsqldb.jdbc.JDBCDriver" classpathref="maven.test.classpath" ignoresystemclasspath="true"/>
+                    <available property="vietata.3" classname="org.hsqldb.jdbcDriver" classpathref="maven.test.classpath" ignoresystemclasspath="true"/>
+                    <available property="vietata.4" classname="org.apache.derby.jdbc.EmbeddedDriver" classpathref="maven.test.classpath" ignoresystemclasspath="true"/>
+                    <available property="vietata.5" classname="org.apache.derby.iapi.jdbc.AutoloadedDriver" classpathref="maven.test.classpath" ignoresystemclasspath="true"/>
+                    <fail message="DATABASE-INCORPORATO-CLASSE-VIETATA: driver di database incorporato sul classpath di ${project.artifactId}">
+                      <condition>
+                        <or>
+                        <isset property="vietata.0"/>
+                        <isset property="vietata.1"/>
+                        <isset property="vietata.2"/>
+                        <isset property="vietata.3"/>
+                        <isset property="vietata.4"/>
+                        <isset property="vietata.5"/>
+                        </or>
+                      </condition>
+                    </fail>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>

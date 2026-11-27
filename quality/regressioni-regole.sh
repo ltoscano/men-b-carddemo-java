@@ -236,7 +236,7 @@ exit "$rc"' _ "$@" </dev/null >"${log}" 2>&1 || rc=$?
   return "${rc}"
 }
 
-ESEC_BASE=(verify -Dtest=ArchitetturaTest,DatabaseIncorporatiTest -Dsurefire.failIfNoSpecifiedTests=false)
+ESEC_BASE=(verify -Dtest=ArchitetturaTest -Dsurefire.failIfNoSpecifiedTests=false)
 
 # Controlla che la corsa di base mostri ogni controllo eseguito, con il numero atteso di volte.
 # Stampa i controlli mancanti; restituisce 0 solo se ci sono tutti.
@@ -256,8 +256,7 @@ controlla_base() { # log
   conta "checkstyle tipi vietati (4 moduli)" 4 "checkstyle:3.6.0:check (tipi-vietati)"
   conta "checkstyle senza violazioni" 4 "You have 0 Checkstyle violations"
   conta "test ArchUnit eseguiti" 1 "Running io.github.ltoscano.carddemo.parity.ArchitetturaTest"
-  conta "test sulle classi dei database eseguiti" 1 "Running io.github.ltoscano.carddemo.parity.DatabaseIncorporatiTest"
-  conta "test sulle classi dei database riusciti" 1 "Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed"
+  conta "controllo sulle classi dei database (padre + 5 moduli)" 6 "antrun:3.2.0:run (classi-database-vietate)"
   conta "test ArchUnit riusciti" 1 "Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed"
   return "${ok}"
 }
@@ -365,7 +364,18 @@ atteso_fallimento db-servicemix-derby "enforcer, bundle ripubblicato" "${ENF} (d
 
 # controllo sulle classi: coordinata non elencata (enforcer spento da riga di comando), driver caricabile
 mut_dip carddemo-parity hsqldb-classi
-atteso_fallimento db-classi-hsqldb "test sulle classi" "DatabaseIncorporatiTest" "DATABASE-INCORPORATO-CLASSE-VIETATA" "org.hsqldb.jdbc.JDBCDriver" "on project carddemo-parity" -- verify -Denforcer.skip=true -Dtest=DatabaseIncorporatiTest -Dsurefire.failIfNoSpecifiedTests=false
+atteso_fallimento db-classi-hsqldb "controllo sulle classi" "maven-antrun-plugin:3.2.0:run (classi-database-vietate)" "DATABASE-INCORPORATO-CLASSE-VIETATA" "on project carddemo-parity" -- validate -Denforcer.skip=true
+
+# driver noto sotto coordinate non elencate (it.menb:prova-driver, repository locale di prova), Enforcer acceso
+prova_driver() { # nome modulo
+  mut_repo "$2"
+  mut_dip "$2" "$1"
+  atteso_fallimento "$1" "controllo sulle classi, classpath effettivo di $2" "maven-antrun-plugin:3.2.0:run (classi-database-vietate)" "DATABASE-INCORPORATO-CLASSE-VIETATA" "on project $2" -- validate
+}
+prova_driver classi-online-optional carddemo-online
+prova_driver classi-online-test carddemo-online
+prova_driver classi-online-provided carddemo-online
+prova_driver classi-domain-test carddemo-domain
 
 mut_dip carddemo-batch derby
 atteso_fallimento db-derby "enforcer" "${ENF} (database-incorporati)" "DATABASE-INCORPORATO-VIETATO" "org.apache.derby:derby" "<--- banned via the exclude/include list" "on project carddemo-batch" -- validate
@@ -441,8 +451,8 @@ mut_senza_blocco carddemo-batch plugin maven-enforcer-plugin
 cancello cancello-enforcer-archi-rimosso "enforcer archi rimosso dal modulo"
 mut_senza_file carddemo-parity/src/test/java/io/github/ltoscano/carddemo/parity/ArchitetturaTest.java
 cancello cancello-archunit-rimosso "test ArchUnit rimosso"
-mut_senza_file carddemo-parity/src/test/java/io/github/ltoscano/carddemo/parity/DatabaseIncorporatiTest.java
-cancello cancello-classi-rimosso "test sulle classi rimosso"
+mut_skip carddemo-loader '<plugins>' '      <plugin><artifactId>maven-antrun-plugin</artifactId><configuration><skip>true</skip></configuration></plugin>'
+cancello cancello-classi-skip "controllo sulle classi in skip in un modulo"
 
 echo
 echo "== riepilogo"

@@ -1,0 +1,7 @@
+    <!-- PROVA-REGOLE-26: driver noto sotto coordinate non elencate -->
+    <dependency>
+      <groupId>it.menb</groupId>
+      <artifactId>prova-driver</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope>
+    </dependency>
