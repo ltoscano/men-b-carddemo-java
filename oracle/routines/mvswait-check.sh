@@ -196,20 +196,50 @@ for c in $PROVE_CASI $OSS_CASI; do
 done
 log "   e con il segnaposto ogni caso termina con 98: il modulo caricato e' quello in /oracle-bin"
 
-# 2. Routine alterate. Le espressioni di sed agiscono su righe intere della routine.
+# 2. Routine alterate. Le espressioni di sed agiscono su righe intere della routine. Una mutazione, una sola
+#    violazione (giro 1 della PR #52): solo_diversi verifica che, rispetto alla corsa sana di M1, cambino
+#    esattamente i rapporti dei casi in cui la violazione e' visibile e nessun altro.
+# solo_diversi VARIANTE CASI...: i rapporti diversi da quelli di M1 sono esattamente CASI.
+solo_diversi() {
+  local v="$1" c r atteso; shift
+  for c in $PROVE_CASI $OSS_CASI; do
+    atteso=0; case " $* " in *" $c "*) atteso=1 ;; esac
+    r=0; cmp -s "$tmp/obs/$c.txt" "$tmp/$v/obs/$c.txt" || r=$?
+    case "$r" in 0|1) ;; *) fail "variante '$v': confronto di $c fallito (cmp, codice $r)" ;; esac
+    [ "$r" = "$atteso" ] || fail "variante '$v': il rapporto di $c $( [ "$r" = 1 ] && echo cambia || echo non cambia ) (attesi diversi: $*): la mutazione non isola la violazione"
+    cmp -s "$tmp/obs/$c.ambiente" "$tmp/$v/obs/$c.ambiente" || fail "variante '$v': ambiente di $c cambiato"
+  done
+  log "     variante '$v': cambiano solo i rapporti di ${*:-nessun caso}"
+}
+V_TUTTI="D00000000 D00000001 D00000E10 D05F5E0FF D05F5E100 D7FFFFFFF S1 S2 O1 O2 O3 O4"
 R0='^           MOVE 0 TO RETURN-CODE$'
 sorgente argomento "s/$R0/           MOVE X'00' TO LK-INTERVALLO(4:1)\n           MOVE 0 TO RETURN-CODE/"
 variante argomento
 grep -qx 'DOPO  a5a5a5a5 00000000 a5a5a5a5' "$tmp/argomento/obs/D00000001.txt" \
   || fail "la variante 'argomento' non ha modificato l'argomento: prova negativa non significativa"
+solo_diversi argomento D00000001 D00000E10 D05F5E0FF D7FFFFFFF
 expect_fail "routine che modifica l'argomento (quarto byte azzerato)" "D00000001: rapporto diverso dall'atteso" verifica "$tmp/argomento/obs"
 sorgente codice "s/$R0/           MOVE 4 TO RETURN-CODE/"
 variante codice
+solo_diversi codice $V_TUTTI
 expect_fail "routine che restituisce 4" "+RC  000000004" verifica "$tmp/codice/obs"
 expect_fail "routine che restituisce 4 (COBSWAIT termina con 4)" "S1: rapporto diverso dall'atteso" verifica "$tmp/codice/obs"
 sorgente stdout "s/$R0/           DISPLAY 'MVSWAIT SU STDOUT'\n           MOVE 0 TO RETURN-CODE/"
 variante stdout
+solo_diversi stdout $V_TUTTI
 expect_fail "routine che scrive su stdout" "+MVSWAIT SU STDOUT" verifica "$tmp/stdout/obs"
+# Attesa fissa di un secondo (giro 1 della PR #52): rapporti identici a quelli sani, ma ogni esecuzione con
+# valore ammesso dura circa 1000 ms, oltre il limite di durata di mvswait-run.sh (500 ms) e sotto l'arresto
+# di 3 s: la prova deve fallire per la durata misurata, non per il contenuto.
+sorgente unsecondo "s/^      \* Riga 23 (ASMWAIT): l'attesa non e' eseguita\.\$/           MOVE 1 TO WS-HI\n           CALL 'C\$SLEEP' USING WS-HI/"
+prepara unsecondo "$tmp/src-unsecondo/MVSWAIT.cbl"
+expect_fail "routine che attende un secondo fisso" "durata oltre il limite operativo di 500 ms" esegui_variante unsecondo
+solo_diversi unsecondo
+for c in $V_TUTTI; do
+  d="$(cat "$tmp/unsecondo/obs/$c.durata")" || fail "durata di $c della variante 'unsecondo' illeggibile"
+  [ "$d" -ge 900 ] || fail "la variante 'unsecondo' non ha atteso per $c ($d ms): prova negativa non significativa"
+done
+log "     e ogni caso con valore ammesso (WAITPRB e tutti i lanci di COBSWAIT) dura almeno 900 ms"
 # Attesa vera dell'intervallo richiesto (C\$SLEEP, secondi = centesimi / 100): 36 s per D00000E10, oltre il
 # limite operativo; la prova fallisce per durata e non resta appesa.
 sorgente attende "s/^      \* Riga 23 (ASMWAIT): l'attesa non e' eseguita\.\$/           COMPUTE WS-HI = WS-VALORE \/ 100\n           CALL 'C\$SLEEP' USING WS-HI/"
@@ -221,20 +251,25 @@ t1="$(date +%s)" || fail "date fallito"
 log "     (fallita per durata in $((t1 - t0)) s, sotto i 36 s richiesti da D00000E10)"
 sorgente bitalto 's/^           IF WS-VALORE > 2147483647$/           IF WS-VALORE > 4294967295/'
 variante bitalto
+solo_diversi bitalto D80000000 DFFFFFFFF
 expect_fail "routine che ritorna 0 anche con il bit alto acceso (X'80000000')" "D80000000: rapporto diverso dall'atteso" verifica "$tmp/bitalto/obs"
 expect_fail "routine che ritorna 0 anche con il bit alto acceso (X'FFFFFFFF')" "DFFFFFFFF: rapporto diverso dall'atteso" verifica "$tmp/bitalto/obs"
 
-# 3. Valore riportato con l'ordine dei byte invertito, o con il segno.
-sorgente ordine 's/^           PERFORM VARYING WS-I FROM 1 BY 1 UNTIL WS-I > 4$/           PERFORM VARYING WS-I FROM 4 BY -1 UNTIL WS-I < 1/'
+# 3. Valore RIPORTATO con l'ordine dei byte invertito, o con il segno: cambia solo il decimale stampato;
+#    classificazione (WS-VALORE), esadecimale, arresto e codice restano quelli della routine (giro 1 della
+#    PR #52: prima la mutazione sul segno cambiava anche l'arresto 97 in un ritorno 0).
+sorgente ordine 's/^           MOVE WS-VALORE TO WS-DEC$/           COMPUTE WS-DEC = WS-BYTE(4) * 16777216 + WS-BYTE(3) * 65536\n                          + WS-BYTE(2) * 256 + WS-BYTE(1)/'
 variante ordine
-expect_fail "routine che legge i 4 byte in ordine inverso (little-endian)" "D00000E10: rapporto diverso dall'atteso" verifica "$tmp/ordine/obs"
-sorgente segno \
-  's/^           MOVE WS-VALORE TO WS-DEC$/           IF WS-VALORE > 2147483647\n               SUBTRACT 4294967296 FROM WS-VALORE\n           END-IF\n           MOVE WS-VALORE TO WS-DEC/' \
-  's/^       01  WS-DEC                  PIC 9(10)\.$/       01  WS-DEC                  PIC -9(10)./'
+solo_diversi ordine D00000001 D00000E10 D05F5E0FF D05F5E100 D7FFFFFFF D80000000 S1 S2 O2
+[ "$(sed -n 2p "$tmp/ordine/obs/D80000000.txt")" = 97 ] || fail "la variante 'ordine' ha cambiato l'arresto di D80000000"
+expect_fail "routine che riporta il valore con i 4 byte in ordine inverso" "D00000E10: rapporto diverso dall'atteso" verifica "$tmp/ordine/obs"
+sorgente segno "s/^               DISPLAY 'MENB-ORACLE MVSWAIT: ATTESA RICHIESTA '\$/               COMPUTE WS-DEC = 4294967296 - WS-VALORE\n               DISPLAY 'MENB-ORACLE MVSWAIT: ATTESA RICHIESTA -'/"
 variante segno
-grep -q "ATTESA RICHIESTA -2147483648" "$tmp/segno/obs/D80000000.txt" \
+grep -q "ATTESA RICHIESTA -2147483648 (X'80000000') OLTRE" "$tmp/segno/obs/D80000000.txt" \
   || fail "la variante 'segno' non riporta il valore con il segno: prova negativa non significativa"
-expect_fail "routine che legge l'argomento con segno (X'80000000' = -2147483648)" "D80000000: rapporto diverso dall'atteso" verifica "$tmp/segno/obs"
+[ "$(sed -n 2p "$tmp/segno/obs/D80000000.txt")" = 97 ] || fail "la variante 'segno' ha cambiato l'arresto di D80000000"
+solo_diversi segno D80000000 DFFFFFFFF
+expect_fail "routine che riporta il valore con segno (X'80000000' = -2147483648), arresto 97 invariato" "D80000000: rapporto diverso dall'atteso" verifica "$tmp/segno/obs"
 
 # 4. --sysin sbagliato o ignorato.
 # sysin_diretto ARGOMENTI...: COBSWAIT con esegui.sh e gli argomenti dati (le schede di M1 su /s).
@@ -249,18 +284,61 @@ expect_fail "--sysin con una cartella" "esegui.sh: --sysin: file assente o illeg
 expect_fail "--sysin con un percorso relativo" "esegui.sh: --sysin ammette solo un percorso assoluto: 'S1.sysin'" sysin_diretto --sysin S1.sysin
 expect_fail "--sysin senza file" "esegui.sh: --sysin senza file" sysin_diretto --sysin
 expect_fail "--sysin ripetuto" "esegui.sh: --sysin ripetuto" sysin_diretto --sysin /s/S1.sysin --sysin /s/S2.sysin
-# Scheda dentro la cartella di lavoro del programma: esegui.sh la pulisce prima di leggere la scheda, quindi
-# la scheda risulta assente (il programma non parte con un ingresso che sta per sparire).
-sysin_in_lavoro() {
-  local d="$tmp/in-lavoro"
+# 4a. --sysin che coincide con un file che esegui.sh scrive o cancella (giro 1 della PR #52). La scheda di S2
+#     e' messa proprio in quel file (o un collegamento simbolico punta li'): esegui.sh ne fa una copia privata
+#     prima di ogni scrittura, quindi il rapporto deve essere esattamente l'atteso di S2.
+# sysin_alias NOME BERSAGLIO [link] [ESEGUI]: COBSWAIT con --sysin /out/BERSAGLIO (o /out/alias.sysin -> BERSAGLIO).
+sysin_alias() {
+  local d="$tmp/alias-$1" b="$2" modo="${3:-}" e="/oracle/esegui.sh" p
+  [ -z "${4:-}" ] || e="$(in_container "$4")" || return 1
   clean_dir "$d"
-  mkdir -p "$d/lavoro-COBSWAIT" && cp "$tmp/obs/schede/S1.sysin" "$d/lavoro-COBSWAIT/S1.sysin" || fail "preparazione fallita"
+  case "$b" in */*) mkdir -p "$d/${b%/*}" || fail "preparazione di $1 fallita" ;; esac
+  cp "$tmp/obs/schede/S2.sysin" "$d/$b" || fail "preparazione di $1 fallita"
+  p="/out/$b"
+  if [ "$modo" = link ]; then ln -s "/out/$b" "$d/alias.sysin" || fail "collegamento di $1 non creabile"; p=/out/alias.sysin; fi
   orun -v "$d:/out" -v "$BUILD_OUT/bin:/oracle-bin:ro" -e ORACLE_TIMEOUT_RUN=3 \
-    -- timeout -k 10 60 sh /oracle/esegui.sh /out COBSWAIT --sysin /out/lavoro-COBSWAIT/S1.sysin
+    -- timeout -k 10 60 sh "$e" /out COBSWAIT --sysin "$p" || { echo "esegui.sh fallito con --sysin $p"; return 1; }
+  cmp -s "$ATT/S2.txt" "$d/COBSWAIT.txt" \
+    || { diff -u "$ATT/S2.txt" "$d/COBSWAIT.txt" > "$tmp/d"; echo "rapporto con --sysin $p diverso dall'atteso di S2:"; indent "$tmp/d"; return 1; }
 }
-expect_fail "--sysin con una scheda dentro la cartella di lavoro" "esegui.sh: --sysin: file assente o illeggibile: '/out/lavoro-COBSWAIT/S1.sysin'" sysin_in_lavoro
+for spec in ambiente:COBSWAIT.ambiente stdout:COBSWAIT.stdout stderr:COBSWAIT.stderr rapporto:COBSWAIT.txt \
+            lavoro:lavoro-COBSWAIT/S2.sysin "link:COBSWAIT.ambiente:link"; do
+  n="${spec%%:*}"; r="${spec#*:}"; b="${r%%:*}"; m=""; [ "$b" = "$r" ] || m="${r#*:}"
+  sysin_alias "$n" "$b" "$m" > "$tmp/alias.out" 2>&1 || { indent "$tmp/alias.out" >&2; fail "controprova: --sysin su $b${m:+ (collegamento)} non da' il rapporto di S2"; }
+  log "   controprova ok: --sysin su /out/$b${m:+ tramite collegamento simbolico}: rapporto identico all'atteso di S2"
+done
+cp "$ORACLE_ROOT/esegui.sh" "$tmp/esegui-senza-copia.sh" || fail "copia di esegui.sh fallita"
+mutate "$tmp/esegui-senza-copia.sh" 's/^  ingresso="\$copia"$/  ingresso="$sysin"/'
+expect_fail "esegui.sh senza la copia privata, --sysin su .ambiente" "diverso dall'atteso di S2" sysin_alias senza-copia COBSWAIT.ambiente "" "$tmp/esegui-senza-copia.sh"
+expect_fail "esegui.sh senza la copia privata, --sysin collegato a .ambiente" "diverso dall'atteso di S2" sysin_alias senza-copia-link COBSWAIT.ambiente link "$tmp/esegui-senza-copia.sh"
+
+# 4b. Ingresso che non si apre al momento dell'esecuzione, con i file di una corsa precedente nella cartella
+#     d'uscita (giro 1 della PR #52): esegui.sh deve fallire come strumento e non lasciare un rapporto.
+# ingresso_perso NOME ESPRESSIONE-SED: copia di esegui.sh in cui l'ingresso sparisce nel punto indicato.
+ingresso_perso() {
+  local d="$tmp/perso-$1" e="$tmp/esegui-perso-$1.sh" rc=0
+  cp "$ORACLE_ROOT/esegui.sh" "$e" || fail "copia di esegui.sh fallita"
+  mutate "$e" "$2"
+  clean_dir "$d"
+  cp "$tmp/obs/S1.txt" "$d/COBSWAIT.txt" && printf 'VECCHIO STDOUT\n' > "$d/COBSWAIT.stdout" \
+    && printf 'VECCHIO STDERR\n' > "$d/COBSWAIT.stderr" || fail "residui di $1 non preparabili"
+  orun -v "$d:/out" -v "$BUILD_OUT/bin:/oracle-bin:ro" -v "$tmp/obs/schede:/s:ro" -e ORACLE_TIMEOUT_RUN=3 \
+    -- timeout -k 10 60 sh "$(in_container "$e")" /out COBSWAIT --sysin /s/S1.sysin || rc=$?
+  [ "$rc" -ne 0 ] || { echo "esegui.sh terminato con 0 senza ingresso"; return 0; }
+  if [ -s "$d/COBSWAIT.txt" ] || grep -q VECCHIO "$d/COBSWAIT.stdout" "$d/COBSWAIT.stderr" 2>/dev/null; then
+    echo "dopo il fallimento resta un rapporto o un residuo della corsa precedente"; return 0
+  fi
+  return "$rc"
+}
+expect_fail "ingresso cancellato prima del controllo di apertura" "esegui.sh: ingresso non apribile" \
+  ingresso_perso prima 's#^( exec < "\$ingresso" ) 2>/dev/null || #rm -f "$ingresso"; ( exec < "$ingresso" ) 2>/dev/null || #'
+expect_fail "ingresso cancellato tra il controllo e l'apertura sul descrittore 3" "cannot open" \
+  ingresso_perso dopo 's#^exec 3< "\$ingresso" 4>#rm -f "$ingresso"; exec 3< "$ingresso" 4>#'
+# Lo stesso schema sull'uscita: stdout del programma non apribile (descrittore 4).
+expect_fail "stdout del programma non apribile (descrittore 4)" "cannot create" \
+  ingresso_perso stdout 's#^exec 3< "\$ingresso" 4> "\$so"#exec 3< "$ingresso" 4> /nonesiste/stdout#'
 cp "$ORACLE_ROOT/esegui.sh" "$tmp/esegui-ignora.sh" || fail "copia di esegui.sh fallita"
-mutate "$tmp/esegui-ignora.sh" 's#< "\$ingresso" >#< /dev/null >#g'
+mutate "$tmp/esegui-ignora.sh" 's#<&3 >#</dev/null >#g'
 MVSWAIT_ESEGUI="$tmp/esegui-ignora.sh" MVSWAIT_OUT_DIR="$tmp/ignora" bash "$DIR/mvswait-run.sh" > "$tmp/ignora.log" 2>&1 \
   || { cat "$tmp/ignora.log" >&2; fail "esecuzione con esegui.sh che ignora --sysin fallita"; }
 grep -qx '== sysin' "$tmp/ignora/S1.txt" || fail "con esegui.sh alterato manca la sezione == sysin: prova negativa non significativa"
@@ -291,11 +369,14 @@ raggiunto() {
   awk -v c="$2" -v r="$3" '$1==c && $3==0 && $4==r {n++} END {exit !(n>0)}' "$1" \
     || fail "comando $2 non raggiunto o non avvolto come atteso (registro $(rel "$1"))"
 }
-avvolto passa wc=passa sha256sum=passa > "$tmp/av-passa.log" 2>&1 || { indent "$tmp/av-passa.log" >&2; fail "controprova: esegui.sh con gli involucri in modo passa fallito"; }
+avvolto passa wc=passa sha256sum=passa cp=passa mktemp=passa > "$tmp/av-passa.log" 2>&1 || { indent "$tmp/av-passa.log" >&2; fail "controprova: esegui.sh con gli involucri in modo passa fallito"; }
 cmp -s "$tmp/obs/S1.txt" "$tmp/av-passa/res/out/COBSWAIT.txt" || fail "controprova: rapporto con gli involucri in modo passa diverso da quello di S1"
-raggiunto "$tmp/av-passa/res/registro" wc 0
-raggiunto "$tmp/av-passa/res/registro" sha256sum 0
-log "   controprova ok: esegui.sh --sysin con wc e sha256sum avvolti in modo passa, rapporto identico a quello di S1"
+for c in wc sha256sum cp mktemp; do raggiunto "$tmp/av-passa/res/registro" "$c" 0; done
+log "   controprova ok: esegui.sh --sysin con wc, sha256sum, cp e mktemp avvolti in modo passa, rapporto identico a quello di S1"
+expect_fail "esegui.sh --sysin con mktemp (copia privata) che restituisce 42" "esegui.sh: --sysin: copia privata non creabile (mktemp)" avvolto mk42 mktemp=42
+raggiunto "$tmp/av-mk42/res/registro" mktemp 42
+expect_fail "esegui.sh --sysin con cp (copia privata) che restituisce 42" "esegui.sh: --sysin: copia privata non riuscita (cp)" avvolto cp42 cp=42
+raggiunto "$tmp/av-cp42/res/registro" cp 42
 expect_fail "esegui.sh --sysin con wc che restituisce 42" "esegui.sh: --sysin: dimensione non leggibile (wc)" avvolto wc42 wc=42 sha256sum=passa
 raggiunto "$tmp/av-wc42/res/registro" wc 42
 expect_fail "esegui.sh --sysin con sha256sum che restituisce 42" "esegui.sh: --sysin: impronta non calcolabile (sha256sum)" avvolto sha42 wc=passa sha256sum=42
@@ -305,8 +386,8 @@ raggiunto "$tmp/av-shaT42/res/registro" sha256sum 42
 expect_fail "esegui.sh --sysin con wc che risponde con un testo non numerico (esito 0)" "esegui.sh: --sysin: dimensione non valida: 'ottantuno'" avvolto wcfinto wc=finto:ottantuno sha256sum=passa
 expect_fail "esegui.sh --sysin con sha256sum che risponde con un'impronta troncata (esito 0)" "esegui.sh: --sysin: impronta non valida: '59f72f438a92'" avvolto shacorta wc=passa 'sha256sum=finto:59f72f438a92  -'
 expect_fail "esegui.sh --sysin con sha256sum che risponde con caratteri non esadecimali (esito 0)" "esegui.sh: --sysin: impronta non valida: 'IMPRONTA'" avvolto shanonhex wc=passa 'sha256sum=finto:IMPRONTA  -'
-for d in wc42 sha42 shaT42 wcfinto shacorta shanonhex; do
-  [ ! -e "$tmp/av-$d/res/out/COBSWAIT.txt" ] || fail "con $d esegui.sh ha scritto comunque un rapporto"
+for d in mk42 cp42 wc42 sha42 shaT42 wcfinto shacorta shanonhex; do
+  [ ! -s "$tmp/av-$d/res/out/COBSWAIT.txt" ] || fail "con $d esegui.sh ha scritto comunque un rapporto"
 done
 log "     e in nessuno di questi casi esegui.sh ha scritto un rapporto"
 
@@ -318,8 +399,11 @@ run_avvolto() { # run_avvolto NOME COMANDO=MODO: mvswait-run.sh con il comando a
   mkdir -p "$d/avv" "$d/res" || fail "cartelle degli involucri non creabili"
   cp "$ORACLE_ROOT/build/avvolgi.sh" "$d/avv/.avvolgi.sh" || fail "copia di avvolgi.sh fallita"
   c="${s%%=*}"; m="${s#*=}"
-  printf '#!/bin/sh\nexec sh /avv/.avvolgi.sh /res/registro %s '\''%s'\'' /usr/bin/%s "$@"\n' "$c" "$m" "$c" > "$d/avv/$c" \
-    && chmod +x "$d/avv/$c" || fail "involucro di $c non creabile"
+  case "$m" in
+    finto:*) printf '#!/bin/sh\necho '\''%s'\''\n' "${m#finto:}" > "$d/avv/$c" ;;
+    *) printf '#!/bin/sh\nexec sh /avv/.avvolgi.sh /res/registro %s '\''%s'\'' /usr/bin/%s "$@"\n' "$c" "$m" "$c" > "$d/avv/$c" ;;
+  esac
+  chmod +x "$d/avv/$c" || fail "involucro di $c non creabile"
   (
     AVV_D="$d"
     docker() {
@@ -330,6 +414,9 @@ run_avvolto() { # run_avvolto NOME COMANDO=MODO: mvswait-run.sh con il comando a
     MVSWAIT_OUT_DIR="$d/obs" bash "$DIR/mvswait-run.sh"
   )
 }
+expect_fail "mvswait-run.sh con date (misura della durata) che restituisce 42" "orologio non leggibile (date) per D00000000" run_avvolto date date=42
+raggiunto "$tmp/ra-date/res/registro" date 42
+expect_fail "mvswait-run.sh con date che risponde con un testo non numerico (esito 0)" "orologio non valido per D00000000: adesso" run_avvolto datefinto date=finto:adesso
 expect_fail "mvswait-run.sh con sed (scheda dal JCL) che restituisce 42" "scheda di S1 non ricavabile dal JCL" run_avvolto sed sed=42
 raggiunto "$tmp/ra-sed/res/registro" sed 42
 expect_fail "mvswait-run.sh con mv (rapporto del caso) che restituisce 42" "esecuzione dei casi di MVSWAIT fallita" run_avvolto mv mv=42
@@ -461,6 +548,21 @@ expect_fail "coerenza: riga 26 del JCL che non inizia con 00003600 (caso S2)" "S
 # Elenco degli attesi che fallisce: ls che restituisce 42 dopo l'output autentico.
 ls_42() ( ls() { command ls "$@"; return 42; }; export -f ls; coerenza )
 expect_fail "coerenza con ls (elenco degli attesi) che restituisce 42" "DIFETTO: cartella degli attesi non elencabile" ls_42
+
+# 5c. Radice del repository con spazi nel nome (giro 1 della PR #52): mvswait-run.sh su una copia minima
+#     dell'oracle in ".../radice con spazi/oracle" (legacy collegato), artefatti della build: rapporti
+#     identici a quelli di M1.
+sp="$tmp/radice con spazi"
+mkdir -p "$sp/oracle/routines" || fail "radice con spazi non creabile"
+cp "$ORACLE_ROOT/lib.sh" "$ORACLE_ROOT/ambiente.sh" "$ORACLE_ROOT/esegui.sh" "$ORACLE_ROOT/Dockerfile" "$sp/oracle/" \
+  && cp "$DIR/mvswait-run.sh" "$PROVE" "$OSS" "$sp/oracle/routines/" && ln -s "$REPO_ROOT/legacy" "$sp/legacy" \
+  || fail "copia dell'oracle nella radice con spazi fallita"
+ORACLE_ROOT="$sp/oracle" MVSWAIT_BIN_DIR="$BUILD_OUT/bin" MVSWAIT_OUT_DIR="$sp/obs" bash "$sp/oracle/routines/mvswait-run.sh" \
+  > "$tmp/spazi.log" 2>&1 || { indent "$tmp/spazi.log" >&2; fail "mvswait-run.sh non funziona con una radice con spazi"; }
+for c in $PROVE_CASI $OSS_CASI; do
+  cmp -s "$tmp/obs/$c.txt" "$sp/obs/$c.txt" || fail "radice con spazi: rapporto di $c diverso da quello di M1"
+done
+log "   controprova ok: mvswait-run.sh con la radice '$(rel "$sp")': tutti i rapporti identici a quelli di M1"
 
 # 6. Residui: i rapporti sani di M1 lasciati nella cartella d'uscita non soddisfano una corsa rotta.
 mkdir -p "$tmp/residuo"; cp -R "$tmp/obs"/. "$tmp/residuo/"

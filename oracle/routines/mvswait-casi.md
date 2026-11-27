@@ -129,7 +129,12 @@ Atteso di ogni caso: `mvswait-attesi/<caso>.txt`, nel formato del rapporto di `e
 
 ## Limite operativo
 
-Ogni esecuzione che chiama `MVSWAIT` (casi qui sopra e osservazioni) gira con un limite di **3 secondi** (`ORACLE_TIMEOUT_RUN=3` passato a `esegui.sh`, che allo scadere termina il programma e fallisce con codice 3). Il limite si applica all'artefatto vero, non solo alle varianti delle prove negative: una routine che attendesse davvero l'intervallo richiesto (36 secondi per `S1`) farebbe fallire la prova per durata. Non esclude un ritardo fisso inferiore a 3 secondi.
+Ogni esecuzione che chiama `MVSWAIT` (casi qui sopra e osservazioni, quindi anche ogni lancio di `COBSWAIT`) ha due limiti, applicati all'artefatto vero e non solo alle varianti delle prove negative:
+
+- **durata misurata** attorno a `esegui.sh` nel container: al massimo **500 ms** (le esecuzioni sane misurano circa 15-40 ms). Respinge anche un'attesa fissa di un secondo (prova negativa `unsecondo`, aggiunta dopo il giro 1 di validazione della PR #52, che aveva mostrato una routine con `sleep 1` passare il controllo);
+- **arresto** dopo **3 secondi** (`ORACLE_TIMEOUT_RUN=3` passato a `esegui.sh`, che allo scadere termina il programma e fallisce con codice 3): una routine che attendesse davvero l'intervallo richiesto (36 secondi per `S1`) fallisce senza restare appesa.
+
+La prova di avvio (`oracle/avvio/`) lancia `COBSWAIT` anche lei, con il limite generale di 60 s e senza misura di durata: un'attesa fissa vi passerebbe, ma lo stesso artefatto è respinto dal passo `routines`, che fa parte di `./oracle/run.sh --all --check`.
 
 ## Che cosa è specifico di CardDemo
 

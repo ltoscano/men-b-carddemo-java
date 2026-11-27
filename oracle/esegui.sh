@@ -58,38 +58,52 @@ while [ $# -gt 0 ]; do
 done
 t="${ORACLE_TIMEOUT_RUN:-60}"
 [ -x "$BIN/$nome" ] || { echo "esegui.sh: eseguibile assente: $BIN/$nome" >&2; exit 2; }
+so="$out/$nome.stdout"; se="$out/$nome.stderr"; rap="$out/$nome.txt"
+# Ingresso standard del programma: vuoto, oppure il file di --sysin (issue #36). Con --sysin, PRIMA di ogni
+# scrittura o cancellazione dello script, il file si copia in un file privato appena creato (mktemp): da li'
+# in poi impronta e ingresso del programma sono la copia, anche se --sysin coincide (o e' un collegamento)
+# con un file che lo script scrive o cancella (.ambiente, .stdout, .stderr, rapporto, cartella di lavoro).
+# Ogni passo ha l'esito controllato e il valore validato (giro 1 della PR #52).
+ingresso=/dev/null; copia=""
+if [ "$hasysin" -eq 1 ]; then
+  { [ -f "$sysin" ] && [ -r "$sysin" ]; } || { echo "esegui.sh: --sysin: file assente o illeggibile: '$sysin'" >&2; exit 2; }
+  copia="$(mktemp /tmp/esegui-sysin.XXXXXX)" || { echo "esegui.sh: --sysin: copia privata non creabile (mktemp)" >&2; exit 2; }
+  cp "$sysin" "$copia" || { echo "esegui.sh: --sysin: copia privata non riuscita (cp): '$sysin'" >&2; exit 2; }
+  sysin_byte="$(wc -c < "$copia")" || { echo "esegui.sh: --sysin: dimensione non leggibile (wc): '$sysin'" >&2; exit 2; }
+  sysin_byte="${sysin_byte#"${sysin_byte%%[! ]*}"}"; sysin_byte="${sysin_byte%"${sysin_byte##*[! ]}"}"
+  case "$sysin_byte" in ''|*[!0-9]*) echo "esegui.sh: --sysin: dimensione non valida: '$sysin_byte'" >&2; exit 2 ;; esac
+  sysin_sha="$(sha256sum < "$copia")" || { echo "esegui.sh: --sysin: impronta non calcolabile (sha256sum): '$sysin'" >&2; exit 2; }
+  sysin_sha="${sysin_sha%% *}"
+  case "$sysin_sha" in ''|*[!0-9a-f]*) echo "esegui.sh: --sysin: impronta non valida: '$sysin_sha'" >&2; exit 2 ;; esac
+  [ "${#sysin_sha}" -eq 64 ] || { echo "esegui.sh: --sysin: impronta non valida: '$sysin_sha'" >&2; exit 2; }
+  ingresso="$copia"
+fi
+# Nessun residuo di una corsa precedente (giro 1 della PR #52): stdout, stderr e rapporto si vuotano prima di
+# tutto, con i soli comandi della shell. Se lo script si ferma dopo, il rapporto resta vuoto, non vecchio.
+{ : > "$so" && : > "$se" && : > "$rap"; } || { echo "esegui.sh: file d'uscita non scrivibili in $out" >&2; exit 2; }
 lav="$out/lavoro-$nome"
 rm -rf "$lav" && mkdir -p "$lav" || { echo "esegui.sh: cartella di lavoro non creabile: $lav" >&2; exit 2; }
 # Esito di ls controllato (issue #35): prima si perdeva dentro [ -z "$(ls -A ...)" ].
 vuota="$(ls -A "$lav")" || { echo "esegui.sh: cartella di lavoro non elencabile: $lav" >&2; exit 2; }
 [ -z "$vuota" ] || { echo "esegui.sh: cartella di lavoro non vuota: $lav" >&2; exit 2; }
-# Ingresso standard del programma: vuoto, oppure il file di --sysin. Byte e impronta del file si leggono
-# PRIMA dell'esecuzione, ciascuno con l'esito controllato e il valore validato (issue #36). Il controllo
-# viene dopo la pulizia della cartella di lavoro: un file che stava li' dentro risulta assente.
-ingresso=/dev/null
-if [ "$hasysin" -eq 1 ]; then
-  { [ -f "$sysin" ] && [ -r "$sysin" ]; } || { echo "esegui.sh: --sysin: file assente o illeggibile: '$sysin'" >&2; exit 2; }
-  sysin_byte="$(wc -c < "$sysin")" || { echo "esegui.sh: --sysin: dimensione non leggibile (wc): '$sysin'" >&2; exit 2; }
-  sysin_byte="${sysin_byte#"${sysin_byte%%[! ]*}"}"; sysin_byte="${sysin_byte%"${sysin_byte##*[! ]}"}"
-  case "$sysin_byte" in ''|*[!0-9]*) echo "esegui.sh: --sysin: dimensione non valida: '$sysin_byte'" >&2; exit 2 ;; esac
-  sysin_sha="$(sha256sum < "$sysin")" || { echo "esegui.sh: --sysin: impronta non calcolabile (sha256sum): '$sysin'" >&2; exit 2; }
-  sysin_sha="${sysin_sha%% *}"
-  case "$sysin_sha" in ''|*[!0-9a-f]*) echo "esegui.sh: --sysin: impronta non valida: '$sysin_sha'" >&2; exit 2 ;; esac
-  [ "${#sysin_sha}" -eq 64 ] || { echo "esegui.sh: --sysin: impronta non valida: '$sysin_sha'" >&2; exit 2; }
-  ingresso="$sysin"
-fi
-so="$out/$nome.stdout"; se="$out/$nome.stderr"
 cd "$lav" || exit 2
 # shellcheck disable=SC2086
 env -i $AMBIENTE_RUN $dds env > "$out/$nome.ambiente" || { echo "esegui.sh: ambiente non registrabile" >&2; exit 2; }
+# Apertura dell'ingresso controllata a parte (giro 1 della PR #52): un'apertura fallita e' un errore dello
+# strumento, non un codice del programma. L'ingresso resta aperto sul descrittore 3 e il programma lo riceve
+# come stdin (<&3) senza una seconda apertura; se exec 3< fallisse comunque, la shell si ferma con 2.
+# Lo stesso per stdout e stderr (descrittori 4 e 5): una redirezione fallita non diventa il codice del programma.
+( exec < "$ingresso" ) 2>/dev/null || { echo "esegui.sh: ingresso non apribile: '$ingresso'" >&2; exit 2; }
+exec 3< "$ingresso" 4> "$so" 5> "$se"
 if [ "$haparm" -eq 1 ]; then
   # shellcheck disable=SC2086
-  env -i $AMBIENTE_RUN $dds /usr/bin/timeout -k 5 "$t" "$BIN/$nome" "$parm" < "$ingresso" > "$so" 2> "$se"
+  env -i $AMBIENTE_RUN $dds /usr/bin/timeout -k 5 "$t" "$BIN/$nome" "$parm" <&3 >&4 2>&5 3<&- 4>&- 5>&-
 else
   # shellcheck disable=SC2086
-  env -i $AMBIENTE_RUN $dds /usr/bin/timeout -k 5 "$t" "$BIN/$nome" < "$ingresso" > "$so" 2> "$se"
+  env -i $AMBIENTE_RUN $dds /usr/bin/timeout -k 5 "$t" "$BIN/$nome" <&3 >&4 2>&5 3<&- 4>&- 5>&-
 fi
 rc=$?
+exec 3<&- 4>&- 5>&-
 cd / || exit 2
 # Il rapporto, con l'esito di ogni comando controllato (issue #35): prima gli esiti di cat, ls, sort e wc si
 # perdevano dentro il gruppo, la pipeline e le sostituzioni di comando, e un rapporto incompleto passava.
@@ -121,8 +135,8 @@ rapporto() {
     && echo "== file nella cartella di lavoro" && file_lavoro \
     && sezione_sysin
 }
-rapporto > "$out/$nome.txt" || { echo "esegui.sh: rapporto non scrivibile o incompleto" >&2; exit 2; }
-rm -f "$so" "$se" || { echo "esegui.sh: file temporanei non rimovibili: $so $se" >&2; exit 2; }
+rapporto > "$rap" || { echo "esegui.sh: rapporto non scrivibile o incompleto" >&2; exit 2; }
+rm -f "$so" "$se" ${copia:+"$copia"} || { echo "esegui.sh: file temporanei non rimovibili: $so $se $copia" >&2; exit 2; }
 # 124/137: limite di tempo scaduto. E' un fallimento dello strumento, non un comportamento da registrare.
 case "$rc" in 124|137) echo "esegui.sh: $nome non e' terminato entro ${t}s" >&2; exit 3 ;; esac
 exit 0

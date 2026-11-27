@@ -9,17 +9,24 @@
 #   jcl:<cifre>    sed -n '26{s/\r$//;s/^00003600/<cifre>/;p}' /legacy/app/jcl/WAITSTEP.jcl
 #   vuoto          file di 0 byte
 #   testo:<testo>  printf '%s\n' '<testo>'
-# Limite operativo: ogni esecuzione che chiama MVSWAIT ha MVSWAIT_LIMITE secondi (3), applicato da esegui.sh
-# (ORACLE_TIMEOUT_RUN): allo scadere esegui.sh termina il programma e fallisce, e con lui questa prova.
-# Output in oracle/routines/out/mvswait/: <CASO>.txt, <CASO>.ambiente, schede/<CASO>.sysin.
+# Limiti operativi, su ogni esecuzione che chiama MVSWAIT (casi e osservazioni, quindi anche ogni lancio di
+# COBSWAIT), applicati all'artefatto vero:
+#   - durata: misurata nel container attorno a esegui.sh (date +%s%N), deve restare entro MVSWAIT_DURATA_MS
+#     (500 ms); respinge anche un'attesa fissa di un secondo (giro 1 della PR #52). Valori in <CASO>.durata;
+#   - arresto: MVSWAIT_LIMITE secondi (3), applicato da esegui.sh (ORACLE_TIMEOUT_RUN): allo scadere esegui.sh
+#     termina il programma e fallisce, e con lui questa prova (un'attesa lunga non resta appesa).
+# Output in oracle/routines/out/mvswait/: <CASO>.txt, <CASO>.ambiente, <CASO>.durata, schede/<CASO>.sysin.
 # Solo per le prove negative di mvswait-check.sh: MVSWAIT_OUT_DIR sposta l'output, MVSWAIT_BIN_DIR gli
 # artefatti (con WAITPRB, COBSWAIT e MVSWAIT.so), MVSWAIT_ESEGUI indica una copia alterata di esegui.sh
-# (sotto oracle/), MVSWAIT_CASI un elenco di casi diverso (uno o piu' file, separati da spazi).
+# (sotto oracle/).
 . "$ORACLE_ROOT/lib.sh"
 
 MVSWAIT_LIMITE=3
+MVSWAIT_DURATA_MS=500
 DIR="$ORACLE_ROOT/routines"
-casi="${MVSWAIT_CASI:-$DIR/mvswait-prove.tsv $DIR/mvswait-osservazioni.tsv}"
+# Elenchi dei casi: un elemento per percorso (giro 1 della PR #52: la lista separata da spazi non reggeva
+# una radice del repository con spazi nel nome).
+casi=("$DIR/mvswait-prove.tsv" "$DIR/mvswait-osservazioni.tsv")
 out="${MVSWAIT_OUT_DIR:-$ORACLE_ROOT/routines/out/mvswait}"
 bin="${MVSWAIT_BIN_DIR:-$BUILD_OUT/bin}"
 esegui="/oracle/esegui.sh"
@@ -33,7 +40,7 @@ mkdir -p "$out/schede" || fail "cartella delle schede non creabile"
 
 # Terne caso/programma/ingresso, nell'ordine dei file (righe non commento, intestazione esclusa).
 terne=()
-for f in $casi; do
+for f in "${casi[@]}"; do
   [ -f "$f" ] || fail "elenco dei casi assente: $(rel "$f")"
   righe="$(grep -v '^#' "$f")" || fail "lettura di $(rel "$f") fallita"
   n=0
@@ -55,11 +62,18 @@ orun -v "$out:/out" -v "$bin:/oracle-bin:ro" -e ORACLE_TIMEOUT_RUN="$MVSWAIT_LIM
   set -u
   esegui="$1"; shift
   jcl=/legacy/app/jcl/WAITSTEP.jcl
+  # orologio NOME: nanosecondi dall epoca in $ns, con esito e forma controllati.
+  orologio() {
+    ns="$(date +%s%N)" || { echo "orologio non leggibile (date) per $caso" >&2; return 1; }
+    case "$ns" in ""|*[!0-9]*) echo "orologio non valido per $caso: $ns" >&2; return 1 ;; esac
+  }
   while [ $# -ge 3 ]; do
     caso="$1"; prog="$2"; ingr="$3"; shift 3
     mkdir -p "/out/$caso" || exit 1
     if [ "$prog" = WAITPRB ]; then
+      orologio || exit 1; t0="$ns"
       sh "$esegui" "/out/$caso" WAITPRB --parm "$ingr" || { echo "esegui.sh fallito per $caso" >&2; exit 1; }
+      orologio || exit 1; t1="$ns"
     else
       s="/out/schede/$caso.sysin"
       case "$ingr" in
@@ -72,17 +86,24 @@ orun -v "$out:/out" -v "$bin:/oracle-bin:ro" -e ORACLE_TIMEOUT_RUN="$MVSWAIT_LIM
         testo:*) printf "%s\n" "${ingr#testo:}" > "$s" || exit 1 ;;
         *) echo "ingresso non valido per $caso: $ingr" >&2; exit 1 ;;
       esac
+      orologio || exit 1; t0="$ns"
       sh "$esegui" "/out/$caso" COBSWAIT --sysin "$s" || { echo "esegui.sh fallito per $caso" >&2; exit 1; }
+      orologio || exit 1; t1="$ns"
     fi
+    echo "$(( (t1 - t0) / 1000000 ))" > "/out/$caso.durata" || exit 1
     mv "/out/$caso/$prog.txt" "/out/$caso.txt" && mv "/out/$caso/$prog.ambiente" "/out/$caso.ambiente" \
       && rm -rf "/out/$caso" || exit 1
   done' sh "$esegui" "${terne[@]}" || fail "esecuzione dei casi di MVSWAIT fallita"
 
-i=0
+i=0; lenti=""
 while [ "$i" -lt "${#terne[@]}" ]; do
   caso="${terne[$i]}"
   [ -f "$out/$caso.txt" ] || fail "rapporto di $caso assente"
   rc="$(sed -n '2p' "$out/$caso.txt")" || fail "rapporto di $caso illeggibile"
-  log "$caso (${terne[$((i + 1))]} ${terne[$((i + 2))]}): codice di uscita $rc"
+  d="$(cat "$out/$caso.durata")" || fail "durata di $caso illeggibile"
+  case "$d" in ''|*[!0-9]*) fail "durata di $caso non valida: '$d'" ;; esac
+  log "$caso (${terne[$((i + 1))]} ${terne[$((i + 2))]}): codice di uscita $rc, durata $d ms"
+  [ "$d" -le "$MVSWAIT_DURATA_MS" ] || lenti="$lenti $caso=${d}ms"
   i=$((i + 3))
 done
+[ -z "$lenti" ] || fail "durata oltre il limite operativo di ${MVSWAIT_DURATA_MS} ms (MVSWAIT non deve attendere):$lenti"
