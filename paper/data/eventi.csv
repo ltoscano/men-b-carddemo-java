@@ -119,3 +119,7 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T13:27:47Z,pr-30,codex-inizio,codex,orologio,validazione giro 1
 2026-11-27T13:36:07Z,issue-21,esecutore-fine,sonnet,orologio,PR #31 aperta; SHA d79caab; rapporto: 7 criteri su 7 dichiarati soddisfatti; CI verde compreso il nuovo workflow
 2026-11-27T13:36:10Z,issue-21,esecutore-consuntivo,sonnet,orologio,durata 1709 s; contatore token 136856; 88 chiamate a strumenti; PR #31: 5 file
+2026-11-27T13:36:15Z,pr-31,codex-inizio,codex,orologio,validazione giro 1
+2026-11-27T13:38:34Z,pr-29,codex-fine,codex,orologio,giro 1; exit=0; token: 220.275
+2026-11-27T13:39:12Z,pr-29,validazione-fine,fable,orologio,giro 1: BOCCIATA; 1 bloccante (opzioni) e 1 importante (segno)
+2026-11-27T13:39:12Z,issue-4,esecutore-inizio,opus,orologio,giro di correzione 1
