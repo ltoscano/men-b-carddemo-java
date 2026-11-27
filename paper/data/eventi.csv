@@ -111,3 +111,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T13:21:48Z,issue-15,specifica-aggiornata,fable,orologio,voce 28 del registro
 2026-11-27T13:21:48Z,issue-15,esecutore-inizio,opus,orologio,ripresa dopo l'aggiornamento della specifica
 2026-11-27T13:21:53Z,issue-15,esecutore-consuntivo,opus,orologio,prima fase fino al fermo: durata 841 s; 49 chiamate a strumenti; contatore token 203309
+2026-11-27T13:26:17Z,issue-4,esecutore-fine,opus,orologio,PR #29 aperta; SHA 811660e; rapporto: 8 criteri su 8 dichiarati soddisfatti; CI verde
+2026-11-27T13:26:19Z,issue-4,esecutore-consuntivo,opus,orologio,durata 2686 s; contatore token 409750; 193 chiamate a strumenti; PR #29: 49 file
