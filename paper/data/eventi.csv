@@ -71,3 +71,11 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T12:04:31Z,pr-18,codex-fine,codex,orologio,giro 2; exit=0; token: 140.155
 2026-11-27T12:05:12Z,pr-18,validazione-fine,fable,orologio,giro 2: BOCCIATA; 1 importante e 2 minori; specifica modificata; ultimo giro di correzione
 2026-11-27T12:05:12Z,issue-1,esecutore-inizio,sonnet,orologio,giro di correzione 2
+2026-11-27T12:16:16Z,issue-1,esecutore-fine,sonnet,orologio,giro di correzione 2 consegnato; SHA dec220a
+2026-11-27T12:16:18Z,issue-1,esecutore-consuntivo,sonnet,orologio,giro di correzione 2: durata riportata 645 s; 30 chiamate a strumenti; contatore token 461562 (cumulativo)
+2026-11-27T12:16:21Z,pr-18,codex-inizio,codex,orologio,validazione giro 3 (finale)
+2026-11-27T12:29:26Z,issue-14,esecutore-fine,opus,orologio,PR #20 aperta; SHA 9516c47; rapporto: 9 criteri su 9 dichiarati soddisfatti; CI verde
+2026-11-27T12:29:29Z,issue-14,esecutore-consuntivo,opus,orologio,durata 2425 s; contatore token 321652; 174 chiamate a strumenti; PR #20: 16 file
+2026-11-27T12:29:33Z,pr-20,codex-inizio,codex,orologio,validazione giro 1
+2026-11-27T12:29:38Z,pr-18,codex-fine,codex,orologio,giro 3; exit=0; token: 117.435
+2026-11-27T12:30:16Z,pr-18,approvazione,fable,orologio,giro 3: APPROVATA CON RISERVE; un rilievo minore rinviato a nuova issue
