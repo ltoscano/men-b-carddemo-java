@@ -382,3 +382,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T21:37:26Z,processo,risposta-consegnata,fable,orologio,spiegazione in parole semplici
 2026-11-27T21:39:56Z,processo,richiesta-autore,autore,orologio,i concetti della spiegazione semplice sono nel paper?
 2026-11-27T21:40:41Z,paper,aggiornamento,fable,orologio,sezione 1.1 in parole semplici; sintesi 5.1 e 5.2; titoli delle wave allineati al piano; codice proprio e costi dichiarati
+2026-11-27T21:40:43Z,processo,risposta-consegnata,fable,orologio,confronto tra spiegazione e paper; paper integrato
