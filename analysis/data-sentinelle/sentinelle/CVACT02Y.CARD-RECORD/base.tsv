@@ -1,0 +1,18 @@
+# Sentinella scritta a mano leggendo app/cpy/CVACT02Y.cpy, righe 4-11 (issue #43). Non generata dal contratto.
+# La riga 'record' e' composta da glue/componi.py a partire dai valori, dalle PICTURE e dagli intervalli qui sotto.
+contratto	CVACT02Y.CARD-RECORD
+vista	base
+sentinella	base
+sorgente	app/cpy/CVACT02Y.cpy
+radice	4	CARD-RECORD
+lunghezza	150
+fonte-lunghezza	app/cpy/CVACT02Y.cpy:2	RECLN 150
+record	34 35 35 35 36*4 37*4 38*4 35 31 32 33 34 35 36 37 38 39 31 37 38 39 5B 43 41 52 44 2D 45 4D 42 4F 53 53 45 44 2D 4E 41 4D 45 65*30 5D 32 30 32 37 2D 30 39 2D 33 30 4E 5B 46 49 4C 4C 45 52 7A*51 5D
+ordinale	riga	nome	picture	usage	indici	da	a	tipo	valore
+1	5	CARD-NUM	X(16)	-	-	1	16	testo	"4555666677778888"
+2	6	CARD-ACCT-ID	9(11)	-	-	17	27	intero	51234567891
+3	7	CARD-CVV-CD	9(03)	-	-	28	30	intero	789
+4	8	CARD-EMBOSSED-NAME	X(50)	-	-	31	80	testo	"[CARD-EMBOSSED-NAME" "e"*30 "]"
+5	9	CARD-EXPIRAION-DATE	X(10)	-	-	81	90	testo	"2027-09-30"
+6	10	CARD-ACTIVE-STATUS	X(01)	-	-	91	91	testo	"N"
+7	11	FILLER	X(59)	-	-	92	150	testo	"[FILLER" "z"*51 "]"

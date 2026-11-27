@@ -1,0 +1,7 @@
+# Contratti con sentinella per cui nessuna fonte esterna dichiara la lunghezza del record (issue #43). Scritto a mano.
+# Per ogni altro contratto la sentinella deve citare una fonte (commento del copybook, RECORDSIZE del JCL, FD) riletta
+# dal sorgente. Un contratto qui elencato e' rifiutato se contratti.tsv di #3 riporta una lunghezza (recordsize,
+# lunghezze_scritte, dcb_osservata) o se il suo sorgente contiene RECLN, RECORD LENGTH, RECORDSIZE, RECORD CONTAINS,
+# RECORD IS VARYING o LRECL.
+contratto	motivo
+COCOM01Y.CARDDEMO-COMMAREA	COMMAREA CICS: nessun file, quindi nessun JCL ne FD; COCOM01Y.cpy non ha commenti con la lunghezza; i programmi online usano LENGTH OF CARDDEMO-COMMAREA o DFHCOMMAREA a lunghezza variabile (per esempio COMEN01C.cbl righe 67-69), mai il numero 160

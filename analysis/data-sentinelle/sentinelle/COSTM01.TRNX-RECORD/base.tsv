@@ -1,0 +1,25 @@
+# Sentinella scritta a mano leggendo app/cpy/COSTM01.CPY, righe 20-36 (issue #43). Non generata dal contratto.
+# La riga 'record' e' composta da glue/componi.py a partire dai valori, dalle PICTURE e dagli intervalli qui sotto.
+contratto	COSTM01.TRNX-RECORD
+vista	base
+sentinella	base
+sorgente	app/cpy/COSTM01.CPY
+radice	20	TRNX-RECORD
+lunghezza	350
+fonte-lunghezza	app/jcl/CREASTMT.JCL:32	RECORDSIZE(350 350)
+record	34 30 30 30 31*4 32*4 33*4 54 30*13 34 32 50 55 35 30 30 31 50 4F 53 20 54 45 52 4D 4E 4C 5B 54 52 4E 58 2D 44 45 53 43 64*89 5D 31 32 33 34 35 36 37 38 39 31 4B 38 30*6 31 37 5B 54 52 4E 58 2D 4D 45 52 43 48 41 4E 54 2D 4E 41 4D 45 6E*30 5D 5B 54 52 4E 58 2D 4D 45 52 43 48 41 4E 54 2D 43 49 54 59 63*30 5D 5A 49 50 2D 39 38 31 30 31 5A 32 30 32 32 2D 30 36 2D 31 30 2D 31 39 2E 32 37 2E 35 33 2E 30*5 31 32 30 32 32 2D 30 36 2D 31 31 2D 30 38 2E 31 35 2E 33 30 2E 30*5 32 5B 46 49 4C 4C 45 52 7A*12 5D
+ordinale	riga	nome	picture	usage	indici	da	a	tipo	valore
+1	22	TRNX-CARD-NUM	X(16)	-	-	1	16	testo	"4000111122223333"
+2	23	TRNX-ID	X(16)	-	-	17	32	testo	"T000000000000042"
+3	25	TRNX-TYPE-CD	X(02)	-	-	33	34	testo	"PU"
+4	26	TRNX-CAT-CD	9(04)	-	-	35	38	intero	5001
+5	27	TRNX-SOURCE	X(10)	-	-	39	48	testo	"POS TERMNL"
+6	28	TRNX-DESC	X(100)	-	-	49	148	testo	"[TRNX-DESC" "d"*89 "]"
+7	29	TRNX-AMT	S9(09)V99	-	-	149	159	decimale	-123456789.12
+8	30	TRNX-MERCHANT-ID	9(09)	-	-	160	168	intero	800000017
+9	31	TRNX-MERCHANT-NAME	X(50)	-	-	169	218	testo	"[TRNX-MERCHANT-NAME" "n"*30 "]"
+10	32	TRNX-MERCHANT-CITY	X(50)	-	-	219	268	testo	"[TRNX-MERCHANT-CITY" "c"*30 "]"
+11	33	TRNX-MERCHANT-ZIP	X(10)	-	-	269	278	testo	"ZIP-98101Z"
+12	34	TRNX-ORIG-TS	X(26)	-	-	279	304	testo	"2022-06-10-19.27.53.000001"
+13	35	TRNX-PROC-TS	X(26)	-	-	305	330	testo	"2022-06-11-08.15.30.000002"
+14	36	FILLER	X(20)	-	-	331	350	testo	"[FILLER" "z"*12 "]"

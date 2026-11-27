@@ -1,0 +1,28 @@
+# Coppie contratto/vista con sentinella (issue #43). Scritto a mano leggendo i sorgenti, non ricavato dal contratto.
+# vista: 'base' (nessuna REDEFINES scelta) oppure il nome dell'area REDEFINES scelta, come dichiarata nel sorgente.
+# CVEXPORT.cpy dichiara sei REDEFINES indipendenti: EXPORT-TIMESTAMP-R (riga 12, su EXPORT-TIMESTAMP) e cinque aree
+# sull'area dati EXPORT-RECORD-DATA (righe 24, 47, 65, 84, 93). Una vista per area, con il resto in forma base.
+# CBACT01C.VBR-REC (record variabile, CBACT01C.cbl:85) ha due sentinelle: i prefissi di 12 e 39 byte (righe 288, 303).
+contratto	vista	sorgente	dichiarazione	sentinelle
+COCOM01Y.CARDDEMO-COMMAREA	base	app/cpy/COCOM01Y.cpy	19	base
+COSTM01.TRNX-RECORD	base	app/cpy/COSTM01.CPY	20	base
+CSUSR01Y.SEC-USER-DATA	base	app/cpy/CSUSR01Y.cpy	17	base
+CUSTREC.CUSTOMER-RECORD	base	app/cpy/CUSTREC.cpy	4	base
+CVACT01Y.ACCOUNT-RECORD	base	app/cpy/CVACT01Y.cpy	4	base
+CVACT02Y.CARD-RECORD	base	app/cpy/CVACT02Y.cpy	4	base
+CVACT03Y.CARD-XREF-RECORD	base	app/cpy/CVACT03Y.cpy	4	base
+CVCUS01Y.CUSTOMER-RECORD	base	app/cpy/CVCUS01Y.cpy	4	base
+CVEXPORT.EXPORT-RECORD	base	app/cpy/CVEXPORT.cpy	9	base
+CVEXPORT.EXPORT-RECORD	EXPORT-TIMESTAMP-R	app/cpy/CVEXPORT.cpy	12	EXPORT-TIMESTAMP-R
+CVEXPORT.EXPORT-RECORD	EXPORT-CUSTOMER-DATA	app/cpy/CVEXPORT.cpy	24	EXPORT-CUSTOMER-DATA
+CVEXPORT.EXPORT-RECORD	EXPORT-ACCOUNT-DATA	app/cpy/CVEXPORT.cpy	47	EXPORT-ACCOUNT-DATA
+CVEXPORT.EXPORT-RECORD	EXPORT-TRANSACTION-DATA	app/cpy/CVEXPORT.cpy	65	EXPORT-TRANSACTION-DATA
+CVEXPORT.EXPORT-RECORD	EXPORT-CARD-XREF-DATA	app/cpy/CVEXPORT.cpy	84	EXPORT-CARD-XREF-DATA
+CVEXPORT.EXPORT-RECORD	EXPORT-CARD-DATA	app/cpy/CVEXPORT.cpy	93	EXPORT-CARD-DATA
+CVTRA01Y.TRAN-CAT-BAL-RECORD	base	app/cpy/CVTRA01Y.cpy	4	base
+CVTRA02Y.DIS-GROUP-RECORD	base	app/cpy/CVTRA02Y.cpy	4	base
+CVTRA03Y.TRAN-TYPE-RECORD	base	app/cpy/CVTRA03Y.cpy	4	base
+CVTRA04Y.TRAN-CAT-RECORD	base	app/cpy/CVTRA04Y.cpy	4	base
+CVTRA05Y.TRAN-RECORD	base	app/cpy/CVTRA05Y.cpy	4	base
+CVTRA06Y.DALYTRAN-RECORD	base	app/cpy/CVTRA06Y.cpy	4	base
+CBACT01C.VBR-REC	base	app/cbl/CBACT01C.cbl	85	prefisso-12,prefisso-39

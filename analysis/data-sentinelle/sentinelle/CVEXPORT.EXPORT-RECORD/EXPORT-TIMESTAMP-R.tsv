@@ -1,0 +1,21 @@
+# Sentinella scritta a mano leggendo app/cpy/CVEXPORT.cpy, righe 9-19 (issue #43). Non generata dal contratto.
+# Vista EXPORT-TIMESTAMP-R: timestamp ridefinito (righe 12-15, al posto della riga 11), area dati in forma base.
+# La riga 'record' e' composta da glue/componi.py a partire dai valori, dalle PICTURE e dagli intervalli qui sotto.
+contratto	CVEXPORT.EXPORT-RECORD
+vista	EXPORT-TIMESTAMP-R
+sentinella	EXPORT-TIMESTAMP-R
+sorgente	app/cpy/CVEXPORT.cpy
+radice	9	EXPORT-RECORD
+lunghezza	500
+fonte-lunghezza	app/cpy/CVEXPORT.cpy:5	Total Record Length: 500 bytes
+fonte-lunghezza	app/jcl/CBEXPORT.jcl:33	RECORDSIZE(500 500)
+record	53 32 30 32 36 2D 31 31 2D 32 37 54 31 30 2E 31 31 2E 31 32 2E 31 32 33 34 35 36 36 BB BE 6D 42 52 30 32 53 4F 55 54 48 7B 45 58 50 4F 52 54 2D 52 45 43 4F 52 44 2D 44 41 54 41 71*440 7D
+ordinale	riga	nome	picture	usage	indici	da	a	tipo	valore
+1	10	EXPORT-REC-TYPE	X(1)	-	-	1	1	testo	"S"
+3	13	EXPORT-DATE	X(10)	-	-	2	11	testo	"2026-11-27"
+4	14	EXPORT-DATE-TIME-SEP	X(1)	-	-	12	12	testo	"T"
+5	15	EXPORT-TIME	X(15)	-	-	13	27	testo	"10.11.12.123456"
+6	16	EXPORT-SEQUENCE-NUM	9(9)	COMP	-	28	31	intero	918273645
+7	17	EXPORT-BRANCH-ID	X(4)	-	-	32	35	testo	"BR02"
+8	18	EXPORT-REGION-CODE	X(5)	-	-	36	40	testo	"SOUTH"
+9	19	EXPORT-RECORD-DATA	X(460)	-	-	41	500	testo	"{EXPORT-RECORD-DATA" "q"*440 "}"

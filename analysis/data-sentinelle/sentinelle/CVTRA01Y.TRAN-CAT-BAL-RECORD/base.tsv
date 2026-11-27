@@ -1,0 +1,17 @@
+# Sentinella scritta a mano leggendo app/cpy/CVTRA01Y.cpy, righe 4-10 (issue #43). Non generata dal contratto.
+# La riga 'record' e' composta da glue/componi.py a partire dai valori, dalle PICTURE e dagli intervalli qui sotto.
+contratto	CVTRA01Y.TRAN-CAT-BAL-RECORD
+vista	base
+sentinella	base
+sorgente	app/cpy/CVTRA01Y.cpy
+radice	4	TRAN-CAT-BAL-RECORD
+lunghezza	50
+fonte-lunghezza	app/cpy/CVTRA01Y.cpy:2	RECLN = 50
+fonte-lunghezza	app/jcl/TCATBALF.jcl:41	RECORDSIZE(50 50)
+record	31 31 32 33 34 35 36 37 38 39 30 44 42 33 30 30 35 38 37 36 35 34 33 32 31 39 38 50 5B 46 49 4C 4C 45 52 7A*14 5D
+ordinale	riga	nome	picture	usage	indici	da	a	tipo	valore
+1	6	TRANCAT-ACCT-ID	9(11)	-	-	1	11	intero	11234567890
+2	7	TRANCAT-TYPE-CD	X(02)	-	-	12	13	testo	"DB"
+3	8	TRANCAT-CD	9(04)	-	-	14	17	intero	3005
+4	9	TRAN-CAT-BAL	S9(09)V99	-	-	18	28	decimale	-876543219.87
+5	10	FILLER	X(22)	-	-	29	50	testo	"[FILLER" "z"*14 "]"

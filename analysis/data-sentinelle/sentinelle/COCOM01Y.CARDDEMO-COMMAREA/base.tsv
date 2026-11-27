@@ -1,0 +1,27 @@
+# Sentinella scritta a mano leggendo app/cpy/COCOM01Y.cpy, righe 19-44 (issue #43). Non generata dal contratto.
+# La riga 'record' e' composta da glue/componi.py a partire dai valori, dalle PICTURE e dagli intervalli qui sotto.
+contratto	COCOM01Y.CARDDEMO-COMMAREA
+vista	base
+sentinella	base
+sorgente	app/cpy/COCOM01Y.cpy
+radice	19	CARDDEMO-COMMAREA
+lunghezza	160
+fonte-lunghezza	-	nessuna fonte esterna: la COMMAREA non ha RECORDSIZE, FD ne' commento con la lunghezza; 160 e' solo la somma dei campi
+record	43 54 30 31 43 4F 46 52 4F 4D 30 31 43 54 30 32 43 4F 54 4F 50 47 30 32 55 53 45 52 30 30 30 33 41 37 39 31 32 33 34 35 36 37 38 5B 43 44 45 4D 4F 2D 43 55 53 54 2D 46 4E 41 4D 45 66*7 5D 5B 43 44 45 4D 4F 2D 43 55 53 54 2D 4D 4E 41 4D 45 6D*7 5D 5B 43 44 45 4D 4F 2D 43 55 53 54 2D 4C 4E 41 4D 45 6C*7 5D 38 31 32 33 34 35 36 37 38 39 30 59 34 31 31 31 32*4 33*4 34*4 43 4F 53 47 4E 30 41 43 4F 53 47 4E 30 30
+ordinale	riga	nome	picture	usage	indici	da	a	tipo	valore
+1	21	CDEMO-FROM-TRANID	X(04)	-	-	1	4	testo	"CT01"
+2	22	CDEMO-FROM-PROGRAM	X(08)	-	-	5	12	testo	"COFROM01"
+3	23	CDEMO-TO-TRANID	X(04)	-	-	13	16	testo	"CT02"
+4	24	CDEMO-TO-PROGRAM	X(08)	-	-	17	24	testo	"COTOPG02"
+5	25	CDEMO-USER-ID	X(08)	-	-	25	32	testo	"USER0003"
+6	26	CDEMO-USER-TYPE	X(01)	-	-	33	33	testo	"A"
+7	29	CDEMO-PGM-CONTEXT	9(01)	-	-	34	34	intero	7
+8	33	CDEMO-CUST-ID	9(09)	-	-	35	43	intero	912345678
+9	34	CDEMO-CUST-FNAME	X(25)	-	-	44	68	testo	"[CDEMO-CUST-FNAME" "f"*7 "]"
+10	35	CDEMO-CUST-MNAME	X(25)	-	-	69	93	testo	"[CDEMO-CUST-MNAME" "m"*7 "]"
+11	36	CDEMO-CUST-LNAME	X(25)	-	-	94	118	testo	"[CDEMO-CUST-LNAME" "l"*7 "]"
+12	38	CDEMO-ACCT-ID	9(11)	-	-	119	129	intero	81234567890
+13	39	CDEMO-ACCT-STATUS	X(01)	-	-	130	130	testo	"Y"
+14	41	CDEMO-CARD-NUM	9(16)	-	-	131	146	intero	4111222233334444
+15	43	CDEMO-LAST-MAP	X(7)	-	-	147	153	testo	"COSGN0A"
+16	44	CDEMO-LAST-MAPSET	X(7)	-	-	154	160	testo	"COSGN00"

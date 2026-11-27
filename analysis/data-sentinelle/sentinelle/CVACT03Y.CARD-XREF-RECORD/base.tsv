@@ -1,0 +1,15 @@
+# Sentinella scritta a mano leggendo app/cpy/CVACT03Y.cpy, righe 4-8 (issue #43). Non generata dal contratto.
+# La riga 'record' e' composta da glue/componi.py a partire dai valori, dalle PICTURE e dagli intervalli qui sotto.
+contratto	CVACT03Y.CARD-XREF-RECORD
+vista	base
+sentinella	base
+sorgente	app/cpy/CVACT03Y.cpy
+radice	4	CARD-XREF-RECORD
+lunghezza	50
+fonte-lunghezza	app/cpy/CVACT03Y.cpy:2	RECLN 50
+record	34 39 39 39 30*4 31*4 32*4 33 34 35 36 37 38 39 31 32 36 31 32 33 34 35 36 37 38 39 30 5B 46 49 4C 4C 45 52 7A*6 5D
+ordinale	riga	nome	picture	usage	indici	da	a	tipo	valore
+1	5	XREF-CARD-NUM	X(16)	-	-	1	16	testo	"4999000011112222"
+2	6	XREF-CUST-ID	9(09)	-	-	17	25	intero	345678912
+3	7	XREF-ACCT-ID	9(11)	-	-	26	36	intero	61234567890
+4	8	FILLER	X(14)	-	-	37	50	testo	"[FILLER" "z"*6 "]"

@@ -1,0 +1,25 @@
+# Sentinella scritta a mano leggendo app/cpy/CVEXPORT.cpy, righe 9-19 e 93-100 (issue #43). Non generata dal contratto.
+# Vista EXPORT-CARD-DATA: timestamp in forma base (riga 11), area dati ridefinita dalle righe 93-100.
+# La riga 'record' e' composta da glue/componi.py a partire dai valori, dalle PICTURE e dagli intervalli qui sotto.
+contratto	CVEXPORT.EXPORT-RECORD
+vista	EXPORT-CARD-DATA
+sentinella	EXPORT-CARD-DATA
+sorgente	app/cpy/CVEXPORT.cpy
+radice	9	EXPORT-RECORD
+lunghezza	500
+fonte-lunghezza	app/cpy/CVEXPORT.cpy:5	Total Record Length: 500 bytes
+fonte-lunghezza	app/jcl/CBEXPORT.jcl:33	RECORDSIZE(500 500)
+record	44 32 30 32 36 2D 31 31 2D 32 37 2D 31 37 2E 31 38 2E 31 39 2E 32 30 32 31 32 32 35 A4 E9 05 42 52 44 37 43 4F 41 53 54 35 31 30 35 31 30 35 31 30 35 31 30 35 31 30 30 00 00 00 15 3E 01 06 D2 01 C8 5B 45 58 50 2D 43 41 52 44 2D 45 4D 42 4F 53 53 45 44 2D 4E 41 4D 45 65*26 5D 32 30 32 38 2D 31 32 2D 33 31 59 5B 46 49 4C 4C 45 52 7A*365 5D
+ordinale	riga	nome	picture	usage	indici	da	a	tipo	valore
+1	10	EXPORT-REC-TYPE	X(1)	-	-	1	1	testo	"D"
+2	11	EXPORT-TIMESTAMP	X(26)	-	-	2	27	testo	"2026-11-27-17.18.19.202122"
+6	16	EXPORT-SEQUENCE-NUM	9(9)	COMP	-	28	31	intero	900000005
+7	17	EXPORT-BRANCH-ID	X(4)	-	-	32	35	testo	"BRD7"
+8	18	EXPORT-REGION-CODE	X(5)	-	-	36	40	testo	"COAST"
+57	94	EXP-CARD-NUM	X(16)	-	-	41	56	testo	"5105105105105100"
+58	95	EXP-CARD-ACCT-ID	9(11)	COMP	-	57	64	intero	91234567890
+59	96	EXP-CARD-CVV-CD	9(03)	COMP	-	65	66	intero	456
+60	97	EXP-CARD-EMBOSSED-NAME	X(50)	-	-	67	116	testo	"[EXP-CARD-EMBOSSED-NAME" "e"*26 "]"
+61	98	EXP-CARD-EXPIRAION-DATE	X(10)	-	-	117	126	testo	"2028-12-31"
+62	99	EXP-CARD-ACTIVE-STATUS	X(01)	-	-	127	127	testo	"Y"
+63	100	FILLER	X(373)	-	-	128	500	testo	"[FILLER" "z"*365 "]"

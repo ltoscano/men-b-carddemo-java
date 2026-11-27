@@ -1,0 +1,16 @@
+# Sentinella scritta a mano leggendo app/cpy/CVTRA02Y.cpy, righe 4-10 (issue #43). Non generata dal contratto.
+# La riga 'record' e' composta da glue/componi.py a partire dai valori, dalle PICTURE e dagli intervalli qui sotto.
+contratto	CVTRA02Y.DIS-GROUP-RECORD
+vista	base
+sentinella	base
+sorgente	app/cpy/CVTRA02Y.cpy
+radice	4	DIS-GROUP-RECORD
+lunghezza	50
+fonte-lunghezza	app/cpy/CVTRA02Y.cpy:2	RECLN = 50
+record	50 4C 41 54 49 4E 55 4D 30 31 43 52 34 30 30 37 31 32 33 34 35 4F 5B 46 49 4C 4C 45 52 7A*20 5D
+ordinale	riga	nome	picture	usage	indici	da	a	tipo	valore
+1	6	DIS-ACCT-GROUP-ID	X(10)	-	-	1	10	testo	"PLATINUM01"
+2	7	DIS-TRAN-TYPE-CD	X(02)	-	-	11	12	testo	"CR"
+3	8	DIS-TRAN-CAT-CD	9(04)	-	-	13	16	intero	4007
+4	9	DIS-INT-RATE	S9(04)V99	-	-	17	22	decimale	-1234.56
+5	10	FILLER	X(28)	-	-	23	50	testo	"[FILLER" "z"*20 "]"

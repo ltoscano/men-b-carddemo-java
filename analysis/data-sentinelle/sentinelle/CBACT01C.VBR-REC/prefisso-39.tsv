@@ -1,0 +1,18 @@
+# Sentinella scritta a mano leggendo app/cbl/CBACT01C.cbl (issue #43). Non generata dal contratto.
+# Record variabile: VBR-REC PIC X(80) (riga 85, FD alle righe 80-84 "FROM 10 TO 80"); 1575-WRITE-VB2-RECORD
+# (righe 302-305) ne scrive i primi 39 byte, presi da VBRC-REC2 (righe 126-130: 9(11), S9(10)V99, S9(10)V99, X(04)).
+# Il carico qui sotto e' un VBRC-REC2 scritto a mano (-1234567890.11 con il segno nell'ultima cifra, 'J'; +2345678901.22,
+# 'B'); i campi di VBRC-REC2 non fanno parte di questo contratto e non si decodificano. Le intestazioni fisiche del
+# record variabile su disco sono escluse.
+contratto	CBACT01C.VBR-REC
+vista	base
+sentinella	prefisso-39
+sorgente	app/cbl/CBACT01C.cbl
+radice	85	VBR-REC
+lunghezza	80
+fonte-lunghezza	app/cbl/CBACT01C.cbl:83	FROM 10 TO 80
+prefisso	39
+fonte-prefisso	app/cbl/CBACT01C.cbl:303	MOVE 39 TO WS-RECD-LEN
+record	34 31 32 33 34 35 36 37 38 39 30 31 32 33 34 35 36 37 38 39 30 31 4A 32 33 34 35 36 37 38 39 30 31 32 42 32 30 32 34
+ordinale	riga	nome	picture	usage	indici	da	a	tipo	valore
+1	85	VBR-REC	X(80)	-	-	1	80	testo	"41234567890" "12345678901J" "23456789012B" "2024"

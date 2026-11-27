@@ -1,0 +1,31 @@
+# Sentinella scritta a mano leggendo app/cpy/CUSTREC.cpy, righe 4-23 (issue #43). Non generata dal contratto.
+# Le righe 6-22 del copybook iniziano con tabulazioni: nome, PICTURE e USAGE sono trascritti come scritti.
+# La riga 'record' e' composta da glue/componi.py a partire dai valori, dalle PICTURE e dagli intervalli qui sotto.
+contratto	CUSTREC.CUSTOMER-RECORD
+vista	base
+sentinella	base
+sorgente	app/cpy/CUSTREC.cpy
+radice	4	CUSTOMER-RECORD
+lunghezza	500
+fonte-lunghezza	app/cpy/CUSTREC.cpy:2	RECLN 500
+record	39 38 37 36 35 34 33 32 31 5B 43 55 53 54 2D 46 49 52 53 54 2D 4E 41 4D 45 66*8 5D 5B 43 55 53 54 2D 4D 49 44 44 4C 45 2D 4E 41 4D 45 6D*7 5D 5B 43 55 53 54 2D 4C 41 53 54 2D 4E 41 4D 45 6C*9 5D 5B 43 55 53 54 2D 41 44 44 52 2D 4C 49 4E 45 2D 31 61*32 5D 5B 43 55 53 54 2D 41 44 44 52 2D 4C 49 4E 45 2D 32 62*32 5D 5B 43 55 53 54 2D 41 44 44 52 2D 4C 49 4E 45 2D 33 63*32 5D 4E 59 55 53 41 31 30 30 30 31 2D 32 33 34 35 28 32 31 32 29 35 35 35 2D 30 31 30 31 50 31 28 36 34 36 29 35 35 35 2D 30 32 30 32 50 32 32 33 34 35 36 37 38 39 31 50 41 53 53 50 4F 52 54 2D 58 31 32 33 34 35 36 37 38 39 30 31 39 38 30 2D 31 32 2D 33 31 45 46 54 30*5 34 32 59 37 35 33 5B 46 49 4C 4C 45 52 7A*160 5D
+ordinale	riga	nome	picture	usage	indici	da	a	tipo	valore
+1	5	CUST-ID	9(09)	-	-	1	9	intero	987654321
+2	6	CUST-FIRST-NAME	X(25)	-	-	10	34	testo	"[CUST-FIRST-NAME" "f"*8 "]"
+3	7	CUST-MIDDLE-NAME	X(25)	-	-	35	59	testo	"[CUST-MIDDLE-NAME" "m"*7 "]"
+4	8	CUST-LAST-NAME	X(25)	-	-	60	84	testo	"[CUST-LAST-NAME" "l"*9 "]"
+5	9	CUST-ADDR-LINE-1	X(50)	-	-	85	134	testo	"[CUST-ADDR-LINE-1" "a"*32 "]"
+6	10	CUST-ADDR-LINE-2	X(50)	-	-	135	184	testo	"[CUST-ADDR-LINE-2" "b"*32 "]"
+7	11	CUST-ADDR-LINE-3	X(50)	-	-	185	234	testo	"[CUST-ADDR-LINE-3" "c"*32 "]"
+8	12	CUST-ADDR-STATE-CD	X(02)	-	-	235	236	testo	"NY"
+9	13	CUST-ADDR-COUNTRY-CD	X(03)	-	-	237	239	testo	"USA"
+10	14	CUST-ADDR-ZIP	X(10)	-	-	240	249	testo	"10001-2345"
+11	15	CUST-PHONE-NUM-1	X(15)	-	-	250	264	testo	"(212)555-0101P1"
+12	16	CUST-PHONE-NUM-2	X(15)	-	-	265	279	testo	"(646)555-0202P2"
+13	17	CUST-SSN	9(09)	-	-	280	288	intero	234567891
+14	18	CUST-GOVT-ISSUED-ID	X(20)	-	-	289	308	testo	"PASSPORT-X1234567890"
+15	19	CUST-DOB-YYYYMMDD	X(10)	-	-	309	318	testo	"1980-12-31"
+16	20	CUST-EFT-ACCOUNT-ID	X(10)	-	-	319	328	testo	"EFT0000042"
+17	21	CUST-PRI-CARD-HOLDER-IND	X(01)	-	-	329	329	testo	"Y"
+18	22	CUST-FICO-CREDIT-SCORE	9(03)	-	-	330	332	intero	753
+19	23	FILLER	X(168)	-	-	333	500	testo	"[FILLER" "z"*160 "]"
