@@ -9,7 +9,7 @@ require_legacy
 CAPS="$TOOLS_DIR/capabilities.tsv"
 DOC="$REPO_ROOT/docs/legacy-map/strumenti.md"
 [ -d "$OUT" ] || fail "analysis/tools/out assente: eseguire prima './analysis/run.sh tools'"
-tmp="$(mktemp -d)"
+tmp="$(mktmp)"
 trap 'rm -rf "$tmp"' EXIT
 
 # compare CHECK [TOOL] [--expected DIR]: esegue il confronto, stampa l'esito, ritorna 0 se pass
@@ -74,8 +74,60 @@ negative "COPY: numero di istruzioni COPY contate nel sorgente per CBACT04C" cop
 negative "CALL: chiamato atteso di COBSWAIT" call "CALL attesa non trovata: COBSWAIT -> MVSWAIX" call cmt
 negative "tracciati: offset di ACCT-CURR-BAL" layout-offset "CVACT01Y.ACCT-CURR-BAL" layout
 negative "tracciati: lunghezza totale di CVTRA05Y" layout-length "CVTRA05Y: lunghezza totale attesa 351" layout
-negative "JCL: programma del passo STEP15 di POSTTRAN" jcl-program "POSTTRAN/STEP15: programma atteso CBTRN03C" jcl
+negative "JCL: programma del passo STEP15 di POSTTRAN" jcl-program "POSTTRAN/STEP15: tipo e programma attesi ('PGM', 'CBTRN03C')" jcl
+negative "JCL: tipo del passo atteso PROC invece di PGM" jcl-type "POSTTRAN/STEP15: tipo e programma attesi ('PROC', 'CBTRN02C')" jcl
+negative "conteggi: campione a mano di CVACT03Y (codice, commenti)" scc-sample "CVACT03Y.cpy: Code atteso 11, scc 5" scc
 negative "JCL: dataset della DD DALYREJS (GDG)" jcl-dd "POSTTRAN/STEP15: DD attese" jcl
+
+# --- 3b. prove negative sull'OUTPUT dello strumento (l'atteso resta quello vero, si altera l'output)
+log "3b. prove negative: un valore dell'output alterato alla volta"
+negative_out() {
+  local name="$1" kind="$2" needle="$3"; shift 3
+  glue_run --rw "$tmp" -- /analysis/tools/glue/mutate_out.py "$kind" /analysis/tools/out "/work/out-$kind"
+  if compare "$@" --out "/work/out-$kind" > "$tmp/neg.out" 2>&1; then
+    cat "$tmp/neg.out" >&2
+    fail "PROVA NEGATIVA FALLITA ($name): il controllo non ha rilevato l'output alterato"
+  fi
+  grep -q -- "$needle" "$tmp/neg.out" || { cat "$tmp/neg.out" >&2; fail "prova negativa ($name): fallito ma non per il motivo atteso ('$needle')"; }
+  log "   prova negativa ok: $name (output alterato -> il controllo fallisce)"
+}
+negative_out "scc: codice, commenti e vuote dell'aggregato app/cbl azzerati" scc-aggregate-zero "app/cbl: righe 20650 != codice + commenti + vuote" scc
+negative_out "scc: commenti di CVACT03Y azzerati nel CSV per file" scc-file-comments "CVACT03Y.cpy: Code atteso 5, scc 11" scc
+negative_out "compilazione: errori di CBSTM03A portati da 39 a 9999 nel TSV (log originale invariato)" compile-count "CBSTM03A: errori nel TSV 9999, nelle diagnostiche salvate 39" compile
+negative_out "JCL: tipo del passo POSTTRAN/STEP15 alterato nell'output (PGM -> PROC)" jcl-type "POSTTRAN/STEP15: tipo e programma attesi ('PGM', 'CBTRN02C'), mapa ('PROC', 'CBTRN02C')" jcl
+
+# --- 3c. i TSV normalizzati devono derivare dall'output grezzo
+log "3c. i TSV versionati coincidono con quelli rigenerati dall'output grezzo"
+renorm() { glue_run --rw "$tmp" -- /analysis/tools/glue/renorm.py "$@"; }
+renorm cmt /analysis/tools/out/cmt /analysis/tools/out/cmt
+renorm cb2xml /analysis/tools/out/cb2xml /analysis/tools/out/cb2xml
+negative_raw() {
+  local name="$1" kind="$2" tool="$3"
+  glue_run --rw "$tmp" -- /analysis/tools/glue/mutate_out.py "$kind" /analysis/tools/out "/work/raw-$kind"
+  if renorm "$tool" "/work/raw-$kind/$tool" "/analysis/tools/out/$tool" > "$tmp/neg.out" 2>&1; then
+    cat "$tmp/neg.out" >&2
+    fail "PROVA NEGATIVA FALLITA ($name): TSV e grezzo incoerenti ma il controllo e' verde"
+  fi
+  grep -q 'RINORMALIZZAZIONE' "$tmp/neg.out" || { cat "$tmp/neg.out" >&2; fail "prova negativa ($name): motivo inatteso"; }
+  log "   prova negativa ok: $name"
+}
+negative_raw "cb2xml: campo rinominato nell'XML grezzo, TSV invariati" cb2xml-rename cb2xml
+negative_raw "cmt: CALL rinominata nel JSON grezzo, TSV invariati" cmt-call-rename cmt
+
+# Per gli strumenti il cui grezzo non e' versionato (cobmix, mapa: JSON molto grandi / UUID e orari) e per quelli la cui
+# normalizzazione e' nello script di prova (scc, gnucobol, proleap) si rieseguono le prove in una cartella temporanea
+# e si confronta l'intero albero degli output con quello versionato (esclusi i verdetti, scritti da run.sh).
+log "   riesecuzione di tutte le prove in cartella temporanea e confronto con gli output versionati"
+mkdir -p "$tmp/rerun"
+for t in 10-scc 20-gnucobol 30-cmt 31-cobmix 32-proleap 40-cb2xml 50-mapa; do
+  TOOLS_OUT="$tmp/rerun" bash "$TOOLS_DIR/trials/$t.sh" > /dev/null 2>&1 || fail "riesecuzione della prova $t fallita"
+done
+diff -r -x 'verdetto-*' "$tmp/rerun" "$OUT" > "$tmp/rerun.diff" || { head -20 "$tmp/rerun.diff" >&2; fail "output versionati diversi da quelli rigenerati dagli strumenti"; }
+log "   ok: output rigenerati identici a quelli versionati"
+log "   prova negativa: un output versionato alterato e' diverso da quello rigenerato"
+glue_run --rw "$tmp" -- /analysis/tools/glue/mutate_out.py cmt-call-rename /analysis/tools/out /work/out-diff
+if diff -r -x 'verdetto-*' "$tmp/rerun" "$tmp/out-diff" > /dev/null; then fail "il confronto con la rigenerazione non rileva un output alterato"; fi
+log "   ok"
 
 # --- 4. versioni fissate
 log "4. immagini con versione fissata"

@@ -13,6 +13,13 @@ export LEGACY
 # Immagine di base Python per gli script di colla (versione e digest fissati).
 GLUE_IMAGE="python:3.12-slim-trixie@sha256:191083cdf6c7bda8c76158983163ead5d5cf7b77cf3033e805bb0f5296f51b4b"
 
+# Cartella temporanea DENTRO il repository (analysis/.work/, ignorata da git): gli script non scrivono fuori dal repository.
+mktmp() {
+  mkdir -p "$ANALYSIS_ROOT/.work"
+  [ -f "$ANALYSIS_ROOT/.work/.gitignore" ] || printf '*\n' > "$ANALYSIS_ROOT/.work/.gitignore"
+  mktemp -d "$ANALYSIS_ROOT/.work/t.XXXXXX"
+}
+
 log() { echo "[$ANALYSIS_NAME] $*" >&2; }
 fail() { echo "[$ANALYSIS_NAME] ERRORE: $*" >&2; exit 1; }
 

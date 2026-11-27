@@ -9,7 +9,7 @@ ensure_legacy_volume
 build_image "$IMG_COBMIX" "$DOCKER_DIR/cobmix"
 rm -rf "$OUT/cobmix"
 mkdir -p "$OUT/cobmix"
-work="$(mktemp -d)"
+work="$(mktmp)"
 trap 'rm -rf "$work"' EXIT
 
 docker run --rm --entrypoint pip "$IMG_COBMIX" show cobmix | grep -E '^(Name|Version|License)' > "$OUT/cobmix/version.txt"

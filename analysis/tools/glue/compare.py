@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Controlli a campione: confronta l'output normalizzato di uno strumento con gli attesi scritti a mano.
 
-Uso: compare.py CHECK [TOOL] [--expected DIR]
+Uso: compare.py CHECK [TOOL] [--expected DIR] [--out DIR]
   CHECK: scc | compile | copy | call | layout | jcl
   TOOL : per copy/call, lo strumento (cmt | cobmix | proleap)
 Percorsi (nel container): /analysis/tools/out, /analysis/tools/expected, /analysis/manifest/sources.tsv, /legacy.
@@ -54,7 +54,13 @@ def check_scc(exp_dir):
     files = {}
     with open(f"{OUT}/scc/app-by-file.csv", encoding="utf-8", newline="") as f:
         for r in csv.DictReader(f):
-            files[r["Provider"].replace("/legacy/", "", 1)] = int(r["Lines"])
+            path = r["Provider"].replace("/legacy/", "", 1)
+            if path in files:
+                bad(f"file contato due volte da scc: {path}")
+            vals = {k: int(r[k]) for k in ("Lines", "Code", "Comments", "Blanks", "Bytes")}
+            if vals["Code"] + vals["Comments"] + vals["Blanks"] != vals["Lines"]:
+                bad(f"{path}: righe {vals['Lines']} != codice + commenti + vuote ({vals['Code']}+{vals['Comments']}+{vals['Blanks']})")
+            files[path] = (r["Language"], vals)
     mf = [p for p, _ in manifest_rows() if p.startswith("app/")]
     extra = sorted(set(files) - set(mf))
     if extra:
@@ -69,32 +75,68 @@ def check_scc(exp_dir):
     if len(files) + len(missing) != len(mf):
         bad("contati + non contati != file del manifesto sotto app/")
     note(f"scc: {len(files)} file contati, {len(missing)} non contati, {len(mf)} nel manifesto sotto app/")
-    # cartelle di baseline
+    # cartelle di baseline: tutte le colonne dell'aggregato contro la somma dei file
     dirs = {}
     for line in open(f"{OUT}/scc/dirs.csv", encoding="utf-8"):
         d, _, rest = line.rstrip("\n").partition(",")
         cols = rest.split(",")
         if cols[0] == "Language":
             continue
-        f_, l_ = dirs.get(d, (0, 0))
-        dirs[d] = (f_ + int(cols[7]), l_ + int(cols[1]))  # Files, Lines
+        acc = dirs.setdefault(d, dict.fromkeys(("Lines", "Code", "Comments", "Blanks", "Bytes", "Files"), 0))
+        for k, idx in (("Lines", 1), ("Code", 2), ("Comments", 3), ("Blanks", 4), ("Bytes", 6), ("Files", 7)):
+            acc[k] += int(cols[idx])
     for d in ("app/cbl", "app/cpy", "app/jcl"):
-        for what, idx in (("file", 0), ("righe", 1)):
+        agg = dirs.get(d)
+        if agg is None:
+            bad(f"{d}: aggregato assente in dirs.csv")
+            continue
+        for what, key in (("file", "Files"), ("righe", "Lines")):
             want = int(exp[f"cartella:{d}:{what}"])
-            if dirs.get(d, (None, None))[idx] != want:
-                bad(f"{d} {what}: atteso {want}, scc {dirs.get(d)}")
+            if agg[key] != want:
+                bad(f"{d} {what}: atteso {want}, scc {agg[key]}")
+        if agg["Code"] + agg["Comments"] + agg["Blanks"] != agg["Lines"]:
+            bad(f"{d}: righe {agg['Lines']} != codice + commenti + vuote ({agg['Code']}+{agg['Comments']}+{agg['Blanks']})")
+        sums = dict.fromkeys(agg, 0)
+        for p, (_, v) in files.items():
+            if p.startswith(d + "/") and p.count("/") == d.count("/") + 1:
+                for k in ("Lines", "Code", "Comments", "Blanks", "Bytes"):
+                    sums[k] += v[k]
+                sums["Files"] += 1
+        for k in agg:
+            if sums[k] != agg[k]:
+                bad(f"{d}: {k} dell'aggregato {agg[k]} != somma dei file {sums[k]}")
     # coerenza con il manifesto per le cartelle (file)
     for d, t in (("app/cbl/", "cobol"), ("app/cpy/", "copybook"), ("app/jcl/", "jcl")):
         n = sum(1 for p, tt in manifest_rows() if p.startswith(d) and p.count("/") == 2 and tt == t)
-        got = dirs[d[:-1]][0]
+        got = dirs.get(d[:-1], {}).get("Files")
         if n != got:
             bad(f"{d}: manifesto {n} file di tipo {t}, scc {got}")
+    # campioni contati a mano: righe, codice, commenti, vuote per file (con le divergenze note dichiarate)
+    nsamp = 0
+    for r in read_tsv(f"{exp_dir}/scc_files.tsv"):
+        path = r[0]
+        hand = dict(zip(("Lines", "Code", "Comments", "Blanks"), (int(x) for x in r[1:5])))
+        if hand["Code"] + hand["Comments"] + hand["Blanks"] != hand["Lines"]:
+            bad(f"{path}: il campione a mano non e' coerente (codice + commenti + vuote != righe)")
+        if path not in files:
+            bad(f"{path}: campione non presente nell'output di scc")
+            continue
+        got = files[path][1]
+        want = dict(hand)
+        for k, cell in zip(("Code", "Comments", "Blanks"), r[5:8]):
+            if cell != "=":
+                want[k] = int(cell)
+        for k in ("Lines", "Code", "Comments", "Blanks"):
+            if got[k] != want[k]:
+                bad(f"{path}: {k} atteso {want[k]}, scc {got[k]}")
+        nsamp += 1
+    note(f"scc: {nsamp} campioni contati a mano (righe, codice, commenti, vuote) confrontati")
 
 
 # ---------------------------------------------------------------- compile
 def check_compile(exp_dir):
     exp = {r[0]: r[1] for r in read_tsv(f"{exp_dir}/compile.tsv")}
-    got = {r[0]: (int(r[1]), int(r[2])) for r in read_tsv(f"{OUT}/gnucobol/syntax.tsv")[1:]}
+    got = {r[0]: (int(r[1]), int(r[2]), int(r[3])) for r in read_tsv(f"{OUT}/gnucobol/syntax.tsv")[1:]}
     progs = app_cbl_programs()
     if sorted(got) != progs:
         bad(f"programmi compilati diversi dal manifesto: {sorted(set(got) ^ set(progs))}")
@@ -103,14 +145,26 @@ def check_compile(exp_dir):
     for p in progs:
         if p not in got or p not in exp:
             continue
-        rc, errs = got[p]
-        failed = errs > 0
+        rc, errs, warns = got[p]
+        # i conteggi del TSV si riconfrontano con le diagnostiche salvate
+        try:
+            log = open(f"{OUT}/gnucobol/log/{p}.log", encoding="utf-8", errors="replace").read()
+        except OSError:
+            bad(f"{p}: log delle diagnostiche assente")
+            continue
+        log_errs = log.count(": error: ")
+        log_warns = log.count(": warning: ")
+        if errs != log_errs:
+            bad(f"{p}: errori nel TSV {errs}, nelle diagnostiche salvate {log_errs}")
+        if warns != log_warns:
+            bad(f"{p}: avvertimenti nel TSV {warns}, nelle diagnostiche salvate {log_warns}")
+        failed = log_errs > 0
         if failed != (exp[p] == "errore"):
-            bad(f"{p}: atteso {exp[p]}, cobc ha rilevato {errs} errori")
+            bad(f"{p}: atteso {exp[p]}, cobc ha rilevato {log_errs} errori")
         if (rc != 0) != failed:
-            bad(f"{p}: codice di uscita {rc} incoerente con {errs} errori")
+            bad(f"{p}: codice di uscita {rc} incoerente con {log_errs} errori")
     n_ok = sum(1 for p in got if got[p][1] == 0)
-    note(f"cobc: {n_ok} programmi senza errori, {len(got) - n_ok} con errori (tutti attesi)")
+    note(f"cobc: {n_ok} programmi senza errori, {len(got) - n_ok} con errori (tutti attesi); conteggi riletti dai log")
 
 
 # ---------------------------------------------------------------- copy
@@ -155,6 +209,11 @@ def check_call(tool, exp_dir):
     for e in exp:
         if e not in got:
             bad(f"CALL attesa non trovata: {e[0]} -> {e[1]}")
+    # per i programmi con attesi, l'insieme delle CALL dello strumento deve coincidere (niente CALL inventate)
+    for prog in sorted({e[0] for e in exp}):
+        extra_calls = sorted(c for (p, c) in got if p == prog and (p, c) not in exp)
+        if extra_calls:
+            bad(f"{prog}: CALL riportate dallo strumento e assenti dagli attesi: {extra_calls}")
     xctl = [r for r in read_tsv(f"{exp_dir}/xctl.tsv") if r[0] != "programma"]
     seen = [(r[0], r[2]) for r in xctl if (r[0], r[2]) in got]
     note(f"{tool}: CALL attese trovate {len(exp) - sum(1 for e in exp if e not in got)}/{len(exp)}; "
@@ -177,6 +236,11 @@ def check_layout(exp_dir):
         want = (int(r[2]), int(r[3]), r[4], int(r[5]), r[6])
         if want not in layout.get(key, []):
             bad(f"{r[0]}.{r[1]}: atteso offset/lunghezza/tipo/scala/redefines {want}, cb2xml {layout.get(key)}")
+    # i sei campi attesi di CVACT01Y sono davvero i primi sei campi elementari, nell'ordine
+    first = [r for r in read_tsv(f"{OUT}/cb2xml/layout.tsv")[1:] if r[0] == "CVACT01Y" and r[4] != "group"][:6]
+    want_names = [r[1] for r in read_tsv(f"{exp_dir}/layout.tsv") if r[0] == "CVACT01Y"]
+    if [r[1] for r in first] != want_names:
+        bad(f"primi sei campi elementari di CVACT01Y: attesi {want_names}, cb2xml {[r[1] for r in first]}")
     # tre importi consecutivi di uguale ampiezza non scambiati: offset distinti e nell'ordine atteso
     offs = [layout.get(("CVACT01Y", n), [(None,)])[0][0] for n in ("ACCT-CURR-BAL", "ACCT-CREDIT-LIMIT", "ACCT-CASH-CREDIT-LIMIT")]
     if offs != [12, 24, 36]:
@@ -195,10 +259,18 @@ def check_layout(exp_dir):
 
 # ---------------------------------------------------------------- jcl
 def check_jcl(exp_dir):
-    steps = {(r[0], r[1]): r[3] for r in read_tsv(f"{OUT}/mapa/jcl_steps.tsv")[1:]}
-    for r in read_tsv(f"{exp_dir}/jcl_steps.tsv"):
-        if steps.get((r[0], r[1])) != r[2]:
-            bad(f"{r[0]}/{r[1]}: programma atteso {r[2]}, mapa {steps.get((r[0], r[1]))}")
+    steps = {(r[0], r[1]): (r[2], r[3]) for r in read_tsv(f"{OUT}/mapa/jcl_steps.tsv")[1:]}
+    exp_steps = read_tsv(f"{exp_dir}/jcl_steps.tsv")
+    for r in exp_steps:
+        want = (r[2], r[3])
+        if steps.get((r[0], r[1])) != want:
+            bad(f"{r[0]}/{r[1]}: tipo e programma attesi {want}, mapa {steps.get((r[0], r[1]))}")
+    # nessun passo in piu' o in meno per i job con attesi
+    for job in sorted({r[0] for r in exp_steps}):
+        e = {r[1] for r in exp_steps if r[0] == job}
+        g = {k[1] for k in steps if k[0] == job}
+        if e != g:
+            bad(f"{job}: passi attesi {sorted(e)}, mapa {sorted(g)}")
     dd_got = {}
     for r in read_tsv(f"{OUT}/mapa/jcl_dd.tsv")[1:]:
         dd_got.setdefault((r[0], r[1]), {})[r[2]] = r[3]
@@ -209,7 +281,7 @@ def check_jcl(exp_dir):
         g = dd_got.get(key, {})
         if g != e:
             bad(f"{key[0]}/{key[1]}: DD attese {sorted(e.items())}, mapa {sorted(g.items())}")
-    note(f"mapa: passi attesi verificati {len(read_tsv(f'{exp_dir}/jcl_steps.tsv'))}, DD di POSTTRAN/STEP15 verificate {len(dd_exp.get(('POSTTRAN', 'STEP15'), {}))}")
+    note(f"mapa: passi attesi verificati {len(exp_steps)} (tipo e programma), DD di POSTTRAN/STEP15 verificate {len(dd_exp.get(('POSTTRAN', 'STEP15'), {}))}")
 
 
 def main(argv):
@@ -219,6 +291,10 @@ def main(argv):
     while i < len(argv):
         if argv[i] == "--expected":
             exp_dir = argv[i + 1]
+            i += 2
+        elif argv[i] == "--out":
+            global OUT
+            OUT = argv[i + 1]
             i += 2
         else:
             args.append(argv[i])

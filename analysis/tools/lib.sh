@@ -1,7 +1,7 @@
 # Funzioni comuni agli script di analysis/tools (da includere dopo lib/common.sh).
 
 TOOLS_DIR="$ANALYSIS_ROOT/tools"
-OUT="$TOOLS_DIR/out"
+OUT="${TOOLS_OUT:-$TOOLS_DIR/out}"   # TOOLS_OUT: cartella alternativa, usata da check.sh per rigenerare gli output
 DOCKER_DIR="$TOOLS_DIR/docker"
 MANIFEST="$ANALYSIS_ROOT/manifest/sources.tsv"
 

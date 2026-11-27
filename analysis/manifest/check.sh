@@ -6,7 +6,7 @@ require_legacy
 
 here="$(pwd)"
 exp=/analysis/tools/expected/manifest.tsv
-tmp="$(mktemp -d)"
+tmp="$(mktmp)"
 trap 'rm -rf "$tmp"' EXIT
 
 [ -f "$here/sources.tsv" ] || fail "sources.tsv assente: eseguire prima './analysis/run.sh manifest'"
@@ -20,13 +20,13 @@ legacy_ls_files | glue_run --stdin -- /analysis/manifest/classify.py > "$tmp/b.t
 cmp -s "$tmp/a.tsv" "$tmp/b.tsv" || fail "due rigenerazioni consecutive differiscono"
 cmp -s "$tmp/a.tsv" "$here/sources.tsv" || fail "sources.tsv versionato diverso dalla rigenerazione: rieseguire il manifesto"
 
-log "3. test negativo: manifesto con un file omesso e un altro file cobol duplicato deve far fallire il controllo"
+log "3. test negativo: manifesto con un file omesso e un altro file dello stesso tipo (copybook) duplicato deve far fallire il controllo"
 glue_run --rw "$tmp" -- /analysis/manifest/tamper.py manifest /analysis/manifest/sources.tsv /work/tampered.tsv
 if legacy_ls_files | glue_run --rw "$tmp" --stdin -- /analysis/manifest/verify.py /work/tampered.tsv "$exp" 2> "$tmp/neg1.err"; then
   fail "il controllo NON ha rilevato il manifesto alterato"
 fi
 grep -q 'assente dal manifesto: app/cpy/CVACT01Y.cpy' "$tmp/neg1.err" || fail "il file omesso non e' stato segnalato"
-grep -q 'percorso duplicato nel manifesto: app/cbl/CBACT01C.cbl' "$tmp/neg1.err" || fail "il duplicato non e' stato segnalato"
+grep -q 'percorso duplicato nel manifesto: app/cpy/CVACT03Y.cpy' "$tmp/neg1.err" || fail "il duplicato non e' stato segnalato"
 log "   fallisce come previsto: $(wc -l < "$tmp/neg1.err" | tr -d ' ') discrepanze segnalate"
 
 log "4. test negativo: valore atteso alterato (31 -> 30 programmi sotto app/cbl) deve far fallire il controllo"

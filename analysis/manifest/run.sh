@@ -6,7 +6,7 @@
 require_legacy
 
 here="$(pwd)"
-tmp="$(mktemp -d)"
+tmp="$(mktmp)"
 trap 'rm -rf "$tmp"' EXIT
 
 legacy_ls_files | glue_run --stdin -- /analysis/manifest/classify.py > "$tmp/sources.tsv"

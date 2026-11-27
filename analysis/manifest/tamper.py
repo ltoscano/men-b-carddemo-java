@@ -2,8 +2,8 @@
 """Produce versioni alterate del manifesto o degli attesi, per i test negativi.
 
 Uso:
-  tamper.py manifest IN OUT   omette un file (app/cpy/CVACT01Y.cpy) e duplica un altro file dello stesso
-                              tipo (app/cbl/CBACT01C.cbl, cobol): il numero di righe resta invariato
+  tamper.py manifest IN OUT   omette un file (app/cpy/CVACT01Y.cpy, copybook) e duplica un altro file dello
+                              stesso tipo (app/cpy/CVACT03Y.cpy, copybook): il numero di righe resta invariato
   tamper.py expected IN OUT   altera il valore atteso dei programmi cobol sotto app/cbl (31 -> 30)
 """
 import sys
@@ -19,7 +19,7 @@ def main(mode: str, src: str, dst: str) -> int:
                 dropped = True
                 continue
             out.append(l)
-            if l.startswith("app/cbl/CBACT01C.cbl\t"):
+            if l.startswith("app/cpy/CVACT03Y.cpy\t"):
                 out.append(l)
                 dup = True
         assert dropped and dup, "righe da alterare non trovate"

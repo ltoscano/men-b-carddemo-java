@@ -101,6 +101,8 @@ def main(caps_path, doc_path, out_dir):
             continue
         if clean(r[ccol["Stato"]]) != c[2]:
             errors.append(f"{c[0]}: stato nel documento '{clean(r[ccol['Stato']])}' diverso da capabilities.tsv '{c[2]}'")
+        if "Issue che ne dipendono" in ccol and clean(r[ccol["Issue che ne dipendono"]]).replace(" ", "") != c[1]:
+            errors.append(f"{c[0]}: issue nel documento '{clean(r[ccol['Issue che ne dipendono']])}' diverse da capabilities.tsv '{c[1]}'")
         if clean(r[ccol["Strumenti"]]) != c[3]:
             errors.append(f"{c[0]}: strumenti nel documento '{clean(r[ccol['Strumenti']])}' diversi da capabilities.tsv '{c[3]}'")
         if c[2] == "available":

@@ -5,7 +5,8 @@
 set -euo pipefail
 
 RUN="$ANALYSIS_ROOT/run.sh"
-tmp="$(mktemp -d)"
+mkdir -p "$ANALYSIS_ROOT/.work"; printf '*\n' > "$ANALYSIS_ROOT/.work/.gitignore"
+tmp="$(mktemp -d "$ANALYSIS_ROOT/.work/t.XXXXXX")"
 trap 'rm -rf "$tmp"' EXIT
 
 say() { echo "[selftest] $*"; }

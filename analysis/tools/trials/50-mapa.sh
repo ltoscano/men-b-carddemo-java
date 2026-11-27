@@ -8,7 +8,7 @@ ensure_legacy_volume
 build_image "$IMG_MAPA" "$DOCKER_DIR/mapa"
 rm -rf "$OUT/mapa"
 mkdir -p "$OUT/mapa"
-work="$(mktemp -d)"
+work="$(mktmp)"
 trap 'rm -rf "$work"' EXIT
 
 printf 'mapa (cartella jcl/, Demo01), commit d05705af310730c3e9aa848e824755e652618512, compilato dai sorgenti\n' > "$OUT/mapa/version.txt"
