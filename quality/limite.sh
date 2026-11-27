@@ -47,6 +47,25 @@ limited() {
   return "${rc}"
 }
 
+# limited_out <file> <secondi> <comando esterno> [argomenti...]
+# Come limited, ma lo standard output del comando va nel file indicato e, se il comando riesce,
+# finisce in LIMITED_OUT (senza a capo finali). Si usa al posto di "$(limited ...)": un processo
+# figlio del comando che sopravvive all'arresto terrebbe aperta la pipe di "$(...)" e l'attesa
+# non avrebbe limite; un file non blocca nessuno. In caso di errore LIMITED_OUT resta vuota.
+LIMITED_OUT=""
+limited_out() {
+  local file="$1" limit="$2" rc=0
+  shift 2
+  LIMITED_OUT=""
+  limited "${limit}" "$@" >"${file}" || rc=$?
+  [ "${rc}" -eq 0 ] || return "${rc}"
+  if ! LIMITED_OUT="$(<"${file}")"; then
+    printf 'ERRORE: lettura di %s fallita\n' "${file}" >&2
+    return 1
+  fi
+  return 0
+}
+
 # stop_limited: ferma il comando in corso di `limited` (TERM, poi KILL dopo 10 s) e il suo
 # guardiano. Per i trap di uscita; non decide nulla, l'esito lo decide chi chiama.
 stop_limited() {

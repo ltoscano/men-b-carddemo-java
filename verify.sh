@@ -3,20 +3,23 @@
 #  1. elimina gli output precedenti (fallisce se la cancellazione fallisce);
 #  2. lancia mvn -B verify in un'immagine Maven ufficiale (JDK 21, versione fissata), con
 #     accesso al Docker dell'host per i test di integrazione (Testcontainers);
-#  3. controlla che il test di integrazione PostgreSQL sia stato eseguito e non saltato;
+#  3. controlla che il rapporto del test di integrazione PostgreSQL sia XML completo, di
+#     questa corsa, con il caso di test eseguito e riuscito (quality/RapportoSurefire.java);
 #  4. controlla che online e batch abbiano esattamente un jar eseguibile (*-exec.jar);
 #  5. alla fine, riuscita o no, anche se interrotta, rimuove il container di build e i
 #     container avviati dai test di questa corsa (etichetta menb.verify.run) e verifica che
 #     non ne resti nessuno.
+# Ogni comando esterno sull'host ha un limite di tempo (quality/limite.sh).
 # Non avvia alcun processo applicativo: l'avvio reale dello stack e' compito di ./smoke.sh.
 # Variabili opzionali: MENB_BUILD_CACHE_VOLUME (volume Docker con la cache Maven),
-# MENB_VERIFY_TIMEOUT (secondi, limite dell'intero container di build; predefinito 1800).
+# MENB_VERIFY_TIMEOUT (secondi, limite dell'intero container di build; predefinito 1800),
+# MENB_VERIFY_SHORT_TIMEOUT (secondi, limite di ogni altro comando esterno; predefinito 60).
 set -euo pipefail
 
 IMAGE="maven:3.9.16-eclipse-temurin-21"
 CACHE_VOLUME="${MENB_BUILD_CACHE_VOLUME:-menb-build-m2}"
 VERIFY_TIMEOUT="${MENB_VERIFY_TIMEOUT:-1800}"
-SHORT_TIMEOUT=60
+SHORT_TIMEOUT="${MENB_VERIFY_SHORT_TIMEOUT:-60}"
 # Socket del daemon Docker: la sorgente di un montaggio e' risolta dal daemon, quindi e' il
 # suo socket (su Docker Desktop il percorso e' gestito in modo speciale e porta alla VM).
 DOCKER_SOCKET="/var/run/docker.sock"
@@ -29,24 +32,22 @@ esac
 ROOT="$(cd "${ROOT_DIR}" && pwd)" || { echo "ERRORE: cartella dello script non raggiungibile" >&2; exit 1; }
 [ -f "${ROOT}/pom.xml" ] || { echo "ERRORE: ${ROOT}/pom.xml non trovato" >&2; exit 1; }
 [ -f "${ROOT}/quality/limite.sh" ] || { echo "ERRORE: ${ROOT}/quality/limite.sh non trovato" >&2; exit 1; }
+[ -f "${ROOT}/quality/RapportoSurefire.java" ] || { echo "ERRORE: ${ROOT}/quality/RapportoSurefire.java non trovato" >&2; exit 1; }
 # shellcheck source=quality/limite.sh
 . "${ROOT}/quality/limite.sh" || { echo "ERRORE: caricamento di quality/limite.sh fallito" >&2; exit 1; }
 check_seconds MENB_VERIFY_TIMEOUT "${VERIFY_TIMEOUT}" || exit 1
-# Utente dell'host a cui restituire le cartelle target/: esito di id controllato e valore
-# numerico, altrimenti chown riceverebbe un utente vuoto e non cambierebbe nulla.
-HOST_UID="$(id -u)" || { echo "ERRORE: id -u fallito" >&2; exit 1; }
-HOST_GID="$(id -g)" || { echo "ERRORE: id -g fallito" >&2; exit 1; }
-for value in "${HOST_UID}" "${HOST_GID}"; do
-  case "${value}" in
-    '' | *[!0-9]*) echo "ERRORE: utente dell'host non numerico: '${HOST_UID}:${HOST_GID}'" >&2; exit 1 ;;
-  esac
-done
+check_seconds MENB_VERIFY_SHORT_TIMEOUT "${SHORT_TIMEOUT}" || exit 1
 
-# Identificativo di questa corsa: nome del container di build ed etichetta dei container
-# avviati dai test. Unico per corsa, quindi i residui di altre corse (o di altri) non contano.
+# Identificativo di questa corsa: nome del container di build, etichetta dei container
+# avviati dai test, proprieta' registrata nel rapporto dei test. Unico per corsa, quindi i
+# residui di altre corse (o di altri) non contano.
 RUN_ID="verify-$$-${RANDOM}${RANDOM}"
 BUILD_CONTAINER="menb-build-${RUN_ID}"
 RUN_LABEL="${RUN_LABEL_KEY}=${RUN_ID}"
+# Cartella privata per l'output dei comandi sotto limite (vedi limited_out in limite.sh).
+TMP_BASE="${TMPDIR:-/tmp}"
+WORK="${TMP_BASE%/}/menb-${RUN_ID}"
+WORK_CREATED=0
 
 # Controlla che ogni riga di $1 sia un identificativo completo di container (formato di Docker).
 valid_ids() {
@@ -65,17 +66,16 @@ EOF
 # l'elenco non si ottiene o non ha il formato atteso: l'assenza non e' provata.
 LISTED="<ignoto>"
 list_containers() {
-  local out
   LISTED="<ignoto>"
-  if ! out="$(limited "${SHORT_TIMEOUT}" docker ps -a -q --no-trunc --filter "$1" </dev/null)"; then
+  if ! limited_out "${WORK}/docker-ps.out" "${SHORT_TIMEOUT}" docker ps -a -q --no-trunc --filter "$1" </dev/null; then
     echo "ERRORE: elenco dei container con il filtro $1 fallito" >&2
     return 1
   fi
-  if ! valid_ids "${out}"; then
-    echo "ERRORE: risposta inattesa di Docker nell'elenco dei container ($1): '${out}'" >&2
+  if ! valid_ids "${LIMITED_OUT}"; then
+    echo "ERRORE: risposta inattesa di Docker nell'elenco dei container ($1): '${LIMITED_OUT}'" >&2
     return 1
   fi
-  LISTED="${out}"
+  LISTED="${LIMITED_OUT}"
   return 0
 }
 
@@ -129,13 +129,17 @@ CLEANUP_ARMED=0
 on_exit() {
   local rc=$?
   trap - EXIT HUP INT TERM
-  # Interrotta durante il container di build: lo si ferma prima della pulizia.
+  # Interrotta durante un comando sotto limite: lo si ferma prima della pulizia.
   stop_limited
   if [ "${CLEANUP_ARMED}" -eq 1 ]; then
     echo "== pulizia dei container della corsa ${RUN_ID}"
     if ! cleanup_run; then
       [ "${rc}" -ne 0 ] || rc=1
     fi
+  fi
+  if [ "${WORK_CREATED}" -eq 1 ] && ! limited "${SHORT_TIMEOUT}" rm -rf "${WORK}" </dev/null; then
+    echo "ERRORE: cancellazione di ${WORK} fallita" >&2
+    [ "${rc}" -ne 0 ] || rc=1
   fi
   if [ "${rc}" -eq 0 ]; then
     echo "== verifica completata"
@@ -148,6 +152,22 @@ trap on_exit EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
+
+# mkdir fallisce se la cartella esiste gia': nessun output di altre corse viene riusato.
+limited "${SHORT_TIMEOUT}" mkdir -m 700 "${WORK}" </dev/null || { echo "ERRORE: creazione di ${WORK} fallita" >&2; exit 1; }
+WORK_CREATED=1
+
+# Utente dell'host a cui restituire le cartelle target/: esito di id controllato e valore
+# numerico, altrimenti chown riceverebbe un utente vuoto e non cambierebbe nulla.
+limited_out "${WORK}/id-u.out" "${SHORT_TIMEOUT}" id -u </dev/null || { echo "ERRORE: id -u fallito" >&2; exit 1; }
+HOST_UID="${LIMITED_OUT}"
+limited_out "${WORK}/id-g.out" "${SHORT_TIMEOUT}" id -g </dev/null || { echo "ERRORE: id -g fallito" >&2; exit 1; }
+HOST_GID="${LIMITED_OUT}"
+for value in "${HOST_UID}" "${HOST_GID}"; do
+  case "${value}" in
+    '' | *[!0-9]*) echo "ERRORE: utente dell'host non numerico: '${HOST_UID}:${HOST_GID}'" >&2; exit 1 ;;
+  esac
+done
 
 # Il contenitore gira come root: a fine corsa restituisce all'utente dell'host solo le
 # cartelle target/ generate (non .git, ne' i sorgenti, ne' legacy/).
@@ -191,41 +211,29 @@ if [ "${#residui[@]}" -ne 0 ]; then
   echo "ERRORE: output precedenti ancora presenti dopo la cancellazione: ${residui[*]}" >&2
   exit 1
 fi
-mvn -B verify </dev/null || { echo "ERRORE: mvn verify fallito" >&2; exit 1; }
+# Identificativo della corsa: deve esserci, perche' il rapporto dei test va legato a questa build.
+case "${MENB_VERIFY_RUN_ID:-}" in
+  verify-[0-9]*-[0-9]*) ;;
+  *) echo "ERRORE: identificativo della corsa non valido: '${MENB_VERIFY_RUN_ID:-}'" >&2; exit 1 ;;
+esac
+# -Dmenb.verify.run arriva come proprieta' di sistema ai test e surefire la registra nel rapporto.
+mvn -B verify "-Dmenb.verify.run=${MENB_VERIFY_RUN_ID}" </dev/null || { echo "ERRORE: mvn verify fallito" >&2; exit 1; }
 
-# Il rapporto di surefire esiste solo se il test e' stato eseguito da questa build (i target/
-# sono stati cancellati): almeno un test, nessuno saltato, fallito o in errore.
-echo "== [2/3] controllo del test di integrazione"
+# Il rapporto di surefire deve essere un XML ben formato e completo, di questa corsa (proprieta'
+# menb.verify.run), con il caso di test atteso eseguito e riuscito: lo legge il parser XML del
+# JDK del container (quality/RapportoSurefire.java, lanciato come sorgente).
+echo "== [2/3] controllo del rapporto del test di integrazione"
 report="carddemo-parity/target/surefire-reports/TEST-io.github.ltoscano.carddemo.parity.PostgresIntegrazioneTest.xml"
 if [ ! -f "${report}" ]; then
   echo "ERRORE: rapporto del test di integrazione assente: ${report}" >&2
   exit 1
 fi
-if ! content="$(<"${report}")"; then
-  echo "ERRORE: lettura di ${report} fallita" >&2
+if ! java quality/RapportoSurefire.java "${report}" "${MENB_VERIFY_RUN_ID}" \
+    io.github.ltoscano.carddemo.parity.PostgresIntegrazioneTest \
+    avviaLImmagineDiComposeScriveRileggeEdElimina </dev/null; then
+  echo "ERRORE: rapporto del test di integrazione non valido: ${report}" >&2
   exit 1
 fi
-re_suite='<testsuite[[:space:]][^>]*>'
-if ! [[ "${content}" =~ ${re_suite} ]]; then
-  echo "ERRORE: elemento testsuite non trovato in ${report}" >&2
-  exit 1
-fi
-suite="${BASH_REMATCH[0]}"
-summary=""
-for attr in tests skipped failures errors; do
-  re="[[:space:]]${attr}=\"([0-9]+)\""
-  if ! [[ "${suite}" =~ ${re} ]]; then
-    echo "ERRORE: attributo ${attr} assente o non numerico in ${report}" >&2
-    exit 1
-  fi
-  value="${BASH_REMATCH[1]}"
-  summary="${summary} ${attr}=${value}"
-  case "${attr}" in
-    tests) [ "${value}" -ge 1 ] || { echo "ERRORE: test di integrazione non eseguito (tests=${value})" >&2; exit 1; } ;;
-    *) [ "${value}" -eq 0 ] || { echo "ERRORE: test di integrazione con ${attr}=${value} (atteso 0)" >&2; exit 1; } ;;
-  esac
-done
-echo "PostgresIntegrazioneTest:${summary}"
 
 # Dopo la pulizia puo' esistere solo l'eseguibile prodotto da questa build: ne serve uno.
 echo "== [3/3] controllo dei jar eseguibili"

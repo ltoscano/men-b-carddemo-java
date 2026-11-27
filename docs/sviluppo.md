@@ -10,7 +10,13 @@ Prerequisiti sull'host: Docker (con Compose v2), git e bash. Nessun JDK, Maven o
 ## `./verify.sh`: build e test
 
 1. Dentro `maven:3.9.16-eclipse-temurin-21` cancella i `target/` precedenti ed esegue `mvn -B verify` (compila e prova i cinque moduli, compreso il test di integrazione con PostgreSQL descritto sotto). Se la cancellazione fallisce, la verifica si ferma prima di Maven.
-2. Controlla nel rapporto di surefire di questa build che il test di integrazione `PostgresIntegrazioneTest` sia stato eseguito e non saltato (almeno un test, `skipped`, `failures` ed `errors` a 0). Se il rapporto manca, la verifica fallisce.
+2. Controlla il rapporto di surefire del test di integrazione `PostgresIntegrazioneTest` con `quality/RapportoSurefire.java`, eseguito nel container dal lanciatore di sorgenti del JDK, che legge l'XML con il parser del JDK. Il rapporto deve:
+   - essere un XML ben formato e completo (un file troncato o alterato non si legge);
+   - essere di questa corsa: `mvn` riceve `-Dmenb.verify.run=<corsa>` e surefire registra la proprietà nel rapporto, quindi un rapporto di un'altra corsa viene respinto;
+   - avere `tests` uguale al numero di `testcase` (almeno uno) e `skipped`, `failures` ed `errors` a 0;
+   - contenere il caso `avviaLImmagineDiComposeScriveRileggeEdElimina`, senza `skipped`, `failure`, `error` o riesecuzioni.
+
+   Se il rapporto manca o non soddisfa queste condizioni, la verifica fallisce.
 3. Controlla che `carddemo-online` e `carddemo-batch` abbiano esattamente un jar eseguibile (`*-exec.jar`).
 4. Non avvia alcun processo applicativo: con PostgreSQL le applicazioni non partono senza database, quindi l'avvio è compito di `./smoke.sh`.
 5. I due test di contesto (`OnlineApplicationTest`, `BatchApplicationTest`) caricano il contesto Spring senza database, con il profilo `test` (`src/test/resources/application-test.properties`), che esclude l'autoconfigurazione della sorgente dati. Nessun database in memoria o incorporato. Senza sorgente dati Spring Batch usa da sé un archivio dei metadati senza persistenza.
@@ -19,7 +25,7 @@ Prerequisiti sull'host: Docker (con Compose v2), git e bash. Nessun JDK, Maven o
 8. A fine corsa solo le cartelle `target/` tornano all'utente dell'host; un errore di `chown` fa fallire la verifica.
 9. Moduli: `domain` (nessuna dipendenza), `loader`, `online`, `batch` (solo da `domain`), `parity` (da tutti). `online` e `batch` producono un jar ordinario e uno eseguibile con classificatore `exec`.
 10. Ispezione delle dipendenze: `docker run --rm -v menb-build-m2:/root/.m2 -v "$PWD":/workspace -w /workspace maven:3.9.16-eclipse-temurin-21 mvn -B dependency:tree`.
-11. Limite di tempo: l'intero container di build ha `MENB_VERIFY_TIMEOUT` secondi (predefinito 1800); allo scadere il client Docker riceve SIGTERM, dopo 10 s SIGKILL, e la verifica fallisce. Ogni altro comando Docker dello script ha un limite di 60 s. Il limite è implementato in `quality/limite.sh` (senza `timeout`, che su macOS manca), condiviso con `quality/regressioni-verify.sh`.
+11. Limite di tempo: l'intero container di build ha `MENB_VERIFY_TIMEOUT` secondi (predefinito 1800); allo scadere il client Docker riceve SIGTERM, dopo 10 s SIGKILL, e la verifica fallisce. Ogni altro comando esterno dello script sull'host (`id`, `mkdir`, `rm`, i comandi `docker` di pulizia) ha il limite `MENB_VERIFY_SHORT_TIMEOUT` (predefinito 60 s). Il limite è implementato in `quality/limite.sh` (senza `timeout`, che su macOS manca), condiviso con `quality/regressioni-verify.sh`. L'output dei comandi sotto limite va in file di una cartella privata della corsa (`$TMPDIR/menb-<corsa>`, creata con `mkdir`, rimossa alla fine), non in `$(...)`: un processo figlio sopravvissuto all'arresto terrebbe aperta la pipe e l'attesa non avrebbe limite.
 12. Pulizia: alla fine, riuscita o fallita, anche se lo script riceve INT, TERM o HUP o scade il limite, `verify.sh` ferma il client Docker in corso, rimuove il container di build se esiste ancora (prima, perché non avvii altri container) e i container con l'etichetta `menb.verify.run=<corsa>` della propria corsa, poi verifica con un nuovo elenco che non ne resti nessuno. Se ne trova, li rimuove e fallisce comunque; se Docker non restituisce l'elenco, o lo restituisce in un formato inatteso, l'assenza non è provata e la verifica fallisce. L'identificativo della corsa (`verify-<pid>-<casuale>`) compare nel log; i residui di altre corse non vengono toccati.
 13. Controllo manuale dei residui di tutte le corse: `docker ps -a --filter label=menb.verify.run`.
 
@@ -68,15 +74,22 @@ Si esegue a richiesta (non fa parte di `./verify.sh` né della CI obbligatoria),
 | Caso | Mutazione | Atteso |
 | --- | --- | --- |
 | `repackage-rimosso` | blocco `<build>` tolto da `carddemo-online/pom.xml`, con il jar eseguibile della corsa di base presente | codice ≠ 0, `attesi esattamente 1 jar eseguibile in carddemo-online/target, trovati 0` |
+| `rapporto-incompleto` | `docker` sul `PATH` che inoltra al vero `docker` e, nel solo `docker run`, mette nel container di build un `mvn` che esegue il vero Maven e poi tronca a metà il rapporto del test di integrazione | codice ≠ 0, `non e' XML ben formato e completo`, `rapporto del test di integrazione non valido` |
+| `rapporto-altra-corsa` | come sopra, ma il rapporto viene sostituito da quello completo e riuscito della corsa di base | codice ≠ 0, `il rapporto non e' della corsa corrente`, `rapporto del test di integrazione non valido` |
 | `test-rotto` | un test che fallisce, aggiunto in `carddemo-domain` | codice ≠ 0, il test nell'elenco dei fallimenti di surefire, `mvn verify fallito` |
 | `id-fallisce` | `id` sul `PATH` che esce con 42 | codice ≠ 0, `id -u fallito` |
+| `id-bloccato` | `id` sul `PATH` che non ritorna (un processo figlio che dura un'ora); `MENB_VERIFY_SHORT_TIMEOUT=5`; limite del caso 90 s | codice ≠ 0 entro il limite, `superato il limite di 5s: id -u`, `id -u fallito` |
 | `docker-fallisce` | `docker` sul `PATH` che esce con 42 | codice 42, `container di build terminato con codice 42` |
-| `docker-irraggiungibile` | `docker` sul `PATH` che inoltra tutto al vero `docker` ma toglie il montaggio del socket dal container di build: Docker funziona sull'host, non dentro Maven | codice ≠ 0 entro il limite, `Could not find a valid Docker environment`, fallimento di `PostgresIntegrazioneTest`, `mvn verify fallito`; se il montaggio non viene trovato, la mutazione non è applicata e il caso fallisce |
+| `docker-irraggiungibile` | `docker` sul `PATH` che inoltra tutto al vero `docker` ma toglie il montaggio del socket dal container di build: Docker funziona sull'host, non dentro Maven | codice ≠ 0 entro il limite, `Could not find a valid Docker environment`, fallimento di `PostgresIntegrazioneTest`, `mvn verify fallito` |
+| `git-bloccato` | questo stesso script, con `git` sul `PATH` che non ritorna e `MENB_REGRESSIONI_SHORT_TIMEOUT=5`; limite del caso 90 s | codice ≠ 0 entro il limite, `superato il limite di 5s: git -C`, `git status fallito` |
+
+Nei casi `rapporto-incompleto`, `rapporto-altra-corsa` e `docker-irraggiungibile` lo shim registra in un file di aver applicato la mutazione; se il file manca (per esempio perché `verify.sh` ha cambiato la forma degli argomenti), il caso fallisce invece di passare per la ragione sbagliata. Dopo i casi con un comando che non ritorna, i processi figli lasciati dagli shim vengono fermati.
 
 3. Ripristina il POM e cancella il test aggiunto dopo ogni caso, e comunque all'uscita (anche per errore o INT, TERM, HUP); alla fine controlla che `git status` sia pulito.
 4. Esito: 0 solo se tutti i casi danno l'esito atteso e l'albero è pulito; l'ultima riga è `== REGRESSIONI RIUSCITE: tutti i casi rilevati` o `== REGRESSIONI FALLITE (codice N)`. Per un caso non rilevato stampa le ultime righe del suo log.
 5. `MENB_REGRESSIONI_LOGS=<cartella esistente>` conserva il log di ogni caso (`<caso>.log`).
-6. Non si provano strumenti che restituiscono dati falsi ma ben formati (regola "Fin dove arriva la sfiducia negli script" in `CLAUDE.md`).
+6. Ogni comando esterno dello script (`git`, `mkdir`, `cp`, `rm`, `chmod`, `./verify.sh`) ha un limite di tempo: `MENB_REGRESSIONI_SHORT_TIMEOUT` (predefinito 60 s) per quelli brevi, `MENB_REGRESSIONI_TIMEOUT` per ogni `./verify.sh`. La cartella di lavoro si crea con `mkdir` sotto limite (non `mktemp`), con un nome unico.
+7. Non si provano strumenti che restituiscono dati falsi ma ben formati (regola "Fin dove arriva la sfiducia negli script" in `CLAUDE.md`).
 
 ## Lo stack Compose
 
