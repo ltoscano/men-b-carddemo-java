@@ -28,7 +28,7 @@ OPTFILE=/oracle/cobc.opts
 if [ "${1:-}" = uno ] && [ -n "${UNO_OPZIONI:-}" ]; then OPTFILE="$UNO_OPZIONI"; fi
 LAUNCHER=/oracle/launcher/avvia.c
 # Programmi di prova (oracle/tests/), tutti eseguibili.
-PROVE="PARMECHO ABDUSING ABDNOARG M03BCALL DTCCALL SEGNOPRB PERFPRB"
+PROVE="PARMECHO ABDUSING ABDNOARG M03BCALL DTCCALL SEGNOPRB PERFPRB DATFTPRB"
 
 die() { echo "compile.sh: $*" >&2; exit 1; }
 

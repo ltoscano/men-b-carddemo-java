@@ -1,0 +1,8 @@
+== codice di uscita
+97
+== stdout
+PRIMA 31 323032352d30332d3137a5a5a5a5a5a5a5a5a5a5 31 a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5 a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5
+== stderr
+Warning: program compiled against libxml 212 using older 209
+MENB-ORACLE COBDATFT: caso non riproducibile dall'oracle
+== file nella cartella di lavoro

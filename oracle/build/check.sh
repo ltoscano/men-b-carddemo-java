@@ -3,7 +3,7 @@
 # 1. Rifa' la build (oracle/build/run.sh): l'output viene cancellato e rigenerato, quindi nessun
 #    artefatto di una corsa precedente puo' passare per attuale.
 # 2. Verifica (oracle/build/verifica.sh, nel container) contro gli ELENCHI FISSI qui sotto, con confronti
-#    esatti: gli 11 programmi nell'elenco della build con tipo e sorgente; per ognuno dei 22 programmi
+#    esatti: gli 11 programmi nell'elenco della build con tipo e sorgente; per ognuno dei 23 programmi
 #    compilati (11 + stub e segnaposto + prove) una sola riga in compilazione.tsv, esito 0, nessun errore,
 #    ARGOMENTI DI OGNI INVOCAZIONE DI cobc IDENTICI a quelli attesi (opzioni fissate piu' i soli argomenti
 #    strutturali del tipo), artefatto del tipo giusto; in bin/ nient'altro; opzioni.txt identico;
@@ -30,14 +30,14 @@ stub:COBDATFT:modulo:/oracle/stubs/COBDATFT.cbl stub:MVSWAIT:modulo:/oracle/stub
 prova:PARMECHO:eseguibile:/oracle/tests/PARMECHO.cbl prova:ABDUSING:eseguibile:/oracle/tests/ABDUSING.cbl
 prova:ABDNOARG:eseguibile:/oracle/tests/ABDNOARG.cbl prova:M03BCALL:eseguibile:/oracle/tests/M03BCALL.cbl
 prova:DTCCALL:eseguibile:/oracle/tests/DTCCALL.cbl prova:SEGNOPRB:eseguibile:/oracle/tests/SEGNOPRB.cbl
-prova:PERFPRB:eseguibile:/oracle/tests/PERFPRB.cbl"
+prova:PERFPRB:eseguibile:/oracle/tests/PERFPRB.cbl prova:DATFTPRB:eseguibile:/oracle/tests/DATFTPRB.cbl"
 # Ambiente fissato (deve coincidere con oracle/ambiente.sh): variabili ricevute da cobc e dai programmi.
 AMB_COBC_FISSO="PATH=/usr/bin:/bin HOME=/tmp LC_ALL=C"
 AMB_RUN_FISSO="PATH=/usr/bin:/bin HOME=/tmp LC_ALL=C COB_LIBRARY_PATH=/oracle-bin"
 # Opzioni fissate, nell'ordine (motivi in oracle/cobc.opts e oracle/README.md).
 OPZIONI_FISSE="-std=ibm -fbinary-truncate -fsingle-quote -fsign=EBCDIC -Wall -I/legacy/app/cpy"
 # Passi dei criteri di accettazione: nome e dipendenza (- = nessuna). selftest ha solo check.sh.
-PASSI="build:- avvio:build avviatore:build abend:build segno:build dialetto:build selftest:-"
+PASSI="build:- avvio:build avviatore:build abend:build segno:build dialetto:build routines:build selftest:-"
 
 tmp="$(mktmp)"
 trap 'rm -rf "$tmp"' EXIT

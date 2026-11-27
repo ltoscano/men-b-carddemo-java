@@ -1,6 +1,6 @@
 # Oracle GnuCOBOL, parte 1 (#4)
 
-Immagine container in cui gli 11 programmi batch di CardDemo che compilano senza modifiche si compilano con GnuCOBOL e si avviano. È il primo pezzo dell'oracle: il comportamento di riferimento contro cui si misurerà il Java. Qui non si eseguono i programmi sui dati veri (#5 e successive) e non si implementano le routine esterne (#24); l'unica lettura di dati originali è la sonda sul segno dei numeri (passo `segno`).
+Immagine container in cui gli 11 programmi batch di CardDemo che compilano senza modifiche si compilano con GnuCOBOL e si avviano. È il primo pezzo dell'oracle: il comportamento di riferimento contro cui si misurerà il Java. Qui non si eseguono i programmi sui dati veri (#5 e successive) e delle routine esterne è implementata solo `COBDATFT` (#24, passo `routines`); l'unica lettura di dati originali è la sonda sul segno dei numeri (passo `segno`).
 
 Sull'host servono solo Docker, Git e le utility POSIX. GnuCOBOL gira nel container.
 
@@ -20,8 +20,8 @@ git submodule update --init
 | `cobc.opts` | le opzioni di `cobc`, una per riga, ciascuna con il motivo; uguali per tutti i programmi |
 | `programs.tsv` | gli 11 programmi della build: sorgente, tipo (eseguibile o modulo), motivo del tipo letto nel sorgente |
 | `launcher/avvia.c` | l'avviatore: il `main` di ogni eseguibile, costruisce l'area del `PARM` |
-| `stubs/` | `CEE3ABD` (stub) e i segnaposto `COBDATFT`, `MVSWAIT`, `CEEDAYS` |
-| `tests/` | programmi COBOL di prova: `PARMECHO`, `ABDUSING`, `ABDNOARG`, `M03BCALL`, `DTCCALL`, `SEGNOPRB`, `PERFPRB` |
+| `stubs/` | `CEE3ABD` (stub), `COBDATFT` (equivalente della routine assembler, #24) e i segnaposto `MVSWAIT`, `CEEDAYS` |
+| `tests/` | programmi COBOL di prova: `PARMECHO`, `ABDUSING`, `ABDNOARG`, `M03BCALL`, `DTCCALL`, `SEGNOPRB`, `PERFPRB`, `DATFTPRB` |
 | `ambiente.sh` | (nel container) l'ambiente fissato: le sole variabili che ricevono `cobc` e i programmi |
 | `esegui.sh` | (nel container) avvia un eseguibile in una cartella vuota, nell'ambiente fissato, e scrive il rapporto (codice di uscita, stdout, stderr, file creati) e l'ambiente ricevuto dal programma |
 | `lib.sh` | funzioni comuni: immagine, volume del legacy, esecuzione nel container con limite di tempo, impronta della build, prove negative |
@@ -31,6 +31,7 @@ git submodule update --init
 | `abend/` | passo `abend`: `CEE3ABD` nelle due forme di chiamata; attesi in `abend/expected/` |
 | `segno/` | passo `segno`: lettura e scrittura di importi con segno dai dati originali; attesi in `segno/expected/` |
 | `dialetto/` | passo `dialetto`: sonda semantica su `perform-osvs`, un'impostazione del dialetto letta dalla configurazione del compilatore; attesi in `dialetto/expected/` |
+| `routines/` | passo `routines`: `COBDATFT` provata con il chiamante `DATFTPRB`; tabella dei casi determinati e non determinati in `routines/cobdatft-casi.md` (e `.tsv`), casi in `casi.tsv`, attesi in `routines/expected/` |
 | `selftest/` | test automatico del comando unico (ordine, ciclo, dipendenza mancante, primo errore, controllo mancante) |
 
 Ogni `check.sh` rigenera da zero ciò che controlla, in una cartella nuova: nessun risultato di una corsa precedente viene preso per attuale. La build scrive per ultima `build/out/IMPRONTA`, l'impronta di tutti gli input (sorgenti dell'oracle, opzioni, elenco, strati dell'immagine, commit del legacy) e degli artefatti prodotti; i passi che usano gli artefatti la ricalcolano e rifiutano una build assente, interrotta, vecchia o con artefatti cambiati dopo la build. Il controllo della build verifica anche che `cobc.opts` contenga esattamente le opzioni fissate nel controllo, che **ogni invocazione di `cobc` abbia esattamente gli argomenti attesi** (registrati da `compile.sh` uno per riga, così come sono stati passati: le opzioni fissate più i soli argomenti strutturali del tipo, nient'altro, in quell'ordine) e che i passi dei criteri di accettazione esistano con i loro script. Tutti i confronti dei controlli sono esatti (righe e insiemi interi); l'unico confronto per sottostringa è il motivo atteso nelle prove negative (`expect_fail`), che identifica il messaggio di errore. Ogni programma gira con stdin vuoto e un limite di tempo (`ORACLE_TIMEOUT_RUN`, 60 s; compilazione `ORACLE_TIMEOUT_COMPILE`, 900 s), applicato con `timeout` dentro il container. Gli attesi sono scritti a mano leggendo il sorgente (i paragrafi di `OPEN`, `9910-DISPLAY-IO-STATUS`, `9999-ABEND-PROGRAM`); ogni controllo ha prove negative automatiche, alcune su esecuzioni reali alterate (avviatore con ordine dei byte invertito, stub che ritorna, eseguibili senza moduli).
@@ -79,7 +80,7 @@ eseguibile: cobc <opzioni> -c -o OUT/obj/<P>.o <sorgente>
             cobc -x -A -DMENB_ENTRY=<P> -o OUT/bin/<P> /oracle/launcher/avvia.c OUT/obj/<P>.o
 ```
 
-`build/check.sh` confronta, per ognuno dei 22 programmi compilati, gli argomenti effettivi di ogni invocazione con questo modello: un'opzione in più, in meno o in un altro ordine fa fallire il controllo (prova negativa reale: `CBACT04C` ricompilato con `-fno-binary-truncate` in coda, `CSUTLDTC` con `-fsign=ASCII` in coda). Nessuna opzione di controllo a tempo di esecuzione (`-debug`, `-fec`): su z/OS non c'è `SSRANGE` nel JCL di compilazione, e i controlli di GnuCOBOL fermerebbero programmi che su z/OS proseguono.
+`build/check.sh` confronta, per ognuno dei 23 programmi compilati, gli argomenti effettivi di ogni invocazione con questo modello: un'opzione in più, in meno o in un altro ordine fa fallire il controllo (prova negativa reale: `CBACT04C` ricompilato con `-fno-binary-truncate` in coda, `CSUTLDTC` con `-fsign=ASCII` in coda). Nessuna opzione di controllo a tempo di esecuzione (`-debug`, `-fec`): su z/OS non c'è `SSRANGE` nel JCL di compilazione, e i controlli di GnuCOBOL fermerebbero programmi che su z/OS proseguono.
 
 Scelte che possono cambiare ciò che i programmi fanno:
 
@@ -110,7 +111,7 @@ Opzioni: per tutti quelle di `cobc.opts`. Avvertimenti: dal log di compilazione 
 | `COBSWAIT` | eseguibile | `WAITSTEP.jcl` | 0 |
 | `CSUTLDTC` | modulo | `PROCEDURE DIVISION USING` con tre parametri; `CALL 'CSUTLDTC'` in `CORPT00C` (righe 392, 412) | 0 |
 
-Errori: 0 per tutti. La build compila anche lo stub, i tre segnaposto e i sette programmi di prova: 22 artefatti in `build/out/bin/`. Con `-fsign=EBCDIC` avvertimenti e attesi della prova di avvio non cambiano.
+Errori: 0 per tutti. La build compila anche lo stub `CEE3ABD`, `COBDATFT`, i due segnaposto e gli otto programmi di prova: 23 artefatti in `build/out/bin/`. Con `-fsign=EBCDIC` avvertimenti e attesi della prova di avvio non cambiano.
 
 ### Avvio senza file d'ingresso (passo `avvio`, verificato qui)
 
@@ -139,7 +140,7 @@ Su z/OS il contenuto dell'area oltre la lunghezza non è definito; qui è X'00'.
 
 ## CEE3ABD e segnaposto (passo `abend`, verificato qui)
 
-`stubs/CEE3ABD.cbl` regge le due forme di chiamata del legacy (`CALL 'CEE3ABD' USING ABCODE, TIMING` e `CALL 'CEE3ABD'`), distinte con `C$NARG`. Scrive su stderr `MENB-ORACLE CEE3ABD: ARRESTO ANOMALO ABCODE=+0000000999 TIMING=+0000000000` (o `... SENZA ARGOMENTI`) e termina l'intera esecuzione con **codice di uscita 99**, fisso. Normali, per confronto: 0; 4 (`CBTRN02C` con scarti); la severità di `CEEDAYS` per `CSUTLDTC`; **1** quando libcob si ferma per un errore di runtime (per esempio `libcob: error: module 'CEE3ABD' not found`, osservato nella prova negativa senza moduli). I segnaposto `COBDATFT`, `MVSWAIT`, `CEEDAYS` scrivono `MENB-ORACLE SEGNAPOSTO: <nome> NON IMPLEMENTATO (ISSUE #24)` e terminano con **98**.
+`stubs/CEE3ABD.cbl` regge le due forme di chiamata del legacy (`CALL 'CEE3ABD' USING ABCODE, TIMING` e `CALL 'CEE3ABD'`), distinte con `C$NARG`. Scrive su stderr `MENB-ORACLE CEE3ABD: ARRESTO ANOMALO ABCODE=+0000000999 TIMING=+0000000000` (o `... SENZA ARGOMENTI`) e termina l'intera esecuzione con **codice di uscita 99**, fisso. Normali, per confronto: 0; 4 (`CBTRN02C` con scarti); la severità di `CEEDAYS` per `CSUTLDTC`; **1** quando libcob si ferma per un errore di runtime (per esempio `libcob: error: module 'CEE3ABD' not found`, osservato nella prova negativa senza moduli). I segnaposto `MVSWAIT`, `CEEDAYS` scrivono `MENB-ORACLE SEGNAPOSTO: <nome> NON IMPLEMENTATO (ISSUE #24)` e terminano con **98**.
 
 La terminazione usa `STOP RUN`: libcob chiude i file ancora aperti (su stderr: `libcob: warning: implicit CLOSE of ABD-FILE ('ABDFILE')`). Comportamento osservato e controllato per entrambe le forme: il codice visto dalla shell che ha lanciato il programma è 99; il record scritto prima della chiamata, con il file ancora aperto, **è su disco** dopo l'arresto, esattamente 20 byte; il programma non riprende dopo la `CALL` (nessun secondo record, nessuna riga successiva). Fatto ulteriore, verificato nella stessa prova con uno stub alterato che esce con `_exit(99)` senza chiudere nulla: anche così il record è su disco. Il controllo lo dimostra solo per il caso provato (file `SEQUENTIAL` a record fissi di 20 byte, un solo record, `_exit` subito dopo la `WRITE`); non dimostra che libcob non usi mai un buffer, per altri formati, record più grandi o più record.
 
@@ -168,6 +169,14 @@ Cosa cambia l'opzione oltre alla lettura, misurato dalla stessa sonda:
 - **Osservato solo nella prova negativa, non controllato:** senza l'opzione, dopo aver usato `DALYTRAN-AMT` (in una `MOVE` o in una `IF`), i byte del record in memoria risultano cambiati (`0000005047G` diventa `00000050470`): libcob riscrive il campo nella propria convenzione.
 - **Misurato in validazione** (giro 2 della PR #29, sonde del Validatore non automatizzate qui): con e senza `-fsign=EBCDIC`, lettura e riscrittura di campi `PIC 9`, `COMP-3` con e senza segno, `SIGN LEADING SEPARATE` e `SIGN TRAILING SEPARATE` danno valori e byte identici, anche rispetto all'ingresso (nei casi provati). Con il copybook originale `CVACT01Y` il primo record di `acctdata.txt` (`ACCT-CURR-BAL`, byte 13-24, `00000001940{`) si legge +194,00; anche i saldi +158,00 e +147,00 dei record successivi.
 - **Non verificato:** gli altri file di dati, oltre a `dailytran.txt` e ai record di `acctdata.txt` citati sopra.
+
+## COBDATFT (passo `routines`, verificato qui)
+
+`stubs/COBDATFT.cbl` riproduce `app/asm/COBDATFT.asm` solo dove le istruzioni determinano il risultato byte per byte. Tabella dei casi con le righe dell'assembler in `routines/cobdatft-casi.md`. In breve: ingresso `1` con uscita diversa da `2` (e quinto byte della data diverso da `-`) e ingresso `2` con uscita diversa da `1` formattano la data e restituiscono 0, senza controlli di calendario. Ogni ramo di errore (riga 56, `MVC` di 38 byte da un letterale di 13) e il confronto di 20 byte di riga 36 con quinto byte `-` dipendono da byte oltre i letterali: la routine scrive `MENB-ORACLE COBDATFT: caso non riproducibile dall'oracle` su stderr e termina con **97**.
+
+Verificato da `routines/check.sh` con il chiamante `DATFTPRB` (area riempita con X'A5', stampata in esadecimale prima e dopo la CALL) su 11 casi, 7 determinati e 4 non determinati, contro attesi scritti a mano; `routines/coerenza.sh` verifica che la tabella copra ogni combinazione di selettori una sola volta e che gli attesi siano quelli che la tabella prescrive. Prove negative reali: routine che scrive un byte da conservare, che restituisce 4, che non si ferma nei casi non determinati, segnaposto di #4 rimesso al suo posto (ogni caso termina con 98).
+
+`CBACT01C` chiama `COBDATFT` solo dopo aver letto un record di `ACCTFILE` (paragrafo `1300-POPUL-ACCT-RECORD`): senza file si ferma prima, all'apertura (stato 35, passo `avvio`), quindi il suo atteso di avvio non cambia. Che la routine sia caricata dai programmi è dimostrato con `DATFTPRB`, che la chiama con lo stesso meccanismo (`CALL` letterale dinamica risolta in `COB_LIBRARY_PATH`); per `CBACT01C` stesso lo mostrerà la prima esecuzione sui dati (#5).
 
 ## Assegnazione dei file: da nome DD a file
 
