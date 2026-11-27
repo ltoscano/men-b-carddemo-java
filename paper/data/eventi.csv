@@ -90,3 +90,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T12:41:36Z,pr-20,validazione-fine,fable,orologio,giro 1: BOCCIATA; 1 rilievo bloccante (falso verde nella pulizia)
 2026-11-27T12:41:36Z,issue-14,esecutore-inizio,opus,orologio,giro di correzione 1
 2026-11-27T12:41:51Z,processo,risposta-consegnata,fable,orologio,quattro Esecutori in corso (#2 #3 #4 e correzione di #14)
+2026-11-27T12:48:23Z,issue-2,esecutore-fermo,sonnet,orologio,needs-spec-update: mapa non analizza 3 JCL e non risolve le procedure; nessun codice scritto
+2026-11-27T12:48:27Z,issue-2,specifica-aggiornata,fable,orologio,voce 24 del registro
+2026-11-27T12:48:27Z,issue-2,esecutore-inizio,sonnet,orologio,ripresa dopo l'aggiornamento della specifica
