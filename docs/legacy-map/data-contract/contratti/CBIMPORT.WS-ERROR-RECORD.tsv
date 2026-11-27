@@ -1,0 +1,10 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+WS-ERROR-RECORD	01	gruppo	-	-	-	-	-	0	130	-	-	-	-	WS-ERROR-RECORD
+ERR-TIMESTAMP	05	elementare	X(26)	DISPLAY	-	-	-	0	26	-	-	-	-	WS-ERROR-RECORD/ERR-TIMESTAMP
+FILLER	05	elementare	X(01)	DISPLAY	-	-	-	26	1	-	-	-	-	WS-ERROR-RECORD/FILLER
+ERR-RECORD-TYPE	05	elementare	X(01)	DISPLAY	-	-	-	27	1	-	-	-	-	WS-ERROR-RECORD/ERR-RECORD-TYPE
+FILLER	05	elementare	X(01)	DISPLAY	-	-	-	28	1	-	-	-	-	WS-ERROR-RECORD/FILLER
+ERR-SEQUENCE	05	elementare	9(07)	DISPLAY	-	7	0	29	7	-	-	-	-	WS-ERROR-RECORD/ERR-SEQUENCE
+FILLER	05	elementare	X(01)	DISPLAY	-	-	-	36	1	-	-	-	-	WS-ERROR-RECORD/FILLER
+ERR-MESSAGE	05	elementare	X(50)	DISPLAY	-	-	-	37	50	-	-	-	-	WS-ERROR-RECORD/ERR-MESSAGE
+FILLER	05	elementare	X(43)	DISPLAY	-	-	-	87	43	-	-	-	-	WS-ERROR-RECORD/FILLER

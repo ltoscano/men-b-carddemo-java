@@ -1,0 +1,37 @@
+# Chiavi attese dichiarate nelle SELECT dei programmi batch (issue #3), scritte a mano: posizione e lunghezza del campo chiave
+# nel record dell'FD (riga del SELECT e righe dell'FD). Per EXPORT-SEQUENCE-NUM, che non e' nel record dell'FD, la posizione e'
+# quella del campo in CVEXPORT (WORKING-STORAGE): 1 + 26 = 27, 4 byte (PIC 9(9) COMP).
+# unicita: UNIQUE per la chiave primaria; per l'alternativa, come dichiarata (senza WITH DUPLICATES / WITH DUPLICATES).
+programma	chiave	nome	offset	lunghezza	unicita	nel_record_fd
+CBACT01C	primaria	FD-ACCT-ID	0	11	UNIQUE	si
+CBACT02C	primaria	FD-CARD-NUM	0	16	UNIQUE	si
+CBACT03C	primaria	FD-XREF-CARD-NUM	0	16	UNIQUE	si
+CBCUS01C	primaria	FD-CUST-ID	0	9	UNIQUE	si
+CBACT04C	primaria	FD-TRAN-CAT-KEY	0	17	UNIQUE	si
+CBACT04C	primaria	FD-XREF-CARD-NUM	0	16	UNIQUE	si
+CBACT04C	alternativa	FD-XREF-ACCT-ID	25	11	senza WITH DUPLICATES	si
+CBACT04C	primaria	FD-ACCT-ID	0	11	UNIQUE	si
+CBACT04C	primaria	FD-DISCGRP-KEY	0	16	UNIQUE	si
+CBEXPORT	primaria	CUST-ID	0	9	UNIQUE	si
+CBEXPORT	primaria	ACCT-ID	0	11	UNIQUE	si
+CBEXPORT	primaria	XREF-CARD-NUM	0	16	UNIQUE	si
+CBEXPORT	primaria	TRAN-ID	0	16	UNIQUE	si
+CBEXPORT	primaria	CARD-NUM	0	16	UNIQUE	si
+CBEXPORT	primaria	EXPORT-SEQUENCE-NUM	27	4	UNIQUE	no
+CBIMPORT	primaria	EXPORT-SEQUENCE-NUM	27	4	UNIQUE	no
+CBSTM03B	primaria	FD-TRNXS-ID	0	32	UNIQUE	si
+CBSTM03B	primaria	FD-XREF-CARD-NUM	0	16	UNIQUE	si
+CBSTM03B	primaria	FD-CUST-ID	0	9	UNIQUE	si
+CBSTM03B	primaria	FD-ACCT-ID	0	11	UNIQUE	si
+CBTRN01C	primaria	FD-CUST-ID	0	9	UNIQUE	si
+CBTRN01C	primaria	FD-XREF-CARD-NUM	0	16	UNIQUE	si
+CBTRN01C	primaria	FD-CARD-NUM	0	16	UNIQUE	si
+CBTRN01C	primaria	FD-ACCT-ID	0	11	UNIQUE	si
+CBTRN01C	primaria	FD-TRANS-ID	0	16	UNIQUE	si
+CBTRN02C	primaria	FD-TRANS-ID	0	16	UNIQUE	si
+CBTRN02C	primaria	FD-XREF-CARD-NUM	0	16	UNIQUE	si
+CBTRN02C	primaria	FD-ACCT-ID	0	11	UNIQUE	si
+CBTRN02C	primaria	FD-TRAN-CAT-KEY	0	17	UNIQUE	si
+CBTRN03C	primaria	FD-XREF-CARD-NUM	0	16	UNIQUE	si
+CBTRN03C	primaria	FD-TRAN-TYPE	0	2	UNIQUE	si
+CBTRN03C	primaria	FD-TRAN-CAT-KEY	0	6	UNIQUE	si

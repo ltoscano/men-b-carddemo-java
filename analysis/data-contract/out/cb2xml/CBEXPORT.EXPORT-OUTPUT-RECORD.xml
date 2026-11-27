@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBEXPORT.EXPORT-OUTPUT-RECORD.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="EXPORT-OUTPUT-RECORD" picture="X(500)" position="1" storage-length="500" display-length="500" display-position="1"/>
+</copybook>

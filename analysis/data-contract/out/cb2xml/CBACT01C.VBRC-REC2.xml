@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBACT01C.VBRC-REC2.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="VBRC-REC2" position="1" storage-length="39" display-length="39" display-position="1">
+        <item level="05" name="VB2-ACCT-ID" picture="9(11)" position="1" storage-length="11" display-length="11" numeric="COBOL_NUMERIC" display-position="1"/>
+        <item level="05" name="VB2-ACCT-CURR-BAL" picture="S9(10)V99" position="12" storage-length="12" display-length="12" scale="2" numeric="COBOL_NUMERIC" display-position="12"/>
+        <item level="05" name="VB2-ACCT-CREDIT-LIMIT" picture="S9(10)V99" position="24" storage-length="12" display-length="12" scale="2" numeric="COBOL_NUMERIC" display-position="24"/>
+        <item level="05" name="VB2-ACCT-REISSUE-YYYY" picture="X(04)" position="36" storage-length="4" display-length="4" display-position="36"/>
+    </item>
+</copybook>

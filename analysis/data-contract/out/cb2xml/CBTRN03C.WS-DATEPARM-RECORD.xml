@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBTRN03C.WS-DATEPARM-RECORD.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="WS-DATEPARM-RECORD" position="1" storage-length="21" display-length="21" display-position="1">
+        <item level="05" name="WS-START-DATE" picture="X(10)" position="1" storage-length="10" display-length="10" display-position="1"/>
+        <item level="05" name="FILLER" picture="X(01)" position="11" storage-length="1" display-length="1" display-position="11"/>
+        <item level="05" name="WS-END-DATE" picture="X(10)" position="12" storage-length="10" display-length="10" display-position="12"/>
+    </item>
+</copybook>

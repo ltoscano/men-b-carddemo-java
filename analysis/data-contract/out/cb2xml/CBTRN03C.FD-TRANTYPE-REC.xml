@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBTRN03C.FD-TRANTYPE-REC.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="FD-TRANTYPE-REC" position="1" storage-length="60" display-length="60" display-position="1">
+        <item level="05" name="FD-TRAN-TYPE" picture="X(02)" position="1" storage-length="2" display-length="2" display-position="1"/>
+        <item level="05" name="FD-TRAN-DATA" picture="X(58)" position="3" storage-length="58" display-length="58" display-position="3"/>
+    </item>
+</copybook>

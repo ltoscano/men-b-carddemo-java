@@ -1,0 +1,4 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+FD-XREFFILE-REC	01	gruppo	-	-	-	-	-	0	50	-	-	-	-	FD-XREFFILE-REC
+FD-XREF-CARD-NUM	05	elementare	X(16)	DISPLAY	-	-	-	0	16	-	-	-	-	FD-XREFFILE-REC/FD-XREF-CARD-NUM
+FD-XREF-DATA	05	elementare	X(34)	DISPLAY	-	-	-	16	34	-	-	-	-	FD-XREFFILE-REC/FD-XREF-DATA

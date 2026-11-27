@@ -1,0 +1,236 @@
+programma	riga	tipo	sorgente	destinazione	record
+app/cbl/CBACT01C.cbl	169	INITIALIZE	-	ARR-ARRAY-REC	ARR-ARRAY-REC
+app/cbl/CBACT01C.cbl	216	MOVE di un campo (composizione campo per campo)	ACCT-ID	OUT-ACCT-ID	OUT-ACCT-REC
+app/cbl/CBACT01C.cbl	217	MOVE di un campo (composizione campo per campo)	ACCT-ACTIVE-STATUS	OUT-ACCT-ACTIVE-STATUS	OUT-ACCT-REC
+app/cbl/CBACT01C.cbl	218	MOVE di un campo (composizione campo per campo)	ACCT-CURR-BAL	OUT-ACCT-CURR-BAL	OUT-ACCT-REC
+app/cbl/CBACT01C.cbl	219	MOVE di un campo (composizione campo per campo)	ACCT-CREDIT-LIMIT	OUT-ACCT-CREDIT-LIMIT	OUT-ACCT-REC
+app/cbl/CBACT01C.cbl	220	MOVE di un campo (composizione campo per campo)	ACCT-CASH-CREDIT-LIMIT	OUT-ACCT-CASH-CREDIT-LIMIT	OUT-ACCT-REC
+app/cbl/CBACT01C.cbl	221	MOVE di un campo (composizione campo per campo)	ACCT-OPEN-DATE	OUT-ACCT-OPEN-DATE	OUT-ACCT-REC
+app/cbl/CBACT01C.cbl	222	MOVE di un campo (composizione campo per campo)	ACCT-EXPIRAION-DATE	OUT-ACCT-EXPIRAION-DATE	OUT-ACCT-REC
+app/cbl/CBACT01C.cbl	233	MOVE di un campo (composizione campo per campo)	CODATECN-0UT-DATE	OUT-ACCT-REISSUE-DATE	OUT-ACCT-REC
+app/cbl/CBACT01C.cbl	235	MOVE di un campo (composizione campo per campo)	ACCT-CURR-CYC-CREDIT	OUT-ACCT-CURR-CYC-CREDIT	OUT-ACCT-REC
+app/cbl/CBACT01C.cbl	237	MOVE di un letterale o di un'espressione	2525.00	OUT-ACCT-CURR-CYC-DEBIT	OUT-ACCT-REC
+app/cbl/CBACT01C.cbl	239	MOVE di un campo (composizione campo per campo)	ACCT-GROUP-ID	OUT-ACCT-GROUP-ID	OUT-ACCT-REC
+app/cbl/CBACT01C.cbl	254	MOVE di un campo (composizione campo per campo)	ACCT-ID	ARR-ACCT-ID	ARR-ARRAY-REC
+app/cbl/CBACT01C.cbl	255	MOVE di un campo (composizione campo per campo)	ACCT-CURR-BAL	ARR-ACCT-CURR-BAL	ARR-ARRAY-REC
+app/cbl/CBACT01C.cbl	256	MOVE di un letterale o di un'espressione	1005.00	ARR-ACCT-CURR-CYC-DEBIT	ARR-ARRAY-REC
+app/cbl/CBACT01C.cbl	257	MOVE di un campo (composizione campo per campo)	ACCT-CURR-BAL	ARR-ACCT-CURR-BAL	ARR-ARRAY-REC
+app/cbl/CBACT01C.cbl	258	MOVE di un letterale o di un'espressione	1525.00	ARR-ACCT-CURR-CYC-DEBIT	ARR-ARRAY-REC
+app/cbl/CBACT01C.cbl	259	MOVE di un letterale o di un'espressione	- 1025.00	ARR-ACCT-CURR-BAL	ARR-ARRAY-REC
+app/cbl/CBACT01C.cbl	260	MOVE di un letterale o di un'espressione	- 2500.00	ARR-ACCT-CURR-CYC-DEBIT	ARR-ARRAY-REC
+app/cbl/CBACT04C.cbl	202	MOVE di un campo (composizione campo per campo)	TRANCAT-ACCT-ID	FD-ACCT-ID	FD-ACCTFILE-REC
+app/cbl/CBACT04C.cbl	352	aritmetica (ADD)	-	ACCT-CURR-BAL	ACCOUNT-RECORD
+app/cbl/CBACT04C.cbl	353	MOVE di un letterale o di un'espressione	0	ACCT-CURR-CYC-CREDIT	ACCOUNT-RECORD
+app/cbl/CBACT04C.cbl	354	MOVE di un letterale o di un'espressione	0	ACCT-CURR-CYC-DEBIT	ACCOUNT-RECORD
+app/cbl/CBACT04C.cbl	476	STRING	-	TRAN-ID	TRAN-RECORD
+app/cbl/CBACT04C.cbl	482	MOVE di un letterale o di un'espressione	LETTERALE	TRAN-TYPE-CD	TRAN-RECORD
+app/cbl/CBACT04C.cbl	483	MOVE di un letterale o di un'espressione	LETTERALE	TRAN-CAT-CD	TRAN-RECORD
+app/cbl/CBACT04C.cbl	484	MOVE di un letterale o di un'espressione	LETTERALE	TRAN-SOURCE	TRAN-RECORD
+app/cbl/CBACT04C.cbl	485	STRING	-	TRAN-DESC	TRAN-RECORD
+app/cbl/CBACT04C.cbl	490	MOVE di un campo (composizione campo per campo)	WS-MONTHLY-INT	TRAN-AMT	TRAN-RECORD
+app/cbl/CBACT04C.cbl	491	MOVE di un letterale o di un'espressione	0	TRAN-MERCHANT-ID	TRAN-RECORD
+app/cbl/CBACT04C.cbl	492	MOVE di un letterale o di un'espressione	SPACES	TRAN-MERCHANT-NAME	TRAN-RECORD
+app/cbl/CBACT04C.cbl	493	MOVE di un letterale o di un'espressione	SPACES	TRAN-MERCHANT-CITY	TRAN-RECORD
+app/cbl/CBACT04C.cbl	494	MOVE di un letterale o di un'espressione	SPACES	TRAN-MERCHANT-ZIP	TRAN-RECORD
+app/cbl/CBACT04C.cbl	495	MOVE di un campo (composizione campo per campo)	XREF-CARD-NUM	TRAN-CARD-NUM	TRAN-RECORD
+app/cbl/CBEXPORT.cbl	271	INITIALIZE	-	EXPORT-RECORD	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	274	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-REC-TYPE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	275	MOVE di un campo (composizione campo per campo)	WS-FORMATTED-TIMESTAMP	EXPORT-TIMESTAMP	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	277	MOVE di un campo (composizione campo per campo)	WS-SEQUENCE-COUNTER	EXPORT-SEQUENCE-NUM	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	278	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-BRANCH-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	279	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-REGION-CODE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	282	MOVE di un campo (composizione campo per campo)	CUST-ID	EXP-CUST-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	283	MOVE di un campo (composizione campo per campo)	CUST-FIRST-NAME	EXP-CUST-FIRST-NAME	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	284	MOVE di un campo (composizione campo per campo)	CUST-MIDDLE-NAME	EXP-CUST-MIDDLE-NAME	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	285	MOVE di un campo (composizione campo per campo)	CUST-LAST-NAME	EXP-CUST-LAST-NAME	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	286	MOVE di un campo (composizione campo per campo)	CUST-ADDR-LINE-1	EXP-CUST-ADDR-LINE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	287	MOVE di un campo (composizione campo per campo)	CUST-ADDR-LINE-2	EXP-CUST-ADDR-LINE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	288	MOVE di un campo (composizione campo per campo)	CUST-ADDR-LINE-3	EXP-CUST-ADDR-LINE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	289	MOVE di un campo (composizione campo per campo)	CUST-ADDR-STATE-CD	EXP-CUST-ADDR-STATE-CD	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	290	MOVE di un campo (composizione campo per campo)	CUST-ADDR-COUNTRY-CD	EXP-CUST-ADDR-COUNTRY-CD	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	291	MOVE di un campo (composizione campo per campo)	CUST-ADDR-ZIP	EXP-CUST-ADDR-ZIP	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	292	MOVE di un campo (composizione campo per campo)	CUST-PHONE-NUM-1	EXP-CUST-PHONE-NUM	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	293	MOVE di un campo (composizione campo per campo)	CUST-PHONE-NUM-2	EXP-CUST-PHONE-NUM	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	294	MOVE di un campo (composizione campo per campo)	CUST-SSN	EXP-CUST-SSN	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	295	MOVE di un campo (composizione campo per campo)	CUST-GOVT-ISSUED-ID	EXP-CUST-GOVT-ISSUED-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	296	MOVE di un campo (composizione campo per campo)	CUST-DOB-YYYY-MM-DD	EXP-CUST-DOB-YYYY-MM-DD	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	297	MOVE di un campo (composizione campo per campo)	CUST-EFT-ACCOUNT-ID	EXP-CUST-EFT-ACCOUNT-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	298	MOVE di un campo (composizione campo per campo)	CUST-PRI-CARD-HOLDER-IND	EXP-CUST-PRI-CARD-HOLDER-IND	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	299	MOVE di un campo (composizione campo per campo)	CUST-FICO-CREDIT-SCORE	EXP-CUST-FICO-CREDIT-SCORE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	340	INITIALIZE	-	EXPORT-RECORD	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	343	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-REC-TYPE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	344	MOVE di un campo (composizione campo per campo)	WS-FORMATTED-TIMESTAMP	EXPORT-TIMESTAMP	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	346	MOVE di un campo (composizione campo per campo)	WS-SEQUENCE-COUNTER	EXPORT-SEQUENCE-NUM	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	347	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-BRANCH-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	348	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-REGION-CODE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	351	MOVE di un campo (composizione campo per campo)	ACCT-ID	EXP-ACCT-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	352	MOVE di un campo (composizione campo per campo)	ACCT-ACTIVE-STATUS	EXP-ACCT-ACTIVE-STATUS	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	353	MOVE di un campo (composizione campo per campo)	ACCT-CURR-BAL	EXP-ACCT-CURR-BAL	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	354	MOVE di un campo (composizione campo per campo)	ACCT-CREDIT-LIMIT	EXP-ACCT-CREDIT-LIMIT	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	355	MOVE di un campo (composizione campo per campo)	ACCT-CASH-CREDIT-LIMIT	EXP-ACCT-CASH-CREDIT-LIMIT	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	356	MOVE di un campo (composizione campo per campo)	ACCT-OPEN-DATE	EXP-ACCT-OPEN-DATE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	357	MOVE di un campo (composizione campo per campo)	ACCT-EXPIRAION-DATE	EXP-ACCT-EXPIRAION-DATE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	358	MOVE di un campo (composizione campo per campo)	ACCT-REISSUE-DATE	EXP-ACCT-REISSUE-DATE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	359	MOVE di un campo (composizione campo per campo)	ACCT-CURR-CYC-CREDIT	EXP-ACCT-CURR-CYC-CREDIT	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	360	MOVE di un campo (composizione campo per campo)	ACCT-CURR-CYC-DEBIT	EXP-ACCT-CURR-CYC-DEBIT	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	361	MOVE di un campo (composizione campo per campo)	ACCT-ADDR-ZIP	EXP-ACCT-ADDR-ZIP	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	362	MOVE di un campo (composizione campo per campo)	ACCT-GROUP-ID	EXP-ACCT-GROUP-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	404	INITIALIZE	-	EXPORT-RECORD	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	407	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-REC-TYPE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	408	MOVE di un campo (composizione campo per campo)	WS-FORMATTED-TIMESTAMP	EXPORT-TIMESTAMP	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	410	MOVE di un campo (composizione campo per campo)	WS-SEQUENCE-COUNTER	EXPORT-SEQUENCE-NUM	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	411	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-BRANCH-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	412	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-REGION-CODE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	415	MOVE di un campo (composizione campo per campo)	XREF-CARD-NUM	EXP-XREF-CARD-NUM	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	416	MOVE di un campo (composizione campo per campo)	XREF-CUST-ID	EXP-XREF-CUST-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	417	MOVE di un campo (composizione campo per campo)	XREF-ACCT-ID	EXP-XREF-ACCT-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	459	INITIALIZE	-	EXPORT-RECORD	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	462	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-REC-TYPE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	463	MOVE di un campo (composizione campo per campo)	WS-FORMATTED-TIMESTAMP	EXPORT-TIMESTAMP	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	465	MOVE di un campo (composizione campo per campo)	WS-SEQUENCE-COUNTER	EXPORT-SEQUENCE-NUM	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	466	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-BRANCH-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	467	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-REGION-CODE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	470	MOVE di un campo (composizione campo per campo)	TRAN-ID	EXP-TRAN-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	471	MOVE di un campo (composizione campo per campo)	TRAN-TYPE-CD	EXP-TRAN-TYPE-CD	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	472	MOVE di un campo (composizione campo per campo)	TRAN-CAT-CD	EXP-TRAN-CAT-CD	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	473	MOVE di un campo (composizione campo per campo)	TRAN-SOURCE	EXP-TRAN-SOURCE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	474	MOVE di un campo (composizione campo per campo)	TRAN-DESC	EXP-TRAN-DESC	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	475	MOVE di un campo (composizione campo per campo)	TRAN-AMT	EXP-TRAN-AMT	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	476	MOVE di un campo (composizione campo per campo)	TRAN-MERCHANT-ID	EXP-TRAN-MERCHANT-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	477	MOVE di un campo (composizione campo per campo)	TRAN-MERCHANT-NAME	EXP-TRAN-MERCHANT-NAME	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	478	MOVE di un campo (composizione campo per campo)	TRAN-MERCHANT-CITY	EXP-TRAN-MERCHANT-CITY	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	479	MOVE di un campo (composizione campo per campo)	TRAN-MERCHANT-ZIP	EXP-TRAN-MERCHANT-ZIP	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	480	MOVE di un campo (composizione campo per campo)	TRAN-CARD-NUM	EXP-TRAN-CARD-NUM	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	481	MOVE di un campo (composizione campo per campo)	TRAN-ORIG-TS	EXP-TRAN-ORIG-TS	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	482	MOVE di un campo (composizione campo per campo)	TRAN-PROC-TS	EXP-TRAN-PROC-TS	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	524	INITIALIZE	-	EXPORT-RECORD	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	527	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-REC-TYPE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	528	MOVE di un campo (composizione campo per campo)	WS-FORMATTED-TIMESTAMP	EXPORT-TIMESTAMP	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	530	MOVE di un campo (composizione campo per campo)	WS-SEQUENCE-COUNTER	EXPORT-SEQUENCE-NUM	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	531	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-BRANCH-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	532	MOVE di un letterale o di un'espressione	LETTERALE	EXPORT-REGION-CODE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	535	MOVE di un campo (composizione campo per campo)	CARD-NUM	EXP-CARD-NUM	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	536	MOVE di un campo (composizione campo per campo)	CARD-ACCT-ID	EXP-CARD-ACCT-ID	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	537	MOVE di un campo (composizione campo per campo)	CARD-CVV-CD	EXP-CARD-CVV-CD	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	538	MOVE di un campo (composizione campo per campo)	CARD-EMBOSSED-NAME	EXP-CARD-EMBOSSED-NAME	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	539	MOVE di un campo (composizione campo per campo)	CARD-EXPIRAION-DATE	EXP-CARD-EXPIRAION-DATE	EXPORT-RECORD
+app/cbl/CBEXPORT.cbl	540	MOVE di un campo (composizione campo per campo)	CARD-ACTIVE-STATUS	EXP-CARD-ACTIVE-STATUS	EXPORT-RECORD
+app/cbl/CBIMPORT.cbl	290	INITIALIZE	-	CUSTOMER-RECORD	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	293	MOVE di un campo (composizione campo per campo)	EXP-CUST-ID	CUST-ID	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	294	MOVE di un campo (composizione campo per campo)	EXP-CUST-FIRST-NAME	CUST-FIRST-NAME	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	295	MOVE di un campo (composizione campo per campo)	EXP-CUST-MIDDLE-NAME	CUST-MIDDLE-NAME	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	296	MOVE di un campo (composizione campo per campo)	EXP-CUST-LAST-NAME	CUST-LAST-NAME	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	297	MOVE con riferimento a posizione nella sorgente	EXP-CUST-ADDR-LINE ( 1 )	CUST-ADDR-LINE-1	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	298	MOVE con riferimento a posizione nella sorgente	EXP-CUST-ADDR-LINE ( 2 )	CUST-ADDR-LINE-2	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	299	MOVE con riferimento a posizione nella sorgente	EXP-CUST-ADDR-LINE ( 3 )	CUST-ADDR-LINE-3	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	300	MOVE di un campo (composizione campo per campo)	EXP-CUST-ADDR-STATE-CD	CUST-ADDR-STATE-CD	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	301	MOVE di un campo (composizione campo per campo)	EXP-CUST-ADDR-COUNTRY-CD	CUST-ADDR-COUNTRY-CD	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	302	MOVE di un campo (composizione campo per campo)	EXP-CUST-ADDR-ZIP	CUST-ADDR-ZIP	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	303	MOVE con riferimento a posizione nella sorgente	EXP-CUST-PHONE-NUM ( 1 )	CUST-PHONE-NUM-1	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	304	MOVE con riferimento a posizione nella sorgente	EXP-CUST-PHONE-NUM ( 2 )	CUST-PHONE-NUM-2	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	305	MOVE di un campo (composizione campo per campo)	EXP-CUST-SSN	CUST-SSN	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	306	MOVE di un campo (composizione campo per campo)	EXP-CUST-GOVT-ISSUED-ID	CUST-GOVT-ISSUED-ID	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	307	MOVE di un campo (composizione campo per campo)	EXP-CUST-DOB-YYYY-MM-DD	CUST-DOB-YYYY-MM-DD	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	308	MOVE di un campo (composizione campo per campo)	EXP-CUST-EFT-ACCOUNT-ID	CUST-EFT-ACCOUNT-ID	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	309	MOVE di un campo (composizione campo per campo)	EXP-CUST-PRI-CARD-HOLDER-IND	CUST-PRI-CARD-HOLDER-IND	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	310	MOVE di un campo (composizione campo per campo)	EXP-CUST-FICO-CREDIT-SCORE	CUST-FICO-CREDIT-SCORE	CUSTOMER-RECORD
+app/cbl/CBIMPORT.cbl	325	INITIALIZE	-	ACCOUNT-RECORD	ACCOUNT-RECORD
+app/cbl/CBIMPORT.cbl	328	MOVE di un campo (composizione campo per campo)	EXP-ACCT-ID	ACCT-ID	ACCOUNT-RECORD
+app/cbl/CBIMPORT.cbl	329	MOVE di un campo (composizione campo per campo)	EXP-ACCT-ACTIVE-STATUS	ACCT-ACTIVE-STATUS	ACCOUNT-RECORD
+app/cbl/CBIMPORT.cbl	330	MOVE di un campo (composizione campo per campo)	EXP-ACCT-CURR-BAL	ACCT-CURR-BAL	ACCOUNT-RECORD
+app/cbl/CBIMPORT.cbl	331	MOVE di un campo (composizione campo per campo)	EXP-ACCT-CREDIT-LIMIT	ACCT-CREDIT-LIMIT	ACCOUNT-RECORD
+app/cbl/CBIMPORT.cbl	332	MOVE di un campo (composizione campo per campo)	EXP-ACCT-CASH-CREDIT-LIMIT	ACCT-CASH-CREDIT-LIMIT	ACCOUNT-RECORD
+app/cbl/CBIMPORT.cbl	333	MOVE di un campo (composizione campo per campo)	EXP-ACCT-OPEN-DATE	ACCT-OPEN-DATE	ACCOUNT-RECORD
+app/cbl/CBIMPORT.cbl	334	MOVE di un campo (composizione campo per campo)	EXP-ACCT-EXPIRAION-DATE	ACCT-EXPIRAION-DATE	ACCOUNT-RECORD
+app/cbl/CBIMPORT.cbl	335	MOVE di un campo (composizione campo per campo)	EXP-ACCT-REISSUE-DATE	ACCT-REISSUE-DATE	ACCOUNT-RECORD
+app/cbl/CBIMPORT.cbl	336	MOVE di un campo (composizione campo per campo)	EXP-ACCT-CURR-CYC-CREDIT	ACCT-CURR-CYC-CREDIT	ACCOUNT-RECORD
+app/cbl/CBIMPORT.cbl	337	MOVE di un campo (composizione campo per campo)	EXP-ACCT-CURR-CYC-DEBIT	ACCT-CURR-CYC-DEBIT	ACCOUNT-RECORD
+app/cbl/CBIMPORT.cbl	338	MOVE di un campo (composizione campo per campo)	EXP-ACCT-ADDR-ZIP	ACCT-ADDR-ZIP	ACCOUNT-RECORD
+app/cbl/CBIMPORT.cbl	339	MOVE di un campo (composizione campo per campo)	EXP-ACCT-GROUP-ID	ACCT-GROUP-ID	ACCOUNT-RECORD
+app/cbl/CBIMPORT.cbl	354	INITIALIZE	-	CARD-XREF-RECORD	CARD-XREF-RECORD
+app/cbl/CBIMPORT.cbl	357	MOVE di un campo (composizione campo per campo)	EXP-XREF-CARD-NUM	XREF-CARD-NUM	CARD-XREF-RECORD
+app/cbl/CBIMPORT.cbl	358	MOVE di un campo (composizione campo per campo)	EXP-XREF-CUST-ID	XREF-CUST-ID	CARD-XREF-RECORD
+app/cbl/CBIMPORT.cbl	359	MOVE di un campo (composizione campo per campo)	EXP-XREF-ACCT-ID	XREF-ACCT-ID	CARD-XREF-RECORD
+app/cbl/CBIMPORT.cbl	374	INITIALIZE	-	TRAN-RECORD	TRAN-RECORD
+app/cbl/CBIMPORT.cbl	377	MOVE di un campo (composizione campo per campo)	EXP-TRAN-ID	TRAN-ID	TRAN-RECORD
+app/cbl/CBIMPORT.cbl	378	MOVE di un campo (composizione campo per campo)	EXP-TRAN-TYPE-CD	TRAN-TYPE-CD	TRAN-RECORD
+app/cbl/CBIMPORT.cbl	379	MOVE di un campo (composizione campo per campo)	EXP-TRAN-CAT-CD	TRAN-CAT-CD	TRAN-RECORD
+app/cbl/CBIMPORT.cbl	380	MOVE di un campo (composizione campo per campo)	EXP-TRAN-SOURCE	TRAN-SOURCE	TRAN-RECORD
+app/cbl/CBIMPORT.cbl	381	MOVE di un campo (composizione campo per campo)	EXP-TRAN-DESC	TRAN-DESC	TRAN-RECORD
+app/cbl/CBIMPORT.cbl	382	MOVE di un campo (composizione campo per campo)	EXP-TRAN-AMT	TRAN-AMT	TRAN-RECORD
+app/cbl/CBIMPORT.cbl	383	MOVE di un campo (composizione campo per campo)	EXP-TRAN-MERCHANT-ID	TRAN-MERCHANT-ID	TRAN-RECORD
+app/cbl/CBIMPORT.cbl	384	MOVE di un campo (composizione campo per campo)	EXP-TRAN-MERCHANT-NAME	TRAN-MERCHANT-NAME	TRAN-RECORD
+app/cbl/CBIMPORT.cbl	385	MOVE di un campo (composizione campo per campo)	EXP-TRAN-MERCHANT-CITY	TRAN-MERCHANT-CITY	TRAN-RECORD
+app/cbl/CBIMPORT.cbl	386	MOVE di un campo (composizione campo per campo)	EXP-TRAN-MERCHANT-ZIP	TRAN-MERCHANT-ZIP	TRAN-RECORD
+app/cbl/CBIMPORT.cbl	387	MOVE di un campo (composizione campo per campo)	EXP-TRAN-CARD-NUM	TRAN-CARD-NUM	TRAN-RECORD
+app/cbl/CBIMPORT.cbl	388	MOVE di un campo (composizione campo per campo)	EXP-TRAN-ORIG-TS	TRAN-ORIG-TS	TRAN-RECORD
+app/cbl/CBIMPORT.cbl	389	MOVE di un campo (composizione campo per campo)	EXP-TRAN-PROC-TS	TRAN-PROC-TS	TRAN-RECORD
+app/cbl/CBIMPORT.cbl	404	INITIALIZE	-	CARD-RECORD	CARD-RECORD
+app/cbl/CBIMPORT.cbl	407	MOVE di un campo (composizione campo per campo)	EXP-CARD-NUM	CARD-NUM	CARD-RECORD
+app/cbl/CBIMPORT.cbl	408	MOVE di un campo (composizione campo per campo)	EXP-CARD-ACCT-ID	CARD-ACCT-ID	CARD-RECORD
+app/cbl/CBIMPORT.cbl	409	MOVE di un campo (composizione campo per campo)	EXP-CARD-CVV-CD	CARD-CVV-CD	CARD-RECORD
+app/cbl/CBIMPORT.cbl	410	MOVE di un campo (composizione campo per campo)	EXP-CARD-EMBOSSED-NAME	CARD-EMBOSSED-NAME	CARD-RECORD
+app/cbl/CBIMPORT.cbl	411	MOVE di un campo (composizione campo per campo)	EXP-CARD-EXPIRAION-DATE	CARD-EXPIRAION-DATE	CARD-RECORD
+app/cbl/CBIMPORT.cbl	412	MOVE di un campo (composizione campo per campo)	EXP-CARD-ACTIVE-STATUS	CARD-ACTIVE-STATUS	CARD-RECORD
+app/cbl/CBIMPORT.cbl	429	MOVE di un letterale o di un'espressione	FUNCTION CURRENT-DATE	ERR-TIMESTAMP	WS-ERROR-RECORD
+app/cbl/CBIMPORT.cbl	430	MOVE di un campo (composizione campo per campo)	EXPORT-REC-TYPE	ERR-RECORD-TYPE	WS-ERROR-RECORD
+app/cbl/CBIMPORT.cbl	431	MOVE di un campo (composizione campo per campo)	EXPORT-SEQUENCE-NUM	ERR-SEQUENCE	WS-ERROR-RECORD
+app/cbl/CBIMPORT.cbl	432	MOVE di un letterale o di un'espressione	LETTERALE	ERR-MESSAGE	WS-ERROR-RECORD
+app/cbl/CBSTM03A.CBL	434	MOVE di un campo (composizione campo per campo)	WS-TRN-AMT	ST-TOTAL-TRAMT	ST-LINE14A
+app/cbl/CBSTM03A.CBL	462	STRING	-	ST-NAME	ST-LINE1
+app/cbl/CBSTM03A.CBL	470	MOVE di un campo (composizione campo per campo)	CUST-ADDR-LINE-1	ST-ADD1	ST-LINE2
+app/cbl/CBSTM03A.CBL	471	MOVE di un campo (composizione campo per campo)	CUST-ADDR-LINE-2	ST-ADD2	ST-LINE3
+app/cbl/CBSTM03A.CBL	472	STRING	-	ST-ADD3	ST-LINE4
+app/cbl/CBSTM03A.CBL	483	MOVE di un campo (composizione campo per campo)	ACCT-ID	ST-ACCT-ID	ST-LINE7
+app/cbl/CBSTM03A.CBL	484	MOVE di un campo (composizione campo per campo)	ACCT-CURR-BAL	ST-CURR-BAL	ST-LINE8
+app/cbl/CBSTM03A.CBL	485	MOVE di un campo (composizione campo per campo)	CUST-FICO-CREDIT-SCORE	ST-FICO-SCORE	ST-LINE9
+app/cbl/CBSTM03A.CBL	529	MOVE di un campo (composizione campo per campo)	ACCT-ID	L11-ACCT	HTML-L11
+app/cbl/CBSTM03A.CBL	561	MOVE di un letterale o di un'espressione	SPACES	FD-HTMLFILE-REC	FD-HTMLFILE-REC
+app/cbl/CBSTM03A.CBL	562	STRING	-	FD-HTMLFILE-REC	FD-HTMLFILE-REC
+app/cbl/CBSTM03A.CBL	569	MOVE di un letterale o di un'espressione	SPACES	HTML-ADDR-LN	HTML-ADDR-LN
+app/cbl/CBSTM03A.CBL	570	STRING	-	HTML-ADDR-LN	HTML-ADDR-LN
+app/cbl/CBSTM03A.CBL	577	MOVE di un letterale o di un'espressione	SPACES	HTML-ADDR-LN	HTML-ADDR-LN
+app/cbl/CBSTM03A.CBL	578	STRING	-	HTML-ADDR-LN	HTML-ADDR-LN
+app/cbl/CBSTM03A.CBL	585	MOVE di un letterale o di un'espressione	SPACES	HTML-ADDR-LN	HTML-ADDR-LN
+app/cbl/CBSTM03A.CBL	586	STRING	-	HTML-ADDR-LN	HTML-ADDR-LN
+app/cbl/CBSTM03A.CBL	613	MOVE di un letterale o di un'espressione	SPACES	HTML-BSIC-LN	HTML-BSIC-LN
+app/cbl/CBSTM03A.CBL	614	STRING	-	HTML-BSIC-LN	HTML-BSIC-LN
+app/cbl/CBSTM03A.CBL	620	MOVE di un letterale o di un'espressione	SPACES	HTML-BSIC-LN	HTML-BSIC-LN
+app/cbl/CBSTM03A.CBL	621	STRING	-	HTML-BSIC-LN	HTML-BSIC-LN
+app/cbl/CBSTM03A.CBL	627	MOVE di un letterale o di un'espressione	SPACES	HTML-BSIC-LN	HTML-BSIC-LN
+app/cbl/CBSTM03A.CBL	628	STRING	-	HTML-BSIC-LN	HTML-BSIC-LN
+app/cbl/CBSTM03A.CBL	676	MOVE di un campo (composizione campo per campo)	TRNX-ID	ST-TRANID	ST-LINE14
+app/cbl/CBSTM03A.CBL	677	MOVE di un campo (composizione campo per campo)	TRNX-DESC	ST-TRANDT	ST-LINE14
+app/cbl/CBSTM03A.CBL	678	MOVE di un campo (composizione campo per campo)	TRNX-AMT	ST-TRANAMT	ST-LINE14
+app/cbl/CBSTM03A.CBL	686	MOVE di un letterale o di un'espressione	SPACES	HTML-TRAN-LN	HTML-TRAN-LN
+app/cbl/CBSTM03A.CBL	687	STRING	-	HTML-TRAN-LN	HTML-TRAN-LN
+app/cbl/CBSTM03A.CBL	698	MOVE di un letterale o di un'espressione	SPACES	HTML-TRAN-LN	HTML-TRAN-LN
+app/cbl/CBSTM03A.CBL	699	STRING	-	HTML-TRAN-LN	HTML-TRAN-LN
+app/cbl/CBSTM03A.CBL	710	MOVE di un letterale o di un'espressione	SPACES	HTML-TRAN-LN	HTML-TRAN-LN
+app/cbl/CBSTM03A.CBL	711	STRING	-	HTML-TRAN-LN	HTML-TRAN-LN
+app/cbl/CBTRN02C.cbl	394	MOVE di un campo (composizione campo per campo)	XREF-ACCT-ID	FD-ACCT-ID	FD-ACCTFILE-REC
+app/cbl/CBTRN02C.cbl	425	MOVE di un campo (composizione campo per campo)	DALYTRAN-ID	TRAN-ID	TRAN-RECORD
+app/cbl/CBTRN02C.cbl	426	MOVE di un campo (composizione campo per campo)	DALYTRAN-TYPE-CD	TRAN-TYPE-CD	TRAN-RECORD
+app/cbl/CBTRN02C.cbl	427	MOVE di un campo (composizione campo per campo)	DALYTRAN-CAT-CD	TRAN-CAT-CD	TRAN-RECORD
+app/cbl/CBTRN02C.cbl	428	MOVE di un campo (composizione campo per campo)	DALYTRAN-SOURCE	TRAN-SOURCE	TRAN-RECORD
+app/cbl/CBTRN02C.cbl	429	MOVE di un campo (composizione campo per campo)	DALYTRAN-DESC	TRAN-DESC	TRAN-RECORD
+app/cbl/CBTRN02C.cbl	430	MOVE di un campo (composizione campo per campo)	DALYTRAN-AMT	TRAN-AMT	TRAN-RECORD
+app/cbl/CBTRN02C.cbl	431	MOVE di un campo (composizione campo per campo)	DALYTRAN-MERCHANT-ID	TRAN-MERCHANT-ID	TRAN-RECORD
+app/cbl/CBTRN02C.cbl	432	MOVE di un campo (composizione campo per campo)	DALYTRAN-MERCHANT-NAME	TRAN-MERCHANT-NAME	TRAN-RECORD
+app/cbl/CBTRN02C.cbl	433	MOVE di un campo (composizione campo per campo)	DALYTRAN-MERCHANT-CITY	TRAN-MERCHANT-CITY	TRAN-RECORD
+app/cbl/CBTRN02C.cbl	434	MOVE di un campo (composizione campo per campo)	DALYTRAN-MERCHANT-ZIP	TRAN-MERCHANT-ZIP	TRAN-RECORD
+app/cbl/CBTRN02C.cbl	435	MOVE di un campo (composizione campo per campo)	DALYTRAN-CARD-NUM	TRAN-CARD-NUM	TRAN-RECORD
+app/cbl/CBTRN02C.cbl	436	MOVE di un campo (composizione campo per campo)	DALYTRAN-ORIG-TS	TRAN-ORIG-TS	TRAN-RECORD
+app/cbl/CBTRN02C.cbl	469	MOVE di un campo (composizione campo per campo)	XREF-ACCT-ID	FD-TRANCAT-ACCT-ID	FD-TRAN-CAT-BAL-RECORD
+app/cbl/CBTRN02C.cbl	470	MOVE di un campo (composizione campo per campo)	DALYTRAN-TYPE-CD	FD-TRANCAT-TYPE-CD	FD-TRAN-CAT-BAL-RECORD
+app/cbl/CBTRN02C.cbl	471	MOVE di un campo (composizione campo per campo)	DALYTRAN-CAT-CD	FD-TRANCAT-CD	FD-TRAN-CAT-BAL-RECORD
+app/cbl/CBTRN02C.cbl	504	INITIALIZE	-	TRAN-CAT-BAL-RECORD	TRAN-CAT-BAL-RECORD
+app/cbl/CBTRN02C.cbl	505	MOVE di un campo (composizione campo per campo)	XREF-ACCT-ID	TRANCAT-ACCT-ID	TRAN-CAT-BAL-RECORD
+app/cbl/CBTRN02C.cbl	506	MOVE di un campo (composizione campo per campo)	DALYTRAN-TYPE-CD	TRANCAT-TYPE-CD	TRAN-CAT-BAL-RECORD
+app/cbl/CBTRN02C.cbl	507	MOVE di un campo (composizione campo per campo)	DALYTRAN-CAT-CD	TRANCAT-CD	TRAN-CAT-BAL-RECORD
+app/cbl/CBTRN02C.cbl	508	aritmetica (ADD)	-	TRAN-CAT-BAL	TRAN-CAT-BAL-RECORD
+app/cbl/CBTRN02C.cbl	527	aritmetica (ADD)	-	TRAN-CAT-BAL	TRAN-CAT-BAL-RECORD
+app/cbl/CBTRN02C.cbl	547	aritmetica (ADD)	-	ACCT-CURR-BAL	ACCOUNT-RECORD
+app/cbl/CBTRN02C.cbl	549	aritmetica (ADD)	-	ACCT-CURR-CYC-CREDIT	ACCOUNT-RECORD
+app/cbl/CBTRN02C.cbl	551	aritmetica (ADD)	-	ACCT-CURR-CYC-DEBIT	ACCOUNT-RECORD
+app/cbl/CBTRN03C.cbl	329	MOVE di un campo (composizione campo per campo)	WS-BLANK-LINE	FD-REPTFILE-REC	FD-REPTFILE-REC

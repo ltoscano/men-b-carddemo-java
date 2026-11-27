@@ -1,0 +1,2 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+DB2-FORMAT-TS	01	elementare	X(26)	DISPLAY	-	-	-	0	26	-	-	-	-	DB2-FORMAT-TS

@@ -1,0 +1,4 @@
+# Aree con REDEFINES dei contratti la cui estensione differisce da quella dell'area ridefinita (issue #3).
+# Per i contratti (record di file e stato di conversazione) non ce n'e' nessuna: ogni REDEFINES copre esattamente l'area ridefinita.
+# Le tabelle COADM02Y e COMEN02Y (aree di lavoro, senza contratto) hanno ridefinizioni piu' lunghe: sono descritte in discordanze.md.
+contratto	campo	motivo

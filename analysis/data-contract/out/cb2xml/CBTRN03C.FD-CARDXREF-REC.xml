@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBTRN03C.FD-CARDXREF-REC.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="FD-CARDXREF-REC" position="1" storage-length="50" display-length="50" display-position="1">
+        <item level="05" name="FD-XREF-CARD-NUM" picture="X(16)" position="1" storage-length="16" display-length="16" display-position="1"/>
+        <item level="05" name="FD-XREF-DATA" picture="X(34)" position="17" storage-length="34" display-length="34" display-position="17"/>
+    </item>
+</copybook>

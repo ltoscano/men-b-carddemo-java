@@ -1,0 +1,5 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+TRAN-TYPE-RECORD	01	gruppo	-	-	-	-	-	0	60	-	-	-	-	TRAN-TYPE-RECORD
+TRAN-TYPE	05	elementare	X(02)	DISPLAY	-	-	-	0	2	-	-	-	-	TRAN-TYPE-RECORD/TRAN-TYPE
+TRAN-TYPE-DESC	05	elementare	X(50)	DISPLAY	-	-	-	2	50	-	-	-	-	TRAN-TYPE-RECORD/TRAN-TYPE-DESC
+FILLER	05	elementare	X(08)	DISPLAY	-	-	-	52	8	-	-	-	-	TRAN-TYPE-RECORD/FILLER

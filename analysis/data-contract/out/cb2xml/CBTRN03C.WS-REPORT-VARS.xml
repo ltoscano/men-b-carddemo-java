@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBTRN03C.WS-REPORT-VARS.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="WS-REPORT-VARS" position="1" storage-length="190" display-length="195" display-position="1">
+        <item level="05" name="WS-FIRST-TIME" picture="X" position="1" storage-length="1" display-length="1" display-position="1" value="&quot;Y&quot;"/>
+        <item level="05" name="WS-LINE-COUNTER" picture="9(09)" usage="computational-3" position="2" storage-length="5" display-length="9" numeric="COBOL_NUMERIC" display-position="2" value="0"/>
+        <item level="05" name="WS-PAGE-SIZE" picture="9(03)" usage="computational-3" position="7" storage-length="2" display-length="3" numeric="COBOL_NUMERIC" display-position="11" value="20"/>
+        <item level="05" name="WS-BLANK-LINE" picture="X(133)" position="9" storage-length="133" display-length="133" display-position="14" value="spaces"/>
+        <item level="05" name="WS-PAGE-TOTAL" picture="S9(09)V99" position="142" storage-length="11" display-length="11" scale="2" numeric="COBOL_NUMERIC" display-position="147" value="0"/>
+        <item level="05" name="WS-ACCOUNT-TOTAL" picture="S9(09)V99" position="153" storage-length="11" display-length="11" scale="2" numeric="COBOL_NUMERIC" display-position="158" value="0"/>
+        <item level="05" name="WS-GRAND-TOTAL" picture="S9(09)V99" position="164" storage-length="11" display-length="11" scale="2" numeric="COBOL_NUMERIC" display-position="169" value="0"/>
+        <item level="05" name="WS-CURR-CARD-NUM" picture="X(16)" position="175" storage-length="16" display-length="16" display-position="180" value="spaces"/>
+    </item>
+</copybook>

@@ -1,0 +1,8 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+SEC-USER-DATA	01	gruppo	-	-	-	-	-	0	80	-	-	-	-	SEC-USER-DATA
+SEC-USR-ID	05	elementare	X(08)	DISPLAY	-	-	-	0	8	-	-	-	-	SEC-USER-DATA/SEC-USR-ID
+SEC-USR-FNAME	05	elementare	X(20)	DISPLAY	-	-	-	8	20	-	-	-	-	SEC-USER-DATA/SEC-USR-FNAME
+SEC-USR-LNAME	05	elementare	X(20)	DISPLAY	-	-	-	28	20	-	-	-	-	SEC-USER-DATA/SEC-USR-LNAME
+SEC-USR-PWD	05	elementare	X(08)	DISPLAY	-	-	-	48	8	-	-	-	-	SEC-USER-DATA/SEC-USR-PWD
+SEC-USR-TYPE	05	elementare	X(01)	DISPLAY	-	-	-	56	1	-	-	-	-	SEC-USER-DATA/SEC-USR-TYPE
+SEC-USR-FILLER	05	elementare	X(23)	DISPLAY	-	-	-	57	23	-	-	-	-	SEC-USER-DATA/SEC-USR-FILLER

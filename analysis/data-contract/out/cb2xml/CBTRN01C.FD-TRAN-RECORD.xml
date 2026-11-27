@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBTRN01C.FD-TRAN-RECORD.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="FD-TRAN-RECORD" position="1" storage-length="350" display-length="350" display-position="1">
+        <item level="05" name="FD-TRAN-ID" picture="X(16)" position="1" storage-length="16" display-length="16" display-position="1"/>
+        <item level="05" name="FD-CUST-DATA" picture="X(334)" position="17" storage-length="334" display-length="334" display-position="17"/>
+    </item>
+</copybook>

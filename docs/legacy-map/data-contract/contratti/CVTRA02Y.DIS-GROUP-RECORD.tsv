@@ -1,0 +1,8 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+DIS-GROUP-RECORD	01	gruppo	-	-	-	-	-	0	50	-	-	-	-	DIS-GROUP-RECORD
+DIS-GROUP-KEY	05	gruppo	-	-	-	-	-	0	16	-	-	-	-	DIS-GROUP-RECORD/DIS-GROUP-KEY
+DIS-ACCT-GROUP-ID	10	elementare	X(10)	DISPLAY	-	-	-	0	10	-	-	-	-	DIS-GROUP-RECORD/DIS-GROUP-KEY/DIS-ACCT-GROUP-ID
+DIS-TRAN-TYPE-CD	10	elementare	X(02)	DISPLAY	-	-	-	10	2	-	-	-	-	DIS-GROUP-RECORD/DIS-GROUP-KEY/DIS-TRAN-TYPE-CD
+DIS-TRAN-CAT-CD	10	elementare	9(04)	DISPLAY	-	4	0	12	4	-	-	-	-	DIS-GROUP-RECORD/DIS-GROUP-KEY/DIS-TRAN-CAT-CD
+DIS-INT-RATE	05	elementare	S9(04)V99	DISPLAY	S	4	2	16	6	-	-	-	-	DIS-GROUP-RECORD/DIS-INT-RATE
+FILLER	05	elementare	X(28)	DISPLAY	-	-	-	22	28	-	-	-	-	DIS-GROUP-RECORD/FILLER

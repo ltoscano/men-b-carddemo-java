@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CVCRD01Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="CC-WORK-AREAS" position="1" storage-length="213" display-length="213" display-position="1">
+        <item level="05" name="CC-WORK-AREA" position="1" storage-length="213" display-length="213" display-position="1">
+            <item level="10" name="CCARD-AID" picture="X(5)" position="1" storage-length="5" display-length="5" display-position="1">
+                <condition name="CCARD-AID-ENTER">
+                    <condition value="&quot;ENTER&quot;"/>
+                </condition>
+                <condition name="CCARD-AID-CLEAR">
+                    <condition value="&quot;CLEAR&quot;"/>
+                </condition>
+                <condition name="CCARD-AID-PA1">
+                    <condition value="&quot;PA1  &quot;"/>
+                </condition>
+                <condition name="CCARD-AID-PA2">
+                    <condition value="&quot;PA2  &quot;"/>
+                </condition>
+                <condition name="CCARD-AID-PFK01">
+                    <condition value="&quot;PFK01&quot;"/>
+                </condition>
+                <condition name="CCARD-AID-PFK02">
+                    <condition value="&quot;PFK02&quot;"/>
+                </condition>
+                <condition name="CCARD-AID-PFK03">
+                    <condition value="&quot;PFK03&quot;"/>
+                </condition>
+                <condition name="CCARD-AID-PFK04">
+                    <condition value="&quot;PFK04&quot;"/>
+                </condition>
+                <condition name="CCARD-AID-PFK05">
+                    <condition value="&quot;PFK05&quot;"/>
+                </condition>
+                <condition name="CCARD-AID-PFK06">
+                    <condition value="&quot;PFK06&quot;"/>
+                </condition>
+                <condition name="CCARD-AID-PFK07">
+                    <condition value="&quot;PFK07&quot;"/>
+                </condition>
+                <condition name="CCARD-AID-PFK08">
+                    <condition value="&quot;PFK08&quot;"/>
+                </condition>
+                <condition name="CCARD-AID-PFK09">
+                    <condition value="&quot;PFK09&quot;"/>
+                </condition>
+                <condition name="CCARD-AID-PFK10">
+                    <condition value="&quot;PFK10&quot;"/>
+                </condition>
+                <condition name="CCARD-AID-PFK11">
+                    <condition value="&quot;PFK11&quot;"/>
+                </condition>
+                <condition name="CCARD-AID-PFK12">
+                    <condition value="&quot;PFK12&quot;"/>
+                </condition>
+            </item>
+            <!--*      10  CCARD-LAST-PROG                  PIC X(8).-->
+            <item level="10" name="CCARD-NEXT-PROG" picture="X(8)" position="6" storage-length="8" display-length="8" display-position="6"/>
+            <!--*      10  CCARD-RETURN-TO-PROG             PIC X(8).-->
+            <item level="10" name="CCARD-NEXT-MAPSET" picture="X(7)" position="14" storage-length="7" display-length="7" display-position="14"/>
+            <item level="10" name="CCARD-NEXT-MAP" picture="X(7)" position="21" storage-length="7" display-length="7" display-position="21"/>
+            <!--*      10  CCARD-RETURN-FLAG                PIC X(1).-->
+            <!--*        88  CCARD-RETURN-FLAG-OFF          VALUE LOW-VALUES.-->
+            <!--*        88  CCARD-RETURN-FLAG-ON           VALUE '1'.-->
+            <item level="10" name="CCARD-ERROR-MSG" picture="X(75)" position="28" storage-length="75" display-length="75" display-position="28"/>
+            <item level="10" name="CCARD-RETURN-MSG" picture="X(75)" position="103" storage-length="75" display-length="75" display-position="103">
+                <condition name="CCARD-RETURN-MSG-OFF">
+                    <condition value="low-values"/>
+                </condition>
+            </item>
+            <!--*      10  CCARD-FUNCTION                   PIC X(1).-->
+            <!--*        88  CCARD-NO-VALUE                  VALUE LOW-VALUES.-->
+            <!--*        88  CCARD-GET-DATA                  VALUE '1'.-->
+            <item level="10" name="CC-ACCT-ID" picture="X(11)" position="178" storage-length="11" display-length="11" display-position="178" value="spaces" redefined="true"/>
+            <item level="10" name="CC-ACCT-ID-N" picture="9(11)" position="178" storage-length="11" display-length="11" numeric="COBOL_NUMERIC" display-position="178" redefines="CC-ACCT-ID"/>
+            <item level="10" name="CC-CARD-NUM" picture="X(16)" position="189" storage-length="16" display-length="16" display-position="189" value="spaces" redefined="true"/>
+            <item level="10" name="CC-CARD-NUM-N" picture="9(16)" position="189" storage-length="16" display-length="16" numeric="COBOL_NUMERIC" display-position="189" redefines="CC-CARD-NUM"/>
+            <item level="10" name="CC-CUST-ID" picture="X(09)" position="205" storage-length="9" display-length="9" display-position="205" value="spaces" redefined="true"/>
+            <item level="10" name="CC-CUST-ID-N" picture="9(9)" position="205" storage-length="9" display-length="9" numeric="COBOL_NUMERIC" display-position="205" redefines="CC-CUST-ID"/>
+        </item>
+    </item>
+</copybook>

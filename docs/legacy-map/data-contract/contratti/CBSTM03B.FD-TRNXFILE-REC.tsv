@@ -1,0 +1,6 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+FD-TRNXFILE-REC	01	gruppo	-	-	-	-	-	0	350	-	-	-	-	FD-TRNXFILE-REC
+FD-TRNXS-ID	05	gruppo	-	-	-	-	-	0	32	-	-	-	-	FD-TRNXFILE-REC/FD-TRNXS-ID
+FD-TRNX-CARD	10	elementare	X(16)	DISPLAY	-	-	-	0	16	-	-	-	-	FD-TRNXFILE-REC/FD-TRNXS-ID/FD-TRNX-CARD
+FD-TRNX-ID	10	elementare	X(16)	DISPLAY	-	-	-	16	16	-	-	-	-	FD-TRNXFILE-REC/FD-TRNXS-ID/FD-TRNX-ID
+FD-ACCT-DATA	05	elementare	X(318)	DISPLAY	-	-	-	32	318	-	-	-	-	FD-TRNXFILE-REC/FD-ACCT-DATA

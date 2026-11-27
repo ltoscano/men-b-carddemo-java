@@ -1,0 +1,4 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+FD-REJS-RECORD	01	gruppo	-	-	-	-	-	0	430	-	-	-	-	FD-REJS-RECORD
+FD-REJECT-RECORD	05	elementare	X(350)	DISPLAY	-	-	-	0	350	-	-	-	-	FD-REJS-RECORD/FD-REJECT-RECORD
+FD-VALIDATION-TRAILER	05	elementare	X(80)	DISPLAY	-	-	-	350	80	-	-	-	-	FD-REJS-RECORD/FD-VALIDATION-TRAILER

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="COCOM01Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--******************************************************************-->
+    <!--* Communication area for CardDemo application programs-->
+    <!--******************************************************************-->
+    <!--* Copyright Amazon.com, Inc. or its affiliates.-->
+    <!--* All Rights Reserved.-->
+    <!--*-->
+    <!--* Licensed under the Apache License, Version 2.0 (the "License").-->
+    <!--* You may not use this file except in compliance with the License.-->
+    <!--* You may obtain a copy of the License at-->
+    <!--*-->
+    <!--*    http://www.apache.org/licenses/LICENSE-2.0-->
+    <!--*-->
+    <!--* Unless required by applicable law or agreed to in writing,-->
+    <!--* software distributed under the License is distributed on an-->
+    <!--* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,-->
+    <!--* either express or implied. See the License for the specific-->
+    <!--* language governing permissions and limitations under the License-->
+    <!--******************************************************************-->
+    <item level="01" name="CARDDEMO-COMMAREA" position="1" storage-length="160" display-length="160" display-position="1">
+        <item level="05" name="CDEMO-GENERAL-INFO" position="1" storage-length="34" display-length="34" display-position="1">
+            <item level="10" name="CDEMO-FROM-TRANID" picture="X(04)" position="1" storage-length="4" display-length="4" display-position="1"/>
+            <item level="10" name="CDEMO-FROM-PROGRAM" picture="X(08)" position="5" storage-length="8" display-length="8" display-position="5"/>
+            <item level="10" name="CDEMO-TO-TRANID" picture="X(04)" position="13" storage-length="4" display-length="4" display-position="13"/>
+            <item level="10" name="CDEMO-TO-PROGRAM" picture="X(08)" position="17" storage-length="8" display-length="8" display-position="17"/>
+            <item level="10" name="CDEMO-USER-ID" picture="X(08)" position="25" storage-length="8" display-length="8" display-position="25"/>
+            <item level="10" name="CDEMO-USER-TYPE" picture="X(01)" position="33" storage-length="1" display-length="1" display-position="33">
+                <condition name="CDEMO-USRTYP-ADMIN">
+                    <condition value="&quot;A&quot;"/>
+                </condition>
+                <condition name="CDEMO-USRTYP-USER">
+                    <condition value="&quot;U&quot;"/>
+                </condition>
+            </item>
+            <item level="10" name="CDEMO-PGM-CONTEXT" picture="9(01)" position="34" storage-length="1" display-length="1" numeric="COBOL_NUMERIC" display-position="34">
+                <condition name="CDEMO-PGM-ENTER">
+                    <condition value="0"/>
+                </condition>
+                <condition name="CDEMO-PGM-REENTER">
+                    <condition value="1"/>
+                </condition>
+            </item>
+        </item>
+        <item level="05" name="CDEMO-CUSTOMER-INFO" position="35" storage-length="84" display-length="84" display-position="35">
+            <item level="10" name="CDEMO-CUST-ID" picture="9(09)" position="35" storage-length="9" display-length="9" numeric="COBOL_NUMERIC" display-position="35"/>
+            <item level="10" name="CDEMO-CUST-FNAME" picture="X(25)" position="44" storage-length="25" display-length="25" display-position="44"/>
+            <item level="10" name="CDEMO-CUST-MNAME" picture="X(25)" position="69" storage-length="25" display-length="25" display-position="69"/>
+            <item level="10" name="CDEMO-CUST-LNAME" picture="X(25)" position="94" storage-length="25" display-length="25" display-position="94"/>
+        </item>
+        <item level="05" name="CDEMO-ACCOUNT-INFO" position="119" storage-length="12" display-length="12" display-position="119">
+            <item level="10" name="CDEMO-ACCT-ID" picture="9(11)" position="119" storage-length="11" display-length="11" numeric="COBOL_NUMERIC" display-position="119"/>
+            <item level="10" name="CDEMO-ACCT-STATUS" picture="X(01)" position="130" storage-length="1" display-length="1" display-position="130"/>
+        </item>
+        <item level="05" name="CDEMO-CARD-INFO" position="131" storage-length="16" display-length="16" display-position="131">
+            <item level="10" name="CDEMO-CARD-NUM" picture="9(16)" position="131" storage-length="16" display-length="16" numeric="COBOL_NUMERIC" display-position="131"/>
+        </item>
+        <item level="05" name="CDEMO-MORE-INFO" position="147" storage-length="14" display-length="14" display-position="147">
+            <item level="10" name="CDEMO-LAST-MAP" picture="X(7)" position="147" storage-length="7" display-length="7" display-position="147"/>
+            <item level="10" name="CDEMO-LAST-MAPSET" picture="X(7)" position="154" storage-length="7" display-length="7" display-position="154"/>
+        </item>
+    </item>
+</copybook>

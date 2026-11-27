@@ -1,0 +1,2 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+EXPORT-INPUT-RECORD	01	elementare	X(500)	DISPLAY	-	-	-	0	500	-	-	-	-	EXPORT-INPUT-RECORD

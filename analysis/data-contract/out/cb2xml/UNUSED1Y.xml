@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="UNUSED1Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="UNUSED-DATA" position="1" storage-length="80" display-length="80" display-position="1">
+        <item level="05" name="UNUSED-ID" picture="X(08)" position="1" storage-length="8" display-length="8" display-position="1"/>
+        <item level="05" name="UNUSED-FNAME" picture="X(20)" position="9" storage-length="20" display-length="20" display-position="9"/>
+        <item level="05" name="UNUSED-LNAME" picture="X(20)" position="29" storage-length="20" display-length="20" display-position="29"/>
+        <item level="05" name="UNUSED-PWD" picture="X(08)" position="49" storage-length="8" display-length="8" display-position="49"/>
+        <item level="05" name="UNUSED-TYPE" picture="X(01)" position="57" storage-length="1" display-length="1" display-position="57"/>
+        <item level="05" name="UNUSED-FILLER" picture="X(23)" position="58" storage-length="23" display-length="23" display-position="58"/>
+    </item>
+</copybook>

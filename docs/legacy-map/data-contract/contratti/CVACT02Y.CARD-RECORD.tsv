@@ -1,0 +1,9 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+CARD-RECORD	01	gruppo	-	-	-	-	-	0	150	-	-	-	-	CARD-RECORD
+CARD-NUM	05	elementare	X(16)	DISPLAY	-	-	-	0	16	-	-	-	-	CARD-RECORD/CARD-NUM
+CARD-ACCT-ID	05	elementare	9(11)	DISPLAY	-	11	0	16	11	-	-	-	-	CARD-RECORD/CARD-ACCT-ID
+CARD-CVV-CD	05	elementare	9(03)	DISPLAY	-	3	0	27	3	-	-	-	-	CARD-RECORD/CARD-CVV-CD
+CARD-EMBOSSED-NAME	05	elementare	X(50)	DISPLAY	-	-	-	30	50	-	-	-	-	CARD-RECORD/CARD-EMBOSSED-NAME
+CARD-EXPIRAION-DATE	05	elementare	X(10)	DISPLAY	-	-	-	80	10	-	-	-	-	CARD-RECORD/CARD-EXPIRAION-DATE
+CARD-ACTIVE-STATUS	05	elementare	X(01)	DISPLAY	-	-	-	90	1	-	-	-	-	CARD-RECORD/CARD-ACTIVE-STATUS
+FILLER	05	elementare	X(59)	DISPLAY	-	-	-	91	59	-	-	-	-	CARD-RECORD/FILLER

@@ -1,0 +1,4 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+FD-TRAN-RECORD	01	gruppo	-	-	-	-	-	0	350	-	-	-	-	FD-TRAN-RECORD
+FD-TRAN-ID	05	elementare	X(16)	DISPLAY	-	-	-	0	16	-	-	-	-	FD-TRAN-RECORD/FD-TRAN-ID
+FD-CUST-DATA	05	elementare	X(334)	DISPLAY	-	-	-	16	334	-	-	-	-	FD-TRAN-RECORD/FD-CUST-DATA

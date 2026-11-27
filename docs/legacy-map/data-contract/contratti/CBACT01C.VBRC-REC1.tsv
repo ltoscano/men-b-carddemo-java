@@ -1,0 +1,4 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+VBRC-REC1	01	gruppo	-	-	-	-	-	0	12	-	-	-	-	VBRC-REC1
+VB1-ACCT-ID	05	elementare	9(11)	DISPLAY	-	11	0	0	11	-	-	-	-	VBRC-REC1/VB1-ACCT-ID
+VB1-ACCT-ACTIVE-STATUS	05	elementare	X(01)	DISPLAY	-	-	-	11	1	-	-	-	-	VBRC-REC1/VB1-ACCT-ACTIVE-STATUS

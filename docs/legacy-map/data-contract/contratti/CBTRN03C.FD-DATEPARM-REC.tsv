@@ -1,0 +1,2 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+FD-DATEPARM-REC	01	elementare	X(80)	DISPLAY	-	-	-	0	80	-	-	-	-	FD-DATEPARM-REC
