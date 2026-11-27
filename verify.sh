@@ -9,7 +9,22 @@ set -euo pipefail
 
 IMAGE="maven:3.9.16-eclipse-temurin-21"
 CACHE_VOLUME="${MENB_BUILD_CACHE_VOLUME:-menb-build-m2}"
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Cartella dello script senza comandi esterni (niente dirname), con esito controllato.
+case "${BASH_SOURCE[0]}" in
+  */*) ROOT_DIR="${BASH_SOURCE[0]%/*}" ;;
+  *) ROOT_DIR="." ;;
+esac
+ROOT="$(cd "${ROOT_DIR}" && pwd)" || { echo "ERRORE: cartella dello script non raggiungibile" >&2; exit 1; }
+[ -f "${ROOT}/pom.xml" ] || { echo "ERRORE: ${ROOT}/pom.xml non trovato" >&2; exit 1; }
+# Utente dell'host a cui restituire le cartelle target/: esito di id controllato e valore
+# numerico, altrimenti chown riceverebbe un utente vuoto e non cambierebbe nulla.
+HOST_UID="$(id -u)" || { echo "ERRORE: id -u fallito" >&2; exit 1; }
+HOST_GID="$(id -g)" || { echo "ERRORE: id -g fallito" >&2; exit 1; }
+for value in "${HOST_UID}" "${HOST_GID}"; do
+  case "${value}" in
+    '' | *[!0-9]*) echo "ERRORE: utente dell'host non numerico: '${HOST_UID}:${HOST_GID}'" >&2; exit 1 ;;
+  esac
+done
 
 # Il contenitore gira come root: a fine corsa restituisce all'utente dell'host solo le
 # cartelle target/ generate (non .git, ne' i sorgenti, ne' legacy/).
@@ -18,7 +33,7 @@ docker run --rm -i \
   -v "${CACHE_VOLUME}:/root/.m2" \
   -v "${ROOT}:/workspace" \
   -w /workspace \
-  -e HOST_UID="$(id -u)" -e HOST_GID="$(id -g)" \
+  -e HOST_UID="${HOST_UID}" -e HOST_GID="${HOST_GID}" \
   "${IMAGE}" bash -s <<'CONTAINER'
 set -uo pipefail
 shopt -s nullglob

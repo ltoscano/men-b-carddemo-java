@@ -22,7 +22,13 @@
 # MENB_SMOKE_PROJECT: nome del progetto Compose di smoke (predefinito menb-smoke).
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Cartella dello script senza comandi esterni (niente dirname), con esito controllato.
+case "${BASH_SOURCE[0]}" in
+  */*) ROOT_DIR="${BASH_SOURCE[0]%/*}" ;;
+  *) ROOT_DIR="." ;;
+esac
+ROOT="$(cd "${ROOT_DIR}" && pwd)" || { echo "ERRORE: cartella dello script non raggiungibile" >&2; exit 1; }
+[ -f "${ROOT}/compose.yaml" ] || { echo "ERRORE: ${ROOT}/compose.yaml non trovato" >&2; exit 1; }
 PROJECT="${MENB_SMOKE_PROJECT:-menb-smoke}"
 BUILD_TIMEOUT="${MENB_SMOKE_BUILD_TIMEOUT:-900}"
 UP_TIMEOUT="${MENB_SMOKE_UP_TIMEOUT:-240}"
@@ -91,71 +97,138 @@ check_seconds() {
   esac
 }
 
-# Elenca le risorse con l'etichetta del progetto, una per riga ("container <id>" ecc.).
-# Restituisce 1 se un elenco non si puo' ottenere: in quel caso l'assenza non e' provata.
-list_project_resources() {
-  local out kind
-  for kind in container network volume; do
+# Controlla che ogni riga di $2 sia un identificativo del tipo $1 (formato di Docker).
+valid_ids() {
+  local kind="$1" line
+  while IFS= read -r line; do
+    [ -n "${line}" ] || continue
     case "${kind}" in
-      container) out="$(limited "${SHORT_TIMEOUT}" docker ps -a -q --no-trunc --filter "label=${LABEL}" </dev/null)" || return 1 ;;
-      network) out="$(limited "${SHORT_TIMEOUT}" docker network ls -q --no-trunc --filter "label=${LABEL}" </dev/null)" || return 1 ;;
-      volume) out="$(limited "${SHORT_TIMEOUT}" docker volume ls -q --filter "label=${LABEL}" </dev/null)" || return 1 ;;
-    esac
-    if [ -n "${out}" ]; then
-      printf '%s\n' "${out}" | sed "s/^/${kind} /"
-    fi
-  done
-}
-
-# Rimozione di riserva, per etichetta, di cio' che "down" non ha rimosso.
-remove_by_label() {
-  local kind id
-  while read -r kind id; do
-    [ -n "${id}" ] || continue
-    case "${kind}" in
-      container) limited "${SHORT_TIMEOUT}" docker rm -f -v "${id}" </dev/null >/dev/null || err "rimozione del container ${id} fallita" ;;
-      network) limited "${SHORT_TIMEOUT}" docker network rm "${id}" </dev/null >/dev/null || err "rimozione della rete ${id} fallita" ;;
-      volume) limited "${SHORT_TIMEOUT}" docker volume rm -f "${id}" </dev/null >/dev/null || err "rimozione del volume ${id} fallita" ;;
+      container | network) [[ "${line}" =~ ^[0-9a-f]{64}$ ]] || return 1 ;;
+      volume) [[ "${line}" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || return 1 ;;
     esac
   done <<EOF
-$1
+$2
 EOF
+  return 0
+}
+
+# Acquisisce da Docker gli identificativi grezzi delle risorse con l'etichetta del progetto
+# in RES_CONTAINERS, RES_NETWORKS, RES_VOLUMES. Va chiamata nella shell corrente (non in
+# $(...)). Restituisce 1, lasciando le variabili al valore "<ignoto>", se un elenco non si
+# ottiene o non ha il formato atteso: in quel caso l'assenza di risorse non e' provata.
+# La decisione si prende solo su questi dati grezzi; la stampa e' separata (print_resources).
+RES_CONTAINERS="<ignoto>"
+RES_NETWORKS="<ignoto>"
+RES_VOLUMES="<ignoto>"
+collect_project_resources() {
+  local containers networks volumes
+  RES_CONTAINERS="<ignoto>"
+  RES_NETWORKS="<ignoto>"
+  RES_VOLUMES="<ignoto>"
+  if ! containers="$(limited "${SHORT_TIMEOUT}" docker ps -a -q --no-trunc --filter "label=${LABEL}" </dev/null)"; then
+    err "elenco dei container con l'etichetta ${LABEL} fallito"
+    return 1
+  fi
+  if ! networks="$(limited "${SHORT_TIMEOUT}" docker network ls -q --no-trunc --filter "label=${LABEL}" </dev/null)"; then
+    err "elenco delle reti con l'etichetta ${LABEL} fallito"
+    return 1
+  fi
+  if ! volumes="$(limited "${SHORT_TIMEOUT}" docker volume ls -q --filter "label=${LABEL}" </dev/null)"; then
+    err "elenco dei volumi con l'etichetta ${LABEL} fallito"
+    return 1
+  fi
+  if ! valid_ids container "${containers}" || ! valid_ids network "${networks}" || ! valid_ids volume "${volumes}"; then
+    err "risposta inattesa di Docker nell'elenco delle risorse: '${containers}' '${networks}' '${volumes}'"
+    return 1
+  fi
+  RES_CONTAINERS="${containers}"
+  RES_NETWORKS="${networks}"
+  RES_VOLUMES="${volumes}"
+  return 0
+}
+
+# Vero solo se l'ultima acquisizione e' riuscita e non ha trovato nulla.
+no_project_resources() {
+  [ -z "${RES_CONTAINERS}" ] && [ -z "${RES_NETWORKS}" ] && [ -z "${RES_VOLUMES}" ]
+}
+
+# Stampa su stderr le risorse dell'ultima acquisizione (solo presentazione, con builtin).
+print_resources() {
+  local kind ids id
+  for kind in container network volume; do
+    case "${kind}" in
+      container) ids="${RES_CONTAINERS}" ;;
+      network) ids="${RES_NETWORKS}" ;;
+      volume) ids="${RES_VOLUMES}" ;;
+    esac
+    while IFS= read -r id; do
+      [ -n "${id}" ] && printf '  %s %s\n' "${kind}" "${id}" >&2
+    done <<EOF
+${ids}
+EOF
+  done
+  return 0
+}
+
+# Rimozione di riserva, per etichetta, di cio' che "down" non ha rimosso. Gli esiti dei
+# singoli comandi vengono riportati; la decisione la prende la nuova acquisizione che segue.
+remove_by_label() {
+  local id
+  while IFS= read -r id; do
+    [ -n "${id}" ] || continue
+    limited "${SHORT_TIMEOUT}" docker rm -f -v "${id}" </dev/null >/dev/null || err "rimozione del container ${id} fallita"
+  done <<EOF
+${RES_CONTAINERS}
+EOF
+  while IFS= read -r id; do
+    [ -n "${id}" ] || continue
+    limited "${SHORT_TIMEOUT}" docker network rm "${id}" </dev/null >/dev/null || err "rimozione della rete ${id} fallita"
+  done <<EOF
+${RES_NETWORKS}
+EOF
+  while IFS= read -r id; do
+    [ -n "${id}" ] || continue
+    limited "${SHORT_TIMEOUT}" docker volume rm -f "${id}" </dev/null >/dev/null || err "rimozione del volume ${id} fallita"
+  done <<EOF
+${RES_VOLUMES}
+EOF
+  return 0
 }
 
 # Spegne e rimuove container, reti e volumi del progetto, poi verifica per etichetta.
-# Restituisce 0 solo se "down" riesce e non resta nulla. La verifica per etichetta serve
-# anche perche' "down" termina con 0 quando un volume non si puo' rimuovere perche' in uso.
+# Restituisce 0 solo se "down" riesce, l'elenco di Docker si ottiene e non resta nulla.
+# La verifica per etichetta serve anche perche' "down" termina con 0 quando un volume non
+# si puo' rimuovere perche' in uso.
 cleanup_project() {
-  local rc=0 leftovers
+  local rc=0
   log "docker compose down --volumes del progetto ${PROJECT}"
   if ! limited "${DOWN_TIMEOUT}" "${COMPOSE[@]}" --profile batch down --volumes --remove-orphans --timeout 10 </dev/null; then
     err "docker compose down fallito"
     rc=1
   fi
-  if ! leftovers="$(list_project_resources)"; then
-    err "impossibile elencare le risorse con l'etichetta ${LABEL}"
+  if ! collect_project_resources; then
+    err "impossibile verificare l'assenza di risorse con l'etichetta ${LABEL}"
     return 1
   fi
-  if [ -n "${leftovers}" ]; then
-    err "risorse con l'etichetta ${LABEL} rimaste dopo down:"
-    printf '%s\n' "${leftovers}" >&2
-    rc=1
-    log "rimozione di riserva per etichetta"
-    remove_by_label "${leftovers}"
-    if ! leftovers="$(list_project_resources)"; then
-      err "impossibile elencare le risorse con l'etichetta ${LABEL}"
-      return 1
-    fi
-    if [ -n "${leftovers}" ]; then
-      err "risorse ancora presenti, da rimuovere a mano:"
-      printf '%s\n' "${leftovers}" >&2
-      return 1
-    fi
+  if no_project_resources; then
+    log "nessun container, rete o volume con l'etichetta ${LABEL}"
+    return "${rc}"
+  fi
+  err "risorse con l'etichetta ${LABEL} rimaste dopo down:"
+  print_resources
+  log "rimozione di riserva per etichetta"
+  remove_by_label
+  if ! collect_project_resources; then
+    err "impossibile verificare l'assenza di risorse con l'etichetta ${LABEL}"
+    return 1
+  fi
+  if no_project_resources; then
     log "rimozione di riserva riuscita: nessuna risorsa rimasta"
   else
-    log "nessun container, rete o volume con l'etichetta ${LABEL}"
+    err "risorse ancora presenti, da rimuovere a mano:"
+    print_resources
   fi
-  return "${rc}"
+  return 1
 }
 
 on_exit() {
@@ -241,13 +314,16 @@ SQL
 # COMPLETED, su istanze distinte, e le esecuzioni dei lanci precedenti invariate.
 EXEC_IDS=""
 verify_executions() {
-  local n="$1" rows count=0 exec_id inst_id status exit_code steps steps_ok
+  local n="$1" rows line count=0 exec_id inst_id status exit_code steps steps_ok
   local ids="" insts=""
   if ! rows="$(query_executions </dev/null)"; then
     fail "interrogazione delle esecuzioni di ${JOB_NAME} fallita"
   fi
   if [ -n "${rows}" ]; then
-    printf '%s\n' "${rows}" | sed 's/^/   /'
+    # Solo presentazione, con builtin: la decisione si prende sotto, sui dati grezzi.
+    while IFS= read -r line; do printf '   %s\n' "${line}"; done <<EOF
+${rows}
+EOF
   else
     echo "   (nessuna esecuzione di ${JOB_NAME})"
   fi
@@ -297,12 +373,12 @@ COMPOSE=(docker compose --project-name "${PROJECT}" --project-directory "${ROOT}
   --file "${ROOT}/compose.yaml" --env-file /dev/null)
 
 limited "${SHORT_TIMEOUT}" docker compose version </dev/null || fail "docker compose non disponibile"
-if ! existing="$(list_project_resources)"; then
-  fail "impossibile elencare le risorse con l'etichetta ${LABEL}"
+if ! collect_project_resources; then
+  fail "impossibile verificare l'assenza di risorse con l'etichetta ${LABEL}"
 fi
 CLEANUP_ARMED=1
-if [ -n "${existing}" ]; then
-  printf '%s\n' "${existing}" >&2
+if ! no_project_resources; then
+  print_resources
   fail "esistono gia' risorse del progetto ${PROJECT} (residui di una corsa precedente o uno smoke in corso): vengono rimosse, rilanciare lo smoke"
 fi
 log "progetto ${PROJECT}: nessuna risorsa preesistente"
@@ -319,7 +395,11 @@ limited "$((UP_TIMEOUT + 30))" "${COMPOSE[@]}" up -d --no-build --wait --wait-ti
   || fail "docker compose up --wait fallito: db e online non sono diventati sani (limite ${UP_TIMEOUT}s)"
 for svc in db online; do
   ids="$(limited "${SHORT_TIMEOUT}" "${COMPOSE[@]}" ps -q "${svc}" </dev/null)" || fail "elenco dei container di ${svc} fallito"
-  [ -n "${ids}" ] && [ "$(printf '%s\n' "${ids}" | wc -l | tr -d ' ')" = "1" ] || fail "atteso un solo container di ${svc}, trovati: '${ids}'"
+  # Esattamente un identificativo, senza pipeline: nessun a capo e formato di Docker.
+  case "${ids}" in
+    '' | *$'\n'*) fail "atteso un solo container di ${svc}, trovati: '${ids}'" ;;
+  esac
+  valid_ids container "${ids}" || fail "identificativo inatteso del container di ${svc}: '${ids}'"
   health="$(limited "${SHORT_TIMEOUT}" docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' "${ids}" </dev/null)" \
     || fail "ispezione del container di ${svc} fallita"
   [ "${health}" = "healthy" ] || fail "${svc} non sano: '${health}'"
