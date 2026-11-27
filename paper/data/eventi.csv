@@ -106,3 +106,7 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T13:06:48Z,P13,fine,fable,orologio,13 rilievi (1 bloccante) accolti; #15 ristretta; aperte #26 #27 #28
 2026-11-27T13:06:48Z,issue-15,esecutore-inizio,opus,orologio,worktree isolato
 2026-11-27T13:06:48Z,issue-21,esecutore-inizio,sonnet,orologio,worktree isolato
+2026-11-27T13:07:27Z,processo,risposta-consegnata,fable,orologio,cinque Esecutori in corso: #2 #3 #4 #15 #21
+2026-11-27T13:21:44Z,issue-15,esecutore-fermo,opus,orologio,needs-spec-update: con tag e digest Docker ignora il tag; criterio sull'immagine irrealizzabile
+2026-11-27T13:21:48Z,issue-15,specifica-aggiornata,fable,orologio,voce 28 del registro
+2026-11-27T13:21:48Z,issue-15,esecutore-inizio,opus,orologio,ripresa dopo l'aggiornamento della specifica
