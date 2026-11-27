@@ -1,0 +1,18 @@
+# Dichiarazione unica dei file di verdetto dovuti in analysis/tools/out/ (issue #21).
+# Letta da run.sh (che li produce: rifiuta un verdetto non dichiarato e, a fine corsa, richiede che quelli realmente
+# scritti nella corsa siano esattamente questi) e da check.sh (che confronta l'insieme esatto dei file presenti con questo
+# e ricalcola ogni verdetto con il controllo e lo strumento dichiarati). Non esiste un altro elenco.
+# Colonne separate da TAB: cartella dello strumento sotto out/, nome del file, controllo (argomento di compare.py),
+# strumento ('-' se il controllo non ne ha). Cartella e nome devono essere quelli che il controllo produce davvero
+# (regola in verdict_check_dir, lib.sh): un verdetto vale solo nella cartella del proprio strumento.
+# verdetto-<controllo>.txt: esito del confronto con gli attesi; prova-fallita-ripartizione.txt: prova del fallimento
+# di una capacita' unavailable (controllo scc-split).
+cb2xml	verdetto-layout.txt	layout	-
+cmt	verdetto-call.txt	call	cmt
+cmt	verdetto-copy.txt	copy	cmt
+cobmix	verdetto-copy.txt	copy	cobmix
+gnucobol	verdetto-compile.txt	compile	-
+mapa	verdetto-jcl.txt	jcl	-
+proleap	verdetto-copy.txt	copy	proleap
+scc	prova-fallita-ripartizione.txt	scc-split	-
+scc	verdetto-scc.txt	scc	-
