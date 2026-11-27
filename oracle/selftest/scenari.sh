@@ -24,7 +24,7 @@ r "$r1" --all --check > "$tmp/s1c.log" 2>&1 || { cat "$tmp/s1c.log" >&2; die "--
 say "2. senza la dichiarazione delle dipendenze il consumatore fallisce (il test e' sensibile all'ordine)"
 rm -rf "$r1/zzz-produttore/out" "$r1/aaa-consumatore/out" "$r1/aaa-consumatore/deps"
 if r "$r1" --all > "$tmp/s2.log" 2>&1; then die "senza deps il consumatore avrebbe dovuto fallire"; fi
-grep -q 'output del produttore assente' "$tmp/s2.log" || die "motivo del fallimento inatteso"
+grep -qx 'output del produttore assente' "$tmp/s2.log" || die "motivo del fallimento inatteso"
 
 say "3. passo singolo, passo inesistente, nome non valido"
 r "$r1" zzz-produttore > /dev/null 2>&1 || die "esecuzione singola fallita"
@@ -35,7 +35,7 @@ if r "$r1" ../x > /dev/null 2>&1; then die "nome con / accettato"; fi
 say "4. dipendenza mancante"
 r4="$tmp/s4"; mkdir -p "$r4/uno"; echo 'non-esiste' > "$r4/uno/deps"; echo 'true' > "$r4/uno/run.sh"; echo 'true' > "$r4/uno/check.sh"
 if r "$r4" --all > "$tmp/s4.log" 2>&1; then die "dipendenza mancante non rilevata (--all)"; fi
-grep -q "dipende da 'non-esiste', che non esiste" "$tmp/s4.log" || die "messaggio di dipendenza mancante assente"
+grep -qx "run.sh: errore: il passo 'uno' dipende da 'non-esiste', che non esiste" "$tmp/s4.log" || die "messaggio di dipendenza mancante assente"
 if r "$r4" --all --check > "$tmp/s4c.log" 2>&1; then die "dipendenza mancante non rilevata (--all --check)"; fi
 
 say "5. ciclo di dipendenze, anche di un passo su se stesso"
@@ -43,11 +43,11 @@ r5="$tmp/s5"; mkdir -p "$r5/a" "$r5/b" "$r5/c"
 echo b > "$r5/a/deps"; echo c > "$r5/b/deps"; echo a > "$r5/c/deps"
 for n in a b c; do echo 'touch ../eseguito' > "$r5/$n/run.sh"; echo 'true' > "$r5/$n/check.sh"; done
 if r "$r5" --all > "$tmp/s5.log" 2>&1; then die "ciclo non rilevato"; fi
-grep -q 'dipendenze cicliche' "$tmp/s5.log" || die "messaggio di ciclo assente"
+grep -qx 'run.sh: errore: dipendenze cicliche tra: a b c' "$tmp/s5.log" || die "messaggio di ciclo assente"
 [ ! -e "$r5/eseguito" ] || die "con un ciclo e' stato eseguito un passo"
 r5b="$tmp/s5b"; mkdir -p "$r5b/a"; echo a > "$r5b/a/deps"; echo true > "$r5b/a/run.sh"
 if r "$r5b" --all > "$tmp/s5b.log" 2>&1; then die "dipendenza da se stesso non rilevata"; fi
-grep -q 'dipende da se stesso' "$tmp/s5b.log" || die "messaggio di dipendenza da se stesso assente"
+grep -qx "run.sh: errore: il passo 'a' dipende da se stesso (ciclo)" "$tmp/s5b.log" || die "messaggio di dipendenza da se stesso assente"
 
 say "6. ci si ferma al primo errore"
 r6="$tmp/s6"; mkdir -p "$r6/a" "$r6/b" "$r6/c"
@@ -61,9 +61,9 @@ r7="$tmp/s7"; mkdir -p "$r7/con" "$r7/senza"
 echo 'true' > "$r7/con/run.sh"; echo 'true' > "$r7/con/check.sh"; echo 'true' > "$r7/senza/run.sh"
 r "$r7" --all > /dev/null 2>&1 || die "--all (senza --check) dovrebbe riuscire"
 if r "$r7" --all --check > "$tmp/s7.log" 2>&1; then die "--all --check ha accettato un passo senza check.sh"; fi
-grep -q "il passo 'senza' non ha check.sh" "$tmp/s7.log" || die "messaggio di controllo mancante assente (--all --check)"
+grep -qx "run.sh: errore: il passo 'senza' non ha check.sh: ogni passo deve avere il suo controllo" "$tmp/s7.log" || die "messaggio di controllo mancante assente (--all --check)"
 if r "$r7" senza --check > "$tmp/s7b.log" 2>&1; then die "'senza --check' ha accettato un passo senza check.sh"; fi
-grep -q "il passo 'senza' non ha check.sh" "$tmp/s7b.log" || die "messaggio di controllo mancante assente (passo singolo)"
+grep -qx "run.sh: errore: il passo 'senza' non ha check.sh: ogni passo deve avere il suo controllo" "$tmp/s7b.log" || die "messaggio di controllo mancante assente (passo singolo)"
 r "$r7" con --check > /dev/null 2>&1 || die "il controllo di un passo che ce l'ha dovrebbe riuscire"
 
 say "8. ordine alfabetico a parita' di dipendenze"

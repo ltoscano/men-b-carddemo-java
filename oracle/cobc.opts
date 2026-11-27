@@ -16,6 +16,11 @@
 # APOST: stesso JCL di compilazione. QUOTE vale l'apice singolo. Nessuno degli 11 programmi usa QUOTE:
 # oggi l'opzione non ha effetto, e' presente per fedelta' alle opzioni originali.
 -fsingle-quote
+# Segno dei numeri DISPLAY con la convenzione EBCDIC: ultima cifra '{' 'A'-'I' (positivo, 0-9) e
+# '}' 'J'-'R' (negativo, 0-9). E' la convenzione dei file di dati del legacy (app/data/ASCII/, per
+# esempio '0000009190}' = -919,00 in dailytran.txt) e corrisponde ai nibble di zona C/D di z/OS.
+# Con il default della macchina (ASCII) GnuCOBOL legge '}' come positivo. Verificato da oracle/segno/.
+-fsign=EBCDIC
 # Solo diagnostica (avvertimenti nel log di compilazione): non cambia il codice generato.
 -Wall
 # Cartella dei copybook del legacy, letta dal volume sensibile alle maiuscole montato in sola lettura.

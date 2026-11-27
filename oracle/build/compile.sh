@@ -3,21 +3,29 @@
 #   - gli stub e i segnaposto di oracle/stubs/          -> moduli (bin/<NOME>.so)
 #   - i programmi del legacy elencati in un file .tsv   -> eseguibili (bin/<NOME>) o moduli (bin/<NOME>.so)
 #   - i programmi di prova di oracle/tests/             -> eseguibili
-# Opzioni: tutte e sole quelle di /oracle/cobc.opts, uguali per tutti. In piu', per tipo di artefatto:
-#   eseguibile: cobc -c <opzioni> sorgente  e poi  cobc -x -A -DMENB_ENTRY=<NOME> avvia.c <NOME>.o
-#               (il secondo comando compila solo il C dell'avviatore e collega);
-#   modulo:     cobc -m <opzioni> sorgente.
+# Opzioni: tutte e sole quelle di /oracle/cobc.opts, uguali per tutti. In piu', per tipo di artefatto,
+# solo questi argomenti strutturali (verificati uno per uno da oracle/build/verifica.sh):
+#   modulo:     cobc <opzioni> -m -o OUT/bin/<NOME>.so <sorgente>
+#   eseguibile: cobc <opzioni> -c -o OUT/obj/<NOME>.o <sorgente>
+#               cobc -x -A -DMENB_ENTRY=<NOME> -o OUT/bin/<NOME> /oracle/launcher/avvia.c OUT/obj/<NOME>.o
+#               (il secondo comando compila solo il C dell'avviatore e collega).
+# Ogni invocazione di cobc passa da cobc_reg, che scrive nel log gli argomenti effettivi, uno per riga
+# ("== cobc", poi "arg <argomento>"), e poi esegue esattamente quegli argomenti.
 #
 # Uso:
 #   compile.sh tutto ELENCO.tsv OUT
 #       compila tutto; scrive OUT/bin, OUT/log/<NOME>.log, OUT/compilazione.tsv, OUT/opzioni.txt, OUT/ambiente.txt.
 #       Esce con 1 se una compilazione fallisce.
 #   compile.sh uno TIPO SORGENTE NOME OUT [opzione cobc in piu'] [opzione C in piu' per l'avviatore]
-#       compila un solo programma (usato dalle prove negative dei controlli, mai dalla build).
+#       compila un solo programma (usato dalle prove negative dei controlli, mai dalla build). Solo in
+#       questo modo UNO_OPZIONI puo' indicare un file di opzioni alterato al posto di /oracle/cobc.opts.
 set -u
 
 OPTFILE=/oracle/cobc.opts
+if [ "${1:-}" = uno ] && [ -n "${UNO_OPZIONI:-}" ]; then OPTFILE="$UNO_OPZIONI"; fi
 LAUNCHER=/oracle/launcher/avvia.c
+# Programmi di prova (oracle/tests/), tutti eseguibili.
+PROVE="PARMECHO ABDUSING ABDNOARG M03BCALL DTCCALL SEGNOPRB"
 
 die() { echo "compile.sh: $*" >&2; exit 1; }
 
@@ -31,6 +39,15 @@ while IFS= read -r line || [ -n "$line" ]; do
 done < "$OPTFILE"
 [ -n "$OPTS" ] || die "nessuna opzione in $OPTFILE"
 
+# cobc_reg ARGOMENTI...: registra gli argomenti nel log ($logf) e li esegue tali e quali.
+cobc_reg() {
+  { echo "== cobc"; for a in "$@"; do printf 'arg %s\n' "$a"; done; } >> "$logf"
+  cobc "$@" >> "$logf" 2>&1
+  r=$?
+  echo "== codice $r" >> "$logf"
+  return "$r"
+}
+
 # compila TIPO SORGENTE NOME OUT [cobc-extra] [c-extra]; scrive OUT/log/NOME.log; ritorna il codice di cobc
 compila() {
   tipo="$1"; src="$2"; nome="$3"; out="$4"; xcob="${5:-}"; xc="${6:-}"
@@ -39,24 +56,21 @@ compila() {
   : > "$logf"
   case "$tipo" in
     modulo)
-      echo "comando: cobc $OPTS${xcob:+ $xcob} -m -o bin/$nome.so $src" >> "$logf"
       # shellcheck disable=SC2086
-      cobc $OPTS $xcob -m -o "$out/bin/$nome.so" "$src" >> "$logf" 2>&1
-      rc=$?
+      set -- $OPTS $xcob -m -o "$out/bin/$nome.so" "$src"
+      cobc_reg "$@"; rc=$?
       ;;
     eseguibile)
-      echo "comando: cobc $OPTS${xcob:+ $xcob} -c -o obj/$nome.o $src" >> "$logf"
       # shellcheck disable=SC2086
-      cobc $OPTS $xcob -c -o "$out/obj/$nome.o" "$src" >> "$logf" 2>&1
-      rc=$?
+      set -- $OPTS $xcob -c -o "$out/obj/$nome.o" "$src"
+      cobc_reg "$@"; rc=$?
       if [ "$rc" -eq 0 ]; then
-        echo "comando: cobc -x -A -DMENB_ENTRY=$nome${xc:+ -A $xc} -o bin/$nome $LAUNCHER obj/$nome.o" >> "$logf"
         if [ -n "$xc" ]; then
-          cobc -x -A "-DMENB_ENTRY=$nome" -A "$xc" -o "$out/bin/$nome" "$LAUNCHER" "$out/obj/$nome.o" >> "$logf" 2>&1
+          set -- -x -A "-DMENB_ENTRY=$nome" -A "$xc" -o "$out/bin/$nome" "$LAUNCHER" "$out/obj/$nome.o"
         else
-          cobc -x -A "-DMENB_ENTRY=$nome" -o "$out/bin/$nome" "$LAUNCHER" "$out/obj/$nome.o" >> "$logf" 2>&1
+          set -- -x -A "-DMENB_ENTRY=$nome" -o "$out/bin/$nome" "$LAUNCHER" "$out/obj/$nome.o"
         fi
-        rc=$?
+        cobc_reg "$@"; rc=$?
       fi
       ;;
     *) die "tipo sconosciuto: $tipo" ;;
@@ -79,6 +93,7 @@ case "${1:-}" in
     [ -f "$elenco" ] || die "elenco assente: $elenco"
     mkdir -p "$out" || die "impossibile creare $out"
     printf 'programma\torigine\ttipo\tcodice_uscita\tavvertimenti\terrori\n' > "$out/compilazione.tsv"
+    # shellcheck disable=SC2086
     printf '%s\n' $OPTS > "$out/opzioni.txt"
     for f in /oracle/stubs/*.cbl; do
       n="$(basename "$f" .cbl)"
@@ -91,7 +106,7 @@ case "${1:-}" in
       compila "$tipo" "/legacy/$src" "$n" "$out"; rc=$?
       riga "$n" legacy "$tipo" "$out" "$rc"
     done
-    for n in PARMECHO ABDUSING ABDNOARG M03BCALL DTCCALL; do
+    for n in $PROVE; do
       compila eseguibile "/oracle/tests/$n.cbl" "$n" "$out"; rc=$?
       riga "$n" prova eseguibile "$out" "$rc"
     done
@@ -104,7 +119,7 @@ case "${1:-}" in
       dpkg-query -W -f '${Package} ${Version}\n' gnucobol3 libcob4t64 libcob4-dev libdb5.3t64 gcc-14 libc6 libgmp10 libxml2
       echo "== cobcrun --runtime-config"; cobcrun --runtime-config 2>&1
     } > "$out/ambiente.txt" 2>&1
-    # Un programma del legacy che non compila fa fallire la build (le righe con codice diverso da 0).
+    # Un programma che non compila fa fallire la build (le righe con codice diverso da 0).
     fl="$(awk -F'\t' 'NR>1 && $4!=0' "$out/compilazione.tsv" | wc -l)"
     [ "$fl" -eq 0 ] || { awk -F'\t' 'NR>1 && $4!=0 {print "compile.sh: compilazione fallita: " $1}' "$out/compilazione.tsv" >&2; exit 1; }
     ;;

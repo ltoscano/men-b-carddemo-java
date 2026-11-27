@@ -47,7 +47,8 @@ sed 's/^/   /' "$tmp/v.out" >&2
 
 log "3. prove negative"
 variante invertito "" "-DMENB_ORDINE_INVERTITO"
-grep -q "0a 00 32" "$tmp/invertito/obs/PARMDUMP.hex" || fail "la variante con ordine invertito non ha prodotto l'area attesa (0a 00 ...)"
+[ "$(cat "$tmp/invertito/obs/PARMDUMP.hex")" = "0a 00 32 30 32 32 30 37 31 38 30 30" ] \
+  || fail "la variante con ordine invertito non ha prodotto l'area attesa (0a 00 32 30 32 32 30 37 31 38 30 30)"
 expect_fail "avviatore con la lunghezza in ordine little-endian (0a 00)" "byte dell'area diversi" verifica "$tmp/invertito/obs"
 variante nativo "-fbinary-byteorder=native" ""
 expect_fail "PARMECHO compilato con -fbinary-byteorder=native (legge 2560)" "PARM-LENGTH= 02560" verifica "$tmp/nativo/obs"
