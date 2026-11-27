@@ -25,12 +25,20 @@
 #       e l'ambiente effettivo: ambiente-cobc.txt, ambiente-run.txt (variabili ricevute), cobc-info.txt,
 #       configurazione.sha256 (cartella di configurazione riportata da cobc e SHA-256 dei suoi file),
 #       runtime-config.txt (configurazione di runtime riportata da libcob).
-#       Esce con 1 se una compilazione fallisce.
+#       Esce con 1 se una compilazione fallisce o se fallisce un'acquisizione dell'ambiente.
 #   compile.sh uno TIPO SORGENTE NOME OUT [opzione cobc in piu'] [opzione C in piu' per l'avviatore]
 #                  [cartella dei copybook adattati, anteposta alle opzioni come -I<cartella>]
 #       compila un solo programma (usato dalle prove negative dei controlli, mai dalla build). Solo in
 #       questo modo UNO_OPZIONI puo' indicare un file di opzioni alterato al posto di /oracle/cobc.opts.
+#
+# Esiti (issue #35). Ogni comando il cui fallimento cambierebbe il risultato ha l'esito controllato; un
+# errore operativo ferma lo script con un messaggio che nomina il comando. Esiti diversi da 0 ammessi:
+# quello di cobc (registrato nel log e in compilazione.tsv, decide se la build fallisce) e l'esito 1 di
+# `grep -c` e di `grep -v` (nessuna riga trovata: conteggio 0, elenco senza righe di commento).
+# In modo `tutto` l'ambiente effettivo si acquisisce PRIMA di compilare: un'acquisizione fallita ferma la
+# build, e build/run.sh, che scrive l'impronta solo dopo una build riuscita, non la scrive.
 set -u
+set -o pipefail
 
 OPTFILE=/oracle/cobc.opts
 if [ "${1:-}" = uno ] && [ -n "${UNO_OPZIONI:-}" ]; then OPTFILE="$UNO_OPZIONI"; fi
@@ -45,23 +53,31 @@ die() { echo "compile.sh: $*" >&2; exit 1; }
 # Opzioni dal file: righe senza commenti e senza spazi iniziali/finali; una sola parola per riga.
 OPTS=""
 while IFS= read -r line || [ -n "$line" ]; do
-  line="$(printf '%s' "$line" | sed -e 's/#.*$//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+  line="$(printf '%s' "$line" | sed -e 's/#.*$//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')" \
+    || die "lettura delle opzioni di $OPTFILE fallita (sed)"
   [ -n "$line" ] || continue
   case "$line" in *[[:space:]]*) die "opzione con spazi in $OPTFILE: '$line'" ;; esac
   OPTS="$OPTS${OPTS:+ }$line"
-done < "$OPTFILE"
+done < "$OPTFILE" || die "lettura di $OPTFILE fallita"
 [ -n "$OPTS" ] || die "nessuna opzione in $OPTFILE"
 
 # Ambiente fissato (AMBIENTE_COBC, AMBIENTE_RUN): cobc parte sempre da `env -i` con quelle sole variabili.
 . /oracle/ambiente.sh
 
+# registra ARGOMENTI...: le righe "== cobc" e "arg <argomento>" (una per argomento) su stdout.
+registra() {
+  echo "== cobc" || return 1
+  for a in "$@"; do printf 'arg %s\n' "$a" || return 1; done
+}
+
 # cobc_reg ARGOMENTI...: registra gli argomenti nel log ($logf) e li esegue tali e quali, nell'ambiente fissato.
+# Ritorna il codice di cobc; una scrittura del log fallita ferma lo script.
 cobc_reg() {
-  { echo "== cobc"; for a in "$@"; do printf 'arg %s\n' "$a"; done; } >> "$logf"
+  registra "$@" >> "$logf" || die "scrittura del log $logf fallita"
   # shellcheck disable=SC2086
   env -i $AMBIENTE_COBC cobc "$@" >> "$logf" 2>&1
   r=$?
-  echo "== codice $r" >> "$logf"
+  echo "== codice $r" >> "$logf" || die "scrittura del log $logf fallita"
   return "$r"
 }
 
@@ -70,9 +86,9 @@ cobc_reg() {
 compila() {
   tipo="$1"; src="$2"; nome="$3"; out="$4"; xcob="${5:-}"; xc="${6:-}"; xpre=""
   [ -z "${7:-}" ] || xpre="-I$7"
-  mkdir -p "$out/bin" "$out/obj" "$out/log"
+  mkdir -p "$out/bin" "$out/obj" "$out/log" || die "impossibile creare le cartelle di $out"
   logf="$out/log/$nome.log"
-  : > "$logf"
+  : > "$logf" || die "impossibile creare $logf"
   case "$tipo" in
     modulo)
       # shellcheck disable=SC2086
@@ -94,16 +110,32 @@ compila() {
       ;;
     *) die "tipo sconosciuto: $tipo" ;;
   esac
-  echo "codice di uscita: $rc" >> "$logf"
+  echo "codice di uscita: $rc" >> "$logf" || die "scrittura del log $logf fallita"
   return "$rc"
+}
+
+# conta MODELLO FILE: stampa quante righe del FILE contengono MODELLO. Esiti ammessi di `grep -c`: 0 (almeno
+# una riga) e 1 (nessuna riga: conteggio 0, il caso normale); ogni altro esito ferma lo script.
+# Si chiama come c="$(conta ...)" || exit 1: die dentro la sostituzione di comando esce solo da quella.
+conta() {
+  c="$(grep -c -- "$1" "$2")"
+  r=$?
+  [ "$r" -le 1 ] || die "conteggio di '$1' in $2 fallito (grep, codice $r)"
+  case "$c" in ''|*[!0-9]*) die "conteggio di '$1' in $2 non numerico: '$c'" ;; esac
+  echo "$c"
 }
 
 # riga TSV: nome origine tipo codice avvertimenti errori
 riga() {
-  w="$(grep -c ': warning: ' "$4/log/$1.log")"
-  e="$(grep -c ': error: ' "$4/log/$1.log")"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$5" "$w" "$e" >> "$4/compilazione.tsv"
+  w_n="$(conta ': warning: ' "$4/log/$1.log")" || exit 1
+  e_n="$(conta ': error: ' "$4/log/$1.log")" || exit 1
+  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$5" "$w_n" "$e_n" >> "$4/compilazione.tsv" \
+    || die "scrittura di $4/compilazione.tsv fallita"
 }
+
+# esito CODICE NOME: un'acquisizione dell'ambiente (o la scrittura di un suo risultato) e' riuscita solo con
+# codice 0; altrimenti la build si ferma con un messaggio che nomina l'acquisizione.
+esito() { [ "$1" -eq 0 ] || die "acquisizione fallita: $2 (codice $1)"; }
 
 case "${1:-}" in
   tutto)
@@ -111,11 +143,63 @@ case "${1:-}" in
     elenco="$2"; out="$3"
     [ -f "$elenco" ] || die "elenco assente: $elenco"
     mkdir -p "$out" || die "impossibile creare $out"
-    printf 'programma\torigine\ttipo\tcodice_uscita\tavvertimenti\terrori\n' > "$out/compilazione.tsv"
+    # Cartella di lavoro nel container (non in OUT): file intermedi delle acquisizioni e dell'elenco.
+    w="$(mktemp -d /tmp/compile.XXXXXX)" || die "impossibile creare la cartella di lavoro"
+
+    # 1. Ambiente effettivo, sempre letto nello stesso ambiente fissato usato per compilare ed eseguire:
+    #    versioni, gestore dei file indicizzati, configurazione di runtime. Ogni acquisizione ha un nome
+    #    e un solo esito ammesso, 0.
     # shellcheck disable=SC2086
-    printf '%s\n' $OPTS > "$out/opzioni.txt"
+    env -i $AMBIENTE_COBC cobc --version > "$w/cobc-version.txt" 2>&1; esito $? "cobc --version"
+    # shellcheck disable=SC2086
+    env -i $AMBIENTE_COBC cobc --info > "$w/cobc-info.txt" 2>&1; esito $? "cobc --info (per ambiente.txt)"
+    dpkg-query -W -f '${Package} ${Version}\n' gnucobol3 libcob4t64 libcob4-dev libdb5.3t64 gcc-14 libc6 libgmp10 libxml2 \
+      > "$w/pacchetti.txt" 2>&1; esito $? "dpkg-query (pacchetti)"
+    # shellcheck disable=SC2086
+    env -i $AMBIENTE_RUN cobcrun --runtime-config > "$w/runtime-config.txt" 2>&1; esito $? "cobcrun --runtime-config (per ambiente.txt)"
+    {
+      echo "== cobc --version" && head -n 1 "$w/cobc-version.txt" \
+        && echo "== cobc --info" && sed -n '/GnuCOBOL information/,$p' "$w/cobc-info.txt" \
+        && echo "== pacchetti" && cat "$w/pacchetti.txt" \
+        && echo "== cobcrun --runtime-config" && cat "$w/runtime-config.txt"
+    } > "$out/ambiente.txt"; esito $? "composizione di ambiente.txt"
+    # Le variabili che ricevono cobc e i programmi (una per riga, nell'ordine dell'elenco).
+    # shellcheck disable=SC2086
+    env -i $AMBIENTE_COBC env > "$out/ambiente-cobc.txt"; esito $? "env (ambiente di cobc)"
+    # shellcheck disable=SC2086
+    env -i $AMBIENTE_RUN env > "$out/ambiente-run.txt"; esito $? "env (ambiente dei programmi)"
+    # Configurazione del compilatore come la riporta cobc stesso (cobc --info: COB_CONFIG_DIR, piu' una
+    # riga "env:" per ogni variabile che la sostituisce) e contenuto della cartella effettivamente usata.
+    # shellcheck disable=SC2086
+    env -i $AMBIENTE_COBC cobc --info > "$out/cobc-info.txt" 2>&1; esito $? "cobc --info (per cobc-info.txt)"
+    # Cartella usata: il percorso della riga "  env: COB_CONFIG_DIR    : <percorso>" se c'e', altrimenti
+    # quello della riga "COB_CONFIG_DIR           : <percorso>". Il percorso e' cio' che segue il primo
+    # ": " dopo il nome della variabile, senza spazi finali (prima si prendeva il secondo campo, che nella
+    # riga "env:" e' il nome della variabile: rilievo 2 del giro 3 della PR #29).
+    cfg="$(awk '
+      /^  env: COB_CONFIG_DIR[[:space:]]*: / { e = $0; sub(/^  env: COB_CONFIG_DIR[[:space:]]*: /, "", e) }
+      /^COB_CONFIG_DIR[[:space:]]*: /        { d = $0; sub(/^COB_CONFIG_DIR[[:space:]]*: /, "", d) }
+      END { v = (e != "" ? e : d); sub(/[[:space:]]+$/, "", v); print v }' "$out/cobc-info.txt")"
+    esito $? "estrazione della cartella di configurazione da cobc --info (awk)"
+    [ -n "$cfg" ] || die "acquisizione fallita: cobc --info non riporta la cartella di configurazione"
+    nomi="$(cd "$cfg" && LC_ALL=C ls -A)"; esito $? "elenco dei file di configurazione di $cfg (ls)"
+    printf '%s\n' "$nomi" > "$w/configurazione.elenco"; esito $? "scrittura dell'elenco dei file di configurazione"
+    echo "cartella $cfg" > "$out/configurazione.sha256"; esito $? "scrittura di configurazione.sha256"
+    while IFS= read -r f; do
+      [ -n "$f" ] || continue
+      (cd "$cfg" && sha256sum "$f") >> "$out/configurazione.sha256"; esito $? "sha256sum di $f"
+    done < "$w/configurazione.elenco" || exit 1
+    # Configurazione di runtime come la riporta libcob (cobcrun --runtime-config) nell'ambiente dei programmi.
+    # shellcheck disable=SC2086
+    env -i $AMBIENTE_RUN cobcrun --runtime-config > "$out/runtime-config.txt" 2>&1; esito $? "cobcrun --runtime-config (per runtime-config.txt)"
+
+    # 2. Compilazioni.
+    printf 'programma\torigine\ttipo\tcodice_uscita\tavvertimenti\terrori\n' > "$out/compilazione.tsv" \
+      || die "scrittura di $out/compilazione.tsv fallita"
+    # shellcheck disable=SC2086
+    printf '%s\n' $OPTS > "$out/opzioni.txt" || die "scrittura di $out/opzioni.txt fallita"
     for f in /oracle/stubs/*.cbl; do
-      n="$(basename "$f" .cbl)"
+      n="$(basename "$f" .cbl)" || die "basename di $f fallito"
       compila modulo "$f" "$n" "$out"; rc=$?
       riga "$n" stub modulo "$out" "$rc"
     done
@@ -125,50 +209,36 @@ case "${1:-}" in
     mkdir -p "$out/log" || die "impossibile creare $out/log"
     sh /oracle/adattamenti/adatta.sh /legacy "$out/adattati" > "$adatta_log" 2>&1 \
       || { cat "$adatta_log" >&2; die "generazione delle copie adattate fallita"; }
-    # Programmi del legacy: righe non commento, intestazione esclusa.
-    grep -v '^#' "$elenco" | tail -n +2 | while IFS="$(printf '\t')" read -r n src tipo motivo; do
+    # Programmi del legacy: righe non commento, intestazione esclusa. Esiti ammessi di `grep -v`: 0 e 1
+    # (nessuna riga selezionata). L'elenco si legge da un file, non da una pipeline: il ciclo gira in
+    # questa shell e un errore al suo interno ferma lo script.
+    grep -v '^#' "$elenco" > "$w/elenco.tsv"
+    r=$?; [ "$r" -le 1 ] || die "lettura dell'elenco $elenco fallita (grep, codice $r)"
+    tail -n +2 "$w/elenco.tsv" > "$w/elenco-righe.tsv" || die "lettura dell'elenco $elenco fallita (tail)"
+    while IFS="$(printf '\t')" read -r n src tipo motivo; do
       [ -n "$n" ] || continue
       case " $ADATTATI " in
         *" $n "*)
-          compila "$tipo" "$out/adattati/$(basename "$src")" "$n" "$out" "" "" "$out/adattati"; rc=$?
+          b="$(basename "$src")" || die "basename di $src fallito"
+          compila "$tipo" "$out/adattati/$b" "$n" "$out" "" "" "$out/adattati"; rc=$?
           riga "$n" adattato "$tipo" "$out" "$rc" ;;
         *)
           compila "$tipo" "/legacy/$src" "$n" "$out"; rc=$?
           riga "$n" legacy "$tipo" "$out" "$rc" ;;
       esac
-    done
+    done < "$w/elenco-righe.tsv" || exit 1
     for n in $PROVE; do
       compila eseguibile "/oracle/tests/$n.cbl" "$n" "$out"; rc=$?
       riga "$n" prova eseguibile "$out" "$rc"
     done
-    rm -rf "$out/obj"
-    # Ambiente effettivo, sempre letto nello stesso ambiente fissato usato per compilare ed eseguire:
-    # versioni, gestore dei file indicizzati, configurazione di runtime.
-    # shellcheck disable=SC2086
-    {
-      echo "== cobc --version"; env -i $AMBIENTE_COBC cobc --version | head -1
-      echo "== cobc --info"; env -i $AMBIENTE_COBC cobc --info | sed -n '/GnuCOBOL information/,$p'
-      echo "== pacchetti"
-      dpkg-query -W -f '${Package} ${Version}\n' gnucobol3 libcob4t64 libcob4-dev libdb5.3t64 gcc-14 libc6 libgmp10 libxml2
-      echo "== cobcrun --runtime-config"; env -i $AMBIENTE_RUN cobcrun --runtime-config 2>&1
-    } > "$out/ambiente.txt" 2>&1
-    # Le variabili che ricevono cobc e i programmi (una per riga, nell'ordine dell'elenco).
-    # shellcheck disable=SC2086
-    env -i $AMBIENTE_COBC env > "$out/ambiente-cobc.txt"
-    # shellcheck disable=SC2086
-    env -i $AMBIENTE_RUN env > "$out/ambiente-run.txt"
-    # Configurazione del compilatore come la riporta cobc stesso (cobc --info: COB_CONFIG_DIR, piu' una
-    # riga "env:" per ogni variabile che la sostituisce) e contenuto della cartella effettivamente usata.
-    # shellcheck disable=SC2086
-    env -i $AMBIENTE_COBC cobc --info > "$out/cobc-info.txt" 2>&1
-    cfg="$(awk -F': ' '/^  env: COB_CONFIG_DIR/ {e=$2} /^COB_CONFIG_DIR/ {d=$2} END {print (e != "" ? e : d)}' "$out/cobc-info.txt" | sed 's/[[:space:]]*$//')"
-    { echo "cartella $cfg"; (cd "$cfg" && LC_ALL=C ls -A | while read -r f; do sha256sum "$f"; done); } > "$out/configurazione.sha256"
-    # Configurazione di runtime come la riporta libcob (cobcrun --runtime-config) nell'ambiente dei programmi.
-    # shellcheck disable=SC2086
-    env -i $AMBIENTE_RUN cobcrun --runtime-config > "$out/runtime-config.txt" 2>&1
+    rm -rf "$out/obj" || die "impossibile cancellare $out/obj"
     # Un programma che non compila fa fallire la build (le righe con codice diverso da 0).
-    fl="$(awk -F'\t' 'NR>1 && $4!=0' "$out/compilazione.tsv" | wc -l)"
-    [ "$fl" -eq 0 ] || { awk -F'\t' 'NR>1 && $4!=0 {print "compile.sh: compilazione fallita: " $1}' "$out/compilazione.tsv" >&2; exit 1; }
+    awk -F'\t' 'NR>1 && $4!=0 {print $1}' "$out/compilazione.tsv" > "$w/falliti.txt" \
+      || die "lettura di $out/compilazione.tsv fallita (awk)"
+    if [ -s "$w/falliti.txt" ]; then
+      while IFS= read -r n; do echo "compile.sh: compilazione fallita: $n" >&2; done < "$w/falliti.txt"
+      exit 1
+    fi
     ;;
   uno)
     [ $# -ge 5 ] || die "uso: compile.sh uno TIPO SORGENTE NOME OUT [opzione cobc] [opzione C] [cartella adattati]"

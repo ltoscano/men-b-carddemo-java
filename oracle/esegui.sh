@@ -45,7 +45,9 @@ t="${ORACLE_TIMEOUT_RUN:-60}"
 [ -x "$BIN/$nome" ] || { echo "esegui.sh: eseguibile assente: $BIN/$nome" >&2; exit 2; }
 lav="$out/lavoro-$nome"
 rm -rf "$lav" && mkdir -p "$lav" || { echo "esegui.sh: cartella di lavoro non creabile: $lav" >&2; exit 2; }
-[ -z "$(ls -A "$lav")" ] || { echo "esegui.sh: cartella di lavoro non vuota: $lav" >&2; exit 2; }
+# Esito di ls controllato (issue #35): prima si perdeva dentro [ -z "$(ls -A ...)" ].
+vuota="$(ls -A "$lav")" || { echo "esegui.sh: cartella di lavoro non elencabile: $lav" >&2; exit 2; }
+[ -z "$vuota" ] || { echo "esegui.sh: cartella di lavoro non vuota: $lav" >&2; exit 2; }
 so="$out/$nome.stdout"; se="$out/$nome.stderr"
 cd "$lav" || exit 2
 # shellcheck disable=SC2086
@@ -59,17 +61,27 @@ else
 fi
 rc=$?
 cd / || exit 2
-{
-  echo "== codice di uscita"
-  echo "$rc"
-  echo "== stdout"
-  cat "$so"
-  echo "== stderr"
-  cat "$se"
-  echo "== file nella cartella di lavoro"
-  ( cd "$lav" && for f in $(ls -A | sort); do echo "$f $(wc -c < "$f" | tr -d ' ')"; done )
-} > "$out/$nome.txt" || { echo "esegui.sh: rapporto non scrivibile" >&2; exit 2; }
-rm -f "$so" "$se"
+# Il rapporto, con l'esito di ogni comando controllato (issue #35): prima gli esiti di cat, ls, sort e wc si
+# perdevano dentro il gruppo, la pipeline e le sostituzioni di comando, e un rapporto incompleto passava.
+# file_lavoro: una riga "<nome> <byte>" per file della cartella di lavoro, in ordine (formato invariato).
+file_lavoro() (
+  cd "$lav" || exit 1
+  nomi="$(ls -A)" || exit 1
+  nomi="$(printf '%s\n' "$nomi" | sort)" || exit 1
+  for f in $nomi; do
+    b="$(wc -c < "$f")" || exit 1
+    b="$(printf '%s' "$b" | tr -d ' ')" || exit 1
+    echo "$f $b" || exit 1
+  done
+)
+rapporto() {
+  echo "== codice di uscita" && echo "$rc" \
+    && echo "== stdout" && cat "$so" \
+    && echo "== stderr" && cat "$se" \
+    && echo "== file nella cartella di lavoro" && file_lavoro
+}
+rapporto > "$out/$nome.txt" || { echo "esegui.sh: rapporto non scrivibile o incompleto" >&2; exit 2; }
+rm -f "$so" "$se" || { echo "esegui.sh: file temporanei non rimovibili: $so $se" >&2; exit 2; }
 # 124/137: limite di tempo scaduto. E' un fallimento dello strumento, non un comportamento da registrare.
 case "$rc" in 124|137) echo "esegui.sh: $nome non e' terminato entro ${t}s" >&2; exit 3 ;; esac
 exit 0

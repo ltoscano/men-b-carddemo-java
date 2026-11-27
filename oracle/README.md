@@ -7,7 +7,7 @@ Sull'host servono solo Docker, Git e le utility POSIX. GnuCOBOL gira nel contain
 ```
 git submodule update --init
 ./oracle/run.sh build              # immagine, volume del legacy, compilazione (circa 20 s con la cache di Docker)
-./oracle/run.sh --all --check      # tutti i controlli, con le prove negative (circa 2,5 minuti)
+./oracle/run.sh --all --check      # tutti i controlli, con le prove negative (alcuni minuti; anche in CI, .github/workflows/oracle.yml)
 ./oracle/run.sh avvio --check      # un solo controllo
 ```
 
@@ -25,7 +25,7 @@ git submodule update --init
 | `ambiente.sh` | (nel container) l'ambiente fissato: le sole variabili che ricevono `cobc` e i programmi |
 | `esegui.sh` | (nel container) avvia un eseguibile in una cartella vuota, nell'ambiente fissato, e scrive il rapporto (codice di uscita, stdout, stderr, file creati) e l'ambiente ricevuto dal programma |
 | `lib.sh` | funzioni comuni: immagine, volume del legacy, esecuzione nel container con limite di tempo, impronta della build, prove negative |
-| `build/` | passo `build`: compila tutto in `build/out/` (ignorato da git); `check.sh` rifà la build e la verifica contro elenchi fissi, compresi gli argomenti esatti di ogni invocazione di `cobc` |
+| `build/` | passo `build`: compila tutto in `build/out/` (ignorato da git); `check.sh` rifà la build e la verifica contro elenchi fissi, compresi gli argomenti esatti di ogni invocazione di `cobc`; `avvolgi.sh` è l'involucro delle prove sugli esiti dei comandi (sezione "Esiti dei comandi") |
 | `avvio/` | passo `avvio`: prova di avvio reale di ogni eseguibile e dei due moduli; attesi in `avvio/expected/` |
 | `avviatore/` | passo `avviatore`: `PARMECHO` riceve `2022071800`; attesi in `avviatore/expected/` |
 | `abend/` | passo `abend`: `CEE3ABD` nelle due forme di chiamata; attesi in `abend/expected/` |
@@ -62,6 +62,8 @@ Il controllo della build verifica ciò che compilatore e runtime riportano di av
 - `cobc --info` riporta `COB_CONFIG_DIR : /usr/share/gnucobol/config` e `COB_COPY_DIR : /usr/share/gnucobol/copy`, e nessuna riga `env:` (la riga con cui `cobc` segnala una variabile che sostituisce la propria configurazione);
 - la cartella di configurazione così riportata e lo SHA-256 di ognuno dei suoi 40 file (`.conf`, `.words`, `.ttbl`, `runtime.cfg`) coincidono con `build/expected/configurazione.sha256`. `cobc` non dice quali file della cartella legge: si fissa la cartella intera;
 - `cobcrun --runtime-config` riporta esattamente `build/expected/runtime-config.txt`: `runtime.cfg` dell'immagine, tutte le impostazioni al default o non impostate, la sola riga `env:` è `COB_LIBRARY_PATH : /oracle-bin`.
+
+La cartella di configurazione registrata in `configurazione.sha256` è quella che `cobc --info` dichiara di usare: il percorso della riga `env: COB_CONFIG_DIR : <percorso>` se c'è, altrimenti quello della riga `COB_CONFIG_DIR : <percorso>`. Fino alla issue #35 dalla riga `env:` si prendeva il nome della variabile al posto del percorso (rilievo 2 del giro 3 della PR #29): il controllo restava rosso, ma con la diagnostica sbagliata (`can't cd to COB_CONFIG_DIR`) e senza le impronte della cartella realmente usata. Oggi `build/check.sh` confronta per intero il manifesto della build con configurazione alternativa con uno acquisito in modo indipendente (percorso passato dal controllo, nomi elencati con `find`, hash con un solo `sha256sum`), verifica che nel log non ci sia `can't cd` e che la configurazione resti comunque rifiutata.
 
 I due file attesi sono la configurazione dell'immagine così com'è, registrata una volta e da allora fissa: sono l'identità della configurazione, non valori derivati dal sorgente. Gli SHA-256 dei file di configurazione entrano anche nell'impronta della build. Ogni esecuzione registra inoltre l'ambiente ricevuto dal programma (`<P>.ambiente`), che i controlli dei passi confrontano con quello fissato.
 
@@ -215,9 +217,28 @@ Marcatura: **verificata qui** = un controllo di questa issue la dimostra; **misu
 | Chiamate dinamiche | Misurato in validazione: `M03BCALL` con `CBSTM03B` collegato staticamente o dinamicamente dà lo stesso output | misurata in validazione per un caso |
 | `DISPLAY` e `ACCEPT FROM SYSIN` | stdout e stdin del processo al posto di `SYSOUT` e della DD `SYSIN` | verificata qui (stdout); `SYSIN` vuoto osservato solo per `COBSWAIT` |
 
+## Esiti dei comandi (issue #35)
+
+Un controllo che non si accorge di un comando fallito dà un falso verde: al giro 3 della PR #29 un `cobcrun --runtime-config` che stampava l'output giusto e poi usciva con 42 lasciava verde tutta la suite. Da #35, negli script `build/compile.sh`, `build/verifica.sh`, `build/run.sh`, `build/check.sh`, `lib.sh` ed `esegui.sh`:
+
+- **Acquisizioni della build.** `compile.sh tutto` legge l'ambiente effettivo (`cobc --version`, due `cobc --info`, `dpkg-query`, due `cobcrun --runtime-config`, le due liste di variabili con `env`, l'estrazione della cartella di configurazione, l'elenco dei suoi file e lo `sha256sum` di ognuno) **prima** di compilare, ciascuno con il suo nome e un solo esito ammesso, 0. Un'acquisizione fallita ferma la build con `compile.sh: acquisizione fallita: <nome> (codice <n>)`; `build/run.sh`, che scrive `build/out/IMPRONTA` solo dopo una build riuscita, non la scrive.
+- **Esiti ammessi diversi da 0.** Quello di `cobc` (registrato nel log e in `compilazione.tsv`: decide se la build fallisce) e l'esito 1 di `grep` quando non trova righe (`grep -c` con conteggio 0, `grep -v` su un elenco senza commenti, `grep -E` senza righe `env:`). Ogni altro esito è un errore operativo: ferma lo script o, in `verifica.sh`, è un `DIFETTO`.
+- **Costrutti eliminati.** Le sostituzioni di comando `$(…)` dentro gli argomenti di un altro comando (`echo`, `[`, `docker`, `orun`), dove il loro fallimento si perdeva e poteva cambiare l'esito, e le pipeline il cui primo comando poteva fallire senza effetto sull'esito (`grep | wc`, `nm | awk`, `ls | sort` dentro `for`). Al loro posto: assegnazioni con l'esito controllato, file intermedi, `set -o pipefail` (anche in `compile.sh` e `verifica.sh`, che girano con `dash`). Restano sostituzioni dentro i soli messaggi di diagnostica, scritti quando l'esito è già deciso (per esempio l'elenco delle differenze dopo un `DIFETTO`): un loro fallimento cambia il testo, non l'esito.
+
+Le prove sono in `build/check.sh`, punto 6. Lo schema è sempre lo stesso: un solo comando alla volta è avvolto da `build/avvolgi.sh`, che lo esegue davvero (output autentico), scrive una riga nel registro (`<ID> <invocazione> <esito reale> <esito restituito> <argomenti>`) e restituisce 42. Ogni prova verifica che lo script fallisca per il motivo atteso e, dal registro, che il comando bersaglio sia stato raggiunto con l'esito reale atteso. Le invocazioni ripetute dello stesso comando si provano separatamente (`42@N`: solo l'N-esima; `42:ARG`: solo quella con quell'argomento).
+
+- Acquisizioni: la **build di produzione** (`build/run.sh` con `lib.sh` e l'impronta) gira su una copia dell'oracle in `.work/`, con il legacy collegato, in cui `compile.sh` ha un solo comando avvolto; per ogni punto si verifica anche che `IMPRONTA` non esista. Nel ciclo degli hash fallisce il secondo file (`acu.conf`) dei 40, non l'ultimo. Controprova: tutti gli involucri insieme in modo `passa`, la build riesce, scrive l'impronta e i suoi risultati sono identici a quelli della build normale.
+- `esegui.sh` e `verifica.sh`: l'involucro sta davanti nel `PATH` del container (i programmi compilati non lo vedono: partono da `env -i` con `PATH=/usr/bin:/bin`). Controprove con gli involucri in modo `passa`.
+- `lib.sh` e le funzioni di `check.sh`, sull'host: il comando è sostituito da una funzione della shell che lo esegue davvero e restituisce 42.
+
+Confronto tra CI e locale: le prove eseguite per passo si contano sul log di `./oracle/run.sh --all --check` con lo stesso `awk` dell'ultimo passo di `.github/workflows/oracle.yml`.
+
+**Limite dichiarato** (regola del registro delle approvazioni nata dalla PR #20): i controlli si accorgono di un comando che fallisce, di un'attesa che non finisce, di una risposta malformata o incompleta, di un risultato rimasto da una corsa precedente; non si difendono da uno strumento sostituito che restituisce dati falsi ma ben formati con esito 0.
+
 ## Limiti
 
-- La CI del repository esegue solo `./verify.sh`: questi controlli non girano in CI (il workflow è fuori dal perimetro di #4).
+- I controlli girano in CI con `.github/workflows/oracle.yml` (issue #35), come utente non privilegiato: il workflow lo esige, perché le prove che rendono un file illeggibile con `chmod 000` con `root` si fermerebbero con un errore esplicito, e registra l'UID effettivo dei container (`orun -- id`).
+- Il primo passo della CI costruisce l'immagine dell'oracle su una macchina nuova, con i pacchetti dell'archivio Debian corrente (versioni fissate solo per GnuCOBOL e Berkeley DB, vedi sotto): l'architettura del runner (amd64) può differire da quella locale.
 - Nessun programma del legacy gira sui dati reali (#5). Dei dati si legge `dailytran.txt` (sonda sul segno) e, per lo scenario di `CBSTM03A`, 13 righe di `cardxref.txt`, `custdata.txt`, `acctdata.txt` e `dailytran.txt` caricate in quattro piccoli file indicizzati (`adattamenti/registro.md`).
 - `CBSTM03A` gira da una copia adattata: le righe di console delle righe 266-291 (nome del job e nomi DD letti dai blocchi di controllo di z/OS) non sono riprodotte (`adattamenti/registro.md`).
 - Il controllo degli argomenti di `cobc` legge ciò che `compile.sh` registra: dimostra che le invocazioni registrate sono quelle attese, e `compile.sh` registra gli argomenti nello stesso punto in cui li passa a `cobc`. Una modifica a `compile.sh` che registrasse argomenti diversi da quelli eseguiti non sarebbe vista da questo controllo; per il segno la sonda `SEGNOPRB` ne verifica comunque l'effetto, per gli altri effetti no.

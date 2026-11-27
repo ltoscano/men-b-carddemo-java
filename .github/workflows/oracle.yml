@@ -1,0 +1,54 @@
+name: Oracle GnuCOBOL
+
+# Controlli di oracle/ (build, passi, prove negative): ./oracle/run.sh --all --check (issue #35).
+# File distinto da ci.yml e analysis.yml.
+on:
+  push:
+  pull_request:
+
+jobs:
+  oracle-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      # orun (oracle/lib.sh) esegue i container con UID e GID dell'host. Le prove che rendono un file
+      # illeggibile con chmod 000 (build/check.sh, adattamenti/check.sh) si fermano con un errore esplicito
+      # se il processo e' root: il workflow deve girare come utente non privilegiato, e qui lo si esige.
+      - name: Utente dell'host
+        run: |
+          set -euo pipefail
+          uid="$(id -u)"
+          gid="$(id -g)"
+          echo "UID dell'host: ${uid}, GID: ${gid}"
+          if [ "${uid}" -eq 0 ]; then
+            echo "ERRORE: il workflow gira come root: le prove con chmod 000 non sarebbero eseguite"
+            exit 1
+          fi
+      # Il runner parte senza immagine ne' volume: build/run.sh costruisce l'immagine dell'oracle e crea il
+      # volume del legacy. L'output completo resta nel log della corsa e in oracle-check.log.
+      - name: Controlli di oracle/
+        timeout-minutes: 40
+        run: |
+          set -euo pipefail
+          ./oracle/run.sh --all --check 2>&1 | tee oracle-check.log
+      # UID effettivo nei container dell'oracle, letto con la stessa funzione orun usata dai controlli.
+      - name: UID effettivo nei container
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          ORACLE_ROOT="$PWD/oracle" ORACLE_NAME=uid bash -c '. "$ORACLE_ROOT/lib.sh"; orun -- id'
+      # Prove negative e controprove eseguite per passo, e quelle con file illeggibili: da confrontare con
+      # lo stesso comando eseguito in locale sul log di ./oracle/run.sh --all --check (oracle/README.md).
+      - name: Prove eseguite per passo
+        if: always()
+        run: |
+          set -euo pipefail
+          test -s oracle-check.log
+          awk '/^== [^ ]+: check\.sh$/ {p = $2; sub(/:$/, "", p); o[++k] = p}
+               /prova negativa ok:/ {n[p]++; if ($0 ~ /prova negativa ok: [^(]*illeggibile/) i[p]++}
+               /controprova ok/ {c[p]++}
+               END {for (j = 1; j <= k; j++) printf "%-12s prove negative %3d  controprove %d  con file illeggibili %d\n", o[j], n[o[j]], c[o[j]], i[o[j]]}' \
+            oracle-check.log
