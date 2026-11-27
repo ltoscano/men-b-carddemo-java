@@ -9,13 +9,13 @@ INV_JOBS=6
 py() {
   local rw="$1"; shift
   docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e PYTHONDONTWRITEBYTECODE=1 \
-    -v "$ANALYSIS_ROOT:/analysis:ro" -v "$LEGACY_VOL:/legacy:ro" -v "$rw:/work" "$GLUE_IMAGE" python -I "$@"
+    -v "$ANALYSIS_ROOT:/analysis:ro" -v "$DOCS_DIR:/docs:ro" -v "$LEGACY_VOL:/legacy:ro" -v "$rw:/work" "$GLUE_IMAGE" python -I "$@"
 }
 # psh RW_DIR comando...: come py, ma esegue un comando di shell nel container (sh -c).
 psh() {
   local rw="$1"; shift
   docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e PYTHONDONTWRITEBYTECODE=1 \
-    -v "$ANALYSIS_ROOT:/analysis:ro" -v "$LEGACY_VOL:/legacy:ro" -v "$rw:/work" "$GLUE_IMAGE" sh -c "$*"
+    -v "$ANALYSIS_ROOT:/analysis:ro" -v "$DOCS_DIR:/docs:ro" -v "$LEGACY_VOL:/legacy:ro" -v "$rw:/work" "$GLUE_IMAGE" sh -c "$*"
 }
 G() { echo "/analysis/inventory/glue/$1"; }
 

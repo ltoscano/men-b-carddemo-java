@@ -41,7 +41,7 @@ schema "$gen/docs/graph.json" || fail "graph.json non e' valido rispetto allo sc
 
 log "4. conteggi indipendenti, righe, livelli, attesi a mano (verify.py)"
 verify() { # verify GRAPH(in /work) [EXPECTED(in container)]
-  psh "$gen" "python -I $(G verify.py) $1 /work/tmp/counts.json /work/out ${2:-/analysis/inventory/expected}"
+  psh "$gen" "python -I $(G verify.py) $1 /work/tmp/counts.json /work/out ${2:-/analysis/inventory/expected} /docs/graph.schema.json"
 }
 verify /work/docs/graph.json | tail -3 >&2 || fail "verifica del grafo fallita"
 # secondo conteggio, senza Python (awk), contro quello di Python
@@ -76,7 +76,7 @@ log "   ok: un DD DATA senza delimitatore fa fallire l'estrattore in modo esplic
 log "5. prove negative sul grafo (ogni alterazione deve far fallire verify.py per il motivo atteso)"
 neg() { # neg NOME KIND NEEDLE
   local name="$1" kind="$2" needle="$3" out rc=0
-  out="$(psh "$gen" "python -I $(G mutate.py) $kind /work/docs/graph.json /work/m.json && python -I $(G verify.py) /work/m.json /work/tmp/counts.json /work/out /analysis/inventory/expected" 2>&1)" || rc=$?
+  out="$(psh "$gen" "python -I $(G mutate.py) $kind /work/docs/graph.json /work/m.json && python -I $(G verify.py) /work/m.json /work/tmp/counts.json /work/out /analysis/inventory/expected /docs/graph.schema.json" 2>&1)" || rc=$?
   [ "$rc" -ne 0 ] || { echo "$out" | tail -3 >&2; fail "PROVA NEGATIVA FALLITA ($name): il controllo e' rimasto verde"; }
   echo "$out" | grep -q -- "$needle" || { echo "$out" | head -5 >&2; fail "prova negativa ($name): fallito ma non per il motivo atteso ('$needle')"; }
   log "   ok: $name (exit $rc)"
@@ -101,13 +101,49 @@ neg "una transazione puntata al programma di un'altra" transaction-to-other-prog
 neg "un dataset rinominato (anche nei campi DSN)" dataset-renamed "JCL: app/jcl/INTCALC.jcl:"
 neg "il programma eseguito da un passo cambiato (WAITSTEP)" exec-target "JCL: app/jcl/WAITSTEP.jcl:"
 neg "il DISP di una DD alterato" dd-disp "dsn/disp sorgente del grafo"
+neg "generazione GDG alterata (COMBTRAN SORTOUT, non campionata a mano)" gdg-generation "gdg/generazione/membro"
+neg "flag gdg spento su una DD (+1)" gdg-flag "gdg/generazione/membro"
+neg "membro alterato (CREADB21 riga 46)" member-altered "gdg/generazione/membro"
+neg "contenitore di un passo alterato (WAITSTEP)" container-altered "contenitore"
+neg "classe di una DD alterata" dd-classe "classe"
+neg "fonte di un'esecuzione alterata" exec-fonte "dell'esecuzione diversa"
+neg "fonte dell'appartenenza job-passo alterata" contain-fonte "dell'appartenenza al contenitore diversa"
+neg "modulo di un programma alterato" node-modulo "modulo"
+neg "ordinale di un passo alterato" step-ordinale "senza passo o senza esecuzione nel grafo"
+neg "attributo simbolico su un dataset non simbolico" dataset-simbolico "simbolico"
+neg "origine di un nodo external alterata" external-origine "origine"
+neg "modulo di una transazione alterato" transaction-file "modulo"
+
+log "5b. prova negativa: un attributo aggiunto allo schema e non elencato in ATTRS deve far fallire il controllo"
+py "$gen" -c "import json;s=json.load(open('/docs/graph.schema.json'));s['\$defs']['occ_dd']['properties']['nuovo_attributo']={'type':'string'};json.dump(s,open('/work/schema-plus.json','w'))"
+rc=0; out="$(psh "$gen" "python -I $(G verify.py) /work/docs/graph.json /work/tmp/counts.json /work/out /analysis/inventory/expected /work/schema-plus.json" 2>&1)" || rc=$?
+[ "$rc" -ne 0 ] && echo "$out" | grep -q "attributo dello schema non coperto: occ_dd.nuovo_attributo" || fail "PROVA NEGATIVA FALLITA: un attributo nuovo dello schema non fa fallire il controllo"
+log "   ok: attributo nuovo non coperto rifiutato (exit $rc)"
+
+log "5c. prove negative sull'output di mapa (struttura e tipi di record, per ogni invocazione, anche per i file al livello B)"
+negmapa() { # negmapa NOME FILE-JCL COMANDO-SU-DIR-COPIA NEEDLE
+  local name="$1" f="$2" cmd="$3" needle="$4" out rc=0 n
+  n="$(echo "$f" | tr '/' '_')"
+  rm -rf "$tmp/mp" && mkdir -p "$tmp/mp/raw" "$tmp/mp/out" && cp "$gen/tmp/mapa"/* "$tmp/mp/raw/"
+  ( cd "$tmp/mp/raw" && eval "$cmd" )
+  out="$(psh "$tmp/mp" "python -I $(G normalize.py) mapa /work/raw /work/out" 2>&1)" || rc=$?
+  [ "$rc" -ne 0 ] || fail "PROVA NEGATIVA FALLITA ($name): output di mapa non riconoscibile accettato"
+  echo "$out" | grep -q -- "$needle" || { echo "$out" | head -3 >&2; fail "prova negativa ($name): motivo inatteso ('$needle')"; }
+  log "   ok: $name (exit $rc)"
+}
+T=app_app-transaction-type-db2_jcl_TRANEXTR.jcl
+negmapa "CSV di TRANEXTR (livello B) sostituito da una riga di testo" app/app-transaction-type-db2/jcl/TRANEXTR.jcl "printf 'TRUNCATED INVALID RESPONSE\\n' > $T.csv" "non riconoscibile"
+negmapa "CSV di TRANEXTR svuotato (senza il messaggio 'neither jobs nor procs')" app/app-transaction-type-db2/jcl/TRANEXTR.jcl ": > $T.csv" "output vuoto"
+negmapa "CSV di POSTTRAN con un record JOBSTEPDD troncato" app/jcl/POSTTRAN.jcl "awk 'BEGIN{FS=OFS=\",\"} /^JOBSTEPDD/ { if (!d) { print \$1,\$2,\$3; d=1; next } } {print}' app_jcl_POSTTRAN.jcl.csv > x.tmp; mv x.tmp app_jcl_POSTTRAN.jcl.csv" "record JOBSTEPDD con"
+negmapa "log di mapa di TRANEXTR troncato" app/app-transaction-type-db2/jcl/TRANEXTR.jcl "printf 'x\\n' > $T.stdout" "Processing complete"
+negmapa "CSV di mapa mancante" app/jcl/POSTTRAN.jcl "rm app_jcl_POSTTRAN.jcl.csv" "output o log mancante"
 
 log "6. prove negative sugli attesi scritti a mano (si altera l'atteso, il grafo resta quello vero)"
 negexp() { # negexp NOME FILE SED-EXPR NEEDLE
   local name="$1" file="$2" expr="$3" needle="$4" out rc=0
   rm -rf "$gen/exp" && cp -R "$INV_DIR/expected" "$gen/exp"
   if [ "$expr" = "rm" ]; then rm -f "$gen/exp/$file"; else sed -i.bak "$expr" "$gen/exp/$file" && rm -f "$gen/exp/$file.bak"; cmp -s "$gen/exp/$file" "$INV_DIR/expected/$file" && fail "prova negativa ($name): la mutazione dell'atteso non ha cambiato nulla"; fi
-  out="$(psh "$gen" "python -I $(G verify.py) /work/docs/graph.json /work/tmp/counts.json /work/out /work/exp" 2>&1)" || rc=$?
+  out="$(psh "$gen" "python -I $(G verify.py) /work/docs/graph.json /work/tmp/counts.json /work/out /work/exp /docs/graph.schema.json" 2>&1)" || rc=$?
   [ "$rc" -ne 0 ] || fail "PROVA NEGATIVA FALLITA ($name): atteso alterato ma il controllo e' verde"
   echo "$out" | grep -q -- "$needle" || { echo "$out" | head -5 >&2; fail "prova negativa ($name): fallito ma non per il motivo atteso ('$needle')"; }
   log "   ok: $name (exit $rc)"

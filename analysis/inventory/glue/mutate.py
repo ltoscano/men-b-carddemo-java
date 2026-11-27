@@ -113,6 +113,32 @@ elif kind == "exec-target":                   # WAITSTEP: il programma eseguito 
     find("PASSO_ESEGUE", "jcl-step:WAITSTEP/WAIT")["a"] = "program:CBACT01C"
 elif kind == "dd-disp":                       # il DISP di una DD alterato (resto invariato)
     find("PASSO_DD", "jcl-step:POSTTRAN/STEP15", "dataset:AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS")["occorrenze"][0]["disp_sorgente"] = "OLD"
+elif kind == "gdg-generation":                # generazione GDG alterata su una DD non campionata a mano (COMBTRAN SORTOUT)
+    find("PASSO_DD", "jcl-step:COMBTRAN/STEP05R", "dataset:AWS.M2.CARDDEMO.TRANSACT.COMBINED")["occorrenze"][0]["generazione"] = "-1"
+elif kind == "gdg-flag":                      # il flag gdg spento su una DD (+1)
+    find("PASSO_DD", "jcl-step:INTCALC/STEP15", "dataset:AWS.M2.CARDDEMO.SYSTRAN")["occorrenze"][0]["gdg"] = False
+elif kind == "member-altered":                # membro alterato (CREADB21 riga 46, livello B)
+    e = find("PASSO_DD", "jcl-step:CREADB21/FREEPLN", "dataset:&LBNM..CNTL")
+    assert e["occorrenze"][0]["membro"] == "DB2FREE"
+    e["occorrenze"][0]["membro"] = "FAKE"
+elif kind == "container-altered":             # metadato contenitore di un passo alterato
+    next(n for n in g["nodi"] if n["id"] == "jcl-step:WAITSTEP/WAIT")["contenitore"] = "proc:REPROC"
+elif kind == "dd-classe":                     # classe di una DD SYSOUT alterata
+    find("PASSO_DD", "jcl-step:INTCALC/STEP15", "dataset:~SYSOUT")["occorrenze"][0]["classe"] = "reale"
+elif kind == "exec-fonte":
+    find("PASSO_ESEGUE", "jcl-step:INTCALC/STEP15")["occorrenze"][0]["fonte"] = "schede"
+elif kind == "contain-fonte":
+    find("JOB_PASSO", "jcl-job:INTCALC")["occorrenze"][0]["fonte"] = "schede"
+elif kind == "node-modulo":
+    next(n for n in g["nodi"] if n["id"] == "program:CBPAUP0C")["modulo"] = "base"
+elif kind == "step-ordinale":
+    next(n for n in g["nodi"] if n["id"] == "jcl-step:CARDFILE/STEP10")["ordinale"] = 99
+elif kind == "dataset-simbolico":
+    next(n for n in g["nodi"] if n["id"] == "dataset:AWS.M2.CARDDEMO.LOADLIB")["simbolico"] = True
+elif kind == "external-origine":
+    next(n for n in g["nodi"] if n["id"] == "external:CEE3ABD")["origine"] = "x"
+elif kind == "transaction-file":
+    next(n for n in g["nodi"] if n["id"] == "transaction:CAUP")["modulo"] = "app-vsam-mq"
 else:
     raise SystemExit("mutazione sconosciuta: " + kind)
 with open(dst, "w", encoding="utf-8") as f:

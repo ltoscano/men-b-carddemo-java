@@ -13,7 +13,7 @@ from collections import Counter, defaultdict
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import manifest, of_type, read_lines, read_tsv, stem
 
-GRAPH, COUNTS, OUT, EXP = sys.argv[1:5]
+GRAPH, COUNTS, OUT, EXP, SCHEMA = sys.argv[1:6]
 errors = []
 
 
@@ -381,6 +381,189 @@ for e in edges:
         for o in e["occorrenze"]:
             if o["livello"] != "passo":
                 err(f"PASSO_DD {e['da']}: DD di livello '{o['livello']}' attribuita a un passo")
+
+# ------------------------------------------------------------------ 6b. ogni attributo scritto nel grafo e' confrontato con un valore ricavato dagli intermedi
+# ATTRS: tutti gli attributi dello schema. Ognuno e' CONFRONTATO con gli intermedi (out/*.tsv, manifesto, sorgente) oppure e'
+# DERIVATO con una regola scritta qui sotto e verificata. Un attributo dello schema che non e' in questo elenco fa fallire il controllo.
+ATTRS = {
+    "root.versione_schema": "derivato: costante 1, verificata",
+    "root.descrizione": "derivato: testo fisso, deve essere una stringa non vuota che rimanda a inventario.md",
+    "root.livelli_jcl": "confrontato con livello_b.tsv atteso, con jcl_livelli (mapa vs conteggio) e con la fonte di passi e DD",
+    "root.nodi": "ogni nodo e' confrontato (vedi nodo.*)",
+    "root.archi": "ogni arco e' confrontato (vedi arco.* e occ_*)",
+    "nodo.id": "derivato: tipo:nome, verificato",
+    "nodo.tipo": "derivato dal tipo di file nel manifesto o dagli archi; verificato con il prefisso dell'id",
+    "nodo.nome": "confrontato: nome file senza estensione (manifesto), nome della transazione (csd.tsv), regola dei passi (cards.tsv), dataset (DD)",
+    "nodo.file": "confrontato con il percorso nel manifesto, con csd.tsv o con cards.tsv",
+    "nodo.modulo": "derivato dal percorso: 'base' se non inizia con app/app-, altrimenti la cartella del modulo; verificato",
+    "nodo.riga": "confrontato con la riga della scheda EXEC (cards.tsv)",
+    "nodo.ordinale": "confrontato con il numero d'ordine del passo (cards.tsv)",
+    "nodo.contenitore": "derivato dal file (job o procedura) e confrontato con l'arco JOB_PASSO/PROC_PASSO",
+    "nodo.fonte": "derivato dal livello del file (A: mapa, B e procedure: schede), verificato",
+    "nodo.classe": "confrontato con la classificazione delle schede DD che puntano al dataset",
+    "nodo.simbolico": "derivato: vero se il nome contiene & ed e' un dataset reale; verificato",
+    "nodo.origine": "derivato dal tipo di arco entrante (COPY, CALL, transazione, procedura); verificato",
+    "arco.tipo": "confrontato: ogni occorrenza di strumento/estrattore ha un arco di quel tipo",
+    "arco.da": "confrontato con file del sorgente (COPY, CALL), csd.tsv, cards.tsv (passo di appartenenza)",
+    "arco.a": "confrontato con copy.tsv, call_occ.tsv, csd.tsv, cards.tsv/mapa_dd.tsv",
+    "arco.occorrenze": "confrontato come insieme, in entrambe le direzioni",
+    "occ_copy.file": "confrontato con copy.tsv", "occ_copy.riga": "confrontato con copy.tsv e con il sorgente",
+    "occ_copy.sostituzioni": "confrontato con copy.tsv (testo delle sostituzioni)",
+    "sostituzione.da": "confrontato con copy.tsv (tramite le sostituzioni)", "sostituzione.a": "confrontato con copy.tsv (tramite le sostituzioni)",
+    "occ_call.file": "confrontato con call_occ.tsv/call_dinamiche.tsv", "occ_call.riga": "confrontato con call_occ.tsv e con il sorgente",
+    "occ_call.non_risolto": "derivato: vero se e solo se il bersaglio e' external:~NON-RISOLTO; verificato",
+    "occ_call.operando": "confrontato con call_dinamiche.tsv",
+    "occ_transazione.file": "confrontato con csd.tsv", "occ_transazione.riga": "confrontato con csd.tsv e con il sorgente",
+    "occ_transazione.riga_programma": "confrontato con csd.tsv e con il sorgente (stesso blocco DEFINE)",
+    "occ_contiene.file": "confrontato con cards.tsv", "occ_contiene.riga": "confrontato con la riga della scheda EXEC",
+    "occ_contiene.fonte": "derivato dal livello del file; verificato",
+    "occ_esegue.file": "confrontato con cards.tsv", "occ_esegue.riga": "confrontato con cards.tsv",
+    "occ_esegue.esecuzione": "confrontato con cards.tsv (PGM o PROC)", "occ_esegue.parm": "confrontato con cards.tsv",
+    "occ_esegue.fonte": "derivato dal livello del file; verificato",
+    "occ_dd.file": "confrontato con cards.tsv", "occ_dd.riga": "confrontato con cards.tsv",
+    "occ_dd.dd": "confrontato con cards.tsv", "occ_dd.livello": "confrontato: passo se la scheda segue un EXEC, job altrimenti",
+    "occ_dd.fonte": "derivato dal livello del file; verificato",
+    "occ_dd.classe": "confrontato con la classificazione della scheda DD (cards.tsv)",
+    "occ_dd.dsn_sorgente": "confrontato con cards.tsv", "occ_dd.disp_sorgente": "confrontato con cards.tsv",
+    "occ_dd.dsn_risolto": "confrontato con mapa_dd.tsv", "occ_dd.disp_effettivo": "confrontato con mapa_dd.tsv",
+    "occ_dd.gdg": "derivato dal nome del dataset (suffisso numerico con segno tra parentesi); verificato",
+    "occ_dd.generazione": "derivato dal nome del dataset; verificato", "occ_dd.membro": "derivato dal nome del dataset; verificato",
+}
+sch = json.load(open(SCHEMA, encoding="utf-8"))
+in_schema = {"root." + k for k in sch["properties"]}
+for d in ("nodo", "arco", "sostituzione", "occ_copy", "occ_call", "occ_transazione", "occ_contiene", "occ_esegue", "occ_dd"):
+    in_schema |= {d + "." + k for k in sch["$defs"][d]["properties"]}
+for k in sorted(in_schema - set(ATTRS)):
+    err(f"attributo dello schema non coperto: {k} (aggiungerlo ad ATTRS in verify.py con il confronto o la regola di derivazione)")
+for k in sorted(set(ATTRS) - in_schema):
+    err(f"ATTRS elenca {k}, che non e' nello schema")
+
+if g["versione_schema"] != 1 or not isinstance(g["descrizione"], str) or "inventario.md" not in g["descrizione"]:
+    err("attributi radice: versione_schema o descrizione inattesi")
+manif_path = {t: {stem(p): p for p in of_type(t)} for t in ("cobol", "copybook", "asm", "proc", "jcl")}
+
+
+def modulo_rule(path):
+    return path.split("/")[1] if path.startswith("app/app-") else "base"
+
+
+inbound = defaultdict(list)
+for e in edges:
+    inbound[e["a"]].append(e)
+ds_classes = defaultdict(set)
+
+
+def classe_of(c):
+    if c["in_linea"] == "1":
+        return "instream"
+    if c["sysout"] == "1":
+        return "sysout"
+    if c["dummy"] == "1":
+        return "dummy"
+    if c["dsn"].startswith("&&"):
+        return "temporaneo"
+    return "reale" if c["dsn"] else "senza-dsn"
+
+
+def gdg_parts(c, risolto):
+    if classe_of(c) in ("instream", "sysout", "dummy", "senza-dsn"):
+        return None, None
+    name = risolto if (classe_of(c) == "reale" and risolto) else c["dsn"]
+    m = re.match(r"^(.*)\(([^()]*)\)$", name)
+    if not m:
+        return None, None
+    return (m.group(2), None) if re.fullmatch(r"[+-]?\d+", m.group(2)) else (None, m.group(2))
+
+
+csd_rows = {r["transazione"]: r for r in read_tsv(os.path.join(OUT, "csd.tsv"))}
+for n in g["nodi"]:
+    t = n["tipo"]
+    if n["id"] != f"{t}:{n['nome']}":
+        err(f"nodo {n['id']}: id diverso da tipo:nome")
+    if t in ("program", "copybook", "asm", "proc"):
+        mk = {"program": "cobol"}.get(t, t)
+        if manif_path[mk].get(n["nome"]) != n.get("file"):
+            err(f"nodo {n['id']}: file {n.get('file')} diverso dal manifesto {manif_path[mk].get(n['nome'])}")
+    if t == "jcl-job" and manif_path["jcl"].get(n["nome"]) != n.get("file"):
+        err(f"nodo {n['id']}: file {n.get('file')} diverso dal manifesto")
+    if t in ("program", "copybook", "asm", "proc", "jcl-job", "transaction"):
+        if n.get("modulo") != modulo_rule(n["file"]):
+            err(f"nodo {n['id']}: modulo {n.get('modulo')} diverso dalla regola ({modulo_rule(n['file'])})")
+    if t == "jcl-step" and "modulo" in n:
+        err(f"nodo {n['id']}: un passo non ha l'attributo modulo")
+    if t == "transaction":
+        r = csd_rows.get(n["nome"])
+        if not r or r["file"] != n["file"]:
+            err(f"nodo {n['id']}: file {n.get('file')} diverso da csd.tsv")
+    if t == "dataset":
+        sym = "&" in n["nome"] and n["classe"] == "reale"
+        if bool(n.get("simbolico")) != sym or ("simbolico" in n and not sym):
+            err(f"nodo {n['id']}: simbolico {n.get('simbolico')} diverso dalla regola ({sym})")
+    if t == "external":
+        kinds = {e["tipo"] for e in inbound[n["id"]]}
+        if "COPY" in kinds:
+            want_o = "COPY non risolta: nessun copybook con questo nome nel manifesto"
+        elif n["id"] == "external:~NON-RISOLTO":
+            want_o = "CALL con bersaglio in variabile: il nome non e' un letterale e non e' risolto"
+        elif "CALL" in kinds:
+            want_o = "CALL: non e' un file del repository"
+        elif "TRANSAZIONE_PROGRAMMA" in kinds:
+            want_o = "transazione del CSD: programma non nel repository"
+        else:
+            want_o = "procedura non nel repository"
+        if n.get("origine") != want_o:
+            err(f"nodo {n['id']}: origine {n.get('origine')!r} diversa dalla regola ({want_o!r})")
+
+for p in of_type("jcl", "proc"):
+    cs = [c for c in cards[p] if c["scheda"] == "EXEC"]
+    names = Counter(c["nome"] for c in cs)
+    container = ("proc:" if TYPE_OF[p] == "proc" else "jcl-job:") + stem(p)
+    want_f = "mapa" if lv.get(p) == "A" else "schede"
+    for c in cs:
+        st = step_by.get((p, int(c["passo"])))
+        if not st:
+            continue
+        sname = c["nome"] if c["nome"] and names[c["nome"]] == 1 else f"{c['nome']}#{c['passo']}"
+        want_n = ("proc." if TYPE_OF[p] == "proc" else "") + stem(p) + "/" + sname
+        if st["nome"] != want_n or st["file"] != p or st["ordinale"] != int(c["passo"]) or st["riga"] != int(c["riga"]):
+            err(f"nodo {st['id']}: nome/file/ordinale/riga ({st['nome']}, {st['file']}, {st['ordinale']}, {st['riga']}) diversi dalla scheda ({want_n}, {p}, {c['passo']}, {c['riga']})")
+        if st.get("contenitore") != container:
+            err(f"nodo {st['id']}: contenitore {st.get('contenitore')} diverso da {container}")
+        if st.get("fonte") != want_f:
+            err(f"nodo {st['id']}: fonte {st.get('fonte')} diversa da {want_f}")
+        co = contain_occ.get((p, int(c["riga"])))
+        if co and co[1]["fonte"] != want_f:
+            err(f"{p}:{c['riga']}: fonte {co[1]['fonte']} dell'appartenenza al contenitore diversa da {want_f}")
+        eo = exec_occ.get((p, int(c["riga"])))
+        if eo and eo[1]["fonte"] != want_f:
+            err(f"{p}:{c['riga']}: fonte {eo[1]['fonte']} dell'esecuzione diversa da {want_f}")
+    mp = defaultdict(int)
+    for c in cards[p]:
+        if c["scheda"] != "DD":
+            continue
+        do = dd_occ.get((p, int(c["riga"])))
+        if not do:
+            continue
+        e, o = do
+        ordn = int(c["passo"])
+        mrow = None
+        if o["fonte"] == "mapa":
+            rows = mapa_dd_rows[p].get(ordn, [])
+            mrow = rows[mp[ordn]] if mp[ordn] < len(rows) else None
+        mp[ordn] += 1
+        risolto = mrow["dsn_risolto"] if mrow else ""
+        gen, mem = gdg_parts(c, risolto)
+        if o["classe"] != classe_of(c):
+            err(f"{p}:{c['riga']}: classe {o['classe']} diversa dalla scheda ({classe_of(c)})")
+        if o["gdg"] != (gen is not None) or o.get("generazione") != gen or o.get("membro") != mem:
+            err(f"{p}:{c['riga']}: gdg/generazione/membro ({o['gdg']}, {o.get('generazione')}, {o.get('membro')}) diversi dal nome del dataset ({gen is not None}, {gen}, {mem})")
+        if o["fonte"] != want_f:
+            err(f"{p}:{c['riga']}: fonte DD {o['fonte']} diversa da {want_f}")
+        ds_classes[e["a"]].add(classe_of(c))
+for nid, cl in ds_classes.items():
+    n = nodes.get(nid)
+    if n and cl != {n.get("classe")}:
+        err(f"nodo {nid}: classe {n.get('classe')} diversa da quella delle schede DD che lo usano ({sorted(cl)})")
 
 # ------------------------------------------------------------------ 7. attesi scritti a mano
 def edge_rows(da=None, tipi=None):
