@@ -326,3 +326,9 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T19:28:09Z,pr-50,codex-inizio,codex,orologio,validazione 1 di 2
 2026-11-27T19:50:11Z,pr-47,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0; verdetto: APPROVATA
 2026-11-27T19:50:35Z,pr-47,merge,fable,orologio,PR #47 mergiata dopo due validazioni (seconda APPROVATA; 26 min 12 s); chiude #23
+2026-11-27T19:51:31Z,issue-43,specifica-scritta,fable,orologio,riallineata all'esito di #23
+2026-11-27T19:51:31Z,issue-43,codex-inizio,codex,orologio,contestazione della specifica; sola lettura
+2026-11-27T19:51:31Z,processo,risposta-consegnata,fable,orologio,PR #47 mergiata; specifica #43 in contestazione
+2026-11-27T19:54:52Z,issue-43,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-27T19:55:58Z,issue-43,ready,fable,orologio,specifica pubblicata; 7 rilievi accolti
+2026-11-27T19:55:58Z,issue-43,esecutore-inizio,opus,orologio,affidata
