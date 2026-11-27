@@ -303,3 +303,36 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T18:02:49Z,issue-35,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
 2026-11-27T18:03:44Z,issue-35,ready,fable,orologio,specifica pubblicata; 7 rilievi accolti
 2026-11-27T18:03:44Z,issue-35,esecutore-inizio,opus,orologio,affidata
+2026-11-27T18:03:50Z,processo,risposta-consegnata,fable,orologio,specifica #35 affidata
+2026-11-27T18:07:19Z,pr-47,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T18:07:58Z,pr-47,decisione,fable,orologio,validazione 1: quattro rilievi accolti (due bloccanti)
+2026-11-27T18:07:58Z,issue-23,esecutore-inizio,opus,orologio,giro di correzione unico
+2026-11-27T18:20:46Z,issue-27,esecutore-fine,sonnet,orologio,PR #48 aperta; criteri dichiarati soddisfatti; 29 casi di regressione; CI verde dichiarata
+2026-11-27T18:20:48Z,issue-27,esecutore-consuntivo,sonnet,orologio,durata 4889 s; 123 chiamate a strumenti; contatore token 307545
+2026-11-27T18:20:54Z,pr-48,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T19:15:18Z,pr-48,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T19:16:15Z,pr-48,decisione,fable,orologio,validazione 1: quattro rilievi accolti (uno bloccante); uno respinto come limite; uno risolto nella specifica
+2026-11-27T19:16:15Z,issue-27,esecutore-inizio,sonnet,orologio,giro di correzione unico
+2026-11-27T19:16:21Z,processo,risposta-consegnata,fable,orologio,PR #48 rinviata all'Esecutore; tre Esecutori ancora al lavoro
+2026-11-27T19:23:56Z,issue-23,esecutore-fine,opus,orologio,giro di correzione consegnato; SHA afdb94f; CI verde dichiarata; 1654 osservazioni
+2026-11-27T19:23:59Z,issue-23,esecutore-consuntivo,opus,orologio,giro di correzione: durata 4537 s; 105 chiamate a strumenti; contatore token 685488 (cumulativi)
+2026-11-27T19:23:59Z,pr-47,codex-inizio,codex,orologio,validazione 2 di 2; in forma ristretta
+2026-11-27T19:25:30Z,issue-35,esecutore-fine,opus,orologio,PR #49 aperta; SHA 6f4a613; criteri dichiarati soddisfatti; workflow oracle-check verde; rosso sulla mutazione; di nuovo verde
+2026-11-27T19:25:33Z,issue-35,esecutore-consuntivo,opus,orologio,durata 4883 s; 183 chiamate a strumenti; contatore token 401697
+2026-11-27T19:25:35Z,pr-49,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T19:28:03Z,issue-22,esecutore-fine,opus,orologio,PR #50 aperta; SHA 22f1a9d; 240 blocchi; 83 prove negative; CI verde dichiarata
+2026-11-27T19:28:06Z,issue-22,esecutore-consuntivo,opus,orologio,durata 6284 s; 175 chiamate a strumenti; contatore token 523292
+2026-11-27T19:28:06Z,processo,risposta-consegnata,fable,orologio,PR #49 e #50 in validazione 1; PR #47 in validazione 2
+2026-11-27T19:28:09Z,pr-50,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T19:50:11Z,pr-47,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0; verdetto: APPROVATA
+2026-11-27T19:50:35Z,pr-47,merge,fable,orologio,PR #47 mergiata dopo due validazioni (seconda APPROVATA; 26 min 12 s); chiude #23
+2026-11-27T19:51:31Z,issue-43,specifica-scritta,fable,orologio,riallineata all'esito di #23
+2026-11-27T19:51:31Z,issue-43,codex-inizio,codex,orologio,contestazione della specifica; sola lettura
+2026-11-27T19:51:31Z,processo,risposta-consegnata,fable,orologio,PR #47 mergiata; specifica #43 in contestazione
+2026-11-27T19:54:52Z,issue-43,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-27T19:55:58Z,issue-43,ready,fable,orologio,specifica pubblicata; 7 rilievi accolti
+2026-11-27T19:55:58Z,issue-43,esecutore-inizio,opus,orologio,affidata
+2026-11-27T19:56:04Z,processo,risposta-consegnata,fable,orologio,specifica #43 affidata
+2026-11-27T19:56:52Z,pr-49,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: **BOCCIATA — restano falsi verdi nel perimetro; incluso un rapporto dell’oracle infedele ai file realmente prodotti.**
+2026-11-27T19:57:37Z,pr-49,decisione,fable,orologio,validazione 1: cinque rilievi accolti (tre bloccanti)
+2026-11-27T19:57:37Z,issue-35,esecutore-inizio,opus,orologio,giro di correzione unico
