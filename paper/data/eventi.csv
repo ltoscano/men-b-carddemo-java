@@ -207,3 +207,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T15:47:01Z,pr-39,codex-fine,codex,orologio,validazione 1; exit=0; token: 
 2026-11-27T15:47:39Z,pr-39,decisione,fable,orologio,validazione 1: rilievo bloccante accolto; rinvio all'Esecutore per l'unico giro di correzione
 2026-11-27T15:47:39Z,issue-24,esecutore-inizio,opus,orologio,giro di correzione unico
+2026-11-27T15:51:24Z,pr-31,codex-fine,codex,orologio,giro 3; exit=0; token: 104.651
+2026-11-27T15:51:52Z,pr-31,merge,fable,orologio,PR #31 mergiata dopo il giro 3 (APPROVATA); chiude #21
