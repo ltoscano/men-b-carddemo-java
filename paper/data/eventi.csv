@@ -265,3 +265,12 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T16:58:33Z,issue-27,ready,fable,orologio,specifica pubblicata
 2026-11-27T16:58:33Z,issue-23,esecutore-inizio,opus,orologio,affidata
 2026-11-27T16:58:33Z,issue-27,esecutore-inizio,sonnet,orologio,affidata
+2026-11-27T16:59:18Z,processo,risposta-consegnata,fable,orologio,specifiche #23 e #27 affidate; piano aggiornato
+2026-11-27T17:16:15Z,issue-25,esecutore-fine,opus,orologio,PR #44 aperta; SHA 96e384c; criteri dichiarati soddisfatti; 41 prove negative nel passo; CI verde dichiarata
+2026-11-27T17:16:16Z,issue-25,esecutore-consuntivo,opus,orologio,durata 3196 s; 169 chiamate a strumenti; contatore token 461572
+2026-11-27T17:16:21Z,pr-44,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T17:26:59Z,issue-2,esecutore-fine,sonnet,orologio,correzione mirata consegnata; SHA 211723d; CI verde dichiarata
+2026-11-27T17:27:09Z,issue-2,esecutore-consuntivo,sonnet,orologio,correzione mirata: durata 3477 s; 87 chiamate a strumenti; contatore token 203376
+2026-11-27T17:27:11Z,pr-30,verifica-inizio,fable,orologio,tre mutazioni di Codex e criteri su clone pulito
+2026-11-27T17:27:53Z,pr-44,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T17:28:04Z,issue-23,esecutore-fermo,opus,orologio,un'osservazione smentisce un atteso: 9(9) COMP con FF FF FF FF vale 4294967295 con MOVE e -1 con ADD
