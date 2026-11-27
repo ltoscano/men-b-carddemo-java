@@ -71,7 +71,12 @@ health_up() {
 }
 
 echo "== [1/3] pulizia degli output precedenti e mvn -B verify"
-rm -rf carddemo-*/target
+rm -rf carddemo-*/target || { echo "ERRORE: cancellazione dei target/ precedenti fallita" >&2; exit 1; }
+residui=(carddemo-*/target)
+if [ "${#residui[@]}" -ne 0 ]; then
+  echo "ERRORE: output precedenti ancora presenti dopo la cancellazione: ${residui[*]}" >&2
+  exit 1
+fi
 mvn -B verify </dev/null || { echo "ERRORE: mvn verify fallito" >&2; exit 1; }
 
 # Dopo la pulizia puo' esistere solo l'eseguibile prodotto da questa build: ne serve uno.
@@ -110,8 +115,12 @@ if [ "${healthy}" -ne 1 ]; then
   exit 1
 fi
 echo "online sano (stato radice UP)"
-stop_proc "${ONLINE_PID}"
+online_pid="${ONLINE_PID}"
 ONLINE_PID=""
+if ! stop_proc "${online_pid}"; then
+  echo "ERRORE: online non si e' arrestato con SIGTERM (e' stato necessario SIGKILL)" >&2
+  exit 1
+fi
 
 echo "== [3/3] avvio del jar eseguibile di carddemo-batch (${BATCH_JAR})"
 timeout -k 10 "${BATCH_TIMEOUT}" java -jar "${BATCH_JAR}" </dev/null > /tmp/batch.log 2>&1
