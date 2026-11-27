@@ -400,3 +400,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T22:31:41Z,issue-5,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
 2026-11-27T22:32:45Z,issue-5,ready,fable,orologio,specifica pubblicata; 6 rilievi accolti; caricamento in 53
 2026-11-27T22:32:45Z,issue-5,esecutore-inizio,opus,orologio,affidata
+2026-11-27T22:33:03Z,issue-27,esecutore-fine,sonnet,orologio,correzione mirata consegnata; SHA a86f60f; 47 casi in 1631 s; analysis-check in corso alla consegna
+2026-11-27T22:33:03Z,issue-27,esecutore-consuntivo,sonnet,orologio,correzione mirata: durata 3583 s; 33 chiamate a strumenti; contatore token 459127 (cumulativi)
