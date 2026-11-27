@@ -27,7 +27,7 @@ MEN-B ("Make Everything Now, Brownfield") tratta le GitHub Issues come coda di s
 | Pianificatore / Selettore | Claude Fable 5.2 | Scrive le issue, verifica dipendenze e sovrapposizioni, avvia l'Esecutore |
 | Esecutore | Claude Opus / Claude Sonnet (subagent, worktree isolato) | Implementa una sola issue e apre la PR |
 | Validatore adversarial | Codex CLI 0.172, contesto pulito | Cerca di falsificare la PR; al massimo due giri |
-| Gate umano | autore | Decide il merge |
+| Approvatore | all'inizio l'autore; dal passo 9 Claude Fable per delega, con registro | Decide il merge |
 
 ```mermaid
 flowchart LR
@@ -151,7 +151,18 @@ Corrette le specifiche, le issue #1 e #13 sono passate da `blocked` a `ready`.
 
 **Passo 8 — I primi due Esecutori.** Alle 10:04 UTC il pianificatore ha avviato due Esecutori (Claude Sonnet), uno per issue, ciascuno in un *worktree*: una seconda copia di lavoro dello stesso repository, in una cartella separata, così che i due non si pestino i piedi. L'etichetta delle issue è passata a `in-progress`. Il testo dato agli Esecutori è lo stesso per tutti, cambia solo il numero dell'issue: non contiene la specifica, che l'Esecutore legge da GitHub. È in `paper/data/prompts/esecutore.md`.
 
-*(esito: da compilare)*
+**Passo 9 — La prima PR, la prima bocciatura, e due cambi di regole.** L'Esecutore di #13 ha consegnato la PR #17 in 5 minuti e 47 secondi (95.783 token), dichiarando soddisfatti tutti e sei i criteri. La CI su GitHub era verde. Il pianificatore ha rifatto un clone pulito e rieseguito il comando di verifica: esito positivo in 33 secondi.
+
+Tutto verde, dunque. Eppure il Validatore l'ha **bocciata**, in 2 minuti e 48 secondi (48.174 token), con un rilievo bloccante e tre importanti, tutti sullo script di verifica: poteva restare appeso per sempre se il servizio accettava la connessione senza rispondere; poteva controllare un file prodotto da una build precedente invece di quello appena costruito; considerava "sano" un servizio la cui risposta conteneva la parola giusta nel posto sbagliato. Nessuno di questi difetti si vede quando le cose vanno bene: emergono solo chiedendosi come il controllo potrebbe dare ragione a un lavoro sbagliato. La PR è tornata all'Esecutore per il primo dei due giri di correzione ammessi.
+
+Durante questo passo l'autore ha cambiato due regole, ed è giusto dirlo perché cambiano il metodo descritto nella sezione 2:
+
+- *Più autonomia al Validatore.* Nel primo giro Codex lavorava in sola lettura e riceveva il log dei comandi eseguiti dal pianificatore. Da ora lavora in un clone usa e getta in cui può scrivere e usare Docker, e i criteri di accettazione li esegue da sé. Non gli si dà l'accesso completo alla macchina.
+- *Approvazione delegata.* Il metodo di partenza riservava il merge a una persona. L'autore ha scelto di delegarlo al pianificatore, per rendere il processo il più automatico possibile, a una condizione: un registro (`docs/registro-approvazioni.md`) in cui è scritto tutto ciò che viene approvato, con motivo ed evidenze. Le condizioni per un merge sono fissate per iscritto in `CLAUDE.md`: CI verde, criteri rieseguiti dal Validatore, nessun rilievo bloccante aperto, ogni rilievo con un esito scritto, al massimo due giri. Se il secondo giro fallisce, o se pianificatore e Validatore non concordano su un rilievo bloccante, la decisione torna all'autore.
+
+Chi replica deve sapere cosa comporta questa scelta. Il pianificatore ha scritto la specifica, quindi non è un giudice indipendente: l'indipendenza resta affidata al Validatore, che è un modello di un altro fornitore. La persona non approva più ogni modifica una per una; controlla il registro e può annullare. È più veloce ed è meno prudente del metodo di partenza: la sezione sui limiti lo riprende.
+
+*(esito del giro di correzione: da compilare)*
 
 **Come si misurano i tempi.** Su richiesta dell'autore, da questo punto ogni passaggio è cronometrato nel momento in cui avviene. Un piccolo script, `paper/data/tlog.sh`, aggiunge una riga con l'ora corrente al registro `paper/data/eventi.csv`; il registro non si modifica mai, si aggiunge soltanto. Per i passi precedenti i tempi sono stati ricostruiti da fonti verificabili (date dei commit, date di creazione su GitHub, date dei file) e ogni riga dichiara la propria fonte.
 
@@ -211,7 +222,7 @@ Già noti prima di iniziare:
 
 - CardDemo è un'applicazione dimostrativa: più piccola e più pulita di un portafoglio COBOL di produzione.
 - Nessun mainframe disponibile. L'oracle eseguibile è GnuCOBOL e copre i batch; per i programmi CICS l'oracle è una matrice di comportamento ricavata dal sorgente.
-- Un solo operatore umano al gate.
+- Un solo operatore umano. Dal passo 9 l'approvazione delle PR è delegata al pianificatore: la persona controlla un registro invece di approvare ogni modifica. I risultati valgono per questo assetto.
 
 *(da estendere)*
 

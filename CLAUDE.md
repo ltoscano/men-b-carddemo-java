@@ -51,7 +51,8 @@ Migrazione **ibrida**: il comportamento da preservare è brownfield, lo stack ta
 | Pianificatore / Selettore | **Fable** (sessione principale) | Scrive le issue, verifica dipendenze e non-sovrapposizione di cartelle/tabelle, apre il worktree, lancia l'Esecutore. Non implementa. |
 | Esecutore | subagent **Opus** (issue complesse: aritmetica, COMMAREA, batch) o **Sonnet** (issue meccaniche: DTO, schema, loader, boilerplate) | Una sola issue, in worktree isolato. Implementa, testa, apre PR con `Closes #N`. |
 | Validatore adversarial | **Codex CLI** (`codex exec` / `codex review`), contesto pulito | Legge solo specifica, diff e test. Mandato: falsificare. Max due giri, poi scala. |
-| Gate umano | l'utente | Unico a decidere il merge. |
+| Approvatore | **Fable**, per delega dell'autore (27 nov 2026) | Giudica i rilievi del Validatore, decide il merge secondo le regole qui sotto, scrive ogni approvazione nel registro. |
+| Autore | l'utente | Ha delegato l'approvazione. Riceve le escalation, legge il registro quando vuole, può annullare qualsiasi decisione. |
 
 Il Validatore è deliberatamente un modello di un altro fornitore: non condivide contesto né bias dell'Esecutore. Sulle PR lavora in un clone usa e getta con `-s workspace-write -c 'sandbox_workspace_write.network_access=true'`, così esegue da sé Docker e i criteri di accettazione (autonomia concordata con l'autore il 27 nov 2026); mai `danger-full-access`. Sulle specifiche basta `-s read-only`. Prompt in `paper/data/prompts/`. Il suo output va riportato per intero nella PR, comprese le obiezioni respinte e il motivo.
 
@@ -63,7 +64,7 @@ Una issue diventa `ready` solo dopo che Codex ha contestato **la specifica** (no
 
 Ogni issue ha: Obiettivo · Dipendenze e perimetro (sorgenti COBOL di riferimento, cartelle target, fuori ambito) · Specifica · Invarianti di parità · Criteri di accettazione **eseguibili da un comando** · Strategia di rollback · Limiti per l'agente.
 
-Flusso: `ready → Selettore → Esecutore → Validatore → Gate umano → sblocco dipendenze`.
+Flusso: `ready → Selettore → Esecutore → Validatore → Approvatore → sblocco dipendenze`. Dove i documenti di metodo e il piano dicono "gate umano", oggi si intende l'Approvatore delegato, con escalation all'autore.
 
 Nei worktree il submodule va inizializzato (`git submodule update --init`). Il repository è pubblico: niente segreti, dati personali o percorsi locali in commit, issue e PR.
 
@@ -73,12 +74,31 @@ Nei worktree il submodule va inizializzato (`git submodule update --init`). Il r
 2. Una issue, un perimetro, un comando che dice se è finita. Diff minimo, zero refactoring non richiesto.
 3. Se il COBOL smentisce la specifica: fermarsi, commento tecnico, `needs-spec-update`. Mai adattare la realtà in silenzio.
 4. Mai due issue `in-progress` sulla stessa tabella o cartella. Ciclo batch giornaliero in sequenza stretta.
-5. Il merge è umano. Gli agenti non mergiano.
+5. Il merge lo decide solo l'Approvatore (Fable), alle condizioni della sezione "Approvazione delegata". Esecutori e Validatore non mergiano mai.
 6. Importi solo `BigDecimal` con scala e arrotondamento COBOL espliciti. Mai `double`/`float` su `PIC S9…V99`.
 7. Parità significa stesso effetto, stesso ordine di chiave, stesso comportamento su riesecuzione — nessuna idempotenza o "miglioria" inventata.
 8. Ogni `COPY` del programma sorgente ha un corrispondente tradotto o un'esclusione esplicita.
 
 I rischi su cui tarare il Validatore: aritmetica decimale, troncamento e overpunch · stato pseudo-conversazionale `COMMAREA` (due tempi ENTER/REENTER) · confini di transazione CICS (`READ UPDATE`, `SYNCPOINT`, rollback) · chiavi, duplicati e ordinamenti VSAM/AIX · ordine di collazione EBCDIC contro ASCII · logica nascosta nei `COPY` · differenze GnuCOBOL / z/OS che rendono falso l'oracle · effetti parziali prima di un abend.
+
+## Approvazione delegata
+
+Dal 27 nov 2026 l'autore ha delegato a Fable l'approvazione e il merge delle PR, per rendere il processo il più automatico possibile. In cambio, ogni approvazione è scritta in `docs/registro-approvazioni.md`.
+
+**Una PR si mergia solo se valgono tutte:**
+1. la CI sullo SHA finale è verde;
+2. il Validatore (Codex) ha eseguito da sé i criteri di accettazione su un clone pulito e nel suo ultimo giro non resta aperto alcun rilievo bloccante;
+3. ogni rilievo del Validatore ha un esito scritto: corretto, respinto con motivo verificato sul sorgente, o rinviato a una issue esistente o nuova;
+4. il diff è nel perimetro della specifica;
+5. sono stati fatti al massimo due giri di correzione.
+
+**Fable non approva e scala all'autore quando:** il secondo giro di correzione fallisce; serve cambiare il perimetro o l'obiettivo di una specifica già approvata; Fable e Codex restano in disaccordo su un rilievo bloccante; la decisione è irreversibile o esce dal repository.
+
+**Coerenza.** Fable ha scritto la specifica, quindi non è un giudice indipendente del proprio lavoro: l'indipendenza viene da Codex. Fable non respinge un rilievo senza un'evidenza verificata, e a parità di dubbio dà ragione al Validatore. Rilievi simili ricevono lo stesso trattamento: prima di decidere si rilegge il registro.
+
+**Decisioni di prodotto** (per esempio portare o escludere `CBTRN01C`, scenari batch di riferimento): Fable sceglie l'opzione più coerente con l'obiettivo e con le decisioni già prese, la registra come *decisione delegata* con motivo e alternative, e procede. L'autore può annullarla.
+
+**Registro** (`docs/registro-approvazioni.md`, in sola aggiunta): una voce per ogni specifica passata a `ready`, PR mergiata, decisione delegata, rilievo respinto, escalation. Ogni voce: data e ora UTC, oggetto, decisione, motivo, evidenze (SHA, CI, giro del Validatore), cosa è stato rinviato e dove.
 
 ## Non reinventare l'acqua calda
 
@@ -146,4 +166,4 @@ Vincolo dell'autore: nessun passaggio senza tempi. Il registro è `paper/data/ev
 
 ## Azioni che richiedono conferma esplicita
 
-Cambiare visibilità o nome del repository, pubblicare su Zenodo, mergiare una PR. Mai operare sul repository upstream `aws-samples`.
+Cambiare visibilità o nome del repository, pubblicare su Zenodo, cancellare rami o dati non rigenerabili, forzare la storia di `main`. Il merge delle PR è delegato (vedi "Approvazione delegata"). Mai operare sul repository upstream `aws-samples`.

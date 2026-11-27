@@ -32,3 +32,9 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T10:11:16Z,pr-17,verifica-indipendente,fable,orologio,clone pulito: verify.sh exit 0 in 33 s
 2026-11-27T10:11:28Z,pr-17,codex-inizio,codex,orologio,validazione PR #17 giro 1; sola lettura
 2026-11-27T10:12:37Z,pr-17,richiesta-autore,autore,orologio,propone di dare piu autonomia a Codex
+2026-11-27T10:12:58Z,pr-17,risposta-consegnata,fable,orologio,
+2026-11-27T10:13:25Z,pr-17,richiesta-autore,autore,orologio,conferma l'autonomia del Validatore
+2026-11-27T10:14:16Z,pr-17,codex-fine,codex,orologio,exit=0; token: 48.174
+2026-11-27T10:14:36Z,pr-17,validazione-fine,fable,orologio,giro 1: BOCCIATA; 6 rilievi (1 bloccante); 4 da correggere; rinviata all'Esecutore
+2026-11-27T10:14:36Z,issue-13,esecutore-inizio,sonnet,orologio,giro di correzione 1
+2026-11-27T10:15:36Z,processo,richiesta-autore,autore,orologio,delega a Fable l'approvazione e il merge delle PR; chiede un registro delle approvazioni e la massima automazione
