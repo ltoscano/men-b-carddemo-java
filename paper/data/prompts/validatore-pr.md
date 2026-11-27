@@ -37,7 +37,7 @@ Non correggere nulla e non fare commit: se modifichi file per una prova, riprist
 
 ---
 
-## Seconda validazione, in forma ristretta (dal 27 novembre 2026, 16:10 UTC)
+## Seconda validazione, in forma ristretta (dal 27 novembre 2026, 16:00 UTC)
 
 Motivo: fino a qui la seconda validazione rifaceva tutto e durava quanto la prima (24-34 minuti). Ora verifica solo ciò che è cambiato. Al materiale si aggiungono `.validazione/giro-1.md` (il verdetto della prima validazione) e `.validazione/diff-correzione.patch` (il diff tra lo SHA validato e quello attuale). Al prompt di base si sostituisce questo:
 
@@ -45,7 +45,7 @@ Motivo: fino a qui la seconda validazione rifaceva tutto e durava quanto la prim
 > Fai solo questo: (1) per ogni rilievo della prima validazione riesegui il suo controesempio e di' se è chiuso; (2) leggi per intero il diff di correzione e cerca difetti introdotti da quelle modifiche, con prove dove servono; (3) verifica che il diff di correzione resti nel perimetro; (4) esegui una volta i comandi dei criteri di accettazione. Non ripetere le verifiche della prima validazione su parti non modificate.
 > Rispondi in italiano con: verdetto in una riga (APPROVATA, APPROVATA CON RISERVE, BOCCIATA); tabella rilievo per rilievo (chiuso / non chiuso, comando, esito); elenco dei rilievi nuovi con gravità, evidenza e correzione richiesta. Non correggere nulla e non fare commit.
 
-## Quando Codex non serve (dal 27 novembre 2026, 16:10 UTC)
+## Quando Codex non serve (dal 27 novembre 2026, 16:00 UTC)
 
 Decisione dell'autore: la validazione è proporzionata al rischio. Le classi sono in `CLAUDE.md`, sezione "Approvazione delegata".
 

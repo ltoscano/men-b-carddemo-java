@@ -1,0 +1,6 @@
+    <!-- PROVA-REGOLE-26: dipendenza dichiarata e non usata nel codice -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>2.5.252</version>
+    </dependency>

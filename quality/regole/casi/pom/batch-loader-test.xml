@@ -1,0 +1,7 @@
+    <!-- PROVA-REGOLE-26: dipendenza dichiarata e non usata nel codice -->
+    <dependency>
+      <groupId>io.github.ltoscano.carddemo</groupId>
+      <artifactId>carddemo-loader</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>

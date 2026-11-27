@@ -1,0 +1,7 @@
+    <!-- PROVA-REGOLE-26: dipendenza che porta HSQLDB solo per via transitiva -->
+    <dependency>
+      <groupId>io.github.ltoscano.carddemo.prova</groupId>
+      <artifactId>prova-transitiva</artifactId>
+      <version>1.0</version>
+      <type>pom</type>
+    </dependency>

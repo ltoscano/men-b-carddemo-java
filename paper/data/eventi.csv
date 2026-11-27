@@ -241,3 +241,40 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T16:21:42Z,issue-25,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
 2026-11-27T16:22:23Z,issue-25,ready,fable,orologio,specifica pubblicata dopo la contestazione; 5 rilievi accolti
 2026-11-27T16:22:23Z,issue-25,esecutore-inizio,opus,orologio,affidata
+2026-11-27T16:27:09Z,pr-40,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T16:27:43Z,pr-40,decisione,fable,orologio,validazione 2: un rilievo con falso verde; correzione mirata; poi verifica di Fable
+2026-11-27T16:27:43Z,issue-26,esecutore-inizio,sonnet,orologio,correzione mirata dopo la seconda validazione
+2026-11-27T16:27:55Z,pr-30,codex-fine,codex,orologio,giro 3; exit=0; token: 180.097
+2026-11-27T16:28:53Z,pr-30,decisione,fable,orologio,giro 3 BOCCIATA: tre falsi verdi del controllo; correzione mirata; poi verifica di Fable
+2026-11-27T16:28:53Z,issue-2,esecutore-inizio,sonnet,orologio,correzione mirata dopo il giro 3 (nuovo Esecutore; il precedente non è più disponibile)
+2026-11-27T16:30:07Z,paper,aggiornamento,fable,orologio,passi 16-18; tabelle 9-11; rettifica delle ore del registro (voce 59)
+2026-11-27T16:30:10Z,processo,risposta-consegnata,fable,orologio,PR #30 in correzione mirata; paper aggiornato ai passi 16-18
+2026-11-27T16:43:18Z,issue-26,esecutore-fine,sonnet,orologio,correzione mirata consegnata; SHA cf6ffc3; 44 casi dichiarati; CI verde dichiarata
+2026-11-27T16:43:18Z,pr-40,verifica-inizio,fable,orologio,controesempio di Codex e criteri su clone pulito
+2026-11-27T16:43:20Z,issue-26,esecutore-consuntivo,sonnet,orologio,correzione mirata: durata 913 s; 23 chiamate a strumenti; contatore token 241964
+2026-11-27T16:50:15Z,pr-40,verifica-fine,fable,orologio,verifica dell'Approvatore conclusa
+2026-11-27T16:50:45Z,pr-40,merge,fable,orologio,PR #40 mergiata dopo due validazioni e verifica dell'Approvatore; chiude #26
+2026-11-27T16:52:13Z,issue-23,specifica-scritta,fable,orologio,bozza riallineata a #3
+2026-11-27T16:52:13Z,issue-27,specifica-scritta,fable,orologio,bozza riallineata a #26
+2026-11-27T16:52:14Z,issue-23,codex-inizio,codex,orologio,contestazione della specifica; sola lettura
+2026-11-27T16:52:14Z,issue-27,codex-inizio,codex,orologio,contestazione della specifica; sola lettura
+2026-11-27T16:52:14Z,processo,risposta-consegnata,fable,orologio,PR #40 mergiata; specifiche #23 e #27 in contestazione
+2026-11-27T16:55:15Z,issue-27,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-27T16:56:25Z,issue-23,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-27T16:58:33Z,issue-23,ready,fable,orologio,specifica pubblicata; issue divisa; sentinelle in 43
+2026-11-27T16:58:33Z,issue-27,ready,fable,orologio,specifica pubblicata
+2026-11-27T16:58:33Z,issue-23,esecutore-inizio,opus,orologio,affidata
+2026-11-27T16:58:33Z,issue-27,esecutore-inizio,sonnet,orologio,affidata
+2026-11-27T16:59:18Z,processo,risposta-consegnata,fable,orologio,specifiche #23 e #27 affidate; piano aggiornato
+2026-11-27T17:16:15Z,issue-25,esecutore-fine,opus,orologio,PR #44 aperta; SHA 96e384c; criteri dichiarati soddisfatti; 41 prove negative nel passo; CI verde dichiarata
+2026-11-27T17:16:16Z,issue-25,esecutore-consuntivo,opus,orologio,durata 3196 s; 169 chiamate a strumenti; contatore token 461572
+2026-11-27T17:16:21Z,pr-44,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T17:26:59Z,issue-2,esecutore-fine,sonnet,orologio,correzione mirata consegnata; SHA 211723d; CI verde dichiarata
+2026-11-27T17:27:09Z,issue-2,esecutore-consuntivo,sonnet,orologio,correzione mirata: durata 3477 s; 87 chiamate a strumenti; contatore token 203376
+2026-11-27T17:27:11Z,pr-30,verifica-inizio,fable,orologio,tre mutazioni di Codex e criteri su clone pulito
+2026-11-27T17:27:53Z,pr-44,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T17:28:04Z,issue-23,esecutore-fermo,opus,orologio,un'osservazione smentisce un atteso: 9(9) COMP con FF FF FF FF vale 4294967295 con MOVE e -1 con ADD
+2026-11-27T17:28:08Z,issue-23,esecutore-inizio,opus,orologio,ripresa dopo la decisione (voce 63)
+2026-11-27T17:28:12Z,issue-23,esecutore-consuntivo,opus,orologio,prima fase fino al fermo: durata 1725 s; 95 chiamate a strumenti; contatore token 366051
+2026-11-27T17:28:44Z,pr-44,decisione,fable,orologio,validazione 1: tre rilievi accolti (uno bloccante); uno respinto
+2026-11-27T17:28:44Z,issue-25,esecutore-inizio,opus,orologio,giro di correzione unico
