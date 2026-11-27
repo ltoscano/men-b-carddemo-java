@@ -264,7 +264,61 @@ public class RapportiQualita {
 
     // ---- SpotBugs -------------------------------------------------------------------------
 
+    static final String ESCLUSIONI = "quality/regole/spotbugs-esclusioni.xml";
+
+    /**
+     * Un file di esclusioni e' ammesso solo se ogni esclusione (elemento Match) e' preceduta da un
+     * commento con il motivo. Oggi il file non esiste e nessun POM lo configura; un POM che
+     * configura un filtro senza questo file (o con un altro) e' un errore.
+     */
+    static void controllaEsclusioni(Path radice, List<Path> moduli) throws IOException {
+        boolean configurato = false;
+        List<Path> pom = new ArrayList<>(List.of(radice.resolve("pom.xml")));
+        for (Path m : moduli) {
+            pom.add(m.resolve("pom.xml"));
+        }
+        for (Path p : pom) {
+            String testo = Files.readString(p);
+            if (testo.contains("excludeFilterFile") || testo.contains("includeFilterFile")) {
+                configurato = true;
+                if (!testo.contains(ESCLUSIONI)) {
+                    errore("filtro SpotBugs in " + p + " diverso da " + ESCLUSIONI);
+                }
+            }
+        }
+        Path file = radice.resolve(ESCLUSIONI);
+        if (!Files.exists(file)) {
+            if (configurato) {
+                errore("filtro SpotBugs configurato ma " + ESCLUSIONI + " assente");
+            }
+            return;
+        }
+        if (!configurato) {
+            errore(ESCLUSIONI + " esiste ma nessun POM lo configura: le esclusioni non sarebbero applicate");
+        }
+        try {
+            Element r = leggiXml(file).getDocumentElement();
+            int n = 0;
+            for (Node c = r.getFirstChild(); c != null; c = c.getNextSibling()) {
+                if (c instanceof Element e && "Match".equals(e.getTagName())) {
+                    n++;
+                    Node prec = c.getPreviousSibling();
+                    while (prec != null && prec.getNodeType() == Node.TEXT_NODE && prec.getTextContent().isBlank()) {
+                        prec = prec.getPreviousSibling();
+                    }
+                    if (prec == null || prec.getNodeType() != Node.COMMENT_NODE || prec.getTextContent().isBlank()) {
+                        errore("esclusione SpotBugs senza motivo in " + ESCLUSIONI + " (Match n. " + n + "): serve un commento subito prima");
+                    }
+                }
+            }
+            System.out.println("SpotBugs esclusioni: " + n + " in " + ESCLUSIONI + ", ciascuna con il motivo");
+        } catch (Exception e) {
+            errore(ESCLUSIONI + " non leggibile o non e' XML ben formato: " + e.getMessage());
+        }
+    }
+
     static void spotbugs(Path radice, String corsa, long inizioSecondi) throws IOException {
+        controllaEsclusioni(radice, moduli(radice));
         int analizzati = 0;
         for (Path m : moduli(radice)) {
             String nome = m.getFileName().toString();

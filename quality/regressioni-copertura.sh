@@ -488,6 +488,32 @@ caso_rapporto spotbugs-altra-corsa 'cp /menb-shim/batch-spotbugs-base.xml cardde
 caso_rapporto spotbugs-senza-classe 'cambia carddemo-batch/target/spotbugsXml.xml "s{<ClassStats[^>]*class=\x27io[.]github[.]ltoscano[.]carddemo[.]batch[.]InstallationCheckJobConfig\x27[^>]*></ClassStats>}{}"' SpotBugs \
   "classe io.github.ltoscano.carddemo.batch.InstallationCheckJobConfig di carddemo-batch non analizzata da SpotBugs"
 
+# ---- 4b. file di esclusioni di SpotBugs: ammesso solo con il motivo di ogni esclusione ------------
+
+ESCL_FILE="quality/regole/spotbugs-esclusioni.xml"
+configura_esclusioni() {
+  mut_dopo pom.xml '<xmlOutput>true</xmlOutput>' '                <excludeFilterFile>${project.parent.basedir}/quality/regole/spotbugs-esclusioni.xml</excludeFilterFile>'
+  CREATED+=("${ROOT}/${ESCL_FILE}")
+}
+# senza motivo: Maven resta verde, e' verify.sh a respingere il file
+configura_esclusioni
+scrivi "${ROOT}/${ESCL_FILE}" '<FindBugsFilter>
+  <Match><Class name="io.github.ltoscano.carddemo.domain.ProvaRegole"/></Match>
+</FindBugsFilter>'
+run_verify esclusione-senza-motivo || exit 1
+expect esclusione-senza-motivo ko "BUILD SUCCESS" "esclusione SpotBugs senza motivo in ${ESCL_FILE}" "ERRORE: rapporti SpotBugs non validi" "== VERIFICA FALLITA"
+ripristina
+# con motivo: l'esclusione e' applicata (il difetto di prova non fa fallire nulla) e verify.sh la riconosce
+configura_esclusioni
+scrivi "${ROOT}/${ESCL_FILE}" '<FindBugsFilter>
+  <!-- prova di regressione: difetto volutamente escluso -->
+  <Match><Class name="io.github.ltoscano.carddemo.domain.ProvaRegole"/></Match>
+</FindBugsFilter>'
+aggiungi_classe carddemo-domain spotbugs-domain ProvaRegole
+run_verify esclusione-con-motivo || exit 1
+expect esclusione-con-motivo ok "SpotBugs esclusioni: 1 in ${ESCL_FILE}, ciascuna con il motivo" "== verifica completata"
+ripristina
+
 # ---- 5. cancelli rimossi --------------------------------------------------------------------
 
 # SpotBugs in skip in un modulo di produzione senza codice (loader) e in uno con codice (batch):
