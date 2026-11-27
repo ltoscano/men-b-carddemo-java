@@ -1,0 +1,9 @@
+== codice di uscita
+0
+== stdout
+PARMECHO PARM-LENGTH= 00010
+PARMECHO PARM-DATE=2022071800
+== stderr
+Warning: program compiled against libxml 212 using older 209
+== file nella cartella di lavoro
+PARMDUMP 12
