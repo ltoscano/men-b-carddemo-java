@@ -31,3 +31,4 @@ app/cbl/COBSWAIT.cbl	MVSWAIT
 app/cbl/CORPT00C.cbl	CSUTLDTC
 app/cbl/COTRN02C.cbl	CSUTLDTC
 app/cbl/CSUTLDTC.cbl	CEEDAYS
+app/cpy/CSUTLDPY.cpy	CSUTLDTC

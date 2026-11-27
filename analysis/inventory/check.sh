@@ -54,6 +54,25 @@ log "   conteggio awk = conteggio Python su $(wc -l < "$gen/tmp/awk.tsv" | tr -d
 [ "$(awk -F'\t' '$1=="exec" && $2 ~ /\/jcl\// {s+=$3} END{print s+0}' "$gen/tmp/awk.tsv")" = 119 ] || fail "somma EXEC dei file jcl (awk) diversa da 119"
 [ "$(awk -F'\t' '$1=="dd" && $2 ~ /\/jcl\// {s+=$3} END{print s+0}' "$gen/tmp/awk.tsv")" = 480 ] || fail "somma DD dei file jcl (awk) diversa da 480"
 
+log "4b. conteggi, localizzatore, schede e CSD su file di prova propri (formati assenti dal legacy: operando a capo, *>, dati in linea, DLM, commento nel CSD)"
+fxd=/analysis/inventory/fixtures
+mkdir -p "$tmp/fx" && cp "$INV_DIR/fixtures/cmt_calls.tsv" "$tmp/fx/"
+psh "$tmp/fx" "export INV_LEGACY=$fxd/legacy INV_MANIFEST=$fxd/sources.tsv; python -I $(G counts.py) /work/counts.json && python -I $(G counts_tsv.py) /work/counts.json > /work/py.tsv && python -I $(G cards.py) /work && python -I $(G csd.py) /work && python -I $(G locate_calls.py) /work /work" || fail "gli script non girano sui file di prova"
+psh "$tmp/fx" "LEGACY_ROOT=$fxd/legacy sh /analysis/inventory/crosscheck.sh $fxd/files.tsv > /work/awk.tsv" || fail "crosscheck.sh non gira sui file di prova"
+cmp -s "$tmp/fx/py.tsv" "$INV_DIR/fixtures/expected_counts.tsv" || { diff "$tmp/fx/py.tsv" "$INV_DIR/fixtures/expected_counts.tsv" >&2; fail "conteggio Python sui file di prova diverso dall'atteso scritto a mano"; }
+cmp -s "$tmp/fx/awk.tsv" "$INV_DIR/fixtures/expected_counts.tsv" || { diff "$tmp/fx/awk.tsv" "$INV_DIR/fixtures/expected_counts.tsv" >&2; fail "conteggio awk sui file di prova diverso dall'atteso scritto a mano"; }
+awk -F'\t' 'NR>1 {print $3 "\t" $4 "\t" $5 "\t" $2}' "$tmp/fx/cards.tsv" | LC_ALL=C sort > "$tmp/fx/cards.txt"
+LC_ALL=C sort "$INV_DIR/fixtures/expected_cards.tsv" | cmp -s - "$tmp/fx/cards.txt" || { diff "$tmp/fx/cards.txt" "$INV_DIR/fixtures/expected_cards.tsv" >&2; fail "schede sui file di prova diverse dall'atteso"; }
+awk -F'\t' 'NR>1 {print $3 "\t" $2 "\t" $4 "\t" $5}' "$tmp/fx/csd.tsv" | cmp -s - "$INV_DIR/fixtures/expected_csd.tsv" || fail "transazioni del CSD di prova diverse dall'atteso (una riga commentata non deve dare il PROGRAM)"
+tail -n +2 "$tmp/fx/call_occ.tsv" | cmp -s - "$INV_DIR/fixtures/expected_call_occ.tsv" || fail "CALL localizzate sui file di prova diverse dall'atteso"
+tail -n +2 "$tmp/fx/call_dinamiche.tsv" | cmp -s - "$INV_DIR/fixtures/expected_call_dyn.tsv" || fail "CALL con operando in variabile sui file di prova diverse dall'atteso"
+log "   ok: Python, awk, schede, CSD e localizzatore danno su ${fxd##*/} i valori attesi scritti a mano"
+# un DD DATA che non termina: l'estrattore deve fallire in modo esplicito
+mkdir -p "$tmp/fx2/legacy/app/jcl" && printf '//J JOB\n//S EXEC PGM=X\n//D DD DATA\ndati\n' > "$tmp/fx2/legacy/app/jcl/BAD.jcl" && printf 'percorso\ttipo\napp/jcl/BAD.jcl\tjcl\n' > "$tmp/fx2/sources.tsv"
+if psh "$tmp/fx2" "export INV_LEGACY=/work/legacy INV_MANIFEST=/work/sources.tsv; python -I $(G cards.py) /work" > "$tmp/fx2/out.txt" 2>&1; then fail "PROVA NEGATIVA FALLITA: DD DATA senza delimitatore accettato dall'estrattore"; fi
+grep -q "needs-spec-update" "$tmp/fx2/out.txt" || fail "DD DATA senza delimitatore: errore non esplicito"
+log "   ok: un DD DATA senza delimitatore fa fallire l'estrattore in modo esplicito"
+
 log "5. prove negative sul grafo (ogni alterazione deve far fallire verify.py per il motivo atteso)"
 neg() { # neg NOME KIND NEEDLE
   local name="$1" kind="$2" needle="$3" out rc=0
@@ -75,6 +94,13 @@ neg "una DD di livello job attribuita a un passo" jobdd-to-step "DD a livello di
 neg "DD marcata livello passo ma sul job" dd-job-level-marked-step "fonte/livello inattesi"
 neg "una DD di POSTTRAN rimossa" drop-dd-occurrence "POSTTRAN.jcl: passo POSTTRAN/STEP15 (riga 23): DD nel grafo 8, nel sorgente 9"
 neg "PARM di INTCALC alterato" alter-parm "contains_parm.tsv"
+neg "la CALL dentro il copybook CSUTLDPY tolta" drop-copybook-call "CALL (letterali + operando in variabile): app/cpy/CSUTLDPY.cpy: occorrenze nel grafo 0, conteggio indipendente sul sorgente 1"
+neg "bersaglio di una COPY cambiato (conteggi e parole chiave invariati)" copy-target "COPY: lo strumento riporta ('app/cbl/COCRDUPC.cbl', 268"
+neg "due DD scambiate fra due passi di COMBTRAN (conteggi per passo invariati)" swap-dd-between-steps "JCL: app/jcl/COMBTRAN.jcl:"
+neg "una transazione puntata al programma di un'altra" transaction-to-other-program "CSD: il grafo ha"
+neg "un dataset rinominato (anche nei campi DSN)" dataset-renamed "JCL: app/jcl/INTCALC.jcl:"
+neg "il programma eseguito da un passo cambiato (WAITSTEP)" exec-target "JCL: app/jcl/WAITSTEP.jcl:"
+neg "il DISP di una DD alterato" dd-disp "dsn/disp sorgente del grafo"
 
 log "6. prove negative sugli attesi scritti a mano (si altera l'atteso, il grafo resta quello vero)"
 negexp() { # negexp NOME FILE SED-EXPR NEEDLE

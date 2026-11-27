@@ -12,6 +12,8 @@ rows = []
 for path in of_type("csd"):
     cur = None
     for n, line in enumerate(read_lines(path), 1):
+        if line.lstrip().startswith("*"):
+            continue
         m = re.match(r"\s*DEFINE\s+(\w+)\((\w+)\)", line, re.I)
         if m:
             cur = None

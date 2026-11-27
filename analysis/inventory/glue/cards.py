@@ -60,12 +60,22 @@ def cards_of(path):
     i = 0
     step = 0
     out = []
-    instream = False
+    instream = None
     while i < n:
         l = lines[i]
         if instream:
-            if l.startswith("/*") or l.startswith("//"):
-                instream = False
+            mode, dlm = instream
+            if dlm:
+                if l.startswith(dlm):
+                    instream = None
+                i += 1
+                continue
+            if l.startswith("/*"):
+                instream = None
+                i += 1
+                continue
+            if mode == "*" and l.startswith("//"):
+                instream = None
             else:
                 i += 1
                 continue
@@ -106,7 +116,8 @@ def cards_of(path):
         elif op == "DD":
             params = split_top(operand)
             dsn = disp = ""
-            sysout = instr = dummy = 0
+            sysout = dummy = 0
+            instr = ""
             for k, p in enumerate(params):
                 u = p.upper()
                 if u.startswith("DSN=") or u.startswith("DSNAME="):
@@ -116,12 +127,17 @@ def cards_of(path):
                 elif u.startswith("SYSOUT="):
                     sysout = 1
                 elif k == 0 and (p == "*" or u == "DATA"):
-                    instr = 1
+                    instr = "*" if p == "*" else "DATA"
                 elif k == 0 and u == "DUMMY":
                     dummy = 1
             if instr:
-                instream = True
-            out.append((path, start, "DD", name, step, "", "", "", dsn, disp, sysout, instr, dummy))
+                d = re.search(r"DLM=(?:'(..)'|(\S\S))", operand)
+                if d and instr == "*":
+                    raise SystemExit(f"SCHEDE: {path}:{start}: DD * con DLM=: formato oltre cio' che l'estrattore di schede puo' fare (needs-spec-update)")
+                instream = (instr, (d.group(1) or d.group(2)) if d else None)
+            out.append((path, start, "DD", name, step, "", "", "", dsn, disp, sysout, 1 if instr else 0, dummy))
+    if instream and instream[0] == "DATA":
+        raise SystemExit(f"SCHEDE: {path}: DD DATA senza delimitatore finale: formato oltre cio' che l'estrattore di schede puo' fare (needs-spec-update)")
     return out
 
 

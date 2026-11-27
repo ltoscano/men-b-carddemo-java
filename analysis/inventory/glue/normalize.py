@@ -15,7 +15,8 @@ from common import of_type, stem, write_tsv
 
 
 def cmt(raw, out):
-    by_stem = {stem(p): p for p in of_type("cobol")}
+    by_stem = {stem(p): p for p in of_type("cobol", "copybook")}
+    assert len(by_stem) == len(of_type("cobol", "copybook")), "nomi duplicati tra programmi e copybook"
     rows = []
     for p in sorted(glob.glob(os.path.join(raw, "*", "inventory.json"))):
         inv = json.load(open(p, encoding="utf-8"))

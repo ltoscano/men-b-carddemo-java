@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Localizzatore di occorrenze delle CALL statiche (colla, non parser).
 
-Dato l'elenco dei nomi gia' trovati da cobol-migration-toolkit (cmt_calls.tsv), trova nel sorgente la riga di ogni
-istruzione CALL 'NOME' (commenti esclusi, area di codice colonne 8-72, continuazioni di riga considerate: il letterale
-puo' stare a capo). Ogni occorrenza ha la propria riga. Elenca a parte le CALL il cui operando non e' un letterale
-e i letterali che lo strumento non aveva riportato.
+Dato l'elenco dei nomi gia' trovati da cobol-migration-toolkit (cmt_calls.tsv: programmi e copybook), trova nel sorgente
+la riga di ogni istruzione CALL 'NOME' (commenti di riga e `*>` esclusi, area di codice colonne 8-72, continuazioni di
+riga considerate: il letterale puo' stare a capo). Ogni occorrenza ha la propria riga. Elenca a parte le CALL il cui
+operando non e' un letterale (bersaglio in variabile: occorrenze con bersaglio non risolto) e i letterali che lo
+strumento non aveva riportato.
 
 Uso: locate_calls.py INDIR OUTDIR     (INDIR contiene cmt_calls.tsv)"""
 import os
@@ -12,7 +13,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import of_type, read_lines, read_tsv, write_tsv
+from common import of_type, read_lines, read_tsv, strip_cobol_inline_comment, write_tsv
 
 TOKEN = re.compile(r"'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|[A-Za-z0-9][A-Za-z0-9-]*|\S")
 
@@ -24,7 +25,7 @@ def code_text(lines):
         ind = line[6] if len(line) > 6 else " "
         if ind in "*/":
             continue
-        code = line[7:72]
+        code = strip_cobol_inline_comment(line[7:72])
         if ind == "-":
             code = code.lstrip()
             # prosecuzione di un letterale: il primo apice e' il segno di prosecuzione, non fa parte del testo
@@ -43,7 +44,7 @@ def main(indir, outdir):
     for r in read_tsv(os.path.join(indir, "cmt_calls.tsv")):
         calls.setdefault(r["file"], set()).add(r["chiamato"].upper())
     occ, dyn, extra, missing = [], [], [], []
-    for path in of_type("cobol"):
+    for path in of_type("cobol", "copybook"):
         text, where = code_text(read_lines(path))
         toks = [(m.group(), m.start()) for m in TOKEN.finditer(text)]
         found = set()
@@ -59,8 +60,8 @@ def main(indir, outdir):
                     found.add(name)
                 else:
                     extra.append((path, line, name))
-            else:
-                dyn.append((path, line, nxt))
+            elif re.match(r"[A-Za-z0-9]", nxt):
+                dyn.append((path, line, nxt.upper()))
         for name in sorted(calls.get(path, set()) - found):
             missing.append((path, name))
     if missing:

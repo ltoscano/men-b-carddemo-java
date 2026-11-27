@@ -53,13 +53,13 @@ inv_generate() {
     cat "$g/tmp/proleap/$(echo "$f" | tr '/' '_').tsv" | awk -F'\t' -v p="$f" 'BEGIN{OFS="\t"} NR>1 {print p,$1,$2,$3}'
   done < "$g/tmp/copy-files.txt" >> "$g/out/copy.tsv"
 
-  # CALL statiche: nomi da cobol-migration-toolkit (una scansione per cartella di programmi), righe dal localizzatore
+  # CALL statiche: nomi da cobol-migration-toolkit (una scansione per cartella di programmi e di copybook), righe dal localizzatore
   log "CALL: cobol-migration-toolkit per cartella, poi localizzatore"
-  for d in $(manifest_of cobol | sed 's#/[^/]*$##' | LC_ALL=C sort -u); do
+  for d in $({ manifest_of cobol; manifest_of copybook; } | sed 's#/[^/]*$##' | LC_ALL=C sort -u); do
     key="$(echo "$d" | tr '/' '_')"
     mkdir -p "$g/tmp/cmt/$key"
     local cpath=(--copybook-path "/legacy/app/cpy" --copybook-path "/legacy/app/cpy-bms")
-    local mod="${d%/cbl}"
+    local mod="${d%/cbl}"; mod="${mod%/cpy-bms}"; mod="${mod%/cpy}"
     [ "$mod" = "app" ] || cpath+=(--copybook-path "/legacy/$mod/cpy" --copybook-path "/legacy/$mod/cpy-bms")
     tool_run "$IMG_CMT" "$g/tmp/cmt/$key" -- scan "/legacy/$d" "${cpath[@]}" --format json --output /out > "$g/tmp/cmt/$key/stdout.txt" \
       || fail "cobol-migration-toolkit fallito su $d"

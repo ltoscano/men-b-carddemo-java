@@ -33,7 +33,7 @@ def rows_of(path):
     return [l.rstrip("\n").split("\t") for l in open(path, encoding="utf-8") if l.strip() and not l.startswith("#")]
 
 
-REQUIRED = ["edges_COBIL00C", "edges_CBTRN02C", "edges_CBACT01C", "contains_COACTUPC", "contains_COTRTLIC", "contains_parm",
+REQUIRED = ["edges_COBIL00C", "edges_CBTRN02C", "edges_CBACT01C", "contains_COACTUPC", "contains_COTRTLIC", "contains_CSUTLDPY", "contains_CSDB2RPY", "contains_parm",
             "csd_CARDDEMO", "jcl_POSTTRAN", "jcl_CREASTMT", "jcl_TRANEXTR", "jcl_TRANREPT", "jcl_REPROC", "livello_b", "totali", "anomalie_manuali"]
 for r in REQUIRED:
     if not os.path.isfile(os.path.join(EXP, r + ".tsv")) or os.path.getsize(os.path.join(EXP, r + ".tsv")) == 0:
@@ -64,7 +64,7 @@ for e in edges:
             err(f"arco {e['tipo']} {e['da']} -> {e['a']}: il nodo {e[end]} non esiste")
 
 # ------------------------------------------------------------------ 2. COPY e CALL contro il conteggio indipendente
-for tipo, key, label in (("COPY", "copy", "COPY"), ("CALL", "call", "CALL con letterale")):
+for tipo, key, label in (("COPY", "copy", "COPY"), ("CALL", "call", "CALL (letterali + operando in variabile)")):
     got = Counter()
     for e in edges:
         if e["tipo"] == tipo:
@@ -73,6 +73,8 @@ for tipo, key, label in (("COPY", "copy", "COPY"), ("CALL", "call", "CALL con le
                 if nodes.get(e["da"], {}).get("file") != o["file"]:
                     err(f"{tipo} {e['da']} -> {e['a']}: occorrenza in {o['file']} ma il nodo di partenza e' {nodes.get(e['da'], {}).get('file')}")
     for p, want in sorted(counts[key].items()):
+        if key == "call":
+            want += counts["call_var"][p]
         if got[p] != want:
             err(f"{label}: {p}: occorrenze nel grafo {got[p]}, conteggio indipendente sul sorgente {want}")
 
@@ -160,6 +162,188 @@ for e in edges:
         if not PAT[e["tipo"]](o, e):
             err(f"riga: {e['tipo']} {e['da']} -> {e['a']}: la riga {o['riga']} di {o['file']} non contiene l'istruzione ({line_of(o)[:60].strip()!r})")
 
+
+# ------------------------------------------------------------------ 4b. ogni occorrenza e' legata a cio' che lo strumento (o l'estrattore dichiarato) riporta
+def ctx_has(path, riga, name, span=3):
+    ls = src(path)
+    blob = " ".join(ls[riga - 1:riga - 1 + span]).upper().replace("'", " ").replace('"', " ")
+    return re.search(r"(?<![A-Z0-9-])" + re.escape(name.upper()) + r"(?![A-Z0-9-])", blob) is not None
+
+
+cpy_names = {stem(p) for p in of_type("copybook")}
+prog_names = {stem(p) for p in of_type("cobol")}
+asm_names = {stem(p) for p in of_type("asm")}
+proc_names = {stem(p) for p in of_type("proc")}
+src_prefix = {"cobol": "program", "copybook": "copybook"}
+
+
+def multiset(rows):
+    return Counter(rows)
+
+
+# COPY: copy.tsv (ProLeap) <-> occorrenze COPY del grafo: file, riga, bersaglio, sostituzioni
+want = []
+for r in read_tsv(os.path.join(OUT, "copy.tsv")):
+    nm = r["copybook"].upper()
+    want.append((r["file"], int(r["riga"]), ("copybook:" if nm in cpy_names else "external:") + nm, r["sostituzioni"]))
+    if not ctx_has(r["file"], int(r["riga"]), nm):
+        err(f"COPY: {r['file']}:{r['riga']}: il nome {nm} non compare nelle righe del sorgente")
+have = []
+for e in edges:
+    if e["tipo"] == "COPY":
+        for o in e["occorrenze"]:
+            have.append((o["file"], o["riga"], e["a"], ";".join(f"{x['da']}={x['a']}" for x in o.get("sostituzioni", []))))
+            if e["da"] != src_prefix[TYPE_OF[o["file"]]] + ":" + stem(o["file"]):
+                err(f"COPY {o['file']}:{o['riga']}: partenza {e['da']} non coerente con il file")
+for r, n in (multiset(want) - multiset(have)).items():
+    err(f"COPY: lo strumento riporta {r} ma il grafo non lo ha")
+for r, n in (multiset(have) - multiset(want)).items():
+    err(f"COPY: il grafo ha {r} che lo strumento non riporta (bersaglio o sostituzioni diversi)")
+
+# CALL: call_occ.tsv (nomi di cmt + localizzatore) e call_dinamiche.tsv
+want = []
+for r in read_tsv(os.path.join(OUT, "call_occ.tsv")):
+    nm = r["chiamato"].upper()
+    t = "program:" if nm in prog_names else "asm:" if nm in asm_names else "external:"
+    want.append((r["file"], int(r["riga"]), t + nm, ""))
+    if not ctx_has(r["file"], int(r["riga"]), nm):
+        err(f"CALL: {r['file']}:{r['riga']}: il nome {nm} non compare nelle righe del sorgente")
+for r in read_tsv(os.path.join(OUT, "call_dinamiche.tsv")):
+    want.append((r["file"], int(r["riga"]), "external:~NON-RISOLTO", r["operando"].upper()))
+    if not ctx_has(r["file"], int(r["riga"]), r["operando"]):
+        err(f"CALL: {r['file']}:{r['riga']}: l'operando {r['operando']} non compare nelle righe del sorgente")
+have = []
+for e in edges:
+    if e["tipo"] == "CALL":
+        for o in e["occorrenze"]:
+            have.append((o["file"], o["riga"], e["a"], o.get("operando", "")))
+            if ("non_risolto" in o) != (e["a"] == "external:~NON-RISOLTO"):
+                err(f"CALL {o['file']}:{o['riga']}: bersaglio non risolto incoerente con l'occorrenza")
+for r, n in (multiset(want) - multiset(have)).items():
+    err(f"CALL: lo strumento riporta {r} ma il grafo non lo ha")
+for r, n in (multiset(have) - multiset(want)).items():
+    err(f"CALL: il grafo ha {r} che lo strumento non riporta (bersaglio diverso)")
+
+# transazioni: csd.tsv <-> grafo, e programma dello stesso blocco DEFINE nel sorgente
+want = []
+for r in read_tsv(os.path.join(OUT, "csd.tsv")):
+    pg = r["programma"]
+    want.append((r["file"], int(r["riga"]), "transaction:" + r["transazione"], ("program:" if pg in prog_names else "external:") + pg, int(r["riga_programma"])))
+    ls = src(r["file"])
+    if not re.match(r"\s*DEFINE\s+TRANSACTION\(" + re.escape(r["transazione"]) + r"\)", ls[int(r["riga"]) - 1], re.I):
+        err(f"CSD: {r['file']}:{r['riga']}: non e' DEFINE TRANSACTION({r['transazione']})")
+    if not re.search(r"PROGRAM\(" + re.escape(pg) + r"\)", ls[int(r["riga_programma"]) - 1], re.I):
+        err(f"CSD: {r['file']}:{r['riga_programma']}: non contiene PROGRAM({pg})")
+    for mid in ls[int(r["riga"]):int(r["riga_programma"]) - 1]:
+        if re.match(r"\s*DEFINE\b", mid, re.I):
+            err(f"CSD: {r['file']}: tra le righe {r['riga']} e {r['riga_programma']} c'e' un altro DEFINE: il programma non e' dello stesso blocco")
+have = []
+for e in edges:
+    if e["tipo"] == "TRANSAZIONE_PROGRAMMA":
+        for o in e["occorrenze"]:
+            have.append((o["file"], o["riga"], e["da"], e["a"], o["riga_programma"]))
+for r, n in (multiset(want) - multiset(have)).items():
+    err(f"CSD: lo strumento riporta {r} ma il grafo non lo ha")
+for r, n in (multiset(have) - multiset(want)).items():
+    err(f"CSD: il grafo ha {r} che l'estrazione non riporta (programma o riga diversi)")
+
+# JCL: cards.tsv (+ mapa per il livello A) <-> passi, esecuzioni e DD del grafo, con il passo di appartenenza
+cards = defaultdict(list)
+for r in read_tsv(os.path.join(OUT, "cards.tsv")):
+    cards[r["file"]].append(r)
+mapa_dd_rows = defaultdict(lambda: defaultdict(list))
+for r in read_tsv(os.path.join(OUT, "mapa_dd.tsv")):
+    mapa_dd_rows[r["file"]][int(r["ordinale"])].append(r)
+step_by = {(n["file"], n["ordinale"]): n for n in g["nodi"] if n["tipo"] == "jcl-step"}
+exec_occ, dd_occ, contain_occ = {}, {}, {}
+for e in edges:
+    for o in e["occorrenze"]:
+        if e["tipo"] == "PASSO_ESEGUE":
+            exec_occ[(o["file"], o["riga"])] = (e, o)
+        elif e["tipo"] in ("PASSO_DD", "JOB_DD"):
+            dd_occ[(o["file"], o["riga"])] = (e, o)
+        elif e["tipo"] in ("JOB_PASSO", "PROC_PASSO"):
+            contain_occ[(o["file"], o["riga"])] = (e, o)
+
+
+def dataset_expected(c, risolto):
+    if c["in_linea"] == "1":
+        return "dataset:~INSTREAM"
+    if c["sysout"] == "1":
+        return "dataset:~SYSOUT"
+    if c["dummy"] == "1":
+        return "dataset:~DUMMY"
+    if not c["dsn"]:
+        return "dataset:~SENZA-DSN"
+    name = risolto if (risolto and not c["dsn"].startswith("&&")) else c["dsn"]
+    m = re.match(r"^(.*)\(([^()]*)\)$", name)
+    return "dataset:" + (m.group(1) if m else name)
+
+
+seen_exec, seen_dd = set(), set()
+for p in of_type("jcl", "proc"):
+    container = ("proc:" if TYPE_OF[p] == "proc" else "jcl-job:") + stem(p)
+    ks = defaultdict(int)
+    for c in cards[p]:
+        if c["scheda"] == "EXEC":
+            key = (p, int(c["riga"]))
+            seen_exec.add(key)
+            st = step_by.get((p, int(c["passo"])))
+            eo = exec_occ.get(key)
+            if not st or not eo:
+                err(f"JCL: {p}:{c['riga']}: EXEC {c['nome']} senza passo o senza esecuzione nel grafo")
+                continue
+            e, o = eo
+            if st["riga"] != int(c["riga"]) or e["da"] != st["id"]:
+                err(f"JCL: {p}:{c['riga']}: il passo {st['id']} non e' quello della scheda")
+            if o["esecuzione"] != c["tipo_exec"] or o.get("parm", "") != c["parm"] or e["a"].split(":", 1)[1].upper() != c["esegue"].upper():
+                err(f"JCL: {p}:{c['riga']}: esecuzione {e['a']} {o['esecuzione']} parm {o.get('parm', '')!r}, la scheda dice {c['tipo_exec']} {c['esegue']} parm {c['parm']!r}")
+            tgt_ok = {"PGM": ("program:", "asm:", "utility:"), "PROC": ("proc:", "external:")}[c["tipo_exec"]]
+            if not e["a"].startswith(tgt_ok):
+                err(f"JCL: {p}:{c['riga']}: tipo di bersaglio {e['a']} incoerente con {c['tipo_exec']}")
+            co = contain_occ.get(key)
+            if not co or co[0]["da"] != container or co[0]["a"] != st["id"]:
+                err(f"JCL: {p}:{c['riga']}: il passo non e' contenuto in {container}")
+        else:
+            key = (p, int(c["riga"]))
+            seen_dd.add(key)
+            do = dd_occ.get(key)
+            if not do:
+                err(f"JCL: {p}:{c['riga']}: DD {c['nome']} assente dal grafo")
+                continue
+            e, o = do
+            ordn = int(c["passo"])
+            if ordn == 0:
+                if e["tipo"] != "JOB_DD" or e["da"] != container:
+                    err(f"JCL: {p}:{c['riga']}: DD prima del primo passo ma attribuita a {e['da']} ({e['tipo']})")
+            else:
+                st = step_by.get((p, ordn))
+                if e["tipo"] != "PASSO_DD" or not st or e["da"] != st["id"]:
+                    err(f"JCL: {p}:{c['riga']}: DD {c['nome']} del passo {ordn} attribuita a {e['da']} ({e['tipo']})")
+            mrow = None
+            if o["fonte"] == "mapa":
+                idx = ks[ordn]
+                rows = mapa_dd_rows[p].get(ordn, [])
+                mrow = rows[idx] if idx < len(rows) else None
+                if mrow is None:
+                    err(f"JCL: {p}:{c['riga']}: DD dichiarata fonte mapa ma mapa non ha la DD numero {idx + 1} del passo {ordn}")
+            ks[ordn] += 1
+            risolto = mrow["dsn_risolto"] if mrow else ""
+            if o["dd"] != c["nome"] or e["a"] != dataset_expected(c, risolto):
+                err(f"JCL: {p}:{c['riga']}: DD {o['dd']} -> {e['a']}, attesa {c['nome']} -> {dataset_expected(c, risolto)}")
+            if o.get("dsn_sorgente", "") != c["dsn"] or o.get("disp_sorgente", "") != c["disp"]:
+                err(f"JCL: {p}:{c['riga']}: dsn/disp sorgente del grafo ({o.get('dsn_sorgente', '')!r}, {o.get('disp_sorgente', '')!r}) diversi dalla scheda ({c['dsn']!r}, {c['disp']!r})")
+            if mrow:
+                realish = not (c["in_linea"] == "1" or c["sysout"] == "1" or c["dummy"] == "1" or not c["dsn"] or c["dsn"].startswith("&&"))
+                want_r = mrow["dsn_risolto"] if realish else ""
+                want_d = mrow["disp_effettivo"] if (mrow["disp_effettivo"] and (realish or c["disp"] or c["dsn"].startswith("&&"))) else ""
+                if o.get("dsn_risolto", "") != want_r or o.get("disp_effettivo", "") != want_d:
+                    err(f"JCL: {p}:{c['riga']}: dsn_risolto/disp_effettivo del grafo ({o.get('dsn_risolto', '')!r}, {o.get('disp_effettivo', '')!r}) diversi da mapa ({want_r!r}, {want_d!r})")
+for key in set(exec_occ) - seen_exec:
+    err(f"JCL: esecuzione nel grafo a {key[0]}:{key[1]} senza scheda EXEC")
+for key in set(dd_occ) - seen_dd:
+    err(f"JCL: DD nel grafo a {key[0]}:{key[1]} senza scheda DD")
+
 # ------------------------------------------------------------------ 6. livelli di copertura e fonti
 exp_b = {r[0]: r for r in rows_of(os.path.join(EXP, "livello_b.tsv"))}
 lv = g["livelli_jcl"]
@@ -209,6 +393,8 @@ def edge_rows(da=None, tipi=None):
                 det = ";".join(f"{s['da']}={s['a']}" for s in o.get("sostituzioni", []))
             elif e["tipo"] == "TRANSAZIONE_PROGRAMMA":
                 det = str(o["riga_programma"])
+            elif e["tipo"] == "CALL":
+                det = o.get("operando", "")
             else:
                 det = ""
             out.add((e["tipo"], e["da"], e["a"], o["file"], str(o["riga"]), det))

@@ -89,6 +89,12 @@ for r in read_tsv(os.path.join(OUT, "call_occ.tsv")):
         target = node("external", name, origine="CALL: non e' un file del repository")
     edge("CALL", src_node(r["file"]), target, {"file": r["file"], "riga": int(r["riga"])})
 
+NONRISOLTO = None
+for r in read_tsv(os.path.join(OUT, "call_dinamiche.tsv")):
+    if NONRISOLTO is None:
+        NONRISOLTO = node("external", "~NON-RISOLTO", origine="CALL con bersaglio in variabile: il nome non e' un letterale e non e' risolto")
+    edge("CALL", src_node(r["file"]), NONRISOLTO, {"file": r["file"], "riga": int(r["riga"]), "non_risolto": True, "operando": r["operando"]})
+
 # ---------------------------------------------------------------- transazioni
 for r in read_tsv(os.path.join(OUT, "csd.tsv")):
     t = node("transaction", r["transazione"], file=r["file"], modulo=modulo(r["file"]))

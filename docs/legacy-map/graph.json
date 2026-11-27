@@ -1,6 +1,30 @@
 {
  "archi": [
   {
+   "a": "external:~NON-RISOLTO",
+   "da": "copybook:CSDB2RPY",
+   "occorrenze": [
+    {
+     "file": "app/app-transaction-type-db2/cpy/CSDB2RPY.cpy",
+     "non_risolto": true,
+     "operando": "LIT-DSNTIAC",
+     "riga": 57
+    }
+   ],
+   "tipo": "CALL"
+  },
+  {
+   "a": "program:CSUTLDTC",
+   "da": "copybook:CSUTLDPY",
+   "occorrenze": [
+    {
+     "file": "app/cpy/CSUTLDPY.cpy",
+     "riga": 293
+    }
+   ],
+   "tipo": "CALL"
+  },
+  {
    "a": "asm:COBDATFT",
    "da": "program:CBACT01C",
    "occorrenze": [
@@ -17426,6 +17450,12 @@
    "id": "external:MQPUT1",
    "nome": "MQPUT1",
    "origine": "CALL: non e' un file del repository",
+   "tipo": "external"
+  },
+  {
+   "id": "external:~NON-RISOLTO",
+   "nome": "~NON-RISOLTO",
+   "origine": "CALL con bersaglio in variabile: il nome non e' un letterale e non e' risolto",
    "tipo": "external"
   },
   {

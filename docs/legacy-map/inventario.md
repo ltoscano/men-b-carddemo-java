@@ -20,7 +20,7 @@ git submodule update --init
 | asm | 2 |
 | copybook | 62 |
 | dataset | 97 |
-| external | 17 |
+| external | 18 |
 | jcl-job | 46 |
 | jcl-step | 123 |
 | proc | 2 |
@@ -30,7 +30,7 @@ git submodule update --init
 
 | Tipo di arco | Archi | Occorrenze |
 | --- | --- | --- |
-| CALL | 32 | 62 |
+| CALL | 34 | 64 |
 | COPY | 306 | 346 |
 | JOB_DD | 2 | 3 |
 | JOB_PASSO | 119 | 119 |
@@ -48,7 +48,7 @@ Gli strumenti sono quelli adottati in #1 (`docs/legacy-map/strumenti.md`). La co
 | Archi | Strumento | Colla scritta in questa issue |
 | --- | --- | --- |
 | `COPY` (programmi e copybook) | ProLeap (colla Java di #1), un file per volta | nessuna: riga e sostituzioni sono quelle di ProLeap |
-| `CALL` statiche | cobol-migration-toolkit (nomi, una scansione per cartella di programmi) | **localizzatore di occorrenze** (`glue/locate_calls.py`): per ogni nome gia' trovato dallo strumento cerca nel sorgente le istruzioni `CALL 'NOME'` (area di codice colonne 8-72, commenti esclusi, letterale anche a capo); ogni occorrenza ha la sua riga |
+| `CALL` statiche (programmi e copybook) | cobol-migration-toolkit (nomi, una scansione per cartella di programmi e di copybook) | **localizzatore di occorrenze** (`glue/locate_calls.py`): per ogni nome gia' trovato dallo strumento cerca nel sorgente le istruzioni `CALL 'NOME'` (area di codice colonne 8-72, commenti esclusi, letterale anche a capo); ogni occorrenza ha la sua riga |
 | Transazione → programma | nessuno strumento | **estrazione testuale** (`glue/csd.py`): `DEFINE TRANSACTION(X)` e la prima clausola `PROGRAM(Y)` prima del `DEFINE` successivo, nei quattro file `csd` del manifesto |
 | JCL, livello A | mapa, un file per volta | procedure di `app/proc/` presentate a mapa in copie temporanee senza estensione (il nome che mapa cerca), identiche byte per byte agli originali e verificate; non versionate |
 | JCL, livello B | nessuno strumento | **estrattore di schede** (`glue/cards.py`): righe `//nome EXEC` e `//nome DD` e continuazioni (operando che termina con virgola, commenti `//*` in mezzo, colonne 1-72, dati in linea esclusi); ricava `PGM=`/`PROC=`, `PARM=`, `DSN=`, `DISP=`, `SYSOUT=`, `*`, `DUMMY` cosi' come scritti. Non risolve simboli, non espande procedure, non valuta condizioni |
@@ -132,21 +132,21 @@ Gli strumenti sono quelli adottati in #1 (`docs/legacy-map/strumenti.md`). La co
 
 ## Anomalie
 
-### Programmi senza job ne' transazione che li esegua
+### Programmi senza un arco diretto da un job o da una transazione
 
-9 programmi. Quelli con una colonna "chiamato da" sono sottoprogrammi: non li esegue un job o una transazione, li chiama un altro programma.
+9 programmi. **Questa tabella dice solo che nel grafo non c'e' un arco `PASSO_ESEGUE` o `TRANSAZIONE_PROGRAMMA` verso il programma; non dice che nessun job lo lanci.** I lanci che passano per categorie non mappate (programma indicato nel `PARM` di un `DFSRRC00`/`IKJEFT01`, nel `SYSTSIN` o nel `SYSIN` in linea, transazioni IMS) non sono archi. L'ultima colonna e' una ricerca testuale del nome nelle righe non commento dei JCL, non un arco: e' un indizio da verificare, non un risultato. "Chiamato da" elenca i programmi o i copybook con una `CALL` verso il programma.
 
-| Programma | Modulo | Chiamato (CALL) da |
-| --- | --- | --- |
-| `CBPAUP0C` | app-authorization-ims-db2-mq | - |
-| `CBSTM03B` | base | `CBSTM03A` |
-| `CBTRN01C` | base | - |
-| `COBTUPDT` | app-transaction-type-db2 | - |
-| `COPAUS2C` | app-authorization-ims-db2-mq | - |
-| `CSUTLDTC` | base | `CORPT00C`, `COTRN02C` |
-| `DBUNLDGS` | app-authorization-ims-db2-mq | - |
-| `PAUDBLOD` | app-authorization-ims-db2-mq | - |
-| `PAUDBUNL` | app-authorization-ims-db2-mq | - |
+| Programma | Modulo | Chiamato (CALL) da | Menzioni nei JCL (ricerca testuale) |
+| --- | --- | --- | --- |
+| `CBPAUP0C` | app-authorization-ims-db2-mq | - | `CBPAUP0J.jcl:25` |
+| `CBSTM03B` | base | `CBSTM03A` | - |
+| `CBTRN01C` | base | - | - |
+| `COBTUPDT` | app-transaction-type-db2 | - | `MNTTRDB2.jcl:30` |
+| `COPAUS2C` | app-authorization-ims-db2-mq | - | - |
+| `CSUTLDTC` | base | `CORPT00C`, `COTRN02C`, `CSUTLDPY` | - |
+| `DBUNLDGS` | app-authorization-ims-db2-mq | - | `UNLDGSAM.JCL:27` |
+| `PAUDBLOD` | app-authorization-ims-db2-mq | - | `LOADPADB.JCL:27` |
+| `PAUDBUNL` | app-authorization-ims-db2-mq | - | `UNLDPADB.JCL:39` |
 
 ### Copybook mai copiati
 
@@ -192,6 +192,7 @@ Gli strumenti sono quelli adottati in #1 (`docs/legacy-map/strumenti.md`). La co
 | `MQOPEN` | CALL (3) | 7 |
 | `MQPUT` | CALL (2) | 4 |
 | `MQPUT1` | CALL (1) | 1 |
+| `~NON-RISOLTO` | CALL (1) | 1 |
 
 ### Copybook che contengono istruzioni eseguibili
 
@@ -210,9 +211,22 @@ Nessuno per i tipi `cobol`, `copybook`, `jcl`, `proc`, `asm`, `csd`.
 
 Tipi di file sorgente che non hanno nodi perche' fuori ambito (vedi sotto): bms (21), ctl (8), dcl (3), ddl (6), ims (8), macro (2), scheduler (2).
 
-### CALL non letterali e letterali non riportati dallo strumento
+### CALL con bersaglio in variabile e letterali non riportati dallo strumento
 
-CALL con operando non letterale: 0. CALL con letterale che cobol-migration-toolkit non aveva riportato: 0.
+CALL con operando in variabile: 1. Sono occorrenze `CALL` verso il nodo `external:~NON-RISOLTO`, con l'operando scritto nel sorgente; il programma chiamato a tempo di esecuzione non e' determinato dall'analisi statica. CALL con letterale che cobol-migration-toolkit non aveva riportato: 0.
+
+| File | Riga | Operando |
+| --- | --- | --- |
+| `app/app-transaction-type-db2/cpy/CSDB2RPY.cpy` | 57 | `LIT-DSNTIAC` |
+
+### Archi che partono da un copybook
+
+`COPY` e `CALL` si cercano in programmi **e in tutti i copybook** (il contenuto decide, non l'elenco dei copybook gia' noti come eseguibili). Un copybook con una `CALL` crea un percorso programma -> copybook -> chiamato. Gli altri archi del grafo (JCL, CSD) non esistono nei copybook.
+
+| Copybook | Arco | Bersaglio | Occorrenze | Righe |
+| --- | --- | --- | --- | --- |
+| `CSDB2RPY` | CALL | `external:~NON-RISOLTO` | 1 | 57 |
+| `CSUTLDPY` | CALL | `program:CSUTLDTC` | 1 | 293 |
 
 ### Passi senza nome unico, DD a livello di job, DD concatenate
 
@@ -252,5 +266,5 @@ Il grafo non e' completo. Fuori ambito di questa issue:
 | Comportamento | issue #11 |
 | File `bms`, `ctl`, `dcl`, `ddl`, `ims`, `macro`, `scheduler` (CA7, Control-M), `data`, `sample`: nessun nodo | non assegnata qui |
 | Definizioni di file e programmi nei CSD (`DEFINE FILE`, `DEFINE PROGRAM`), `DSN` dentro `SYSIN` dei JCL, `PARM` risolti, `COND`, `IF/THEN` dei JCL | non mappati |
-| `COPY` dentro `EXEC SQL INCLUDE`; `REPLACE`; `CALL` con operando non letterale (elencate sopra) | non mappati |
+| `COPY` dentro `EXEC SQL INCLUDE`; `REPLACE`; la risoluzione del programma chiamato da una `CALL` con operando in variabile (elencate sopra, bersaglio non risolto); i lanci di programmi che passano per `PARM`, `SYSTSIN` o `SYSIN` in linea dei JCL | non mappati |
 

@@ -66,6 +66,53 @@ elif kind == "drop-dd-occurrence":            # una DD di POSTTRAN
     E.remove(e)
 elif kind == "alter-parm":
     find("PASSO_ESEGUE", "jcl-step:INTCALC/STEP15")["occorrenze"][0]["parm"] = "'2022071801'"
+elif kind == "drop-copybook-call":            # la CALL dentro il copybook CSUTLDPY (riga 293) tolta
+    E.remove(find("CALL", "copybook:CSUTLDPY", "program:CSUTLDTC"))
+elif kind == "copy-target":                   # la COPY di COCRDUPC riga 268 punta a un altro copybook (conteggi invariati)
+    src_e = find("COPY", "program:COCRDUPC", "copybook:CVCRD01Y")
+    o = src_e["occorrenze"].pop(0)
+    assert o["riga"] == 268
+    if not src_e["occorrenze"]:
+        E.remove(src_e)
+    find("COPY", "program:COCRDUPC", "copybook:CVACT02Y")["occorrenze"].append(o)
+elif kind == "swap-dd-between-steps":         # due DD di COMBTRAN scambiate fra due passi (conteggi per passo invariati)
+    def take(step, ddname):
+        for e in E:
+            if e["tipo"] == "PASSO_DD" and e["da"] == step:
+                for o in e["occorrenze"]:
+                    if o["dd"] == ddname:
+                        e["occorrenze"].remove(o)
+                        return e["a"], o
+        raise SystemExit("DD non trovata")
+
+    def put(step, a, o):
+        for e in E:
+            if e["tipo"] == "PASSO_DD" and e["da"] == step and e["a"] == a:
+                e["occorrenze"].append(o)
+                return
+        E.append({"tipo": "PASSO_DD", "da": step, "a": a, "occorrenze": [o]})
+    s1, s2 = "jcl-step:COMBTRAN/STEP05R", "jcl-step:COMBTRAN/STEP10"
+    a1, o1 = take(s1, "SORTIN")
+    a2, o2 = take(s2, "TRANVSAM")
+    put(s2, a1, o1)
+    put(s1, a2, o2)
+    g["archi"] = [e for e in E if e["occorrenze"]]
+elif kind == "transaction-to-other-program":  # CCUP puntata al programma di CT02, con la riga PROGRAM di CT02 (coerente)
+    e = find("TRANSAZIONE_PROGRAMMA", "transaction:CCUP")
+    o = e["occorrenze"][0]
+    E.remove(e)
+    o["riga_programma"] = 440
+    find("TRANSAZIONE_PROGRAMMA", "transaction:CT02").__setitem__("a", "program:COTRN02C")
+    E.append({"tipo": "TRANSAZIONE_PROGRAMMA", "da": "transaction:CCUP", "a": "program:COTRN02C", "occorrenze": [o]})
+elif kind == "dataset-renamed":               # il dataset TCATBALF di INTCALC sostituito con LOADLIB, anche nei campi DSN
+    e = find("PASSO_DD", "jcl-step:INTCALC/STEP15", "dataset:AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS")
+    e["a"] = "dataset:AWS.M2.CARDDEMO.LOADLIB"
+    for o in e["occorrenze"]:
+        o["dsn_sorgente"] = o["dsn_risolto"] = "AWS.M2.CARDDEMO.LOADLIB"
+elif kind == "exec-target":                   # WAITSTEP: il programma eseguito da COBSWAIT a CBACT01C
+    find("PASSO_ESEGUE", "jcl-step:WAITSTEP/WAIT")["a"] = "program:CBACT01C"
+elif kind == "dd-disp":                       # il DISP di una DD alterato (resto invariato)
+    find("PASSO_DD", "jcl-step:POSTTRAN/STEP15", "dataset:AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS")["occorrenze"][0]["disp_sorgente"] = "OLD"
 else:
     raise SystemExit("mutazione sconosciuta: " + kind)
 with open(dst, "w", encoding="utf-8") as f:

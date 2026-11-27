@@ -9,6 +9,8 @@ for p, n in c["copy"].items():
     rows.append(("copy", p, n))
 for p, n in c["call"].items():
     rows.append(("call", p, n))
+for p, n in c["call_var"].items():
+    rows.append(("call_var", p, n))
 for p, v in c["jcl"].items():
     rows.append(("exec", p, v["exec"]))
     rows.append(("dd", p, v["dd"]))

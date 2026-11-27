@@ -78,7 +78,7 @@ def write(graph, path, out, counts):
       "trovati da uno strumento o su parole chiave a formato fisso; non e' un parser.\n")
     w("| Archi | Strumento | Colla scritta in questa issue |\n| --- | --- | --- |")
     w("| `COPY` (programmi e copybook) | ProLeap (colla Java di #1), un file per volta | nessuna: riga e sostituzioni sono quelle di ProLeap |")
-    w("| `CALL` statiche | cobol-migration-toolkit (nomi, una scansione per cartella di programmi) | **localizzatore di occorrenze** (`glue/locate_calls.py`): per ogni nome gia' trovato dallo strumento cerca nel sorgente le istruzioni `CALL 'NOME'` (area di codice colonne 8-72, commenti esclusi, letterale anche a capo); ogni occorrenza ha la sua riga |")
+    w("| `CALL` statiche (programmi e copybook) | cobol-migration-toolkit (nomi, una scansione per cartella di programmi e di copybook) | **localizzatore di occorrenze** (`glue/locate_calls.py`): per ogni nome gia' trovato dallo strumento cerca nel sorgente le istruzioni `CALL 'NOME'` (area di codice colonne 8-72, commenti esclusi, letterale anche a capo); ogni occorrenza ha la sua riga |")
     w("| Transazione → programma | nessuno strumento | **estrazione testuale** (`glue/csd.py`): `DEFINE TRANSACTION(X)` e la prima clausola `PROGRAM(Y)` prima del `DEFINE` successivo, nei quattro file `csd` del manifesto |")
     w("| JCL, livello A | mapa, un file per volta | procedure di `app/proc/` presentate a mapa in copie temporanee senza estensione (il nome che mapa cerca), identiche byte per byte agli originali e verificate; non versionate |")
     w("| JCL, livello B | nessuno strumento | **estrattore di schede** (`glue/cards.py`): righe `//nome EXEC` e `//nome DD` e continuazioni (operando che termina con virgola, commenti `//*` in mezzo, colonne 1-72, dati in linea esclusi); ricava `PGM=`/`PROC=`, `PARM=`, `DSN=`, `DISP=`, `SYSOUT=`, `*`, `DUMMY` cosi' come scritti. Non risolve simboli, non espande procedure, non valuta condizioni |")
@@ -120,14 +120,23 @@ def write(graph, path, out, counts):
     # --------------------------------------------------------------- anomalie
     w("## Anomalie\n")
     exec_in = {e["a"] for e in edges if e["tipo"] in ("PASSO_ESEGUE", "TRANSAZIONE_PROGRAMMA")}
-    w("### Programmi senza job ne' transazione che li esegua\n")
+    w("### Programmi senza un arco diretto da un job o da una transazione\n")
     rows = []
+    jcl_lines = {p: read_lines(p) for p in of_type("jcl", "proc")}
     for n in graph["nodi"]:
         if n["tipo"] == "program" and n["id"] not in exec_in:
             callers = sorted({e["da"].split(":", 1)[1] for e in inbound[n["id"]] if e["tipo"] == "CALL"})
-            rows.append((f"`{n['nome']}`", n["modulo"], ", ".join(f"`{c}`" for c in callers) or "-"))
-    w(f"{len(rows)} programmi. Quelli con una colonna \"chiamato da\" sono sottoprogrammi: non li esegue un job o una transazione, li chiama un altro programma.\n")
-    w(table(["Programma", "Modulo", "Chiamato (CALL) da"], rows))
+            hits = []
+            for p, ls in jcl_lines.items():
+                for i, l in enumerate(ls, 1):
+                    if not l.startswith("//*") and re.search(r"(?<![A-Za-z0-9-])" + n["nome"] + r"(?![A-Za-z0-9-])", l[:72]):
+                        hits.append(f"`{os.path.basename(p)}:{i}`")
+            rows.append((f"`{n['nome']}`", n["modulo"], ", ".join(f"`{c}`" for c in callers) or "-", ", ".join(hits[:4]) or "-"))
+    w(f"{len(rows)} programmi. **Questa tabella dice solo che nel grafo non c'e' un arco `PASSO_ESEGUE` o `TRANSAZIONE_PROGRAMMA` verso il programma; non dice che nessun job lo lanci.** "
+      "I lanci che passano per categorie non mappate (programma indicato nel `PARM` di un `DFSRRC00`/`IKJEFT01`, nel `SYSTSIN` o nel `SYSIN` in linea, transazioni IMS) non sono archi. "
+      "L'ultima colonna e' una ricerca testuale del nome nelle righe non commento dei JCL, non un arco: e' un indizio da verificare, non un risultato. "
+      "\"Chiamato da\" elenca i programmi o i copybook con una `CALL` verso il programma.\n")
+    w(table(["Programma", "Modulo", "Chiamato (CALL) da", "Menzioni nei JCL (ricerca testuale)"], rows))
     w("\n### Copybook mai copiati\n")
     copied = {e["a"] for e in edges if e["tipo"] == "COPY"}
     rows = [(f"`{n['nome']}`", n["modulo"]) for n in graph["nodi"] if n["tipo"] == "copybook" and n["id"] not in copied]
@@ -165,10 +174,19 @@ def write(graph, path, out, counts):
         w(table(["Tipo", "File"], [(t, ", ".join(f"`{p}`" for p in ps)) for t, ps in sorted(unmapped.items())]))
     other = Counter(t for p, t in manifest() if t in ("bms", "ctl", "dcl", "ddl", "ims", "macro", "scheduler") )
     w("Tipi di file sorgente che non hanno nodi perche' fuori ambito (vedi sotto): " + ", ".join(f"{t} ({n})" for t, n in sorted(other.items())) + ".\n")
-    w("### CALL non letterali e letterali non riportati dallo strumento\n")
+    w("### CALL con bersaglio in variabile e letterali non riportati dallo strumento\n")
     dyn = read_tsv(os.path.join(out, "call_dinamiche.tsv"))
     non = read_tsv(os.path.join(out, "call_non_riportate.tsv"))
-    w(f"CALL con operando non letterale: {len(dyn)}. CALL con letterale che cobol-migration-toolkit non aveva riportato: {len(non)}.\n")
+    w(f"CALL con operando in variabile: {len(dyn)}. Sono occorrenze `CALL` verso il nodo `external:~NON-RISOLTO`, con l'operando scritto nel sorgente; il programma chiamato a tempo di esecuzione non e' determinato dall'analisi statica. "
+      f"CALL con letterale che cobol-migration-toolkit non aveva riportato: {len(non)}.\n")
+    w(table(["File", "Riga", "Operando"], [(f"`{r['file']}`", r["riga"], f"`{r['operando']}`") for r in dyn]))
+    w("\n### Archi che partono da un copybook\n")
+    w("`COPY` e `CALL` si cercano in programmi **e in tutti i copybook** (il contenuto decide, non l'elenco dei copybook gia' noti come eseguibili). "
+      "Un copybook con una `CALL` crea un percorso programma -> copybook -> chiamato. Gli altri archi del grafo (JCL, CSD) non esistono nei copybook.\n")
+    rows = [(f"`{e['da'].split(':', 1)[1]}`", e["tipo"], f"`{e['a']}`", len(e["occorrenze"]), ", ".join(str(o["riga"]) for o in e["occorrenze"]))
+            for e in edges if e["da"].startswith("copybook:")]
+    w(table(["Copybook", "Arco", "Bersaglio", "Occorrenze", "Righe"], rows))
+    w("")
     w("### Passi senza nome unico, DD a livello di job, DD concatenate\n")
     dup = [n["id"] for n in graph["nodi"] if n["tipo"] == "jcl-step" and "#" in n["id"]]
     w("Passi il cui nome si ripete o manca nel sorgente (distinti con `#n`): " + (", ".join(f"`{i}`" for i in dup) or "nessuno") + ".\n")
@@ -192,7 +210,7 @@ def write(graph, path, out, counts):
     w("| Comportamento | issue #11 |")
     w("| File `bms`, `ctl`, `dcl`, `ddl`, `ims`, `macro`, `scheduler` (CA7, Control-M), `data`, `sample`: nessun nodo | non assegnata qui |")
     w("| Definizioni di file e programmi nei CSD (`DEFINE FILE`, `DEFINE PROGRAM`), `DSN` dentro `SYSIN` dei JCL, `PARM` risolti, `COND`, `IF/THEN` dei JCL | non mappati |")
-    w("| `COPY` dentro `EXEC SQL INCLUDE`; `REPLACE`; `CALL` con operando non letterale (elencate sopra) | non mappati |\n")
+    w("| `COPY` dentro `EXEC SQL INCLUDE`; `REPLACE`; la risoluzione del programma chiamato da una `CALL` con operando in variabile (elencate sopra, bersaglio non risolto); i lanci di programmi che passano per `PARM`, `SYSTSIN` o `SYSIN` in linea dei JCL | non mappati |\n")
 
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(L) + "\n")
