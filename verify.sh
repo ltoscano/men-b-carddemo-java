@@ -5,8 +5,11 @@
 #     accesso al Docker dell'host per i test di integrazione (Testcontainers);
 #  3. controlla che il rapporto del test di integrazione PostgreSQL sia XML completo, di
 #     questa corsa, con il caso di test eseguito e riuscito (quality/RapportoSurefire.java);
-#  4. controlla che online e batch abbiano esattamente un jar eseguibile (*-exec.jar);
-#  5. alla fine, riuscita o no, anche se interrotta, rimuove il container di build e i
+#  4. controlla i rapporti di copertura (JaCoCo: rapporto aggregato e prova dell'agente in ogni
+#     modulo che esegue test) e di analisi statica (SpotBugs: un rapporto per ogni modulo di
+#     produzione) con quality/RapportiQualita.java; i plugin li producono dentro mvn verify;
+#  5. controlla che online e batch abbiano esattamente un jar eseguibile (*-exec.jar);
+#  6. alla fine, riuscita o no, anche se interrotta, rimuove il container di build e i
 #     container avviati dai test di questa corsa (etichetta menb.verify.run) e verifica che
 #     non ne resti nessuno.
 # Ogni comando esterno sull'host ha un limite di tempo (quality/limite.sh).
@@ -17,6 +20,9 @@
 set -euo pipefail
 
 IMAGE="maven:3.9.16-eclipse-temurin-21"
+# Plugin che produce i POM effettivi letti dai controlli di copertura e analisi statica (ultima
+# stabile su Maven Central al 27 nov 2026; non gestita da Spring Boot).
+HELP_PLUGIN_VERSION="3.6.0"
 CACHE_VOLUME="${MENB_BUILD_CACHE_VOLUME:-menb-build-m2}"
 VERIFY_TIMEOUT="${MENB_VERIFY_TIMEOUT:-1800}"
 SHORT_TIMEOUT="${MENB_VERIFY_SHORT_TIMEOUT:-60}"
@@ -33,6 +39,7 @@ ROOT="$(cd "${ROOT_DIR}" && pwd)" || { echo "ERRORE: cartella dello script non r
 [ -f "${ROOT}/pom.xml" ] || { echo "ERRORE: ${ROOT}/pom.xml non trovato" >&2; exit 1; }
 [ -f "${ROOT}/quality/limite.sh" ] || { echo "ERRORE: ${ROOT}/quality/limite.sh non trovato" >&2; exit 1; }
 [ -f "${ROOT}/quality/RapportoSurefire.java" ] || { echo "ERRORE: ${ROOT}/quality/RapportoSurefire.java non trovato" >&2; exit 1; }
+[ -f "${ROOT}/quality/RapportiQualita.java" ] || { echo "ERRORE: ${ROOT}/quality/RapportiQualita.java non trovato" >&2; exit 1; }
 # shellcheck source=quality/limite.sh
 . "${ROOT}/quality/limite.sh" || { echo "ERRORE: caricamento di quality/limite.sh fallito" >&2; exit 1; }
 check_seconds MENB_VERIFY_TIMEOUT "${VERIFY_TIMEOUT}" || exit 1
@@ -188,6 +195,7 @@ limited "${VERIFY_TIMEOUT}" docker run --rm -i \
   -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal \
   -e TESTCONTAINERS_RYUK_DISABLED=true \
   -e MENB_VERIFY_RUN_ID="${RUN_ID}" \
+  -e HELP_PLUGIN_VERSION="${HELP_PLUGIN_VERSION}" \
   "${IMAGE}" bash -s <<'CONTAINER' || rc=$?
 set -uo pipefail
 shopt -s nullglob
@@ -204,7 +212,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "== [1/3] pulizia degli output precedenti e mvn -B verify"
+echo "== [1/6] pulizia degli output precedenti e mvn -B verify"
 rm -rf carddemo-*/target || { echo "ERRORE: cancellazione dei target/ precedenti fallita" >&2; exit 1; }
 residui=(carddemo-*/target)
 if [ "${#residui[@]}" -ne 0 ]; then
@@ -216,13 +224,18 @@ case "${MENB_VERIFY_RUN_ID:-}" in
   verify-[0-9]*-[0-9]*) ;;
   *) echo "ERRORE: identificativo della corsa non valido: '${MENB_VERIFY_RUN_ID:-}'" >&2; exit 1 ;;
 esac
+# Inizio della corsa (secondi dall'epoca): un rapporto SpotBugs prodotto prima non e' di questa corsa.
+RUN_START="$(date +%s)" || { echo "ERRORE: date fallito" >&2; exit 1; }
+case "${RUN_START}" in
+  '' | *[!0-9]*) echo "ERRORE: ora di inizio non numerica: '${RUN_START}'" >&2; exit 1 ;;
+esac
 # -Dmenb.verify.run arriva come proprieta' di sistema ai test e surefire la registra nel rapporto.
 mvn -B verify "-Dmenb.verify.run=${MENB_VERIFY_RUN_ID}" </dev/null || { echo "ERRORE: mvn verify fallito" >&2; exit 1; }
 
 # Il rapporto di surefire deve essere un XML ben formato e completo, di questa corsa (proprieta'
 # menb.verify.run), con il caso di test atteso eseguito e riuscito: lo legge il parser XML del
 # JDK del container (quality/RapportoSurefire.java, lanciato come sorgente).
-echo "== [2/3] controllo del rapporto del test di integrazione"
+echo "== [2/6] controllo del rapporto del test di integrazione"
 report="carddemo-parity/target/surefire-reports/TEST-io.github.ltoscano.carddemo.parity.PostgresIntegrazioneTest.xml"
 if [ ! -f "${report}" ]; then
   echo "ERRORE: rapporto del test di integrazione assente: ${report}" >&2
@@ -235,8 +248,36 @@ if ! java quality/RapportoSurefire.java "${report}" "${MENB_VERIFY_RUN_ID}" \
   exit 1
 fi
 
+# POM effettivi del reattore (maven-help-plugin, versione fissata): la configurazione dei plugin di
+# copertura e di analisi statica si legge da qui, come la vede Maven (ereditarieta', profili,
+# proprieta' risolte), non cercando testo nei POM. Nome unico per corsa; esito controllato.
+EFFECTIVE_POM="/tmp/menb-effective-pom-${MENB_VERIFY_RUN_ID}.xml"
+echo "== [3/6] POM effettivi (maven-help-plugin ${HELP_PLUGIN_VERSION})"
+mvn -B -q "org.apache.maven.plugins:maven-help-plugin:${HELP_PLUGIN_VERSION}:effective-pom" \
+  "-Dmenb.verify.run=${MENB_VERIFY_RUN_ID}" "-Doutput=${EFFECTIVE_POM}" </dev/null \
+  || { echo "ERRORE: generazione dei POM effettivi fallita" >&2; exit 1; }
+[ -s "${EFFECTIVE_POM}" ] || { echo "ERRORE: POM effettivi assenti o vuoti: ${EFFECTIVE_POM}" >&2; exit 1; }
+
+# Copertura: il rapporto aggregato di JaCoCo (carddemo-parity/target/site/jacoco-aggregate/jacoco.xml)
+# deve essere di questa corsa e contenere ogni classe di produzione eseguibile compilata; ogni
+# modulo che ha eseguito test deve avere la prova dell'agente (sessione di questa corsa nel suo
+# target/jacoco.exec). Nessuna soglia di copertura.
+echo "== [4/6] controllo del rapporto di copertura (JaCoCo)"
+if ! java quality/RapportiQualita.java jacoco . "${MENB_VERIFY_RUN_ID}" "${EFFECTIVE_POM}" </dev/null; then
+  echo "ERRORE: rapporto di copertura JaCoCo non valido" >&2
+  exit 1
+fi
+
+# Analisi statica: ogni modulo con codice di produzione deve avere un rapporto SpotBugs di questa
+# corsa, senza difetti ne' errori di analisi, con tutte le sue classi analizzate.
+echo "== [5/6] controllo dei rapporti di analisi statica (SpotBugs)"
+if ! java quality/RapportiQualita.java spotbugs . "${MENB_VERIFY_RUN_ID}" "${RUN_START}" "${EFFECTIVE_POM}" </dev/null; then
+  echo "ERRORE: rapporti SpotBugs non validi" >&2
+  exit 1
+fi
+
 # Dopo la pulizia puo' esistere solo l'eseguibile prodotto da questa build: ne serve uno.
-echo "== [3/3] controllo dei jar eseguibili"
+echo "== [6/6] controllo dei jar eseguibili"
 for module in carddemo-online carddemo-batch; do
   jars=("${module}"/target/*-exec.jar)
   if [ "${#jars[@]}" -ne 1 ]; then
