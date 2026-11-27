@@ -215,10 +215,20 @@ def main(tipo, m):
             d["lunghezza_da"] = "87"
             return d
         tsv_modifica(os.path.join(docs, "relazioni.tsv"), lambda d: d["da"] == "CBIMPORT.WS-ERROR-RECORD", g)
-    elif tipo in ("composizione-eliminata", "timestamp-eliminato"):
-        rad = "WS-VALIDATION-TRAILER" if tipo == "composizione-eliminata" else "DB2-FORMAT-TS"
-        tsv_modifica(cens, lambda d: d["radice"] == rad, lambda d: None)
-        tsv_modifica(os.path.join(docs, "relazioni.tsv"), lambda d: d["da"] == "CBTRN02C." + rad, lambda d: None)
+    elif tipo in ("composizione-eliminata", "timestamp-eliminato", "timestamp-cbact04c-eliminato"):
+        prog, rad = {"composizione-eliminata": ("CBTRN02C", "WS-VALIDATION-TRAILER"), "timestamp-eliminato": ("CBTRN02C", "DB2-FORMAT-TS"),
+                     "timestamp-cbact04c-eliminato": ("CBACT04C", "DB2-FORMAT-TS")}[tipo]
+        tsv_modifica(cens, lambda d: d["radice"] == rad and d["sorgente"] == f"app/cbl/{prog}.cbl", lambda d: None)
+        tsv_modifica(os.path.join(docs, "relazioni.tsv"), lambda d: d["da"] == f"{prog}.{rad}", lambda d: None)
+    elif tipo == "trasferimento-tolto":
+        tsv_modifica(os.path.join(out, "fonti", "trasferimenti.tsv"),
+                     lambda d: d["programma"] == "app/cbl/CBACT04C.cbl" and d["riga"] == "497", lambda d: None)
+    elif tipo == "non-coperto-spostato":
+        def f(d):
+            d["riga"], d["tipo"] = "464", "aritmetica (COMPUTE)"
+            return d
+        tsv_modifica(os.path.join(out, "fonti", "non-coperti.tsv"),
+                     lambda d: d["programma"] == "app/cbl/CBACT04C.cbl" and d["destinazione"] == "TRAN-AMT", f)
     elif tipo == "sezione-errata":
         def f(d):
             d["tipo"] = "LINKAGE"

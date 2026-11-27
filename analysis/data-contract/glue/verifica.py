@@ -735,12 +735,67 @@ def controlla_assegnazioni(D):
        f"{nevid} con il contratto confermato dai programmi che li usano")
 
 
+FINE_ISTRUZIONE = re.compile(r"(?<![A-Z0-9-])(MOVE|STRING|UNSTRING|INITIALIZE|ADD|SUBTRACT|COMPUTE|MULTIPLY|DIVIDE|IF|ELSE|"
+                             r"END-IF|PERFORM|WRITE|REWRITE|READ|DISPLAY|SET|CALL|EVALUATE|WHEN|END-EVALUATE|GO|"
+                             r"END-STRING|END-UNSTRING|END-COMPUTE|CONTINUE|EXIT|GOBACK)(?![A-Z0-9-])|\.(\s|$)")
+
+
+def testo_istruzione(D, p, n, verbo):
+    """Testo dell'istruzione 'verbo' che inizia alla riga n: dal verbo fino al verbo successivo o al punto (al massimo
+    20 righe). Implementazione indipendente da struttura.py, sul testo del sorgente. None se a quella riga il verbo manca."""
+    t = D.codice(p, n) or ""
+    m = re.search(r"(?<![A-Z0-9-])" + re.escape(verbo) + r"(?![A-Z0-9-])", t)
+    if not m:
+        return None
+    testo = t[m.end():]
+    for k in range(n + 1, n + 20):
+        testo += " " + (D.codice(p, k) or "")
+    f = FINE_ISTRUZIONE.search(testo)
+    return testo[:f.start()] if f else testo
+
+
+def controlla_istruzioni(D):
+    """Ogni voce di trasferimenti e non coperti: la riga citata deve aprire un'istruzione del tipo dichiarato che contiene
+    la destinazione (non un'istruzione successiva). Poi la controprova testuale delle MOVE di strutture intere."""
+    for nome, righe in (("trasferimenti", D.trasf), ("non-coperti", D.nonc)):
+        for r in righe:
+            tipo = r.get("tipo", r.get("verbo", "MOVE"))
+            verbo = re.search(r"\(([A-Z]+)\)", tipo).group(1) if tipo.startswith("aritmetica") else tipo.split()[0]
+            testo = testo_istruzione(D, r["programma"], int(r["riga"]), verbo)
+            if testo is None:
+                err(nome, f"{r['programma']}:{r['riga']}: la riga non apre un'istruzione {verbo}")
+            elif not re.search(r"(?<![A-Z0-9-])" + re.escape(r["destinazione"]) + r"(?![A-Z0-9-])", testo):
+                err(nome, f"{r['programma']}:{r['riga']}: l'istruzione {verbo} che inizia a questa riga non ha la destinazione "
+                          f"{r['destinazione']}")
+    # controprova indipendente: MOVE <nome> TO <nome> su una riga, con il primo nome dichiarato 01/77 o gruppo
+    from controprova import indice_copie, mosse_di_strutture
+    copie = indice_copie([r["path"] for r in D.manifesto if r["type"] == "copybook" and r["path"].startswith("app/cpy/")])
+    escluse = {e["destinazione"] for e in leggi_tsv(os.path.join(D.exp, "controprova-escluse.tsv"))}
+    tr = {(t["programma"], t["riga"]): t for t in D.trasf}
+    trovate, n = set(), 0
+    for p in (x["programma"] for x in D.progr if x["batch"] == "si"):
+        for riga, a, b in mosse_di_strutture(D.legacy, p, copie):
+            n += 1
+            trovate.add((p, str(riga)))
+            if (p, str(riga)) in tr:
+                continue
+            if b not in escluse:
+                err("controprova", f"{p}:{riga}: MOVE {a} TO {b} e' un trasferimento di struttura intera che non e' tra i "
+                                   f"trasferimenti e la cui destinazione non e' dichiarata esclusa")
+    for k, t in sorted(tr.items()):
+        if k not in trovate:
+            err("controprova", f"{k[0]}:{k[1]}: trasferimento {t['sorgente']} -> {t['destinazione']} non trovato dalla controprova")
+    ok(f"istruzioni: {len(D.trasf)} trasferimenti e {len(D.nonc)} punti non coperti aprono alla riga citata un'istruzione del "
+       f"tipo dichiarato con quella destinazione; controprova testuale: {n} MOVE di strutture intere, "
+       f"{len(trovate & set(tr))} tra i trasferimenti, le altre verso destinazioni dichiarate escluse")
+
+
 def controlla_composizioni(D):
     """Posizione nel record dei campi delle strutture trasferite: generata dalle relazioni MOVE e da cb2xml, contro gli attesi."""
-    gen = {(c["struttura"], c["record"], c["campo"], c["indice"]): c for c in D.comp}
+    gen = {(c["struttura"], c["record"], c["campo_record"], c["campo"], c["indice"]): c for c in D.comp}
     att = leggi_tsv(os.path.join(D.exp, "composizioni.tsv"))
     for e in att:
-        g = gen.get((e["struttura"], e["record"], e["campo"], e["indice"]))
+        g = gen.get((e["struttura"], e["record"], e["campo_record"], e["campo"], e["indice"]))
         if g is None:
             err("composizioni", f"{e['struttura']} -> {e['record']}: campo {e['campo']} atteso e assente dalle composizioni generate")
         elif (g["offset_nel_record"], g["lunghezza"]) != (e["offset_nel_record"], e["lunghezza"]):
@@ -760,7 +815,8 @@ def main(argv):
     for nome, f in (("A. censimento", controlla_censimento), ("A. relazioni", controlla_relazioni),
                     ("B. contratti", controlla_contratti), ("B. tracciati", controlla_tracciati),
                     ("C. attesi", controlla_attesi), ("C. presenza degli attesi", controlla_presenza_attesi), ("C. chiavi", controlla_chiavi), ("C. discordanze", controlla_discordanze),
-                    ("E. assegnazioni", controlla_assegnazioni), ("F. composizioni", controlla_composizioni)):
+                    ("E. assegnazioni", controlla_assegnazioni), ("F. composizioni", controlla_composizioni),
+                    ("G. istruzioni e controprova", controlla_istruzioni)):
         print(f"{nome}")
         INIZIO[0] = len(ERRORI)
         f(D)

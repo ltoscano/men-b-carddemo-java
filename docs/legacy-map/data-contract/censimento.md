@@ -33,8 +33,8 @@ L'output grezzo e intermedio è in `analysis/data-contract/out/`: gli XML e i lo
 
 - **Tutti i 30 copybook di `app/cpy/`**, presi dal manifesto (`analysis/manifest/sources.tsv`), non da un glob. Per ognuno, le radici di livello 01 che contiene: un copybook può averne più d'una (`CVTRA07Y` ne ha sette, `CSLKPCDY` tre) o nessuna (`CSUTLDWY` ha voci di livello 10 e 20 da includere sotto un gruppo del programma).
 - **I 14 programmi batch di `app/cbl/`**: i programmi del manifesto senza `EXEC CICS`. Dodici hanno file (49 `FD` in tutto); `COBSWAIT` e `CSUTLDTC` non ne hanno. Per ogni `FD`, il suo 01 (o la `COPY` che lo fornisce). Per ogni istruzione `READ`, `WRITE`, `REWRITE` e per ogni `MOVE` di una struttura nel record di un `FD`, la struttura da cui il record è composto prima della scrittura (`WRITE ... FROM`, `MOVE` verso il record) o in cui è letto (`READ ... INTO`); in `CBSTM03A`, anche lo spostamento dei record letti da `CBSTM03B` (area `WS-M03B-FLDT`) nei tracciati dei copybook. Le strutture di `WORKING-STORAGE` e `LINKAGE` coinvolte sono radici del censimento come gli 01 degli `FD`.
-- **I trasferimenti di strutture intere verso i record scritti, anche verso una loro parte**, ricavati dal programma completo (`glue/struttura.py`): ogni `MOVE` di una voce di livello 01 o di un gruppo verso un record che finisce in un file (record di una `WRITE`/`REWRITE`, o struttura di una `WRITE`/`REWRITE ... FROM`) o verso un suo sotto-campo. Nei 12 programmi batch con file sono 14: `VBRC-REC1` e `VBRC-REC2` in `VBR-REC` (CBACT01C), `DALYTRAN-RECORD` e `WS-VALIDATION-TRAILER` nelle due parti di `REJECT-RECORD`, `DB2-FORMAT-TS` in `TRAN-PROC-TS` di `TRAN-RECORD` (CBTRN02C), le nove righe di report in `FD-REPTFILE-REC` (CBTRN03C). Rispetto alla prima consegna si aggiunge una struttura, `DB2-FORMAT-TS`; le altre erano già censite. Per ciascuno il controllo pretende la relazione e la struttura nel censimento; `composizioni.tsv` dà la posizione di ogni campo trasferito nel record (per esempio motivo dello scarto a offset 350 per 4 byte, descrizione a 354 per 76).
-- **Non coperto dai trasferimenti** (elencato punto per punto in `analysis/data-contract/out/fonti/non-coperti.tsv` e riassunto in fondo a questo documento): ciò che scrive dentro un record senza trasferire una struttura intera, cioè composizione campo per campo, letterali, riferimenti con posizione nella sorgente, `STRING`, `INITIALIZE`, aritmetica. Per queste istruzioni non si chiede una relazione; il tracciato del record che le riceve ha comunque il suo contratto.
+- **I trasferimenti di strutture intere verso i record scritti, anche verso una loro parte**, ricavati dal programma completo (`glue/struttura.py`): ogni `MOVE` di una voce di livello 01 o di un gruppo verso un record che finisce in un file (record di una `WRITE`/`REWRITE`, o struttura di una `WRITE`/`REWRITE ... FROM`) o verso un suo sotto-campo. Nei 12 programmi batch con file sono 16: `VBRC-REC1` e `VBRC-REC2` in `VBR-REC` (CBACT01C); `DB2-FORMAT-TS` in `TRAN-ORIG-TS` e in `TRAN-PROC-TS` di `TRAN-RECORD` (CBACT04C, righe 497-498); `DALYTRAN-RECORD` e `WS-VALIDATION-TRAILER` nelle due parti di `REJECT-RECORD`, `DB2-FORMAT-TS` in `TRAN-PROC-TS` di `TRAN-RECORD` (CBTRN02C); le nove righe di report in `FD-REPTFILE-REC` (CBTRN03C). Rispetto alla prima consegna si aggiungono due strutture, `DB2-FORMAT-TS` di CBTRN02C e di CBACT04C; le altre erano già censite. Il rilevatore scompone le istruzioni in nomi, numeri, operatori e parentesi separati e analizza ogni istruzione solo fino al verbo successivo, al punto o al terminatore. Una **controprova indipendente** (`glue/controprova.py`: ricerca riga per riga di `MOVE <nome> TO <nome>` con il primo nome dichiarato 01/77 o gruppo) trova 123 `MOVE` di strutture intere nei 14 programmi batch: i 16 trasferimenti e 107 verso destinazioni che non stanno in un record scritto, dichiarate una per una in `analysis/data-contract/expected/controprova-escluse.tsv` (aree di stato di I/O, parametri di chiamata, tabelle in memoria). Il controllo fallisce se la controprova trova una `MOVE` di struttura che non è tra i trasferimenti né verso una destinazione dichiarata esclusa, o se un trasferimento non è trovato dalla controprova. Per ciascuno il controllo pretende la relazione e la struttura nel censimento; `composizioni.tsv` dà la posizione di ogni campo trasferito nel record (per esempio motivo dello scarto a offset 350 per 4 byte, descrizione a 354 per 76).
+- **Non coperto dai trasferimenti** (elencato punto per punto in `analysis/data-contract/out/fonti/non-coperti.tsv` e riassunto in fondo a questo documento): ciò che scrive dentro un record senza trasferire una struttura intera, cioè composizione campo per campo, letterali, riferimenti con posizione nella sorgente, `STRING`, `INITIALIZE`, aritmetica. Per queste istruzioni non si chiede una relazione; il tracciato del record che le riceve ha comunque il suo contratto. Il controllo verifica ogni voce dell'elenco (e ogni trasferimento) con una lettura indipendente del sorgente: alla riga citata deve iniziare un'istruzione del tipo dichiarato, e la destinazione deve comparire in quell'istruzione, prima del verbo successivo o del punto.
 - Fuori: i copybook delle mappe (`app/cpy-bms/`), i moduli opzionali, i programmi online (le loro strutture di file vengono dai copybook, già censiti).
 
 ## Come si classifica
@@ -82,6 +82,7 @@ L'unico file a lunghezza variabile dei programmi batch è `VBRCFILE` di `CBACT01
 - **`WS-ERROR-RECORD` di `CBIMPORT`** e il record degli scarti di `CBTRN02C` (`REJECT-RECORD` con `WS-VALIDATION-TRAILER`) sono `record-di-file` (campi fissi in dataset catalogati); le righe di `CVTRA07Y` e dell'estratto conto di `CBSTM03A` sono `riga-di-report`.
 - **`AWS.CUSTDATA.CLUSTER`** (`DEFCUST.jcl`), che nessun programma usa, è associato al tracciato cliente sulla base del solo `RECORDSIZE(500 500)` (vedi `file.tsv` e `discordanze.md`).
 - **`CBTRN01C`** non è eseguito da alcun JCL: le sue `SELECT` non sono ricondotte a un dataset.
+- **`DB2-FORMAT-TS` di `CBACT04C`** (riga 150) ha la stessa forma ed è anch'esso `record-di-file`: è spostato intero in `TRAN-ORIG-TS` e `TRAN-PROC-TS` della transazione di interessi generata (righe 497-498, scritta alla riga 500); la sua `01 FILLER REDEFINES` sta alle righe 151-165.
 - **`DB2-FORMAT-TS` di `CBTRN02C`** (riga 159, `PIC X(26)`) è `record-di-file`: è spostato intero nel timestamp di elaborazione `TRAN-PROC-TS` del record delle transazioni (riga 438), che è anche la chiave dell'indice alternativo di `TRANSACT`. La sua forma interna è data dalla `01 FILLER REDEFINES DB2-FORMAT-TS` (righe 160-174), composta campo per campo in `Z-GET-DB2-FORMAT-TIMESTAMP` (righe 692-703): `AAAA-MM-GG-hh.mm.ss.cc0000` (anno, `-`, mese, `-`, giorno, `-`, ora, `.`, minuti, `.`, secondi, `.`, centesimi, `0000`). Quella `FILLER` non ha un contratto proprio, perché è una ridefinizione anonima che nessuna istruzione trasferisce: è un limite dichiarato.
 
 ## Ingressi scritti a mano e come sono verificati
@@ -175,6 +176,7 @@ L'unico file a lunghezza variabile dei programmi batch è `VBRCFILE` di `CBACT01
 | CBTRN02C.cbl | FD:DALYREJS-FILE | FD-REJS-RECORD | 82 | 82-84 | 430 | record-di-file | `CBTRN02C.FD-REJS-RECORD` |
 | CBTRN02C.cbl | FD:ACCOUNT-FILE | FD-ACCTFILE-REC | 87 | 87-89 | 300 | record-di-file | `CBTRN02C.FD-ACCTFILE-REC` |
 | CBTRN02C.cbl | FD:TCATBAL-FILE | FD-TRAN-CAT-BAL-RECORD | 92 | 92-97 | 50 | record-di-file | `CBTRN02C.FD-TRAN-CAT-BAL-RECORD` |
+| CBACT04C.cbl | WORKING-STORAGE | DB2-FORMAT-TS | 150 | 150-150 | 26 | record-di-file | `CBACT04C.DB2-FORMAT-TS` |
 | CBTRN02C.cbl | WORKING-STORAGE | DB2-FORMAT-TS | 159 | 159-159 | 26 | record-di-file | `CBTRN02C.DB2-FORMAT-TS` |
 | CBTRN02C.cbl | WORKING-STORAGE | REJECT-RECORD | 176 | 176-178 | 430 | record-di-file | `CBTRN02C.REJECT-RECORD` |
 | CBTRN02C.cbl | WORKING-STORAGE | WS-VALIDATION-TRAILER | 180 | 180-182 | 80 | record-di-file | `CBTRN02C.WS-VALIDATION-TRAILER` |
@@ -232,6 +234,8 @@ Lunghezze scritte a mano in `relazioni.tsv` (colonne `a mano`) e lette da cb2xml
 | CBACT04C.cbl | READ-INTO | 373 | CBACT04C.FD-ACCTFILE-REC | CVACT01Y.ACCOUNT-RECORD | 300 / 300 | 300 / 300 | 300 | FD | - |
 | CBACT04C.cbl | READ-INTO | 394 | CBACT04C.FD-XREFFILE-REC | CVACT03Y.CARD-XREF-RECORD | 50 / 50 | 50 / 50 | 50 | FD | lettura per chiave alternativa (KEY IS FD-XREF-ACCT-ID, riga 395) |
 | CBACT04C.cbl | READ-INTO | 416, 444 | CBACT04C.FD-DISCGRP-REC | CVTRA02Y.DIS-GROUP-RECORD | 50 / 50 | 50 / 50 | 50 | FD | - |
+| CBACT04C.cbl | MOVE | 497 | CBACT04C.DB2-FORMAT-TS | CVTRA05Y.TRAN-RECORD:TRAN-ORIG-TS | 26 / 26 | 26 / 26 | 26 | destinazione | timestamp di origine della transazione di interessi generata, scritta alla riga 500 |
+| CBACT04C.cbl | MOVE | 498 | CBACT04C.DB2-FORMAT-TS | CVTRA05Y.TRAN-RECORD:TRAN-PROC-TS | 26 / 26 | 26 / 26 | 26 | destinazione | timestamp di elaborazione della transazione di interessi generata, scritta alla riga 500 |
 | CBACT04C.cbl | WRITE-FROM | 500 | CVTRA05Y.TRAN-RECORD | CBACT04C.FD-TRANFILE-REC | 350 / 350 | 350 / 350 | 350 | FD | - |
 | CBEXPORT.cbl | READ | 260 | CVCUS01Y.CUSTOMER-RECORD | CVCUS01Y.CUSTOMER-RECORD | 500 / 500 | 500 / 500 | 500 | FD | FD con COPY CVCUS01Y |
 | CBEXPORT.cbl | READ | 329 | CVACT01Y.ACCOUNT-RECORD | CVACT01Y.ACCOUNT-RECORD | 300 / 300 | 300 / 300 | 300 | FD | FD con COPY CVACT01Y |
@@ -315,6 +319,8 @@ Ogni `MOVE` di una voce di livello 01 o di un gruppo verso un record che finisce
 | --- | --- | --- | --- | --- |
 | CBACT01C.cbl | 289 | VBRC-REC1 | VBR-REC (con posizione) | VBR-REC |
 | CBACT01C.cbl | 304 | VBRC-REC2 | VBR-REC (con posizione) | VBR-REC |
+| CBACT04C.cbl | 497 | DB2-FORMAT-TS | TRAN-ORIG-TS | TRAN-RECORD |
+| CBACT04C.cbl | 498 | DB2-FORMAT-TS | TRAN-PROC-TS | TRAN-RECORD |
 | CBTRN02C.cbl | 438 | DB2-FORMAT-TS | TRAN-PROC-TS | TRAN-RECORD |
 | CBTRN02C.cbl | 447 | DALYTRAN-RECORD | REJECT-TRAN-DATA | REJECT-RECORD |
 | CBTRN02C.cbl | 448 | WS-VALIDATION-TRAILER | VALIDATION-TRAILER | REJECT-RECORD |
@@ -340,6 +346,8 @@ Da `composizioni.tsv`: offset (base 0) del campo nel record di destinazione = of
 | CBACT01C.VBRC-REC2 | CBACT01C.VBR-REC | - | VB2-ACCT-CURR-BAL | - | 11 | 12 |
 | CBACT01C.VBRC-REC2 | CBACT01C.VBR-REC | - | VB2-ACCT-CREDIT-LIMIT | - | 23 | 12 |
 | CBACT01C.VBRC-REC2 | CBACT01C.VBR-REC | - | VB2-ACCT-REISSUE-YYYY | - | 35 | 4 |
+| CBACT04C.DB2-FORMAT-TS | CVTRA05Y.TRAN-RECORD | TRAN-ORIG-TS | DB2-FORMAT-TS | - | 278 | 26 |
+| CBACT04C.DB2-FORMAT-TS | CVTRA05Y.TRAN-RECORD | TRAN-PROC-TS | DB2-FORMAT-TS | - | 304 | 26 |
 | CBTRN02C.DB2-FORMAT-TS | CVTRA05Y.TRAN-RECORD | TRAN-PROC-TS | DB2-FORMAT-TS | - | 304 | 26 |
 | CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-ID | - | 0 | 16 |
 | CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-TYPE-CD | - | 16 | 2 |
@@ -360,7 +368,7 @@ Da `composizioni.tsv`: offset (base 0) del campo nel record di destinazione = of
 
 ### Scritture nei record non coperte dai trasferimenti di strutture
 
-Istruzioni che scrivono dentro un record che finisce in un file senza trasferire una struttura intera: composizione campo per campo, letterali, riferimenti con posizione, `STRING`, `INITIALIZE`, aritmetica. Non sono ricondotte a relazioni: l'elenco completo (240 punti) e' in `analysis/data-contract/out/fonti/non-coperti.tsv`.
+Istruzioni che scrivono dentro un record che finisce in un file senza trasferire una struttura intera: composizione campo per campo, letterali, riferimenti con posizione, `STRING`, `INITIALIZE`, aritmetica. Non sono ricondotte a relazioni: l'elenco completo (235 punti) e' in `analysis/data-contract/out/fonti/non-coperti.tsv`.
 
 | programma | record | tipo | quante | righe |
 | --- | --- | --- | --- | --- |
@@ -371,10 +379,10 @@ Istruzioni che scrivono dentro un record che finisce in un file senza trasferire
 | CBACT01C.cbl | OUT-ACCT-REC | MOVE di un letterale o di un'espressione | 1 | 237 |
 | CBACT04C.cbl | ACCOUNT-RECORD | MOVE di un letterale o di un'espressione | 2 | 353, 354 |
 | CBACT04C.cbl | ACCOUNT-RECORD | aritmetica (ADD) | 1 | 352 |
-| CBACT04C.cbl | ACCOUNT-RECORD | aritmetica (COMPUTE) | 1 | 464 |
 | CBACT04C.cbl | FD-ACCTFILE-REC | MOVE di un campo (composizione campo per campo) | 1 | 202 |
-| CBACT04C.cbl | FD-TRANFILE-REC | aritmetica (COMPUTE) | 1 | 464 |
-| CBACT04C.cbl | TRAN-RECORD | aritmetica (COMPUTE) | 14 | 464, 464, 464, 464, 464, 464, 464, 464, 464, 464, 464, 464, 464, 464 |
+| CBACT04C.cbl | TRAN-RECORD | MOVE di un campo (composizione campo per campo) | 2 | 490, 495 |
+| CBACT04C.cbl | TRAN-RECORD | MOVE di un letterale o di un'espressione | 7 | 482, 483, 484, 491, 492, 493, 494 |
+| CBACT04C.cbl | TRAN-RECORD | STRING | 2 | 476, 485 |
 | CBEXPORT.cbl | EXPORT-RECORD | INITIALIZE | 5 | 271, 340, 404, 459, 524 |
 | CBEXPORT.cbl | EXPORT-RECORD | MOVE di un campo (composizione campo per campo) | 62 | 275, 277, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 344, 346, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 408, 410, 415, 416, 417, 463, 465, 470, 471, 472, 473, 474, 475, 476, 477, 478, 479, 480, 481, 482, 528, 530, 535, 536, 537, 538, 539, 540 |
 | CBEXPORT.cbl | EXPORT-RECORD | MOVE di un letterale o di un'espressione | 15 | 274, 278, 279, 343, 347, 348, 407, 411, 412, 462, 466, 467, 527, 531, 532 |

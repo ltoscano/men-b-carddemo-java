@@ -1,0 +1,13 @@
+# Destinazioni di `MOVE <struttura> TO <nome>` trovate dalla controprova testuale (glue/controprova.py) che NON sono
+# trasferimenti verso un record scritto, scritte a mano con il motivo (issue #3, giro 2 di validazione). Ogni altra MOVE
+# di una struttura intera trovata dalla controprova deve comparire in out/fonti/trasferimenti.tsv.
+destinazione	motivo
+IO-STATUS	area di lavoro dello stato di I/O da visualizzare (01 IO-STATUS in WORKING-STORAGE di ogni programma batch), mai scritta in un file
+IO-STATUS-04	area di lavoro per la visualizzazione dello stato di I/O (01 IO-STATUS-04), mai scritta in un file
+IO-STATUS-0403	parte di IO-STATUS-04, mai scritta in un file
+LK-M03B-RC	codice di ritorno nell'area dei parametri di CBSTM03B (LINKAGE), restituito a CBSTM03A, mai scritto in un file
+WS-TRAN-REST	elemento della tabella in memoria WS-TRNX-TABLE di CBSTM03A (riga 829), mai scritta in un file
+MVSWAIT-TIME	parametro di COBSWAIT passato a MVSWAIT con CALL, nessun file
+LS-RESULT	area della LINKAGE di CSUTLDTC restituita al chiamante, nessun file
+VSTRING-TEXT	parametro di CEEDAYS in CSUTLDTC, nessun file
+WS-DATE	campo di WS-DATE-VALIDATION-RESULT di CSUTLDTC, nessun file

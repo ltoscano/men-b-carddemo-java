@@ -113,6 +113,10 @@ negativa_gen() {
 negativa_gen frammento-accorciato "ERRORE [censimento] app/cbl/CBIMPORT.cbl WS-ERROR-RECORD: intervallo dichiarato 152-159, nel sorgente la struttura va da 152 a 160"
 negativa_gen composizione-eliminata "ERRORE [relazioni] app/cbl/CBTRN02C.cbl:448: MOVE WS-VALIDATION-TRAILER TO VALIDATION-TRAILER (struttura intera verso il record REJECT-RECORD) non coperta da una relazione"
 negativa_gen timestamp-eliminato "ERRORE [relazioni] app/cbl/CBTRN02C.cbl:438: MOVE DB2-FORMAT-TS TO TRAN-PROC-TS (struttura intera verso il record TRAN-RECORD) non coperta da una relazione"
+negativa_gen timestamp-cbact04c-eliminato "ERRORE [relazioni] app/cbl/CBACT04C.cbl:497: MOVE DB2-FORMAT-TS TO TRAN-ORIG-TS (struttura intera verso il record TRAN-RECORD) non coperta da una relazione"
+# rilievo del giro 2: trasferimenti persi dal rilevatore e punti non coperti attribuiti all'istruzione sbagliata
+negativa trasferimento-tolto "ERRORE [controprova] app/cbl/CBACT04C.cbl:497: MOVE DB2-FORMAT-TS TO TRAN-ORIG-TS e' un trasferimento di struttura intera che non e' tra i trasferimenti"
+negativa non-coperto-spostato "ERRORE [non-coperti] app/cbl/CBACT04C.cbl:464: l'istruzione COMPUTE che inizia a questa riga non ha la destinazione TRAN-AMT"
 negativa_gen sezione-errata "ERRORE [censimento] app/cbl/CBACT01C.cbl VBRC-REC1: tipo LINKAGE, ma la riga 123 e' nella sezione WORKING-STORAGE"
 negativa_gen file-contratto-scambiato "ERRORE [assegnazioni] file.tsv: AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS ha contratto CVTRA02Y.DIS-GROUP-RECORD, ma i programmi lo leggono o scrivono con ['CVTRA01Y.TRAN-CAT-BAL-RECORD']"
 negativa voce-tracciato-tolta "ERRORE [tracciati] app/cpy/CVACT01Y.cpy ACCOUNT-RECORD: cb2xml ha 13 voci, il sorgente ne ha 14 fino al confine"
