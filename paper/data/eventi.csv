@@ -144,3 +144,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T14:06:44Z,pr-33,codex-fine,codex,orologio,giro 1; exit=0; token: 127.305
 2026-11-27T14:07:19Z,pr-33,validazione-fine,fable,orologio,giro 1: BOCCIATA; 2 rilievi accolti
 2026-11-27T14:07:19Z,issue-15,esecutore-inizio,opus,orologio,giro di correzione 1
+2026-11-27T14:11:15Z,pr-29,codex-fine,codex,orologio,giro 2; exit=0; token: 157.065
+2026-11-27T14:11:51Z,pr-29,validazione-fine,fable,orologio,giro 2: BOCCIATA; 1 importante (configurazione dall'ambiente); ultimo giro di correzione
+2026-11-27T14:11:51Z,issue-4,esecutore-inizio,opus,orologio,giro di correzione 2
