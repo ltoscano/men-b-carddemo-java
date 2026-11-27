@@ -595,17 +595,17 @@ def mutazioni_sentinelle(b):
                 t[i][9] = nuovo
                 riscrivi_sentinella(file_sentinella(m, s), campi=t, ricomponi=True)
                 b.prova(fam, f"{chi(s, c)} {t0} -> {nuovo}", m, attesa_testi(testo, gruppi=("valori",)))
-        alfa = [i for i, c in enumerate(s["campi"]) if c["tipo"] == "testo"]
-        if alfa:
-            i = alfa[0]
-            c = s["campi"][i]
-            m = b.mondo()
-            t = [list(x) for x in tab]
+        for i, c in enumerate(s["campi"]):
+            if c["tipo"] != "testo":
+                continue
             n = (min(c["a"], s["prefisso"]) if s["prefisso"] else c["a"]) - c["da"] + 1
-            t[i][9] = valore_a_testo(" " * n)
-            riscrivi_sentinella(file_sentinella(m, s), campi=t, ricomponi=True)
-            b.prova("testo-vuoto", f"{chi(s, c)} tutto spazi", m,
-                    attesa_testi(f"{chi(s, c)}: valore tutto spazi o tutto zeri", gruppi=("valori", "unicita")))
+            for carattere, come in ((" ", "spazi"), ("0", "zeri")):
+                m = b.mondo()
+                t = [list(x) for x in tab]
+                t[i][9] = valore_a_testo(carattere * n)
+                riscrivi_sentinella(file_sentinella(m, s), campi=t, ricomponi=True)
+                b.prova("testo-vuoto", f"{chi(s, c)} tutto {come}", m,
+                        attesa_testi(f"{chi(s, c)}: valore tutto spazi o tutto zeri", gruppi=("valori", "unicita")))
         # lunghezza e fonte
         m = b.mondo()
         riscrivi_sentinella(file_sentinella(m, s), chiavi={"lunghezza": str(s["lunghezza"] + 1)})
