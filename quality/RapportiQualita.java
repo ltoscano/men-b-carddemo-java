@@ -389,6 +389,11 @@ public class RapportiQualita {
                     diff.add("configurazione dell'esecuzione " + new TreeMap<>(ce) + " invece di " + new TreeMap<>(CONFIG_SPOTBUGS));
                 }
             }
+            // ${project.parent.basedir} non e' risolta dall'interpolazione del modello (la risolve Maven al
+            // momento di valutare il parametro): ogni modulo ha per genitore la radice del reattore.
+            if (filtro != null) {
+                filtro = filtro.replace("${project.parent.basedir}", radice.toAbsolutePath().normalize().toString());
+            }
             if (filtro != null && !Path.of(filtro).toAbsolutePath().normalize().equals(filtroAtteso)) {
                 diff.add("filtro di esclusioni '" + filtro + "' invece di " + filtroAtteso);
             }

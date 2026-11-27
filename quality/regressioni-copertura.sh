@@ -405,6 +405,8 @@ caso_shim() {
   limited "${SHORT_TIMEOUT}" mkdir -p "${SHIM_DIR}/bin" "${WORK}/dk-${nome}" </dev/null || { echo "ERRORE: mkdir degli shim fallito" >&2; exit 1; }
   scrivi "${SHIM_DIR}/bin/mvn" '#!/usr/bin/env bash
 /usr/share/maven/bin/mvn "$@" || exit $?
+# la mutazione si applica una sola volta, dopo il vero "mvn verify" (non dopo i POM effettivi)
+case " $* " in *" verify "*) ;; *) exit 0 ;; esac
 bash /menb-shim/mut.sh || { echo "SHIM: alterazione fallita" >&2; exit 96; }
 : >/menb-shim/mvn-eseguito || exit 98' x
   scrivi "${SHIM_DIR}/mut.sh" "${PROLOGO_MUT}
