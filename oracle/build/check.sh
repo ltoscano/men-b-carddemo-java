@@ -38,7 +38,8 @@ prova:PARMECHO:eseguibile:/oracle/tests/PARMECHO.cbl prova:ABDUSING:eseguibile:/
 prova:ABDNOARG:eseguibile:/oracle/tests/ABDNOARG.cbl prova:M03BCALL:eseguibile:/oracle/tests/M03BCALL.cbl
 prova:DTCCALL:eseguibile:/oracle/tests/DTCCALL.cbl prova:SEGNOPRB:eseguibile:/oracle/tests/SEGNOPRB.cbl
 prova:PERFPRB:eseguibile:/oracle/tests/PERFPRB.cbl prova:DATFTPRB:eseguibile:/oracle/tests/DATFTPRB.cbl
-prova:IDXLOAD:eseguibile:/oracle/tests/IDXLOAD.cbl prova:IDXDUMP:eseguibile:/oracle/tests/IDXDUMP.cbl"
+prova:IDXLOAD:eseguibile:/oracle/tests/IDXLOAD.cbl prova:IDXDUMP:eseguibile:/oracle/tests/IDXDUMP.cbl
+prova:WAITPRB:eseguibile:/oracle/tests/WAITPRB.cbl"
 # Ambiente fissato (deve coincidere con oracle/ambiente.sh): variabili ricevute da cobc e dai programmi.
 AMB_COBC_FISSO="PATH=/usr/bin:/bin HOME=/tmp LC_ALL=C"
 AMB_RUN_FISSO="PATH=/usr/bin:/bin HOME=/tmp LC_ALL=C COB_LIBRARY_PATH=/oracle-bin"

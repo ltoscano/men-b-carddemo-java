@@ -5,6 +5,10 @@
 # 2. Confronta, per ognuno dei lanci dell'elenco fisso qui sotto, il rapporto osservato (codice di
 #    uscita, stdout, stderr, file creati) con quello atteso in oracle/avvio/expected/, scritto a mano
 #    leggendo il sorgente (paragrafi di OPEN, 9910-DISPLAY-IO-STATUS, 9999-ABEND-PROGRAM).
+#    Eccezione dichiarata (issue #36): expected/COBSWAIT.txt non e' ricavato dal sorgente. Con SYSIN vuoto
+#    l'esito di ACCEPT e MOVE non e' determinato: e' l'esito OSSERVATO con GnuCOBOL (valore 0 passato a
+#    MVSWAIT, codice 0), lo stesso del caso O1 di oracle/routines/mvswait-osservazioni.md, e non e' un
+#    riferimento per la migrazione.
 # 3. Prove negative: alterazioni dei rapporti e degli attesi, e un'esecuzione reale senza moduli
 #    (CEE3ABD e segnaposto non risolvibili); ognuna deve far fallire il confronto.
 . "$ORACLE_ROOT/lib.sh"

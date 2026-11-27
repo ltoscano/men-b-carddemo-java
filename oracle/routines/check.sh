@@ -9,6 +9,7 @@
 # 4. Prove negative: attesi alterati; esecuzioni reali con la routine alterata (modifica un byte da
 #    conservare, restituisce un codice diverso da 0, tratta casi non determinati come determinati) e con
 #    il segnaposto di #4 rimesso al posto della routine; tabella e casi alterati; evidenze alterate.
+# 5. MVSWAIT e l'opzione --sysin di esegui.sh (issue #36): mvswait-check.sh, con le sue prove negative.
 . "$ORACLE_ROOT/lib.sh"
 
 DIR="$ORACLE_ROOT/routines"
@@ -198,4 +199,7 @@ mutate "$tmp/amb/D1B.ambiente" 's#^COB_LIBRARY_PATH=/oracle-bin$#COB_LIBRARY_PAT
 expect_fail "ambiente di D1B con un'altra cartella dei moduli" "D1B: ambiente diverso" verifica "$tmp/amb"
 mkdir -p "$tmp/piu"; cp "$tmp/obs"/* "$tmp/piu/"; cp "$tmp/piu/D1A.txt" "$tmp/piu/D9Z.txt"
 expect_fail "rapporto di un caso non previsto" "rapporti di casi non previsti: D9Z" verifica "$tmp/piu"
+
+log "5. MVSWAIT e --sysin di esegui.sh (issue #36)"
+bash "$DIR/mvswait-check.sh" || fail "controllo di MVSWAIT fallito"
 log "controllo superato"

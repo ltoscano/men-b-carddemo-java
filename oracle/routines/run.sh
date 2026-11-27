@@ -6,6 +6,8 @@
 # shell che ha lanciato il programma, stdout, stderr, file creati) e l'ambiente ricevuto.
 # Output in oracle/routines/out/: <CASO>.txt e <CASO>.ambiente.
 # ROUTINES_OUT_DIR e ROUTINES_BIN_DIR spostano output e artefatti (usate dalle prove negative).
+# Poi, solo nell'esecuzione normale del passo (senza ROUTINES_OUT_DIR ne' ROUTINES_BIN_DIR, che usano le
+# prove di COBDATFT), la prova di MVSWAIT: mvswait-run.sh, output in oracle/routines/out/mvswait/ (#36).
 . "$ORACLE_ROOT/lib.sh"
 
 CASI="$ORACLE_ROOT/routines/casi.tsv"
@@ -46,3 +48,8 @@ while [ "$i" -lt "${#coppie[@]}" ]; do
   log "$caso (PARM ${coppie[$((i + 1))]}): codice di uscita $(sed -n '2p' "$out/$caso.txt")"
   i=$((i + 2))
 done
+
+# MVSWAIT (issue #36): solo nell'esecuzione normale del passo.
+if [ -z "${ROUTINES_OUT_DIR:-}" ] && [ -z "${ROUTINES_BIN_DIR:-}" ]; then
+  bash "$ORACLE_ROOT/routines/mvswait-run.sh" || fail "prova di MVSWAIT fallita"
+fi

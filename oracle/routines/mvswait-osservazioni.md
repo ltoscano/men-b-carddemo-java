@@ -22,7 +22,16 @@ Tutti e quattro chiamano `MVSWAIT` con un valore sotto `X'7FFFFFFF'` (un `PIC 9(
 
 ## Osservato
 
-Da compilare dopo la prima esecuzione.
+Prima esecuzione: 27 novembre 2026, GnuCOBOL 3.2 dell'immagine dell'oracle, con l'equivalente di `MVSWAIT` della issue #36. Rapporti registrati in `mvswait-osservati/` così come prodotti.
+
+| Caso | Valore passato a `MVSWAIT` | Codice | Rispetto alla previsione |
+| --- | --- | --- | --- |
+| `O1` | 0 (`X'00000000'`) | 0 | coincide |
+| `O2` | 3600 (`X'00000E10'`) | 0 | coincide |
+| `O3` | 0 (`X'00000000'`) | 0 | la previsione era incerta (0 oppure 12345678): è 0 |
+| `O4` | 0 (`X'00000000'`) | 0 | nessuna previsione; da notare che 7 cifre valide seguite da una lettera danno 0, non 360 o 3600 |
+
+Nessuna osservazione contraddice una previsione scritta. Nessun messaggio di `libcob` su stderr per questi ingressi (nemmeno con `SYSIN` vuoto). Perché `O3` e `O4` diano 0 non è stato indagato nel codice di `libcob`: è un comportamento di GnuCOBOL, non un riferimento, e la migrazione non lo deve imitare. Se la parità su questi ingressi servisse, andrebbe stabilita su z/OS, che non abbiamo.
 
 ## La prova di avvio
 
