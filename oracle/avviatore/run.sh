@@ -17,8 +17,8 @@ ensure_image
 [ -x "$bin/PARMECHO" ] || fail "PARMECHO assente in $(rel "$bin")"
 clean_dir "$out"
 
-orun -v "$out:/out" -e ORACLE_TIMEOUT_RUN="$ORACLE_TIMEOUT_RUN" -- \
-  sh /oracle/esegui.sh "$(in_container "$bin")" /out PARMECHO "$PARM" || fail "esecuzione di PARMECHO fallita"
+orun -v "$out:/out" -v "$bin:/oracle-bin:ro" -e ORACLE_TIMEOUT_RUN="$ORACLE_TIMEOUT_RUN" -- \
+  sh /oracle/esegui.sh /out PARMECHO --parm "$PARM" || fail "esecuzione di PARMECHO fallita"
 [ -f "$out/PARMECHO.txt" ] || fail "rapporto di PARMECHO assente"
 if [ -f "$out/lavoro-PARMECHO/PARMDUMP" ]; then
   # od gira nel container: stesse utility su ogni host. Una riga: byte esadecimali separati da uno spazio.

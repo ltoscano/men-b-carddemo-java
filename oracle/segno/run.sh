@@ -18,9 +18,9 @@ ensure_image
 clean_dir "$out"
 mkdir -p "$out/dd"
 
-orun -v "$out:/out" -e ORACLE_TIMEOUT_RUN="$ORACLE_TIMEOUT_RUN" \
-  -e DD_DALYTRAN=/legacy/app/data/ASCII/dailytran.txt -e DD_SEGNOOUT=/out/dd/SEGNOOUT.dat -- \
-  sh /oracle/esegui.sh "$(in_container "$bin")" /out SEGNOPRB || fail "esecuzione di SEGNOPRB fallita"
+orun -v "$out:/out" -v "$bin:/oracle-bin:ro" -e ORACLE_TIMEOUT_RUN="$ORACLE_TIMEOUT_RUN" -- \
+  sh /oracle/esegui.sh /out SEGNOPRB --dd DD_DALYTRAN=/legacy/app/data/ASCII/dailytran.txt \
+  --dd DD_SEGNOOUT=/out/dd/SEGNOOUT.dat || fail "esecuzione di SEGNOPRB fallita"
 [ -f "$out/SEGNOPRB.txt" ] || fail "rapporto di SEGNOPRB assente"
 if [ -f "$out/dd/SEGNOOUT.dat" ]; then
   { cat "$out/dd/SEGNOOUT.dat"; echo; } > "$out/SEGNOOUT.txt" || fail "lettura di SEGNOOUT fallita"

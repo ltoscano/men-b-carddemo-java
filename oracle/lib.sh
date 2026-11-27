@@ -175,7 +175,7 @@ in_container() {
 # ricalcolano e rifiutano una build assente, interrotta, vecchia o con artefatti cambiati dopo la build.
 build_inputs() {
   printf '%s\n' "$ORACLE_ROOT/Dockerfile" "$ORACLE_ROOT/cobc.opts" "$ORACLE_ROOT/programs.tsv" \
-    "$ORACLE_ROOT/launcher/avvia.c" "$ORACLE_ROOT/build/compile.sh"
+    "$ORACLE_ROOT/launcher/avvia.c" "$ORACLE_ROOT/build/compile.sh" "$ORACLE_ROOT/ambiente.sh"
   ls "$ORACLE_ROOT"/stubs/*.cbl "$ORACLE_ROOT"/tests/*.cbl
 }
 
@@ -187,7 +187,23 @@ fingerprint() {
     done
     echo "immagine $(image_id)"
     echo "legacy $(legacy_commit)"
+    # Contenuto della configurazione di compilatore e runtime dell'immagine (file .conf, .words, runtime.cfg).
+    config_hash
   } | git hash-object --stdin
+}
+
+# SHA-256 di ogni file della cartella di configurazione di GnuCOBOL nell'immagine.
+config_hash() {
+  orun -- timeout 60 sh -c 'cd /usr/share/gnucobol/config && LC_ALL=C ls -A | while read -r f; do sha256sum "$f"; done' \
+    || fail "lettura della configurazione dell'immagine fallita"
+}
+
+# config_alternativa CARTELLA: copia della configurazione dell'immagine con perform-osvs: no aggiunto a
+# ibm.conf (la mutazione del Validatore, giro 2 della PR #29). Solo per le prove negative.
+config_alternativa() {
+  mkdir -p "$1"
+  orun -v "$1:/alt" -- timeout 60 sh -c 'cp -R /usr/share/gnucobol/config/. /alt/ && echo "perform-osvs: no" >> /alt/ibm.conf' \
+    || fail "creazione della configurazione alternativa fallita"
 }
 
 artifacts_hash() { # artifacts_hash CARTELLA-DELLA-BUILD

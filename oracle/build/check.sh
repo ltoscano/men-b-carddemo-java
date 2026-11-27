@@ -3,7 +3,7 @@
 # 1. Rifa' la build (oracle/build/run.sh): l'output viene cancellato e rigenerato, quindi nessun
 #    artefatto di una corsa precedente puo' passare per attuale.
 # 2. Verifica (oracle/build/verifica.sh, nel container) contro gli ELENCHI FISSI qui sotto, con confronti
-#    esatti: gli 11 programmi nell'elenco della build con tipo e sorgente; per ognuno dei 21 programmi
+#    esatti: gli 11 programmi nell'elenco della build con tipo e sorgente; per ognuno dei 22 programmi
 #    compilati (11 + stub e segnaposto + prove) una sola riga in compilazione.tsv, esito 0, nessun errore,
 #    ARGOMENTI DI OGNI INVOCAZIONE DI cobc IDENTICI a quelli attesi (opzioni fissate piu' i soli argomenti
 #    strutturali del tipo), artefatto del tipo giusto; in bin/ nient'altro; opzioni.txt identico;
@@ -29,11 +29,15 @@ ACCESSORI="stub:CEE3ABD:modulo:/oracle/stubs/CEE3ABD.cbl stub:CEEDAYS:modulo:/or
 stub:COBDATFT:modulo:/oracle/stubs/COBDATFT.cbl stub:MVSWAIT:modulo:/oracle/stubs/MVSWAIT.cbl
 prova:PARMECHO:eseguibile:/oracle/tests/PARMECHO.cbl prova:ABDUSING:eseguibile:/oracle/tests/ABDUSING.cbl
 prova:ABDNOARG:eseguibile:/oracle/tests/ABDNOARG.cbl prova:M03BCALL:eseguibile:/oracle/tests/M03BCALL.cbl
-prova:DTCCALL:eseguibile:/oracle/tests/DTCCALL.cbl prova:SEGNOPRB:eseguibile:/oracle/tests/SEGNOPRB.cbl"
+prova:DTCCALL:eseguibile:/oracle/tests/DTCCALL.cbl prova:SEGNOPRB:eseguibile:/oracle/tests/SEGNOPRB.cbl
+prova:PERFPRB:eseguibile:/oracle/tests/PERFPRB.cbl"
+# Ambiente fissato (deve coincidere con oracle/ambiente.sh): variabili ricevute da cobc e dai programmi.
+AMB_COBC_FISSO="PATH=/usr/bin:/bin HOME=/tmp LC_ALL=C"
+AMB_RUN_FISSO="PATH=/usr/bin:/bin HOME=/tmp LC_ALL=C COB_LIBRARY_PATH=/oracle-bin"
 # Opzioni fissate, nell'ordine (motivi in oracle/cobc.opts e oracle/README.md).
 OPZIONI_FISSE="-std=ibm -fbinary-truncate -fsingle-quote -fsign=EBCDIC -Wall -I/legacy/app/cpy"
 # Passi dei criteri di accettazione: nome e dipendenza (- = nessuna). selftest ha solo check.sh.
-PASSI="build:- avvio:build avviatore:build abend:build segno:build selftest:-"
+PASSI="build:- avvio:build avviatore:build abend:build segno:build dialetto:build selftest:-"
 
 tmp="$(mktmp)"
 trap 'rm -rf "$tmp"' EXIT
@@ -43,7 +47,7 @@ verifica() {
   local elenco="$1" out="$2" rc=0 p
   # shellcheck disable=SC2086
   orun -- timeout 300 sh /oracle/build/verifica.sh "$(in_container "$elenco")" "$(in_container "$out")" \
-    "$OPZIONI_FISSE" $FISSO $ACCESSORI || rc=1
+    "$OPZIONI_FISSE" "$AMB_COBC_FISSO" "$AMB_RUN_FISSO" $FISSO $ACCESSORI || rc=1
   if p="$(stamp_problem "$out")"; then echo "impronta valida: input e artefatti attuali"
   else echo "DIFETTO: impronta: $p"; rc=1; fi
   return "$rc"
@@ -158,6 +162,50 @@ copia isam; mutate "$tmp/isam/ambiente.txt" 's/^indexed file handler     : BDB$/
 expect_fail "gestore dei file indicizzati diverso da BDB" "ambiente: manca la riga 'indexed file handler     : BDB'" verifica "$tmp/isam.tsv" "$tmp/isam"
 copia impr; mutate "$tmp/impr/IMPRONTA" '1s/^input ./input x/'
 expect_fail "impronta degli input alterata" "build non aggiornata" verifica "$tmp/impr.tsv" "$tmp/impr"
+
+# Ambiente e configurazione del compilatore e del runtime.
+# verifica_container ELENCO OUT: la sola verifica nel container (senza impronta).
+verifica_container() {
+  # shellcheck disable=SC2086
+  orun -- timeout 300 sh /oracle/build/verifica.sh "$(in_container "$1")" "$(in_container "$2")" \
+    "$OPZIONI_FISSE" "$AMB_COBC_FISSO" "$AMB_RUN_FISSO" $FISSO $ACCESSORI
+}
+# build_alterata NOME ESPRESSIONE-SED: build completa reale con una copia alterata di compile.sh.
+build_alterata() {
+  cp "$ORACLE_ROOT/build/compile.sh" "$tmp/$1.compile.sh"
+  mutate "$tmp/$1.compile.sh" "$2"
+  mkdir -p "$tmp/$1"
+  orun -v "$tmp/$1:/out" -- timeout -k 10 "$ORACLE_TIMEOUT_COMPILE" \
+    sh "$(in_container "$tmp/$1.compile.sh")" tutto /oracle/programs.tsv /out > "$tmp/$1.log" 2>&1 \
+    || { indent "$tmp/$1.log" >&2; fail "build alterata '$1' fallita"; }
+}
+config_alternativa "$tmp/alt"
+alt="$(in_container "$tmp/alt")"
+# a) configurazione alternativa (perform-osvs: no) che arriva davvero a cobc.
+build_alterata cfg "s#^\. /oracle/ambiente\.sh\$#. /oracle/ambiente.sh; AMBIENTE_COBC=\"\$AMBIENTE_COBC COB_CONFIG_DIR=$alt\"#"
+expect_fail "build con COB_CONFIG_DIR alternativo nell'ambiente di cobc: ambiente" "ambiente di cobc diverso" verifica_container "$ORACLE_ROOT/programs.tsv" "$tmp/cfg"
+expect_fail "build con COB_CONFIG_DIR alternativo: cobc --info lo riporta" "cobc --info riporta variabili d'ambiente" verifica_container "$ORACLE_ROOT/programs.tsv" "$tmp/cfg"
+expect_fail "build con COB_CONFIG_DIR alternativo: file di configurazione diversi" "configurazione del compilatore diversa" verifica_container "$ORACLE_ROOT/programs.tsv" "$tmp/cfg"
+# b) controprova: la mutazione del Validatore (giro 2, PR #29), la stessa configurazione solo esportata
+#    nello script di compilazione, non arriva a cobc: la verifica riesce.
+build_alterata export "s#^\. /oracle/ambiente\.sh\$#. /oracle/ambiente.sh; export COB_CONFIG_DIR=$alt COBCPY=/tmp COB_CFLAGS=-O0#"
+verifica_container "$ORACLE_ROOT/programs.tsv" "$tmp/export" > "$tmp/export.out" 2>&1 \
+  || { indent "$tmp/export.out" >&2; fail "variabili esportate dallo script di compilazione sono arrivate a cobc"; }
+log "   controprova ok: COB_CONFIG_DIR, COBCPY, COB_CFLAGS esportati nello script di compilazione non arrivano a cobc"
+# c) configurazione di runtime alternativa nell'ambiente dei programmi.
+build_alterata run "s#^\. /oracle/ambiente\.sh\$#. /oracle/ambiente.sh; AMBIENTE_RUN=\"\$AMBIENTE_RUN COB_RUNTIME_CONFIG=$alt/runtime_empty.cfg\"#"
+expect_fail "COB_RUNTIME_CONFIG alternativo nell'ambiente dei programmi: ambiente" "ambiente dei programmi diverso" verifica_container "$ORACLE_ROOT/programs.tsv" "$tmp/run"
+expect_fail "COB_RUNTIME_CONFIG alternativo: configurazione di runtime riportata da libcob" "configurazione di runtime diversa" verifica_container "$ORACLE_ROOT/programs.tsv" "$tmp/run"
+# d) evidenze alterate.
+copia cfgsha; mutate "$tmp/cfgsha/configurazione.sha256" 's/^[0-9a-f]\{64\}  ibm\.conf$/0000000000000000000000000000000000000000000000000000000000000000  ibm.conf/'
+expect_fail "SHA-256 di ibm.conf alterato" "configurazione del compilatore diversa" verifica "$tmp/cfgsha.tsv" "$tmp/cfgsha"
+copia info; mutate "$tmp/info/cobc-info.txt" '/^COB_CONFIG_DIR /a\
+  env: COB_CONFIG_DIR    : /tmp/alt'
+expect_fail "riga env: in cobc --info" "cobc --info riporta variabili d'ambiente" verifica "$tmp/info.tsv" "$tmp/info"
+copia rtc; mutate "$tmp/rtc/runtime-config.txt" 's/^    : COB_VARSEQ_FORMAT      : 0        (default)$/ env: COB_VARSEQ_FORMAT      : 1       /'
+expect_fail "COB_VARSEQ_FORMAT diverso nella configurazione di runtime" "configurazione di runtime diversa" verifica "$tmp/rtc.tsv" "$tmp/rtc"
+copia ambc; rm "$tmp/ambc/ambiente-cobc.txt"
+expect_fail "ambiente di cobc non registrato" "ambiente di cobc diverso" verifica "$tmp/ambc.tsv" "$tmp/ambc"
 
 cp "$ORACLE_ROOT/cobc.opts" "$tmp/cobc.opts"; mutate "$tmp/cobc.opts" 's/^-fsign=EBCDIC$/# -fsign=EBCDIC/'
 expect_fail "-fsign=EBCDIC tolto da cobc.opts" "fissate nel controllo" opzioni_fisse "$tmp/cobc.opts"

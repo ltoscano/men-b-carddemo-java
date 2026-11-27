@@ -20,8 +20,8 @@ clean_dir "$out"
 for n in $PROVE; do
   [ -x "$bin/$n" ] || fail "$n assente in $(rel "$bin")"
   mkdir -p "$out/dd-$n"
-  orun -v "$out:/out" -e ORACLE_TIMEOUT_RUN="$ORACLE_TIMEOUT_RUN" -e "DD_ABDFILE=/out/dd-$n/ABDFILE.dat" -- \
-    sh /oracle/esegui.sh "$(in_container "$bin")" /out "$n" || fail "esecuzione di $n fallita"
+  orun -v "$out:/out" -v "$bin:/oracle-bin:ro" -e ORACLE_TIMEOUT_RUN="$ORACLE_TIMEOUT_RUN" -- \
+    sh /oracle/esegui.sh /out "$n" --dd "DD_ABDFILE=/out/dd-$n/ABDFILE.dat" || fail "esecuzione di $n fallita"
   [ -f "$out/$n.txt" ] || fail "rapporto di $n assente"
   if [ -f "$out/dd-$n/ABDFILE.dat" ]; then
     orun -v "$out:/out" -- timeout 60 od -An -tx1 -v "/out/dd-$n/ABDFILE.dat" \

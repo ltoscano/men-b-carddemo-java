@@ -26,6 +26,11 @@ confronta() {
     if ! diff -u "$exp/$n.txt" "$obs/$n.txt" > "$tmp/diff.txt"; then
       echo "$n: osservato diverso dall'atteso:"; indent "$tmp/diff.txt"; errs=$((errs + 1))
     fi
+    # Ambiente ricevuto dal programma: esattamente quello fissato (oracle/ambiente.sh), uguale per tutti.
+    if [ ! -f "$obs/$n.ambiente" ]; then echo "$n: ambiente non registrato ($n.ambiente)"; errs=$((errs + 1))
+    elif ! diff -u "$exp/tutti.ambiente" "$obs/$n.ambiente" > "$tmp/diff.txt"; then
+      echo "$n: ambiente diverso da quello fissato:"; indent "$tmp/diff.txt"; errs=$((errs + 1))
+    fi
   done
   for f in "$exp"/*.txt "$obs"/*.txt; do
     [ -f "$f" ] || continue
@@ -46,7 +51,7 @@ sed 's/^/   /' "$tmp/c.out" >&2
 log "3. prove negative"
 neg() { # neg NOME: copia pulita degli osservati e degli attesi in $tmp/NOME/{obs,exp}
   rm -rf "$tmp/$1"; mkdir -p "$tmp/$1/obs" "$tmp/$1/exp"
-  cp "$tmp/obs"/*.txt "$tmp/$1/obs/"; cp "$EXP"/*.txt "$tmp/$1/exp/"
+  cp "$tmp/obs"/*.txt "$tmp/obs"/*.ambiente "$tmp/$1/obs/"; cp "$EXP"/*.txt "$EXP"/*.ambiente "$tmp/$1/exp/"
 }
 neg codice;    mutate "$tmp/codice/obs/CBACT04C.txt" '2s/^99$/0/'
 expect_fail "codice di uscita di CBACT04C 99 -> 0" "CBACT04C: osservato diverso" confronta "$tmp/codice/obs" "$tmp/codice/exp"
@@ -67,6 +72,25 @@ expect_fail "rapporto di un programma fuori elenco" "CBACT05C: rapporto fuori el
 AVVIO_SENZA_STUB=1 AVVIO_OUT_DIR="$tmp/senza-stub" bash "$ORACLE_ROOT/avvio/run.sh" > "$tmp/senza-stub.log" 2>&1 \
   || { cat "$tmp/senza-stub.log" >&2; fail "esecuzione senza moduli non completata"; }
 expect_fail "esecuzione reale senza i moduli (CEE3ABD non risolvibile)" "CBACT01C: osservato diverso" confronta "$tmp/senza-stub" "$EXP"
+neg manca-amb; rm "$tmp/manca-amb/obs/CBTRN01C.ambiente"
+expect_fail "ambiente di CBTRN01C non registrato" "CBTRN01C: ambiente non registrato" confronta "$tmp/manca-amb/obs" "$tmp/manca-amb/exp"
+# Esecuzione reale con una variabile di runtime alterata: copia di esegui.sh che aggiunge
+# COB_VARSEQ_FORMAT=1 all'ambiente fissato dei programmi.
+cp "$ORACLE_ROOT/esegui.sh" "$tmp/esegui-alterato.sh"
+mutate "$tmp/esegui-alterato.sh" 's#^\. /oracle/ambiente\.sh$#. /oracle/ambiente.sh; AMBIENTE_RUN="$AMBIENTE_RUN COB_VARSEQ_FORMAT=1"#'
+AVVIO_ESEGUI="$tmp/esegui-alterato.sh" AVVIO_OUT_DIR="$tmp/runtime-alterato" bash "$ORACLE_ROOT/avvio/run.sh" > "$tmp/runtime-alterato.log" 2>&1 \
+  || { cat "$tmp/runtime-alterato.log" >&2; fail "esecuzione con il runtime alterato non completata"; }
+grep -qx 'COB_VARSEQ_FORMAT=1' "$tmp/runtime-alterato/CBACT01C.ambiente" || fail "la variabile alterata non e' arrivata al programma"
+expect_fail "esecuzione reale con COB_VARSEQ_FORMAT=1 nell'ambiente dei programmi" "CBACT01C: ambiente diverso da quello fissato" confronta "$tmp/runtime-alterato" "$EXP"
+# Controprova: la stessa variabile soltanto esportata dallo script (ambiente ereditato) non arriva ai
+# programmi, perche' partono da env -i: il confronto deve riuscire.
+cp "$ORACLE_ROOT/esegui.sh" "$tmp/esegui-export.sh"
+mutate "$tmp/esegui-export.sh" 's#^\. /oracle/ambiente\.sh$#. /oracle/ambiente.sh; export COB_VARSEQ_FORMAT=1 COB_RUNTIME_CONFIG=/nonesiste#'
+AVVIO_ESEGUI="$tmp/esegui-export.sh" AVVIO_OUT_DIR="$tmp/runtime-export" bash "$ORACLE_ROOT/avvio/run.sh" > "$tmp/runtime-export.log" 2>&1 \
+  || { cat "$tmp/runtime-export.log" >&2; fail "esecuzione con le variabili esportate non completata"; }
+confronta "$tmp/runtime-export" "$EXP" > "$tmp/runtime-export.out" 2>&1 \
+  || { indent "$tmp/runtime-export.out" >&2; fail "variabili esportate dallo script sono arrivate ai programmi"; }
+log "   controprova ok: COB_VARSEQ_FORMAT e COB_RUNTIME_CONFIG esportati dallo script non arrivano ai programmi"
 # Artefatti di una build assente, incompleta o non aggiornata: la prova si rifiuta di usarli.
 cp -R "$BUILD_OUT" "$tmp/build-senza-impronta"; rm "$tmp/build-senza-impronta/IMPRONTA"
 expect_fail "build senza impronta (interrotta o fallita)" "build assente o incompleta" \

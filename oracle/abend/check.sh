@@ -24,6 +24,9 @@ verifica() {
     if [ ! -f "$obs/$n.txt" ]; then echo "$n: rapporto assente"; errs=$((errs + 1))
     elif ! diff -u "$EXP/$n.txt" "$obs/$n.txt" > "$tmp/d"; then
       echo "$n: rapporto diverso dall'atteso:"; indent "$tmp/d"; errs=$((errs + 1)); fi
+    if [ ! -f "$obs/$n.ambiente" ]; then echo "$n: ambiente non registrato"; errs=$((errs + 1))
+    elif ! diff -u "$EXP/$n.ambiente" "$obs/$n.ambiente" > "$tmp/d"; then
+      echo "$n: ambiente diverso da quello fissato:"; indent "$tmp/d"; errs=$((errs + 1)); fi
     if [ ! -f "$obs/$n.dat.hex" ]; then echo "$n: contenuto di ABDFILE non registrato"; errs=$((errs + 1))
     elif ! diff -u "$EXP/ABDFILE.hex" "$obs/$n.dat.hex" > "$tmp/d"; then
       echo "$n: ABDFILE dopo l'arresto diverso dall'atteso:"; indent "$tmp/d"; errs=$((errs + 1)); fi
@@ -77,12 +80,15 @@ for n in $PROVE; do
 done
 log "   fatto verificato: anche uscendo con _exit, senza chiudere i file, il record scritto prima e' su disco"
 # c) alterazioni delle evidenze.
-mkdir -p "$tmp/hex"; cp "$tmp/obs"/*.txt "$tmp/obs"/*.hex "$tmp/hex/"
+mkdir -p "$tmp/hex"; cp "$tmp/obs"/*.txt "$tmp/obs"/*.hex "$tmp/obs"/*.ambiente "$tmp/hex/"
 mutate "$tmp/hex/ABDNOARG.dat.hex" 's/ 20 20$/ 20 21/'
 expect_fail "byte di ABDFILE alterati (ABDNOARG)" "ABDNOARG: ABDFILE dopo l'arresto diverso" verifica "$tmp/hex"
-mkdir -p "$tmp/manca"; cp "$tmp/obs"/*.txt "$tmp/obs"/ABDNOARG.dat.hex "$tmp/manca/"
+mkdir -p "$tmp/manca"; cp "$tmp/obs"/*.txt "$tmp/obs"/*.ambiente "$tmp/obs"/ABDNOARG.dat.hex "$tmp/manca/"
 expect_fail "contenuto di ABDFILE non registrato (ABDUSING)" "ABDUSING: contenuto di ABDFILE non registrato" verifica "$tmp/manca"
-mkdir -p "$tmp/codice"; cp "$tmp/obs"/*.txt "$tmp/obs"/*.hex "$tmp/codice/"
+mkdir -p "$tmp/amb"; cp "$tmp/obs"/*.txt "$tmp/obs"/*.hex "$tmp/obs"/*.ambiente "$tmp/amb/"
+mutate "$tmp/amb/ABDUSING.ambiente" 's#^DD_ABDFILE=.*$#DD_ABDFILE=/tmp/altrove.dat#'
+expect_fail "DD_ABDFILE di ABDUSING diversa da quella fissata" "ABDUSING: ambiente diverso" verifica "$tmp/amb"
+mkdir -p "$tmp/codice"; cp "$tmp/obs"/*.txt "$tmp/obs"/*.hex "$tmp/obs"/*.ambiente "$tmp/codice/"
 mutate "$tmp/codice/ABDNOARG.txt" '2s/^99$/1/'
 expect_fail "codice di uscita di ABDNOARG 99 -> 1" "ABDNOARG: rapporto diverso" verifica "$tmp/codice"
 log "controllo superato"

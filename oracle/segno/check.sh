@@ -21,7 +21,7 @@ trap 'rm -rf "$tmp"' EXIT
 
 verifica() {
   local obs="$1" errs=0 f
-  for f in SEGNOPRB.txt SEGNOOUT.txt; do
+  for f in SEGNOPRB.txt SEGNOOUT.txt SEGNOPRB.ambiente; do
     if [ ! -f "$obs/$f" ]; then echo "$f: assente"; errs=$((errs + 1))
     elif ! diff -u "$EXP/$f" "$obs/$f" > "$tmp/d"; then
       echo "$f: diverso dall'atteso:"; indent "$tmp/d"; errs=$((errs + 1)); fi
@@ -52,7 +52,10 @@ expect_fail "sonda compilata senza -fsign=EBCDIC: -919,00 letto come +919,00" "V
 expect_fail "sonda compilata senza -fsign=EBCDIC: byte scritti diversi" "SEGNOOUT.txt: diverso" verifica "$tmp/senza/obs"
 mkdir -p "$tmp/manca"; cp "$tmp/obs/SEGNOPRB.txt" "$tmp/manca/"
 expect_fail "contenuto di SEGNOOUT non registrato" "SEGNOOUT.txt: assente" verifica "$tmp/manca"
-mkdir -p "$tmp/alt"; cp "$tmp/obs/SEGNOPRB.txt" "$tmp/obs/SEGNOOUT.txt" "$tmp/alt/"
+mkdir -p "$tmp/alt"; cp "$tmp/obs/SEGNOPRB.txt" "$tmp/obs/SEGNOOUT.txt" "$tmp/obs/SEGNOPRB.ambiente" "$tmp/alt/"
 mutate "$tmp/alt/SEGNOPRB.txt" 's/VALORE=-000000070.99 RAMO=DEBITO/VALORE=-000000070.99 RAMO=CREDITO/'
 expect_fail "ramo del record 23 alterato" "SEGNOPRB.txt: diverso" verifica "$tmp/alt"
+mkdir -p "$tmp/amb"; cp "$tmp/obs/SEGNOPRB.txt" "$tmp/obs/SEGNOOUT.txt" "$tmp/obs/SEGNOPRB.ambiente" "$tmp/amb/"
+mutate "$tmp/amb/SEGNOPRB.ambiente" '/^LC_ALL=C$/d'
+expect_fail "LC_ALL assente dall'ambiente di SEGNOPRB" "SEGNOPRB.ambiente: diverso" verifica "$tmp/amb"
 log "controllo superato"

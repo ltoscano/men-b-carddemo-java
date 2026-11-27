@@ -1,16 +1,21 @@
 #!/bin/sh
 # Eseguito DENTRO il container dell'oracle da oracle/build/check.sh. Verifica l'output di una build.
-# Uso: verifica.sh ELENCO.tsv OUT "OPZIONI" VOCE ...
+# Uso: verifica.sh ELENCO.tsv OUT "OPZIONI" "AMBIENTE-COBC" "AMBIENTE-RUN" VOCE ...
 #   ELENCO.tsv  elenco della build da verificare (di norma /oracle/programs.tsv)
-#   OUT         cartella di output della build (bin/, log/, compilazione.tsv, opzioni.txt, ambiente.txt)
+#   OUT         cartella di output della build (bin/, log/, compilazione.tsv, opzioni.txt, ambiente.txt,
+#               ambiente-cobc.txt, ambiente-run.txt, cobc-info.txt, configurazione.sha256, runtime-config.txt)
 #   OPZIONI     le opzioni di cobc fissate nel controllo, separate da spazi, nell'ordine
+#   AMBIENTE-*  le variabili fissate nel controllo per cobc e per i programmi (VAR=valore separate da spazi)
+# Attesi fissati in /oracle/build/expected/: configurazione.sha256 (cartella e SHA-256 dei file di
+# configurazione del compilatore) e runtime-config.txt (configurazione di runtime riportata da libcob).
 #   VOCE        origine:NOME:tipo:sorgente, con origine = legacy | stub | prova, tipo = eseguibile | modulo,
 #               sorgente = percorso nel container. Le voci legacy sono l'elenco fisso degli 11.
 # Tutti i confronti sono esatti (righe intere, insiemi interi): niente prefissi, sottostringhe o jolly.
 # Stampa una riga per ogni difetto trovato; esce con 1 se ce n'e' almeno uno, con 0 altrimenti.
 set -u
-[ $# -ge 4 ] || { echo "uso: verifica.sh ELENCO.tsv OUT OPZIONI VOCE ..." >&2; exit 2; }
-elenco="$1"; out="$2"; opzioni="$3"; shift 3
+[ $# -ge 6 ] || { echo "uso: verifica.sh ELENCO.tsv OUT OPZIONI AMBIENTE-COBC AMBIENTE-RUN VOCE ..." >&2; exit 2; }
+elenco="$1"; out="$2"; opzioni="$3"; amb_cobc="$4"; amb_run="$5"; shift 5
+ATTESI=/oracle/build/expected
 errs=0
 err() { echo "DIFETTO: $*"; errs=$((errs + 1)); }
 TAB="$(printf '\t')"
@@ -101,6 +106,31 @@ for atteso in 'cobc (GnuCOBOL) 3.2.0' 'indexed file handler     : BDB' 'sequenti
               'gnucobol3 3.2-3' 'libcob4t64 3.2-3' 'libcob4-dev 3.2-3' 'libdb5.3t64 5.3.28+dfsg2-9'; do
   grep -qxF -- "$atteso" "$amb" 2>/dev/null || err "ambiente: manca la riga '$atteso'"
 done
+
+# 6. Ambiente e configurazione effettivamente usati.
+#    a) le variabili ricevute da cobc e dai programmi sono esattamente quelle fissate, nell'ordine;
+for o in $amb_cobc; do echo "$o"; done > "$w/amb-cobc.txt"
+cmp -s "$w/amb-cobc.txt" "$out/ambiente-cobc.txt" 2>/dev/null \
+  || err "ambiente di cobc diverso da quello fissato: $(tr '\n' ' ' < "$out/ambiente-cobc.txt" 2>/dev/null)"
+for o in $amb_run; do echo "$o"; done > "$w/amb-run.txt"
+cmp -s "$w/amb-run.txt" "$out/ambiente-run.txt" 2>/dev/null \
+  || err "ambiente dei programmi diverso da quello fissato: $(tr '\n' ' ' < "$out/ambiente-run.txt" 2>/dev/null)"
+#    b) cobc --info (letto nello stesso ambiente) riporta la cartella di configurazione e dei copybook
+#       dell'immagine e nessuna variabile d'ambiente che li sostituisca (righe "env:");
+ci="$out/cobc-info.txt"
+[ "$(grep -c '^COB_CONFIG_DIR ' "$ci" 2>/dev/null)" -eq 1 ] && grep -qx 'COB_CONFIG_DIR           : /usr/share/gnucobol/config' "$ci" \
+  || err "cobc --info: COB_CONFIG_DIR diverso da /usr/share/gnucobol/config"
+grep -qx 'COB_COPY_DIR             : /usr/share/gnucobol/copy' "$ci" 2>/dev/null || err "cobc --info: COB_COPY_DIR diverso da /usr/share/gnucobol/copy"
+grep -E '^[[:space:]]*env:' "$ci" > "$w/env-info.txt" 2>/dev/null
+[ ! -s "$w/env-info.txt" ] || err "cobc --info riporta variabili d'ambiente che ne cambiano la configurazione: $(tr -s ' ' < "$w/env-info.txt" | tr '\n' ';')"
+#    c) la cartella di configurazione usata e il contenuto di ogni suo file sono quelli fissati;
+cmp -s "$ATTESI/configurazione.sha256" "$out/configurazione.sha256" 2>/dev/null || {
+  err "configurazione del compilatore diversa da quella fissata:"
+  diff "$ATTESI/configurazione.sha256" "$out/configurazione.sha256" 2>&1 | sed 's/^/      /'; }
+#    d) la configurazione di runtime riportata da libcob (cobcrun --runtime-config) e' quella fissata.
+cmp -s "$ATTESI/runtime-config.txt" "$out/runtime-config.txt" 2>/dev/null || {
+  err "configurazione di runtime diversa da quella fissata:"
+  diff "$ATTESI/runtime-config.txt" "$out/runtime-config.txt" 2>&1 | sed 's/^/      /'; }
 
 if [ "$errs" -eq 0 ]; then
   echo "verifica riuscita: $# programmi compilati con gli argomenti attesi (11 del legacy), opzioni e ambiente conformi"

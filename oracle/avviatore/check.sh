@@ -22,6 +22,9 @@ verifica() {
   if [ ! -f "$obs/PARMECHO.txt" ]; then echo "rapporto di PARMECHO assente"; errs=$((errs + 1))
   elif ! diff -u "$EXP/PARMECHO.txt" "$obs/PARMECHO.txt" > "$tmp/d2"; then
     echo "rapporto di PARMECHO diverso dall'atteso:"; indent "$tmp/d2"; errs=$((errs + 1)); fi
+  if [ ! -f "$obs/PARMECHO.ambiente" ]; then echo "ambiente di PARMECHO non registrato"; errs=$((errs + 1))
+  elif ! diff -u "$EXP/PARMECHO.ambiente" "$obs/PARMECHO.ambiente" > "$tmp/d3"; then
+    echo "ambiente di PARMECHO diverso da quello fissato:"; indent "$tmp/d3"; errs=$((errs + 1)); fi
   [ "$errs" -eq 0 ] || { echo "verifica fallita: $errs differenze"; return 1; }
   echo "verifica riuscita: area $(cat "$obs/PARMDUMP.hex"), lunghezza e testo letti dal programma come attesi"
 }
@@ -54,7 +57,11 @@ variante nativo "-fbinary-byteorder=native" ""
 expect_fail "PARMECHO compilato con -fbinary-byteorder=native (legge 2560)" "PARM-LENGTH= 02560" verifica "$tmp/nativo/obs"
 mkdir -p "$tmp/manca"; cp "$tmp/obs/PARMECHO.txt" "$tmp/manca/"
 expect_fail "byte dell'area assenti" "byte dell'area assenti" verifica "$tmp/manca"
-mkdir -p "$tmp/testo"; cp "$tmp/obs/PARMECHO.txt" "$tmp/obs/PARMDUMP.hex" "$tmp/testo/"
+mkdir -p "$tmp/testo"; cp "$tmp/obs/PARMECHO.txt" "$tmp/obs/PARMDUMP.hex" "$tmp/obs/PARMECHO.ambiente" "$tmp/testo/"
 mutate "$tmp/testo/PARMECHO.txt" 's/^PARMECHO PARM-DATE=2022071800$/PARMECHO PARM-DATE=2022071900/'
 expect_fail "testo del PARM letto dal programma alterato" "rapporto di PARMECHO diverso" verifica "$tmp/testo"
+mkdir -p "$tmp/amb"; cp "$tmp/obs/PARMECHO.txt" "$tmp/obs/PARMDUMP.hex" "$tmp/obs/PARMECHO.ambiente" "$tmp/amb/"
+mutate "$tmp/amb/PARMECHO.ambiente" '$a\
+COB_PRE_LOAD=ALTRO'
+expect_fail "variabile in piu' nell'ambiente di PARMECHO" "ambiente di PARMECHO diverso" verifica "$tmp/amb"
 log "controllo superato"

@@ -14,7 +14,10 @@
 #
 # Uso:
 #   compile.sh tutto ELENCO.tsv OUT
-#       compila tutto; scrive OUT/bin, OUT/log/<NOME>.log, OUT/compilazione.tsv, OUT/opzioni.txt, OUT/ambiente.txt.
+#       compila tutto; scrive OUT/bin, OUT/log/<NOME>.log, OUT/compilazione.tsv, OUT/opzioni.txt, OUT/ambiente.txt
+#       e l'ambiente effettivo: ambiente-cobc.txt, ambiente-run.txt (variabili ricevute), cobc-info.txt,
+#       configurazione.sha256 (cartella di configurazione riportata da cobc e SHA-256 dei suoi file),
+#       runtime-config.txt (configurazione di runtime riportata da libcob).
 #       Esce con 1 se una compilazione fallisce.
 #   compile.sh uno TIPO SORGENTE NOME OUT [opzione cobc in piu'] [opzione C in piu' per l'avviatore]
 #       compila un solo programma (usato dalle prove negative dei controlli, mai dalla build). Solo in
@@ -25,7 +28,7 @@ OPTFILE=/oracle/cobc.opts
 if [ "${1:-}" = uno ] && [ -n "${UNO_OPZIONI:-}" ]; then OPTFILE="$UNO_OPZIONI"; fi
 LAUNCHER=/oracle/launcher/avvia.c
 # Programmi di prova (oracle/tests/), tutti eseguibili.
-PROVE="PARMECHO ABDUSING ABDNOARG M03BCALL DTCCALL SEGNOPRB"
+PROVE="PARMECHO ABDUSING ABDNOARG M03BCALL DTCCALL SEGNOPRB PERFPRB"
 
 die() { echo "compile.sh: $*" >&2; exit 1; }
 
@@ -39,10 +42,14 @@ while IFS= read -r line || [ -n "$line" ]; do
 done < "$OPTFILE"
 [ -n "$OPTS" ] || die "nessuna opzione in $OPTFILE"
 
-# cobc_reg ARGOMENTI...: registra gli argomenti nel log ($logf) e li esegue tali e quali.
+# Ambiente fissato (AMBIENTE_COBC, AMBIENTE_RUN): cobc parte sempre da `env -i` con quelle sole variabili.
+. /oracle/ambiente.sh
+
+# cobc_reg ARGOMENTI...: registra gli argomenti nel log ($logf) e li esegue tali e quali, nell'ambiente fissato.
 cobc_reg() {
   { echo "== cobc"; for a in "$@"; do printf 'arg %s\n' "$a"; done; } >> "$logf"
-  cobc "$@" >> "$logf" 2>&1
+  # shellcheck disable=SC2086
+  env -i $AMBIENTE_COBC cobc "$@" >> "$logf" 2>&1
   r=$?
   echo "== codice $r" >> "$logf"
   return "$r"
@@ -111,14 +118,30 @@ case "${1:-}" in
       riga "$n" prova eseguibile "$out" "$rc"
     done
     rm -rf "$out/obj"
-    # Ambiente effettivo: versioni, gestore dei file indicizzati, configurazione di runtime.
+    # Ambiente effettivo, sempre letto nello stesso ambiente fissato usato per compilare ed eseguire:
+    # versioni, gestore dei file indicizzati, configurazione di runtime.
+    # shellcheck disable=SC2086
     {
-      echo "== cobc --version"; cobc --version | head -1
-      echo "== cobc --info"; cobc --info | sed -n '/GnuCOBOL information/,$p'
+      echo "== cobc --version"; env -i $AMBIENTE_COBC cobc --version | head -1
+      echo "== cobc --info"; env -i $AMBIENTE_COBC cobc --info | sed -n '/GnuCOBOL information/,$p'
       echo "== pacchetti"
       dpkg-query -W -f '${Package} ${Version}\n' gnucobol3 libcob4t64 libcob4-dev libdb5.3t64 gcc-14 libc6 libgmp10 libxml2
-      echo "== cobcrun --runtime-config"; cobcrun --runtime-config 2>&1
+      echo "== cobcrun --runtime-config"; env -i $AMBIENTE_RUN cobcrun --runtime-config 2>&1
     } > "$out/ambiente.txt" 2>&1
+    # Le variabili che ricevono cobc e i programmi (una per riga, nell'ordine dell'elenco).
+    # shellcheck disable=SC2086
+    env -i $AMBIENTE_COBC env > "$out/ambiente-cobc.txt"
+    # shellcheck disable=SC2086
+    env -i $AMBIENTE_RUN env > "$out/ambiente-run.txt"
+    # Configurazione del compilatore come la riporta cobc stesso (cobc --info: COB_CONFIG_DIR, piu' una
+    # riga "env:" per ogni variabile che la sostituisce) e contenuto della cartella effettivamente usata.
+    # shellcheck disable=SC2086
+    env -i $AMBIENTE_COBC cobc --info > "$out/cobc-info.txt" 2>&1
+    cfg="$(awk -F': ' '/^  env: COB_CONFIG_DIR/ {e=$2} /^COB_CONFIG_DIR/ {d=$2} END {print (e != "" ? e : d)}' "$out/cobc-info.txt" | sed 's/[[:space:]]*$//')"
+    { echo "cartella $cfg"; (cd "$cfg" && LC_ALL=C ls -A | while read -r f; do sha256sum "$f"; done); } > "$out/configurazione.sha256"
+    # Configurazione di runtime come la riporta libcob (cobcrun --runtime-config) nell'ambiente dei programmi.
+    # shellcheck disable=SC2086
+    env -i $AMBIENTE_RUN cobcrun --runtime-config > "$out/runtime-config.txt" 2>&1
     # Un programma che non compila fa fallire la build (le righe con codice diverso da 0).
     fl="$(awk -F'\t' 'NR>1 && $4!=0' "$out/compilazione.tsv" | wc -l)"
     [ "$fl" -eq 0 ] || { awk -F'\t' 'NR>1 && $4!=0 {print "compile.sh: compilazione fallita: " $1}' "$out/compilazione.tsv" >&2; exit 1; }

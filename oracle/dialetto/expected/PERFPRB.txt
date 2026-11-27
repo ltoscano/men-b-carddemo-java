@@ -1,0 +1,10 @@
+== codice di uscita
+0
+== stdout
+B
+C
+D
+DONE
+== stderr
+Warning: program compiled against libxml 212 using older 209
+== file nella cartella di lavoro

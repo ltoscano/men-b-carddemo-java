@@ -21,14 +21,16 @@ git submodule update --init
 | `programs.tsv` | gli 11 programmi della build: sorgente, tipo (eseguibile o modulo), motivo del tipo letto nel sorgente |
 | `launcher/avvia.c` | l'avviatore: il `main` di ogni eseguibile, costruisce l'area del `PARM` |
 | `stubs/` | `CEE3ABD` (stub) e i segnaposto `COBDATFT`, `MVSWAIT`, `CEEDAYS` |
-| `tests/` | programmi COBOL di prova: `PARMECHO`, `ABDUSING`, `ABDNOARG`, `M03BCALL`, `DTCCALL`, `SEGNOPRB` |
-| `esegui.sh` | (nel container) avvia un eseguibile in una cartella vuota e scrive il rapporto: codice di uscita, stdout, stderr, file creati |
+| `tests/` | programmi COBOL di prova: `PARMECHO`, `ABDUSING`, `ABDNOARG`, `M03BCALL`, `DTCCALL`, `SEGNOPRB`, `PERFPRB` |
+| `ambiente.sh` | (nel container) l'ambiente fissato: le sole variabili che ricevono `cobc` e i programmi |
+| `esegui.sh` | (nel container) avvia un eseguibile in una cartella vuota, nell'ambiente fissato, e scrive il rapporto (codice di uscita, stdout, stderr, file creati) e l'ambiente ricevuto dal programma |
 | `lib.sh` | funzioni comuni: immagine, volume del legacy, esecuzione nel container con limite di tempo, impronta della build, prove negative |
 | `build/` | passo `build`: compila tutto in `build/out/` (ignorato da git); `check.sh` rifà la build e la verifica contro elenchi fissi, compresi gli argomenti esatti di ogni invocazione di `cobc` |
 | `avvio/` | passo `avvio`: prova di avvio reale di ogni eseguibile e dei due moduli; attesi in `avvio/expected/` |
 | `avviatore/` | passo `avviatore`: `PARMECHO` riceve `2022071800`; attesi in `avviatore/expected/` |
 | `abend/` | passo `abend`: `CEE3ABD` nelle due forme di chiamata; attesi in `abend/expected/` |
 | `segno/` | passo `segno`: lettura e scrittura di importi con segno dai dati originali; attesi in `segno/expected/` |
+| `dialetto/` | passo `dialetto`: sonda semantica su `perform-osvs`, un'impostazione del dialetto letta dalla configurazione del compilatore; attesi in `dialetto/expected/` |
 | `selftest/` | test automatico del comando unico (ordine, ciclo, dipendenza mancante, primo errore, controllo mancante) |
 
 Ogni `check.sh` rigenera da zero ciò che controlla, in una cartella nuova: nessun risultato di una corsa precedente viene preso per attuale. La build scrive per ultima `build/out/IMPRONTA`, l'impronta di tutti gli input (sorgenti dell'oracle, opzioni, elenco, strati dell'immagine, commit del legacy) e degli artefatti prodotti; i passi che usano gli artefatti la ricalcolano e rifiutano una build assente, interrotta, vecchia o con artefatti cambiati dopo la build. Il controllo della build verifica anche che `cobc.opts` contenga esattamente le opzioni fissate nel controllo, che **ogni invocazione di `cobc` abbia esattamente gli argomenti attesi** (registrati da `compile.sh` uno per riga, così come sono stati passati: le opzioni fissate più i soli argomenti strutturali del tipo, nient'altro, in quell'ordine) e che i passi dei criteri di accettazione esistano con i loro script. Tutti i confronti dei controlli sono esatti (righe e insiemi interi); l'unico confronto per sottostringa è il motivo atteso nelle prove negative (`expect_fail`), che identifica il messaggio di errore. Ogni programma gira con stdin vuoto e un limite di tempo (`ORACLE_TIMEOUT_RUN`, 60 s; compilazione `ORACLE_TIMEOUT_COMPILE`, 900 s), applicato con `timeout` dentro il container. Gli attesi sono scritti a mano leggendo il sorgente (i paragrafi di `OPEN`, `9910-DISPLAY-IO-STATUS`, `9999-ABEND-PROGRAM`); ogni controllo ha prove negative automatiche, alcune su esecuzioni reali alterate (avviatore con ordine dei byte invertito, stub che ritorna, eseguibili senza moduli).
@@ -38,7 +40,32 @@ Ogni `check.sh` rigenera da zero ciò che controlla, in una cartella nuova: ness
 - Base `debian:trixie-slim` fissata per digest, la stessa di `analysis/tools/docker/gnucobol` (il compilatore con cui #1 ha verificato che gli 11 compilano).
 - GnuCOBOL 3.2.0: pacchetti Debian `gnucobol3`, `libcob4t64`, `libcob4-dev` alla versione `3.2-3`.
 - **Backend dei file indicizzati: Berkeley DB** (`indexed file handler : BDB` in `cobc --info`), `libdb5.3t64` fissato a `5.3.28+dfsg2-9`. I file sequenziali usano il gestore interno di libcob. Il controllo della build verifica questi valori in `build/out/ambiente.txt`.
-- Configurazione di runtime: nessuna variabile di libcob nell'immagine, valgono i default di `runtime.cfg` (registrati a ogni build in `build/out/ambiente.txt`). Gli script impostano solo `COB_LIBRARY_PATH` (cartella dei moduli) e, quando serve, `DD_<nome>` per i file. In particolare: `COB_VARSEQ_FORMAT` 0, `COB_FILE_PATH` non impostata (cartella corrente), `COB_SYNC` no.
+- Configurazione di runtime: nessuna variabile di libcob nell'immagine, valgono i default di `runtime.cfg`. In particolare: `COB_VARSEQ_FORMAT` 0, `COB_FILE_PATH` non impostata (cartella corrente), `COB_SYNC` no. Vedi "Ambiente fissato" qui sotto.
+
+### Ambiente fissato (compilatore e runtime)
+
+`cobc` e libcob leggono la loro configurazione anche da variabili d'ambiente: una `COB_CONFIG_DIR` diversa, per esempio, fa usare a `cobc` un altro `ibm.conf` senza che cambi nessun argomento (rilievo del Validatore al giro 2 della PR #29: con `perform-osvs: no` aggiunto a una copia della configurazione, un `PERFORM` cambiava flusso e tutti i controlli restavano verdi). Per questo:
+
+- **ogni invocazione di `cobc`** (`build/compile.sh`) e **ogni esecuzione di un programma compilato** (`esegui.sh`) parte da `env -i` seguito da un elenco esplicito di variabili (`ambiente.sh`). Nulla dell'ambiente ereditato arriva al compilatore o al runtime: non il container, non `docker run -e`, non un `export` in uno script;
+- variabili ammesse per `cobc`: `PATH=/usr/bin:/bin`, `HOME=/tmp`, `LC_ALL=C`;
+- variabili ammesse per i programmi: le stesse, più `COB_LIBRARY_PATH=/oracle-bin` (gli artefatti sono sempre montati lì) e, una per una, le `DD_<nome>=<percorso>` chieste esplicitamente a `esegui.sh` con `--dd` (nessun'altra forma è accettata);
+- quindi **sono assenti** tutte le altre variabili che GnuCOBOL 3.2 legge. Elenco ricavato da `cobc --help`, `cobc --info`, `cobcrun --runtime-config`, `runtime.cfg` e dai nomi presenti negli eseguibili `cobc` e `libcob`:
+  - compilatore: `COB_CONFIG_DIR`, `COB_COPY_DIR`, `COBCPY`, `COB_COPY_LIB_<nome>`, `COB_CC`, `COB_CFLAGS`, `COB_LDFLAGS`, `COB_LDADD`, `COB_LIBS`, `COB_LIB_PATHS`, `COB_DEBUG_FLAGS`, `COB_MSG_FORMAT`, `COB_OBJECT_EXT`, `COB_MODULE_EXT`, `COB_EXE_EXT`, `COB_EXT_EXPORT`, `COB_STRIP_CMD`, `COB_UNIX_LF`, `COBC_GEN_DUMP_COMMENTS`, `COBC_CORE_ON_ERROR`, `COBOL_WORDS_DIRECTIVE`, `TMPDIR`;
+  - runtime: `COB_RUNTIME_CONFIG`, `COB_PRE_LOAD`, `COB_LOAD_CASE`, `COB_PHYSICAL_CANCEL`, `COB_FILE_PATH`, `COB_VARSEQ_FORMAT`, `COB_LS_FIXED`, `COB_LS_VALIDATE`, `COB_LS_NULLS`, `COB_LS_SPLIT`, `COB_SEQ_CONCAT_NAME`, `COB_SEQ_CONCAT_SEP`, `COB_SORT_CHUNK`, `COB_SORT_MEMORY`, `COB_SYNC`, `DB_HOME`, `COB_COL_JUST_LRC`, `COB_ZEROES_ALPHABETIC`, `COB_SPACES_ALPHABETIC`, `COB_CURRENT_DATE`, `COB_DATE`, `COB_SWITCH_<n>`, `COB_SET_DEBUG`, `COB_SET_TRACE`, `COB_TRACE_FILE`, `COB_TRACE_FORMAT`, `COB_OLD_TRACE`, `COB_STACKTRACE`, `COB_CORE_ON_ERROR`, `COB_CORE_FILENAME`, `COB_DUMP_FILE`, `COB_DUMP_WIDTH`, `COB_DEBUG_LOG`, `COB_DISABLE_WARNINGS`, `COB_ENV_MANGLE`, le variabili dello schermo e della stampa (`COB_BELL`, `COB_REDIRECT_DISPLAY`, `COB_SCREEN_ESC`, `COB_SCREEN_EXCEPTIONS`, `COB_TIMEOUT_SCALE`, `COB_INSERT_MODE`, `COB_MOUSE_FLAGS`, `COB_MOUSE_INTERVAL`, `COB_DISPLAY_PRINT_PIPE`, `COB_DISPLAY_PRINT_FILE`, `COB_DISPLAY_PUNCH_FILE`, `COB_LEGACY`, `COB_EXIT_WAIT`, `COB_EXIT_MSG`, `COBPRINTER`), le forme `dd_<nome>` e `<nome>` dei file;
+  - libc: `TZ`, `LANG` e le `LC_*` diverse da `LC_ALL=C`.
+
+Il controllo della build verifica ciò che compilatore e runtime riportano di aver usato, letto nello stesso ambiente fissato:
+
+- le variabili ricevute da `cobc` e dai programmi (`build/out/ambiente-cobc.txt`, `ambiente-run.txt`) sono esattamente quelle fissate nel controllo;
+- `cobc --info` riporta `COB_CONFIG_DIR : /usr/share/gnucobol/config` e `COB_COPY_DIR : /usr/share/gnucobol/copy`, e nessuna riga `env:` (la riga con cui `cobc` segnala una variabile che sostituisce la propria configurazione);
+- la cartella di configurazione così riportata e lo SHA-256 di ognuno dei suoi 40 file (`.conf`, `.words`, `.ttbl`, `runtime.cfg`) coincidono con `build/expected/configurazione.sha256`. `cobc` non dice quali file della cartella legge: si fissa la cartella intera;
+- `cobcrun --runtime-config` riporta esattamente `build/expected/runtime-config.txt`: `runtime.cfg` dell'immagine, tutte le impostazioni al default o non impostate, la sola riga `env:` è `COB_LIBRARY_PATH : /oracle-bin`.
+
+I due file attesi sono la configurazione dell'immagine così com'è, registrata una volta e da allora fissa: sono l'identità della configurazione, non valori derivati dal sorgente. Gli SHA-256 dei file di configurazione entrano anche nell'impronta della build. Ogni esecuzione registra inoltre l'ambiente ricevuto dal programma (`<P>.ambiente`), che i controlli dei passi confrontano con quello fissato.
+
+Sonda semantica: `tests/PERFPRB.cbl` (passo `dialetto`) dipende da `perform-osvs`, un'impostazione che non è un'opzione di `cobc` ma viene dalla configurazione del dialetto. Con la configurazione dell'immagine stampa `B C D DONE`; con `perform-osvs: no` stampa `B C D E AFTER-INNER B C D DONE`. Un cambio di configurazione che sfuggisse agli altri controlli cambierebbe questo esito.
+
+Effetto sui risultati: con l'ambiente fissato gli attesi delle prove di avvio, dell'avviatore, di CEE3ABD e del segno non sono cambiati. Prima i programmi ricevevano anche le variabili del container (`HOSTNAME`, il `PATH` di Debian) e `COB_LIBRARY_PATH` puntava a un'altra cartella: nessuna di queste aveva effetto su questi programmi.
 - Il legacy si legge da un volume Docker proprio, `menb-oracle-legacy-<commit>`, copiato byte per byte dal submodule e verificato a ogni build con lo SHA-256 di ogni file; montato in sola lettura. Su macOS un bind mount non distingue le maiuscole; il volume sì. I sorgenti non vengono modificati né pre-elaborati.
 - **Avviso di libxml2 su stderr.** Ogni programma, all'avvio, scrive su stderr `Warning: program compiled against libxml 212 using older 209`: libcob di Debian è compilata con libxml2 2.12, ma trixie installa la 2.9.14 (pacchetto `2.12.7+dfsg+really2.9.14`). Nessuno degli 11 programmi usa XML. La riga compare negli attesi perché è ciò che si osserva.
 
@@ -52,7 +79,7 @@ eseguibile: cobc <opzioni> -c -o OUT/obj/<P>.o <sorgente>
             cobc -x -A -DMENB_ENTRY=<P> -o OUT/bin/<P> /oracle/launcher/avvia.c OUT/obj/<P>.o
 ```
 
-`build/check.sh` confronta, per ognuno dei 21 programmi compilati, gli argomenti effettivi di ogni invocazione con questo modello: un'opzione in più, in meno o in un altro ordine fa fallire il controllo (prova negativa reale: `CBACT04C` ricompilato con `-fno-binary-truncate` in coda, `CSUTLDTC` con `-fsign=ASCII` in coda). Nessuna opzione di controllo a tempo di esecuzione (`-debug`, `-fec`): su z/OS non c'è `SSRANGE` nel JCL di compilazione, e i controlli di GnuCOBOL fermerebbero programmi che su z/OS proseguono.
+`build/check.sh` confronta, per ognuno dei 22 programmi compilati, gli argomenti effettivi di ogni invocazione con questo modello: un'opzione in più, in meno o in un altro ordine fa fallire il controllo (prova negativa reale: `CBACT04C` ricompilato con `-fno-binary-truncate` in coda, `CSUTLDTC` con `-fsign=ASCII` in coda). Nessuna opzione di controllo a tempo di esecuzione (`-debug`, `-fec`): su z/OS non c'è `SSRANGE` nel JCL di compilazione, e i controlli di GnuCOBOL fermerebbero programmi che su z/OS proseguono.
 
 Scelte che possono cambiare ciò che i programmi fanno:
 
@@ -83,7 +110,7 @@ Opzioni: per tutti quelle di `cobc.opts`. Avvertimenti: dal log di compilazione 
 | `COBSWAIT` | eseguibile | `WAITSTEP.jcl` | 0 |
 | `CSUTLDTC` | modulo | `PROCEDURE DIVISION USING` con tre parametri; `CALL 'CSUTLDTC'` in `CORPT00C` (righe 392, 412) | 0 |
 
-Errori: 0 per tutti. La build compila anche lo stub, i tre segnaposto e i sei programmi di prova: 21 artefatti in `build/out/bin/`. Con `-fsign=EBCDIC` avvertimenti e attesi della prova di avvio non cambiano.
+Errori: 0 per tutti. La build compila anche lo stub, i tre segnaposto e i sette programmi di prova: 22 artefatti in `build/out/bin/`. Con `-fsign=EBCDIC` avvertimenti e attesi della prova di avvio non cambiano.
 
 ### Avvio senza file d'ingresso (passo `avvio`, verificato qui)
 
@@ -139,7 +166,8 @@ Cosa cambia l'opzione oltre alla lettura, misurato dalla stessa sonda:
 - **`DISPLAY` a console.** Un campo zoned con segno mostrato con `DISPLAY` esce come cifre seguite dal segno (`00000050477+`, `00000091900-`), nello stesso formato con e senza l'opzione; cambia solo il valore, se è stato letto male. Le righe di `DISPLAY` della prova di avvio e degli stub non cambiano.
 - **Confronti.** I confronti numerici usano il valore: con l'opzione `-919,00 < 504,77` e `-919,00 < 0` sono veri, senza sono falsi. I confronti alfanumerici (su byte, per esempio su un gruppo o con riferimento a sottostringa) confrontano i byte presenti in memoria: l'opzione non cambia la regola, ma senza di essa quei byte possono essere stati riscritti (punto seguente). Nella sonda il confronto tra i byte dei record 2 e 1 dà lo stesso esito nei due casi.
 - **Osservato solo nella prova negativa, non controllato:** senza l'opzione, dopo aver usato `DALYTRAN-AMT` (in una `MOVE` o in una `IF`), i byte del record in memoria risultano cambiati (`0000005047G` diventa `00000050470`): libcob riscrive il campo nella propria convenzione.
-- **Non verificato:** l'effetto su campi senza segno (`PIC 9`), su campi con `SIGN SEPARATE` e su `COMP-3`; i file di dati diversi da `dailytran.txt` (dove, a vista, si usa la stessa convenzione, per esempio `acctdata.txt`).
+- **Misurato in validazione** (giro 2 della PR #29, sonde del Validatore non automatizzate qui): con e senza `-fsign=EBCDIC`, lettura e riscrittura di campi `PIC 9`, `COMP-3` con e senza segno, `SIGN LEADING SEPARATE` e `SIGN TRAILING SEPARATE` danno valori e byte identici, anche rispetto all'ingresso (nei casi provati). Con il copybook originale `CVACT01Y` il primo record di `acctdata.txt` (`ACCT-CURR-BAL`, byte 13-24, `00000001940{`) si legge +194,00; anche i saldi +158,00 e +147,00 dei record successivi.
+- **Non verificato:** gli altri file di dati, oltre a `dailytran.txt` e ai record di `acctdata.txt` citati sopra.
 
 ## Assegnazione dei file: da nome DD a file
 
@@ -181,3 +209,4 @@ Marcatura: **verificata qui** = un controllo di questa issue la dimostra; **misu
 - `CEE3ABD` non riproduce il dump né la gestione delle condizioni di Language Environment.
 - I pacchetti sono fissati per versione su un archivio Debian corrente: se Debian ritira una di quelle versioni, la build dell'immagine fallisce (non è stato usato `snapshot.debian.org`).
 - `docker build` non ha un limite di tempo proprio; i programmi e le compilazioni sì.
+- L'ambiente fissato si applica dentro gli script dell'oracle. Una modifica di `ambiente.sh`, `compile.sh` o `esegui.sh` che aggiungesse variabili all'elenco è vista dal confronto dell'ambiente registrato (e, per `perform-osvs`, dalla sonda `PERFPRB`). Una che le aggiungesse solo all'esecuzione e non alla registrazione sarebbe vista solo dalle sonde semantiche (segno, `PERFORM`), non per le altre impostazioni.
