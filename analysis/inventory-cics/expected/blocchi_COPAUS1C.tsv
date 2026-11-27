@@ -1,0 +1,9 @@
+file	riga	riga_fine	comando	categoria	attributi	opzioni	bersagli	archi
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	202	205	RETURN	trasferimento	-	TRANSID(WS-CICS-TRANID) | COMMAREA(CARDDEMO-COMMAREA)	TRANSID=TRANSID(WS-CICS-TRANID) costante CPVD @app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:36	TRANSID>transaction:CPVD
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	248	252	LINK	trasferimento	-	PROGRAM(WS-PGM-AUTH-FRAUD) | COMMAREA(WS-FRAUD-DATA) | NOHANDLE	PROGRAM=PROGRAM(WS-PGM-AUTH-FRAUD) costante COPAUS2C @app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl:35	PROGRAM>program:COPAUS2C
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	367	370	XCTL	trasferimento	-	PROGRAM(CDEMO-TO-PROGRAM) | COMMAREA(CARDDEMO-COMMAREA)	PROGRAM=PROGRAM(CDEMO-TO-PROGRAM) non_risolto !senza-value-letterale	-
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	381	387	SEND MAP	mappe	-	MAP('COPAU1A') | MAPSET('COPAU01') | FROM(COPAU1AO) | ERASE | CURSOR	MAP=MAP('COPAU1A') letterale COPAU1A | MAPSET=MAPSET('COPAU01') letterale COPAU01	MAP>cics-map:COPAU01/COPAU1A | MAPSET>cics-mapset:COPAU01
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	389	394	SEND MAP	mappe	-	MAP('COPAU1A') | MAPSET('COPAU01') | FROM(COPAU1AO) | CURSOR	MAP=MAP('COPAU1A') letterale COPAU1A | MAPSET=MAPSET('COPAU01') letterale COPAU01	MAP>cics-map:COPAU01/COPAU1A | MAPSET>cics-mapset:COPAU01
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	400	405	RECEIVE MAP	mappe	-	MAP('COPAU1A') | MAPSET('COPAU01') | INTO(COPAU1AI) | NOHANDLE	MAP=MAP('COPAU1A') letterale COPAU1A | MAPSET=MAPSET('COPAU01') letterale COPAU01	MAP>cics-map:COPAU01/COPAU1A | MAPSET>cics-mapset:COPAU01
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	558	559	SYNCPOINT	transazione	-	-	-	-
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl	566	568	SYNCPOINT ROLLBACK	transazione	-	ROLLBACK	-	-

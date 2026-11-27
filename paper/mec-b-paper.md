@@ -299,7 +299,7 @@ La regola ha bisogno di una risposta alla domanda "e se la seconda validazione b
 | --- | --- | --- | --- | --- |
 | #31 | #21 verdetti e CI | 26 + 33 + 34 min | approvata, nessun rilievo | mergiata alle 15:51 |
 | #32 | #3 contratto dati | 20 + 27 + 33 min | approvata con una riserva minore (una motivazione che cita la struttura sbagliata) | mergiata alle 15:57; riserva nella issue #41 |
-| #30 | #2 inventario | 34 + 30 + 63 min | bocciata: tre falsi verdi nuovi | correzione mirata in corso |
+| #30 | #2 inventario | 34 + 30 + 63 min | bocciata: tre falsi verdi nuovi | correzione mirata; mergiata alle 17:34 (passo 19) |
 
 Due osservazioni. La prima: un terzo giro costa quanto il primo, perché il Validatore riparte da zero. La seconda riguarda la PR #30: a ogni giro il Validatore ha trovato rilievi nuovi dello stesso schema (un attributo della mappa delle dipendenze che il controllo non confronta con una fonte indipendente), alterando ogni volta un punto diverso del programma che costruisce la mappa. La mappa consegnata è giusta in tutti i campioni riletti a mano; è il controllo che non la proteggerebbe da una modifica futura. Un'issue che produce 268 file o un grafo con decine di attributi offre troppa superficie: andava divisa.
 
@@ -318,7 +318,7 @@ Le regole sul codice Java (#26) rendono automatici tre divieti: dipendenze tra m
 | PR | Issue | Esecutore | Lavoro dell'Esecutore | Validazione 1 | Validazione 2 | Esito |
 | --- | --- | --- | ---: | ---: | ---: | --- |
 | #39 | #24 routine `COBDATFT` | Opus | 23 min + 21 min di correzione | 14 min 38 s, bocciata (1 rilievo) | 7 min 16 s, approvata | mergiata alle 16:16, 68 minuti dopo l'affidamento |
-| #40 | #26 regole sul codice Java | Sonnet | 58 min in 2 fasi + 20 min di correzione | 15 min 16 s, bocciata (5 rilievi) | 5 min 45 s, bocciata (1 rilievo) | correzione mirata in corso |
+| #40 | #26 regole sul codice Java | Sonnet | 58 min in 2 fasi + 20 min di correzione | 15 min 16 s, bocciata (5 rilievi) | 5 min 45 s, bocciata (1 rilievo) | correzione mirata; mergiata alle 16:50 (passo 19) |
 
 L'Esecutore di #26 si era fermato una volta da solo (`needs-spec-update`): i controlli nuovi girano anche quando si costruiscono le immagini Docker, e lì il loro file di configurazione non veniva copiato. Aveva scartato da sé due scorciatoie, una delle quali avrebbe lasciato verde una verifica con il controllo spento.
 
@@ -334,11 +334,71 @@ L'Esecutore di #26 si era fermato una volta da solo (`needs-spec-update`): i con
 | --- | --- | --- |
 | Durata della seconda validazione | da 10 a 33 min (cinque PR del passo 15, forma completa) | 7 min 16 s (PR #39) e 5 min 45 s (PR #40), forma ristretta |
 | PR di solo testo, dall'affidamento al merge | non applicabile: tutte passavano dal Validatore | 9 min 3 s (PR #42: Esecutore 1 min 54 s, il resto è CI e verifica dell'Approvatore) |
-| Effetto dell'autocontrollo dell'Esecutore | — | non ancora misurato: la prima PR scritta con la nuova lista è quella dell'issue #25 |
+| Effetto dell'autocontrollo dell'Esecutore | — | misurato al passo 22: non riduce le bocciature alla prima validazione, cambia il tipo di rilievi |
 
 La differenza sulla seconda validazione non dipende solo dalla forma ristretta: le due PR del passo 17 sono anche più piccole di quelle del passo 15, e nel frattempo giravano meno validazioni in parallelo.
 
 Un errore dell'Approvatore, per completezza. In dieci voci del registro delle approvazioni l'ora era stata scritta a memoria ed era in anticipo fino a 14 minuti rispetto al registro degli eventi; in una voce una durata era stata scritta "a occhio" (15 minuti invece di 9). Entrambe le cose sono state rettificate con voci aggiunte, senza toccare le voci originali. È lo stesso errore già commesso e dichiarato per le voci 11-26 dello stesso registro: chi tiene un registro tende a ricostruire, e l'unica difesa è leggere l'orologio ogni volta.
+
+**Passo 19 — Quando la seconda validazione boccia: la verifica dell'Approvatore.** La regola del passo 16 è stata applicata due volte nel giro di un'ora.
+
+*PR #40 (regole sul codice Java).* Il difetto rimasto: il controllo che vieta i database in memoria guardava le dipendenze di un solo modulo. L'Esecutore lo ha spostato in un punto da cui gira per ogni modulo. L'Approvatore ha clonato il ramo, ha aggiunto a un modulo la libreria vera di un database in memoria nelle tre forme indicate dal Validatore, e ha osservato tre fallimenti per il motivo giusto; poi ha rieseguito i comandi di verifica. Sette minuti. Mergiata alle 16:50.
+
+*PR #30 (inventario).* I tre falsi verdi del terzo giro sono stati corretti da un nuovo Esecutore (quello originale non era più disponibile: un agente non sopravvive alla sessione che lo ha avviato, ed è un motivo in più per tenere tutto scritto nelle PR). Il Validatore aveva lasciato sul disco gli script con cui aveva prodotto i falsi verdi; l'Approvatore li ha rieseguiti tali e quali sul ramo corretto: tre fallimenti dove prima c'erano tre successi, e successo senza mutazioni. Sette minuti. Mergiata alle 17:34, 4 ore e 54 minuti dopo l'affidamento: è stata la PR più costosa della giornata, con 127 minuti di sole validazioni.
+
+Che cosa rende possibile questa verifica breve: il Validatore consegna controesempi *eseguibili* (un comando, un file modificato, l'esito osservato), non opinioni. Chi replica il metodo dovrebbe chiederlo esplicitamente nel prompt di validazione.
+
+L'Esecutore subentrato sulla PR #30 ha anche trovato, senza che nessuno glielo chiedesse, la causa di una CI che diventava rossa a caso: in uno script di shell, `echo "$testo" | grep -q parola` può fallire anche quando la parola c'è, se lo script è in una modalità severa (`pipefail`) e `grep` chiude il canale appena trova la corrispondenza. È il genere di difetto che non si trova leggendo: si trova solo eseguendo molte volte.
+
+**Passo 20 — La coda riparte: sei specifiche in tre ore.** Con le prime issue chiuse, altre sono diventate affidabili. Per ciascuna il pianificatore ha riscritto la bozza guardando ciò che le issue precedenti avevano prodotto, l'ha fatta contestare, e l'ha affidata.
+
+**Tabella 12 — Le specifiche contestate tra le 16:18 e le 19:55 UTC** (durate dal registro degli eventi)
+
+| Issue | Oggetto | Contestazione di Codex | Rilievi (bloccanti) | Effetto principale |
+| --- | --- | ---: | ---: | --- |
+| #25 | il batch degli estratti conto nell'oracle | 3 min 33 s | 5 (2) | tre delle 26 righe da neutralizzare sono vuote: il controllo scritto nella bozza era irrealizzabile |
+| #23 | regole di codifica dei campi | 4 min 11 s | 10 (1) | la bozza chiedeva 658 valori scritti a mano: issue divisa in due |
+| #27 | copertura dei test e analisi statica | 3 min 1 s | 6 (0) | un modulo compare nel rapporto di copertura anche con lo strumento spento |
+| #22 | comandi CICS nella mappa | 5 min 35 s | 4 (1) | i controlli guardavano solo i collegamenti presenti, non quelli mancanti; issue divisa in due |
+| #35 | controlli dell'oracle in CI | 4 min 35 s | 7 (1) | "una prova per comando" lasciava scoperte le invocazioni ripetute |
+| #43 | record di prova per ogni tracciato | 3 min 21 s | 7 (1) | la bozza ordinava di fermarsi in una condizione già vera |
+
+Trentanove rilievi in ventiquattro minuti di Validatore, tutti accolti. Tre errori erano di pura coerenza del pianificatore con il proprio repository (righe vuote, condizione già vera, un'affermazione sbagliata lasciata in un documento dalla PR precedente). Contestare una specifica costa da tre a sei minuti; una specifica irrealizzabile scoperta dall'Esecutore ne costa da venti a trenta, più la ripresa.
+
+Due issue sono state divise *prima* di affidarle, applicando la lezione della PR #30: una cosa sola per issue, anche quando la seconda sembra il completamento naturale della prima.
+
+**Passo 21 — Un riferimento che dà due risposte.** L'Esecutore delle regole di codifica (#23) aveva l'ordine di scrivere i valori attesi *prima* di interrogare l'oracle, e di fermarsi se l'oracle li smentiva. È successo una volta su 267. Un campo numerico binario di quattro byte, dichiarato per contenere al massimo nove cifre, può fisicamente contenere numeri più grandi. Con tutti i bit accesi, GnuCOBOL restituisce 4.294.967.295 se il campo viene copiato e −1 se viene sommato a qualcosa.
+
+L'Esecutore non ha scelto: si è fermato e ha proposto tre alternative. L'Approvatore ha deciso (voce 63 del registro) che in quel caso la regola di codifica non assegna alcun valore: conserva i byte e marca il campo come "oltre il limite dichiarato"; ciò che l'oracle fa, operazione per operazione, è registrato a parte come osservazione. Il motivo: se il riferimento stesso dà due valori, sceglierne uno significa inventarlo. La conseguenza pratica per chi migra: un programma che fa aritmetica su un campo così va confrontato con l'oracle caso per caso, e non esiste una regola generale da applicare.
+
+Più tardi l'Esecutore ha trovato la causa nel codice C che il compilatore genera: la funzione di somma riceve il valore come intero con segno. La causa non cambia la decisione, ma spiega perché copia e somma divergono.
+
+**Passo 22 — Otto PR con al massimo due validazioni: che cosa si misura.** Alle 20:00 UTC, quattro ore e mezza dopo la regola delle due validazioni, lo stato è questo.
+
+**Tabella 13 — PR aperte dopo la regola delle due validazioni** (stato alle 20:00 UTC)
+
+| PR | Issue | Esecutore | Validazione 1 | Validazione 2 (ristretta) | Esito |
+| --- | --- | --- | ---: | ---: | --- |
+| #39 | #24 routine `COBDATFT` | Opus | 14 min 38 s, bocciata | 7 min 16 s, approvata | mergiata alle 16:16 |
+| #40 | #26 regole sul codice Java | Sonnet | 15 min 16 s, bocciata | 5 min 45 s, bocciata | verifica dell'Approvatore (7 min); mergiata alle 16:50 |
+| #42 | #41 una motivazione corretta | Sonnet | — (basso rischio) | — | verifica dell'Approvatore (2 min); mergiata alle 16:10 |
+| #44 | #25 estratti conto nell'oracle | Opus | 11 min 32 s, bocciata | 5 min 11 s, approvata | mergiata alle 17:57 |
+| #47 | #23 regole di codifica | Opus | 12 min 19 s, bocciata | 26 min 12 s, approvata | mergiata alle 19:50 |
+| #48 | #27 copertura e analisi statica | Sonnet | 54 min 24 s, bocciata | — | giro di correzione |
+| #49 | #35 oracle in CI | Opus | 31 min 17 s, bocciata | — | giro di correzione |
+| #50 | #22 comandi CICS nella mappa | Opus | 31 min 43 s, bocciata | — | giro di correzione |
+
+Che cosa dicono questi numeri, e che cosa no.
+
+*Nessuna PR a rischio pieno è passata alla prima validazione.* Sette su sette bocciate. L'autocontrollo chiesto agli Esecutori dal passo 18 non ha cambiato questo dato: ha cambiato il tipo di rilievi. Nelle PR scritte dopo, il Validatore ha confermato per intero il contenuto (72 campi di un estratto conto ricostruiti a mano; 523 vettori di codifica su 524; 240 comandi CICS ricontati; 52 prove su 52 sulle acquisizioni di configurazione) e ha trovato i difetti un livello più in là: un controllo che pretende "almeno una riga" invece di tutte, una regola provata con un rappresentante invece che con ogni caso, un comando interno il cui fallimento nessuno guarda.
+
+*La seconda validazione ristretta è breve solo se la correzione è piccola.* Tre volte è durata tra 5 e 7 minuti; una volta 26, più della prima, perché la correzione conteneva 218 valori nuovi che il Validatore ha riconfrontato uno per uno. "Ristretta" limita ciò che si riguarda, non quanto c'è da guardare.
+
+*La validazione costa quanto costa eseguire i controlli.* I 54 minuti della PR #48 sono per 50 minuti l'esecuzione dello script di regressioni consegnato dalla PR stessa. Un controllo che dura cinquanta minuti verrà eseguito di rado: è un costo che la specifica avrebbe dovuto limitare.
+
+*Tre volte l'Approvatore ha respinto un rilievo che il Validatore riteneva bloccante* (voci 25, 52 e 70 del registro), sempre per la stessa ragione: il controesempio richiedeva qualcuno che falsificasse apposta un dato ben formato, o che un controllo girasse dove tecnicamente non può. Ogni volta il motivo è scritto e il limite è dichiarato nella documentazione del progetto. Senza un criterio scritto su dove fermarsi, un Validatore avversariale non finisce mai: è il suo mestiere.
+
+*Un agente in attesa costa.* Un Esecutore, finito il lavoro, è rimasto ad aspettare la CI riconsegnando più volte lo stesso rapporto. Da allora il prompt dice: una sola lettura dello stato della CI, un solo rapporto.
 
 *(passi successivi: da compilare)*
 

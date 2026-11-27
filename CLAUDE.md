@@ -136,7 +136,7 @@ Prima di scrivere un tool di analisi, verificare se ne esiste uno. Si scrive cod
 | Qualità lato Java | SonarQube Community Build, JaCoCo, SpotBugs, ArchUnit, PIT | #15 |
 | Integrazione | Testcontainers | #15 |
 
-Comandi: `./analysis/run.sh --all` e `--all --check` (analisi del legacy), `./verify.sh` (build e test Java). Una nuova analisi è una nuova cartella `analysis/<nome>/` con `run.sh`, `check.sh`, `deps`. Su macOS il legacy va letto da un volume Docker sensibile alle maiuscole, non da un bind mount (`analysis/lib/common.sh`).
+Comandi: `./analysis/run.sh --all` e `--all --check` (analisi del legacy), `./oracle/run.sh --all --check` (oracle), `./verify.sh` (build e test Java). **Catalogo di ciò che abbiamo costruito: `docs/strumenti-creati.md`** (richiesta dell'autore, 27 nov 2026): si aggiorna a ogni merge che aggiunge o cambia un comando, un'analisi o un passo dell'oracle; l'aggiornamento lo fa Fable insieme alla voce di registro del merge. Una nuova analisi è una nuova cartella `analysis/<nome>/` con `run.sh`, `check.sh`, `deps`. Su macOS il legacy va letto da un volume Docker sensibile alle maiuscole, non da un bind mount (`analysis/lib/common.sh`).
 
 Criterio di adozione: lo strumento gira su CardDemo senza modifiche al sorgente e il suo output è controllato a campione contro attesi scritti a mano. Un controllo vale solo se fallisce quando si altera l'output: ogni controllo ha la sua prova negativa. Un errore noto di uno strumento non diventa mai un valore atteso.
 

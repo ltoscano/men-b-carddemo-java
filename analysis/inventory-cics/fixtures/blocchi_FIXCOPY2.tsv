@@ -1,0 +1,2 @@
+file	riga	riga_fine	comando	categoria	attributi	opzioni	bersagli	archi
+app/cbl/FIXCOPY2.cbl	8	8	XCTL	trasferimento	-	PROGRAM(WS-K)	PROGRAM=PROGRAM(WS-K) non_risolto !copy-non-risolta	-

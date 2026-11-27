@@ -7,7 +7,7 @@ export LC_ALL=C
 : "${ORACLE_ROOT:?ORACLE_ROOT non impostata: lanciare gli script tramite oracle/run.sh}"
 : "${ORACLE_NAME:=?}"
 
-REPO_ROOT="$(cd "$ORACLE_ROOT/.." && pwd)"
+REPO_ROOT="$(cd "$ORACLE_ROOT/.." && pwd)" || { echo "[$ORACLE_NAME] ERRORE: radice del repository non calcolabile" >&2; exit 1; }
 LEGACY="$REPO_ROOT/legacy/aws-mainframe-modernization-carddemo"
 # Output della build (artefatti). ORACLE_BUILD_OUT lo sposta: serve solo alle prove negative dei controlli.
 BUILD_OUT="${ORACLE_BUILD_OUT:-$ORACLE_ROOT/build/out}"
@@ -33,7 +33,15 @@ mutate() { # mutate FILE ESPRESSIONE-SED
   local f="$1" expr="$2"
   [ -f "$f" ] || fail "mutate: file assente: $(rel "$f")"
   sed -e "$expr" "$f" > "$f.mut" || fail "mutate: sed fallito su $(rel "$f")"
-  if cmp -s "$f" "$f.mut"; then rm -f "$f.mut"; fail "mutate: l'espressione '$expr' non altera $(rel "$f")"; fi
+  # Esiti di cmp: 0 = nessuna alterazione, 1 = alterato; ogni altro esito e' un errore (issue #35: prima un cmp
+  # fallito valeva come "alterato").
+  local r=0
+  cmp -s "$f" "$f.mut" || r=$?
+  case "$r" in
+    0) rm -f "$f.mut"; fail "mutate: l'espressione '$expr' non altera $(rel "$f")" ;;
+    1) ;;
+    *) fail "mutate: confronto fallito su $(rel "$f") (cmp, codice $r)" ;;
+  esac
   mv "$f.mut" "$f" || fail "mutate: impossibile sostituire $(rel "$f")"
 }
 
@@ -42,7 +50,7 @@ mutate() { # mutate FILE ESPRESSIONE-SED
 expect_fail() {
   local name="$1" needle="$2" outf rc
   shift 2
-  outf="$(mktemp "$ORACLE_ROOT/.work/neg.XXXXXX")"
+  outf="$(mktemp "$ORACLE_ROOT/.work/neg.XXXXXX")" || fail "expect_fail ($name): file temporaneo non creabile (mktemp)"
   set +e; "$@" > "$outf" 2>&1; rc=$?; set -e
   if [ "$rc" -eq 0 ]; then
     sed 's/^/      | /' "$outf" >&2; rm -f "$outf"
@@ -57,10 +65,12 @@ expect_fail() {
 }
 
 # Cartella temporanea dentro il repository (oracle/.work/, ignorata da git), rimossa dal chiamante.
+# Ogni passo ha l'esito controllato (issue #35): senza .gitignore i temporanei finirebbero tra i file di git.
 mktmp() {
-  mkdir -p "$ORACLE_ROOT/.work"
-  [ -f "$ORACLE_ROOT/.work/.gitignore" ] || printf '*\n' > "$ORACLE_ROOT/.work/.gitignore"
-  mktemp -d "$ORACLE_ROOT/.work/t.XXXXXX"
+  mkdir -p "$ORACLE_ROOT/.work" || fail "cartella di lavoro $(rel "$ORACLE_ROOT/.work") non creabile"
+  [ -f "$ORACLE_ROOT/.work/.gitignore" ] || printf '*\n' > "$ORACLE_ROOT/.work/.gitignore" \
+    || fail "scrittura di $(rel "$ORACLE_ROOT/.work/.gitignore") fallita"
+  mktemp -d "$ORACLE_ROOT/.work/t.XXXXXX" || fail "cartella temporanea non creabile in $(rel "$ORACLE_ROOT/.work")"
 }
 
 # Cancella una cartella e verifica che non esista piu': un residuo di una corsa precedente non deve
@@ -77,9 +87,10 @@ legacy_commit() { git -C "$LEGACY" rev-parse HEAD; }
 
 # Il legacy deve esserci e non essere modificato (invariante della issue: nessuna modifica sotto legacy/).
 require_legacy() {
-  [ -n "$(git -C "$LEGACY" ls-files 2>/dev/null | head -1)" ] \
+  local files dirty
+  # Esito di git controllato (issue #35): prima si perdeva dentro [ -n "$(git ... | head -1)" ].
+  files="$(git -C "$LEGACY" ls-files)" && [ -n "$files" ] \
     || fail "sorgente legacy assente o non inizializzato: eseguire 'git submodule update --init'"
-  local dirty
   dirty="$(git -C "$LEGACY" status --porcelain)" || fail "git status sul legacy fallito"
   [ -z "$dirty" ] || fail "il legacy ha modifiche locali (non ammesse): $dirty"
 }
@@ -87,12 +98,18 @@ require_legacy() {
 # --- immagine --------------------------------------------------------------------------------------
 
 # Il tag contiene l'hash del Dockerfile: un Dockerfile diverso produce un'immagine con un altro nome.
-image_tag() { echo "menb-oracle-gnucobol:3.2-$(git hash-object "$ORACLE_ROOT/Dockerfile" | cut -c1-12)"; }
+# L'esito di git hash-object e' controllato (issue #35): prima si perdeva dentro echo.
+image_tag() {
+  local h
+  h="$(git hash-object "$ORACLE_ROOT/Dockerfile")" || fail "hash del Dockerfile fallito (git hash-object)"
+  [ "${#h}" -ge 12 ] || fail "hash del Dockerfile non valido: '$h'"
+  echo "menb-oracle-gnucobol:3.2-${h:0:12}"
+}
 
 IMAGE=""
 ensure_image() {
   [ -z "$IMAGE" ] || return 0
-  IMAGE="$(image_tag)"
+  IMAGE="$(image_tag)" || fail "nome dell'immagine non calcolabile"
   # Nessun contesto di build: il Dockerfile non copia file.
   docker build -q -t "$IMAGE" - < "$ORACLE_ROOT/Dockerfile" > /dev/null || fail "build dell'immagine $IMAGE fallita"
 }
@@ -110,7 +127,10 @@ LEGACY_VOL=""
 ensure_legacy_volume() {
   [ -z "$LEGACY_VOL" ] || return 0
   ensure_image
-  LEGACY_VOL="menb-oracle-legacy-$(legacy_commit | cut -c1-12)"
+  local lc
+  lc="$(legacy_commit)" || fail "commit del legacy non leggibile (git rev-parse)"
+  [ "${#lc}" -ge 12 ] || fail "commit del legacy non valido: '$lc'"
+  LEGACY_VOL="menb-oracle-legacy-${lc:0:12}"
   if ! docker run --rm --network none -v "$LEGACY_VOL:/dst:ro" "$IMAGE" \
         timeout 60 test -f /dst/.menb-complete 2>/dev/null; then
     log "copia del legacy nel volume $LEGACY_VOL"
@@ -118,6 +138,7 @@ ensure_legacy_volume() {
     docker run --rm --network none --user 0:0 -v "$LEGACY:/src:ro" -v "$LEGACY_VOL:/dst" "$IMAGE" \
       timeout -k 10 600 sh -c '
         set -eu
+        set -o pipefail
         find /dst -mindepth 1 -delete
         cp -a /src/. /dst/
         rm -rf /dst/.git
@@ -135,6 +156,7 @@ verify_legacy_volume() {
   docker run --rm --network none -v "$LEGACY:/src:ro" -v "$LEGACY_VOL:/dst:ro" "$IMAGE" \
     timeout -k 10 300 sh -c '
       set -eu
+      set -o pipefail
       (cd /src && find . -path ./.git -prune -o -type f -print0 | sort -z | xargs -0 sha256sum) > /tmp/src.sha
       (cd /dst && find . -type f ! -name .menb-complete ! -name .menb-sha256 -print0 | sort -z | xargs -0 sha256sum) > /tmp/dst.sha
       cmp -s /tmp/src.sha /tmp/dst.sha' \
@@ -152,8 +174,12 @@ orun() {
   [ $# -gt 0 ] || fail "orun: manca il comando"
   shift
   ensure_legacy_volume
+  # UID e GID dell'host, con l'esito controllato (issue #35): prima si perdeva dentro gli argomenti di docker.
+  local uid gid
+  uid="$(id -u)" || fail "orun: id -u fallito"
+  gid="$(id -g)" || fail "orun: id -g fallito"
   docker run --rm --network none --name "menb-oracle-run-$$-$RANDOM" \
-    --user "$(id -u):$(id -g)" -e HOME=/tmp \
+    --user "$uid:$gid" -e HOME=/tmp \
     -v "$LEGACY_VOL:/legacy:ro" -v "$ORACLE_ROOT:/oracle:ro" \
     ${extra[@]+"${extra[@]}"} "$IMAGE" "$@" < /dev/null
 }
@@ -222,7 +248,7 @@ config_hash() {
 # config_alternativa CARTELLA: copia della configurazione dell'immagine con perform-osvs: no aggiunto a
 # ibm.conf (la mutazione del Validatore, giro 2 della PR #29). Solo per le prove negative.
 config_alternativa() {
-  mkdir -p "$1"
+  mkdir -p "$1" || fail "creazione della cartella $(rel "$1") fallita"
   orun -v "$1:/alt" -- timeout 60 sh -c 'cp -R /usr/share/gnucobol/config/. /alt/ && echo "perform-osvs: no" >> /alt/ibm.conf' \
     || fail "creazione della configurazione alternativa fallita"
 }
@@ -245,14 +271,16 @@ build_stamp() { # build_stamp CARTELLA-DELLA-BUILD: il contenuto atteso di IMPRO
 
 # Stampa il difetto dell'impronta di una build (nulla se e' valida); ritorna 1 se c'e' un difetto.
 stamp_problem() { # stamp_problem CARTELLA-DELLA-BUILD
-  local want have
+  local want have h1 h2 w1 w2 nl=$'\n'
   [ -f "$1/IMPRONTA" ] || { echo "build assente o incompleta (nessuna IMPRONTA)"; return 1; }
   want="$(build_stamp "$1")" || { echo "calcolo dell'impronta fallito"; return 1; }
-  have="$(cat "$1/IMPRONTA")"
-  [ "$(echo "$have" | sed -n 1p)" = "$(echo "$want" | sed -n 1p)" ] \
-    || { echo "build non aggiornata: gli input sono cambiati dopo la build"; return 1; }
-  [ "$(echo "$have" | sed -n 2p)" = "$(echo "$want" | sed -n 2p)" ] \
-    || { echo "artefatti della build cambiati, aggiunti o tolti dopo la build"; return 1; }
+  # Esito di cat controllato e righe estratte senza comandi esterni (issue #35): prima l'esito di cat era
+  # ignorato e quello di sed si perdeva dentro [ "$(echo ... | sed -n 1p)" = ... ].
+  have="$(cat "$1/IMPRONTA")" || { echo "impronta illeggibile"; return 1; }
+  h1="${have%%"$nl"*}"; h2="${have#*"$nl"}"; h2="${h2%%"$nl"*}"
+  w1="${want%%"$nl"*}"; w2="${want#*"$nl"}"; w2="${w2%%"$nl"*}"
+  [ "$h1" = "$w1" ] || { echo "build non aggiornata: gli input sono cambiati dopo la build"; return 1; }
+  [ "$h2" = "$w2" ] || { echo "artefatti della build cambiati, aggiunti o tolti dopo la build"; return 1; }
   [ "$have" = "$want" ] || { echo "impronta malformata"; return 1; }
 }
 

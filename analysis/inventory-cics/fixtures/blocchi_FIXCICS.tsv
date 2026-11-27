@@ -1,0 +1,35 @@
+file	riga	riga_fine	comando	categoria	attributi	opzioni	bersagli	archi
+app/cbl/FIXCICS.cbl	42	43	WRITE	file	modalita=scrittura	DATASET(WS-FILE-OK) | FROM(WS-REC) | LENGTH(10) | RIDFLD(WS-KEY)	FILE=DATASET(WS-FILE-OK) costante FIXFILE @app/cbl/FIXCICS.cbl:6	FILE>cics-file:FIXFILE
+app/cbl/FIXCICS.cbl	44	44	DELETE	file	modalita=cancellazione	FILE('FIXFILE') | RIDFLD(WS-KEY)	FILE=FILE('FIXFILE') letterale FIXFILE	FILE>cics-file:FIXFILE
+app/cbl/FIXCICS.cbl	45	45	READ	file	modalita=lettura	DATASET(WS-FILE-MOSSO) | INTO(WS-REC)	FILE=DATASET(WS-FILE-MOSSO) non_risolto !modificato	-
+app/cbl/FIXCICS.cbl	46	46	READ	file	modalita=lettura-update	FILE('FIXFILE') | UPDATE | INTO(WS-REC)	FILE=FILE('FIXFILE') letterale FIXFILE	FILE>cics-file:FIXFILE
+app/cbl/FIXCICS.cbl	47	47	WRITEQ TS	coda	tipo_coda=TS	TS | QUEUE(WS-CODA-OK) | FROM(WS-REC)	QUEUE=QUEUE(WS-CODA-OK) costante FIXQ @app/cbl/FIXCICS.cbl:9	QUEUE>cics-queue:TS/FIXQ
+app/cbl/FIXCICS.cbl	48	48	READQ TD	coda	tipo_coda=TD	TD | QUEUE('FIXTDQ') | INTO(WS-REC)	QUEUE=QUEUE('FIXTDQ') letterale FIXTDQ	QUEUE>cics-queue:TD/FIXTDQ
+app/cbl/FIXCICS.cbl	49	49	DELETEQ TS	coda	tipo_coda=TS	TS | QUEUE('FIXQ')	QUEUE=QUEUE('FIXQ') letterale FIXQ	QUEUE>cics-queue:TS/FIXQ
+app/cbl/FIXCICS.cbl	50	50	DELETEQ	coda	tipo_coda=assente	QUEUE('FIXQ2')	QUEUE=QUEUE('FIXQ2') non_risolto !tipo-coda-assente	-
+app/cbl/FIXCICS.cbl	51	51	START	trasferimento	-	TRANSID(WS-TRANS-OK)	TRANSID=TRANSID(WS-TRANS-OK) costante FX01 @app/cbl/FIXCICS.cbl:8	TRANSID>transaction:FX01
+app/cbl/FIXCICS.cbl	52	52	SEND TEXT	mappe	-	TEXT | FROM(WS-REC)	-	-
+app/cbl/FIXCICS.cbl	56	56	XCTL	trasferimento	-	PROGRAM(WS-PROG-GRUPPO)	PROGRAM=PROGRAM(WS-PROG-GRUPPO) non_risolto !modificato	-
+app/cbl/FIXCICS.cbl	57	57	LINK	trasferimento	-	PROGRAM(WS-RIDEF)	PROGRAM=PROGRAM(WS-RIDEF) non_risolto !modificato	-
+app/cbl/FIXCICS.cbl	58	58	XCTL	trasferimento	-	PROGRAM(WS-CALL-PROG)	PROGRAM=PROGRAM(WS-CALL-PROG) non_risolto !modificato	-
+app/cbl/FIXCICS.cbl	59	59	XCTL	trasferimento	-	PROGRAM(WS-FLAG-PROG)	PROGRAM=PROGRAM(WS-FLAG-PROG) non_risolto !modificato	-
+app/cbl/FIXCICS.cbl	60	60	XCTL	trasferimento	-	PROGRAM(WS-SQL-PROG)	PROGRAM=PROGRAM(WS-SQL-PROG) non_risolto !modificato	-
+app/cbl/FIXCICS.cbl	61	61	XCTL	trasferimento	-	PROGRAM(WS-SENZA-VALUE)	PROGRAM=PROGRAM(WS-SENZA-VALUE) non_risolto !senza-value-letterale	-
+app/cbl/FIXCICS.cbl	62	62	XCTL	trasferimento	-	PROGRAM(WS-DUP)	PROGRAM=PROGRAM(WS-DUP) non_risolto !definito-piu-volte	-
+app/cbl/FIXCICS.cbl	63	63	XCTL	trasferimento	-	PROGRAM(WS-OCC-PROG)	PROGRAM=PROGRAM(WS-OCC-PROG) non_risolto !occurs	-
+app/cbl/FIXCICS.cbl	64	64	XCTL	trasferimento	-	PROGRAM(WS-NON-ESISTE)	PROGRAM=PROGRAM(WS-NON-ESISTE) non_risolto !non-definito	-
+app/cbl/FIXCICS.cbl	65	65	XCTL	trasferimento	-	PROGRAM(LK-PROG)	PROGRAM=PROGRAM(LK-PROG) non_risolto !fuori-working-storage	-
+app/cbl/FIXCICS.cbl	66	66	XCTL	trasferimento	-	PROGRAM(WS-OCC-PROG(1))	PROGRAM=PROGRAM(WS-OCC-PROG(1)) non_risolto !espressione	-
+app/cbl/FIXCICS.cbl	67	67	XCTL	trasferimento	-	PROGRAM(WS-PROG-MULTI)	PROGRAM=PROGRAM(WS-PROG-MULTI) costante FIXTGT @app/cbl/FIXCICS.cbl:16	PROGRAM>program:FIXTGT
+app/cbl/FIXCICS.cbl	68	68	SYNCPOINT	transazione	-	-	-	-
+app/cbl/FIXCICS.cbl	68	68	ASKTIME	altro	-	-	-	-
+app/cbl/FIXCICS.cbl	69	72	LINK	trasferimento	-	PROGRAM('FIXTGT')	PROGRAM=PROGRAM('FIXTGT') letterale FIXTGT	PROGRAM>program:FIXTGT
+app/cbl/FIXCICS.cbl	73	73	XCTL	trasferimento	-	PROGRAM('NOPROG')	PROGRAM=PROGRAM('NOPROG') letterale NOPROG	PROGRAM>external:NOPROG
+app/cbl/FIXCICS.cbl	74	74	XCTL	trasferimento	-	PROGRAM('EXTBASE')	PROGRAM=PROGRAM('EXTBASE') letterale EXTBASE	PROGRAM>external:EXTBASE
+app/cbl/FIXCICS.cbl	75	75	RETURN	trasferimento	-	TRANSID('ZZ99')	TRANSID=TRANSID('ZZ99') letterale ZZ99	TRANSID>external:ZZ99
+app/cbl/FIXCICS.cbl	76	76	SEND MAP	mappe	-	MAP('FIXMAP')	MAP=MAP('FIXMAP') non_risolto !mapset-assente	-
+app/cbl/FIXCICS.cbl	77	77	SEND MAP	mappe	-	MAP('FIXMAP') | MAPSET(WS-MAPSET)	MAP=MAP('FIXMAP') letterale FIXMAP | MAPSET=MAPSET(WS-MAPSET) costante FIXSET @app/cbl/FIXCICS.cbl:14	MAP>cics-map:FIXSET/FIXMAP | MAPSET>cics-mapset:FIXSET
+app/cbl/FIXCICS.cbl	78	79	RECEIVE MAP	mappe	-	MAP('FIXMAP ') | MAPSET('FIXSET') | INTO(WS-REC)	MAP=MAP('FIXMAP ') letterale FIXMAP | MAPSET=MAPSET('FIXSET') letterale FIXSET	MAP>cics-map:FIXSET/FIXMAP | MAPSET>cics-mapset:FIXSET
+app/cbl/FIXCICS.cbl	81	81	ABEND	transazione	-	ABCODE('FX01')	-	-
+app/cbl/FIXCICS.cbl	82	82	SYNCPOINT ROLLBACK	transazione	-	ROLLBACK	-	-
+app/cbl/FIXCICS.cbl	83	83	SEND MAP	mappe	-	MAP('FIXMAP') | MAPSET(WS-SENZA-VALUE)	MAP=MAP('FIXMAP') non_risolto !mapset-non-risolto | MAPSET=MAPSET(WS-SENZA-VALUE) non_risolto !senza-value-letterale	-

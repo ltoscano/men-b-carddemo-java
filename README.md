@@ -15,6 +15,12 @@ Questo repository è insieme il prodotto della migrazione e il materiale di un p
 | `paper/piano-migrazione-carddemo-java.md` | Inventario di CardDemo e piano a ondate |
 | `paper/data/` | Misure grezze (tempi, esiti) da cui derivano tabelle e grafici |
 | `legacy/aws-mainframe-modernization-carddemo/` | Sorgente COBOL originale, submodule in sola lettura fissato al commit `59cc6c2` |
+| `docs/strumenti-creati.md` | Catalogo degli strumenti costruiti in questo progetto: a che servono, come si lanciano, dove sono spiegati |
+| `docs/piano-wave.md` | Il piano: wave, issue, dipendenze e stato |
+| `docs/registro-approvazioni.md` | Ogni specifica approvata, PR mergiata e decisione presa, con il motivo |
+| `docs/legacy-map/` | La mappa del sistema originale: inventario, dipendenze, contratto dati, regole di codifica |
+| `docs/sviluppo.md` | Come costruire, verificare e avviare l'applicazione Java |
+| `analysis/`, `oracle/`, `quality/` | Analisi del legacy, riferimento eseguibile GnuCOBOL, regressioni dei controlli |
 | `CLAUDE.md` | Contesto e regole per gli agenti |
 | [Issues](../../issues) | La coda di specifiche: ogni cambiamento nasce da una issue e arriva con una PR |
 
