@@ -136,3 +136,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T14:02:24Z,pr-31,codex-fine,codex,orologio,giro 1; exit=0; token: 94.177
 2026-11-27T14:02:55Z,pr-30,validazione-fine,fable,orologio,giro 1: BOCCIATA; 2 bloccanti e 3 importanti accolti
 2026-11-27T14:02:55Z,issue-2,esecutore-inizio,sonnet,orologio,giro di correzione 1
+2026-11-27T14:03:26Z,pr-31,validazione-fine,fable,orologio,giro 1: BOCCIATA; 2 importanti (falsi verdi) accolti
+2026-11-27T14:03:26Z,issue-21,esecutore-inizio,sonnet,orologio,giro di correzione 1
