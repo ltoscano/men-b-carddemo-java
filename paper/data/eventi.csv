@@ -63,3 +63,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T11:47:00Z,P10,contestazione-fine,codex,orologio,exit=0; token: 45.899
 2026-11-27T11:48:17Z,P10,fine,fable,orologio,11 rilievi (2 bloccanti); #14 riscritta e ready; #19 chiusa come superata
 2026-11-27T11:48:19Z,issue-14,esecutore-inizio,sonnet,orologio,worktree isolato
+2026-11-27T11:48:46Z,issue-14,nota,fable,orologio,Esecutore: Opus (non Sonnet); motivo nella voce 15 del registro
