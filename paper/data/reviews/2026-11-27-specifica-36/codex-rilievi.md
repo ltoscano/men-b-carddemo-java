@@ -1,0 +1,28 @@
+1. **Importante — `ASMWAIT` esiste: la descrizione dell’originale parte da una premessa falsa.**  
+   **Evidenza:** `bozza-36.md:18` dichiara la macro assente e attribuisce l’unità di misura soltanto al commento JCL. Invece `legacy/aws-mainframe-modernization-carddemo/app/maclib/ASMWAIT.mac:17–20` contiene:
+   ```asm
+   &NAME    ASMWAIT &B
+            STIMER WAIT,BINTVL=&B
+   ```
+   `MVSWAIT.asm:23` espande quindi una richiesta sincrona `STIMER WAIT`. I centesimi derivano dal contratto di `BINTVL`, confermato dal JCL. [Documentazione IBM STIMER](https://www.ibm.com/docs/en/zos/3.2.0?topic=xct-stimer-set-interval-timer).  
+   **Correzione proposta:** aggiungere la macro ai riferimenti e correggere la ricostruzione documentale. Leggerne l’espansione non richiede di implementare un’attesa reale.
+
+2. **Bloccante — I valori con il bit alto acceso non devono avere atteso di successo.**  
+   **Evidenza:** `bozza-36.md:18,28,31,42` prescrive ritorno 0 anche per `X'80000000'` e `X'FFFFFFFF'`. La macro effettivamente invocata (`app/maclib/ASMWAIT.mac:19`) usa `BINTVL`: IBM ammette al massimo `X'7FFFFFFF'`; oltre quel limite `STIMER` produce un abend `X'12F'`. L’assenza di controlli nelle istruzioni precedenti non elimina quelli del servizio. `MVSWAIT.asm:26–27` azzera R15 e ritorna **soltanto se il servizio restituisce il controllo normalmente**. [Restrizioni IBM STIMER](https://www.ibm.com/docs/en/zos/3.2.0?topic=xct-stimer-set-interval-timer).  
+   **Correzione proposta:** distinguere intervalli validi ed errori del servizio; correggere tabella, attesi e obbligo generale di ritorno 0. Se la riproduzione dell’abend resta esclusa, dichiarare quei casi non riprodotti con un esito esplicito dell’oracle. L’attuale criterio approverebbe un equivalente che trasforma un arresto del legacy in successo.
+
+3. **Bloccante — Manca dal perimetro il file necessario a integrare il nuovo chiamante nella build ordinaria.**  
+   **Evidenza:** `bozza-36.md:11` ammette nuove prove in `oracle/tests/` e modifiche a `oracle/build/check.sh`, ma esclude `oracle/build/compile.sh`. Quest’ultimo compila soltanto i nomi della lista `PROVE` alla riga 49, mediante il ciclo alle righe 234–236. Aggiungere un `.cbl` non lo fa compilare. La lista indipendente `ACCESSORI` di `oracle/build/check.sh:35–41` deve poi comprendere lo stesso programma: `oracle/build/verifica.sh:64–81` confronta esattamente compilazioni e artefatti.  
+   **Correzione proposta:** ammettere puntualmente l’aggiornamento di `PROVE` in `compile.sh` e richiedere quello corrispondente di `ACCESSORI`. Gli elenchi `FISSO` e `PASSI` non richiedono nuovi elementi per questa integrazione. Gli attesi sotto `build/expected/` descrivono configurazione e runtime (`verifica.sh:9–10`), non l’elenco dei programmi: non vanno aggiornati per aggiungere il chiamante.
+
+4. **Importante — La riga su stderr introduce un secondo adattamento osservabile, senza definirne il trattamento nei golden.**  
+   **Evidenza:** `bozza-36.md:26–27` dichiara l’adattamento temporale e aggiunge una stampa assente dall’originale. `oracle/esegui.sh:83–89` incorpora integralmente stderr nel rapporto; `oracle/avvio/check.sh:25–28` e `oracle/routines/check.sh:28–30` confrontano il rapporto esattamente. Il prefisso `MENB-ORACLE` non comporta alcuna esclusione automatica.  
+   **Correzione proposta:** dichiarare esplicitamente anche l’adattamento di I/O e fissare quali parti costituiscono riferimento di parità. Il valore richiesto deve essere controllato come evidenza dell’oracle; la sua diagnostica aggiuntiva non deve diventare implicitamente un output richiesto alla migrazione. La scelta va documentata nei file già ammessi.
+
+5. **Importante — La prova negativa sulla durata può passare lasciando nell’equivalente un’attesa reale.**  
+   **Evidenza:** `bozza-36.md:51` richiede un limite breve soltanto per la variante negativa; le righe 42–43 non fissano un limite operativo per l’equivalente effettivo. Il limite ordinario è 60 secondi (`oracle/lib.sh:18`; `oracle/esegui.sh:45,58–61`). Una routine che attende sempre un secondo, poi stampa correttamente valore e byte e restituisce 0, può superare tutti i confronti. Una variante negativa con attesa maggiore del limite breve verrebbe comunque respinta: dimostrerebbe il funzionamento del timeout, lasciando verde quell’implementazione sbagliata.  
+   **Correzione proposta:** definire un limite operativo esplicito anche per le esecuzioni positive di `MVSWAIT`, applicarlo all’artefatto effettivo e usare nella mutazione un ritardo che lo superi. Distinguere la verifica del timeout dalla verifica dell’eliminazione dell’attesa.
+
+6. **Importante — La controprova contro `origin/main` non definisce un confronto riproducibile ed è incompatibile con alcune letture del requisito.**  
+   **Evidenza:** `bozza-36.md:35,55` promette identità senza `--sysin`, ma la riga 46 impone di cambiare proprio un rapporto senza `--sysin`: `COBSWAIT`. Il suo atteso corrente contiene codice 98 e messaggio del segnaposto (`oracle/avvio/expected/COBSWAIT.txt:2,6`). Non è specificato se confrontare due versioni di `esegui.sh` sugli stessi artefatti oppure due revisioni complete. Inoltre `.github/workflows/oracle.yml:14–16` usa il checkout predefinito: nelle PR non garantisce la disponibilità di `origin/main` e della sua storia. [Comportamento di actions/checkout v4](https://github.com/actions/checkout/tree/v4).  
+   **Correzione proposta:** definire una baseline fissata e disponibile alla prova, confrontare le versioni del runner a parità di programma e moduli, ed esplicitare l’eccezione dovuta alla sostituzione di `MVSWAIT`. Usare una baseline conservata nel perimetro ammesso, senza richiedere modifiche alla CI.

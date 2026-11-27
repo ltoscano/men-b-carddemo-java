@@ -1,0 +1,3 @@
+> Bozza, da completare e contestare prima di passare a `ready`. Divisa da #24.
+
+Equivalente verificato di `MVSWAIT`, chiamata da `COBSWAIT` (job `WAITSTEP`). Dal sorgente: `app/asm/MVSWAIT.asm` righe 20–28 legge per riferimento un intero di 4 byte e lo passa al servizio di attesa, restituendo 0 senza validare; `COBSWAIT.cbl` righe 30–38 legge il valore da `SYSIN` in un `PIC 9(8) COMP`; `WAITSTEP.jcl` righe 20–26 documenta l'unità in centesimi di secondo. Da fissare: unità, rappresentazione, intervallo, come fornire `SYSIN` nell'oracle (oggi l'esecuzione forza un ingresso vuoto), e l'attesa resa istantanea come adattamento dichiarato. Dipende da #24 per i file condivisi della build.

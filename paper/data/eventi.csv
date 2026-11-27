@@ -372,3 +372,7 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T21:30:41Z,processo,richiesta-autore,autore,orologio,quali strumenti sono stati creati e dove sono documentati
 2026-11-27T21:32:38Z,pr-48,decisione,fable,orologio,validazione 2: due falsi verdi via POM; correzione mirata; poi verifica di Fable
 2026-11-27T21:32:38Z,issue-27,esecutore-inizio,sonnet,orologio,correzione mirata dopo la seconda validazione
+2026-11-27T21:32:44Z,processo,risposta-consegnata,fable,orologio,catalogo degli strumenti creato; PR #50 mergiata; PR #48 in correzione mirata
+2026-11-27T21:33:56Z,issue-36,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-27T21:35:03Z,issue-36,ready,fable,orologio,specifica pubblicata; 6 rilievi accolti
+2026-11-27T21:35:03Z,issue-36,esecutore-inizio,opus,orologio,affidata
