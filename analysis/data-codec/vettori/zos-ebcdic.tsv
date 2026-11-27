@@ -72,6 +72,7 @@ display-senza-segno	9(4)	decodifica	F1 F2 F3 F4	valido	1234	F1 F2 F3 F4	-	IBM-PG
 display-senza-segno	9(4)	decodifica	F0 F0 F0 F0	valido	0	F0 F0 F0 F0	-	IBM-PG62-CLASSE
 display-senza-segno	9(4)	decodifica	F9 F9 F9 F9	valido	9999	F9 F9 F9 F9	-	IBM-PG62-CLASSE	estremo della PICTURE
 display-senza-segno	9(4)	decodifica	40 F1 F2 F3	non-valido	-	-	-	IBM-PG62-CLASSE	spazio iniziale
+display-senza-segno	9(4)	decodifica	40 40 40 40	non-valido	-	-	-	IBM-PG62-CLASSE	spazi (aggiunto dopo che il controllo di copertura ne ha segnalato la mancanza)
 display-senza-segno	9(4)	decodifica	F1 F2 F3 FA	non-valido	-	-	-	IBM-PG62-CLASSE	semiottetto di cifra A
 display-senza-segno	9(4)	decodifica	00 00 00 00	non-valido	-	-	-	IBM-PG62-CLASSE	X'00'
 display-senza-segno	9(4)	codifica	12	ok	-	F0 F0 F1 F2	F0 F0 F1 F2	IBM-PG63-NUMPROC	zona F, zeri a sinistra

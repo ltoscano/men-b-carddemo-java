@@ -1,0 +1,22 @@
+== cobc
+arg -std=ibm
+arg -fbinary-truncate
+arg -fsingle-quote
+arg -fsign=EBCDIC
+arg -Wall
+arg -I/legacy/app/cpy
+arg -c
+arg -o
+arg /w/build/obj/CODECPRB.o
+arg /sonde/CODECPRB.cbl
+== codice 0
+== cobc
+arg -x
+arg -A
+arg -DMENB_ENTRY=CODECPRB
+arg -o
+arg /w/build/bin/CODECPRB
+arg /oracle/launcher/avvia.c
+arg /w/build/obj/CODECPRB.o
+== codice 0
+codice di uscita: 0

@@ -12,7 +12,6 @@
 """
 import os
 import sys
-from decimal import Decimal
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comune import a_esa, da_esa, leggi_tsv, scrivi_tsv, valore_da_testo  # noqa: E402
