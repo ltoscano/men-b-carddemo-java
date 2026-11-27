@@ -1,0 +1,264 @@
+# Vettori di prova del profilo zos-ebcdic (issue #23). Scritti a mano dalla documentazione IBM citata nella
+# colonna fonte (chiavi definite in docs/legacy-map/data-contract/codifica.md, sezione "Fonti"). Non sono
+# osservabili qui: nessuno di questi attesi e' ricavato dal profilo oracle-gnucobol o dalle sue sonde.
+# Pagina di codici dei campi alfanumerici: 037 (convenzione; vedi codifica.md, "Pagina di codici").
+# Opzioni assunte: NUMPROC(NOPFD) e TRUNC(STD) (default del compilatore; il JCL di compilazione del legacy non
+# le cambia), NUMCLS(PRIM) (default dell'opzione di installazione; l'installazione originale non e' nota).
+# Colonne: come in oracle-gnucobol.tsv.
+categoria	variante	operazione	ingresso	stato	valore	byte	move	fonte	nota
+alfanumerico	X(1)	decodifica	C1	valido	"A"	C1	-	CP037
+alfanumerico	X(2)	decodifica	C1 4B	valido	"A."	C1 4B	-	CP037
+alfanumerico	X(3)	decodifica	C1 40 4B	valido	"A ."	C1 40 4B	-	CP037
+alfanumerico	X(4)	decodifica	C1 40 40 4B	valido	"A  ."	C1 40 40 4B	-	CP037
+alfanumerico	X(5)	decodifica	C1 40 40 40 4B	valido	"A   ."	C1 40 40 40 4B	-	CP037
+alfanumerico	X(7)	decodifica	C1 40*5 4B	valido	"A" " "*5 "."	C1 40*5 4B	-	CP037
+alfanumerico	X(8)	decodifica	C1 40*6 4B	valido	"A" " "*6 "."	C1 40*6 4B	-	CP037
+alfanumerico	X(9)	decodifica	C1 40*7 4B	valido	"A" " "*7 "."	C1 40*7 4B	-	CP037
+alfanumerico	X(10)	decodifica	C1 40*8 4B	valido	"A" " "*8 "."	C1 40*8 4B	-	CP037
+alfanumerico	X(14)	decodifica	C1 40*12 4B	valido	"A" " "*12 "."	C1 40*12 4B	-	CP037
+alfanumerico	X(15)	decodifica	C1 40*13 4B	valido	"A" " "*13 "."	C1 40*13 4B	-	CP037
+alfanumerico	X(16)	decodifica	C1 40*14 4B	valido	"A" " "*14 "."	C1 40*14 4B	-	CP037
+alfanumerico	X(20)	decodifica	C1 40*18 4B	valido	"A" " "*18 "."	C1 40*18 4B	-	CP037
+alfanumerico	X(22)	decodifica	C1 40*20 4B	valido	"A" " "*20 "."	C1 40*20 4B	-	CP037
+alfanumerico	X(23)	decodifica	C1 40*21 4B	valido	"A" " "*21 "."	C1 40*21 4B	-	CP037
+alfanumerico	X(25)	decodifica	C1 40*23 4B	valido	"A" " "*23 "."	C1 40*23 4B	-	CP037
+alfanumerico	X(26)	decodifica	C1 40*24 4B	valido	"A" " "*24 "."	C1 40*24 4B	-	CP037
+alfanumerico	X(28)	decodifica	C1 40*26 4B	valido	"A" " "*26 "."	C1 40*26 4B	-	CP037
+alfanumerico	X(33)	decodifica	C1 40*31 4B	valido	"A" " "*31 "."	C1 40*31 4B	-	CP037
+alfanumerico	X(34)	decodifica	C1 40*32 4B	valido	"A" " "*32 "."	C1 40*32 4B	-	CP037
+alfanumerico	X(43)	decodifica	C1 40*41 4B	valido	"A" " "*41 "."	C1 40*41 4B	-	CP037
+alfanumerico	X(50)	decodifica	C1 40*48 4B	valido	"A" " "*48 "."	C1 40*48 4B	-	CP037
+alfanumerico	X(54)	decodifica	C1 40*52 4B	valido	"A" " "*52 "."	C1 40*52 4B	-	CP037
+alfanumerico	X(58)	decodifica	C1 40*56 4B	valido	"A" " "*56 "."	C1 40*56 4B	-	CP037
+alfanumerico	X(59)	decodifica	C1 40*57 4B	valido	"A" " "*57 "."	C1 40*57 4B	-	CP037
+alfanumerico	X(76)	decodifica	C1 40*74 4B	valido	"A" " "*74 "."	C1 40*74 4B	-	CP037
+alfanumerico	X(80)	decodifica	C1 40*78 4B	valido	"A" " "*78 "."	C1 40*78 4B	-	CP037
+alfanumerico	X(100)	decodifica	C1 40*98 4B	valido	"A" " "*98 "."	C1 40*98 4B	-	CP037
+alfanumerico	X(132)	decodifica	C1 40*130 4B	valido	"A" " "*130 "."	C1 40*130 4B	-	CP037
+alfanumerico	X(134)	decodifica	C1 40*132 4B	valido	"A" " "*132 "."	C1 40*132 4B	-	CP037
+alfanumerico	X(140)	decodifica	C1 40*138 4B	valido	"A" " "*138 "."	C1 40*138 4B	-	CP037
+alfanumerico	X(168)	decodifica	C1 40*166 4B	valido	"A" " "*166 "."	C1 40*166 4B	-	CP037
+alfanumerico	X(178)	decodifica	C1 40*176 4B	valido	"A" " "*176 "."	C1 40*176 4B	-	CP037
+alfanumerico	X(289)	decodifica	C1 40*287 4B	valido	"A" " "*287 "."	C1 40*287 4B	-	CP037
+alfanumerico	X(304)	decodifica	C1 40*302 4B	valido	"A" " "*302 "."	C1 40*302 4B	-	CP037
+alfanumerico	X(318)	decodifica	C1 40*316 4B	valido	"A" " "*316 "."	C1 40*316 4B	-	CP037
+alfanumerico	X(334)	decodifica	C1 40*332 4B	valido	"A" " "*332 "."	C1 40*332 4B	-	CP037
+alfanumerico	X(350)	decodifica	C1 40*348 4B	valido	"A" " "*348 "."	C1 40*348 4B	-	CP037
+alfanumerico	X(352)	decodifica	C1 40*350 4B	valido	"A" " "*350 "."	C1 40*350 4B	-	CP037
+alfanumerico	X(373)	decodifica	C1 40*371 4B	valido	"A" " "*371 "."	C1 40*371 4B	-	CP037
+alfanumerico	X(427)	decodifica	C1 40*425 4B	valido	"A" " "*425 "."	C1 40*425 4B	-	CP037
+alfanumerico	X(460)	decodifica	C1 40*458 4B	valido	"A" " "*458 "."	C1 40*458 4B	-	CP037
+alfanumerico	X(491)	decodifica	C1 40*489 4B	valido	"A" " "*489 "."	C1 40*489 4B	-	CP037
+alfanumerico	X(500)	decodifica	C1 40*498 4B	valido	"A" " "*498 "."	C1 40*498 4B	-	CP037
+alfanumerico	X(10)	decodifica	C1 C2 C3 C4 C5 C6 C7 C8 C9 D1	valido	"ABCDEFGHIJ"	C1 C2 C3 C4 C5 C6 C7 C8 C9 D1	-	CP037	campo pieno
+alfanumerico	X(10)	decodifica	BA BB B0 5F AD BD 40*4	valido	"[]^¬Ý¨" " "*4	BA BB B0 5F AD BD 40*4	-	CP037	i sei byte che distinguono 037 da 1047 (in 1047: Y-acuto, dieresi, negazione, accento circonflesso, [, ])
+alfanumerico	X(4)	decodifica	81 F0 4A 00	valido	"a0¢\u0000"	81 F0 4A 00	-	CP037	minuscola, cifra, centesimo, X'00'
+alfanumerico	X(10)	codifica	"AB"	ok	-	C1 C2 40*8	C1 C2 40*8	IBM-PG64-MOVE	riempimento a destra con spazi (X'40')
+alfanumerico	X(2)	codifica	"[]"	ok	-	BA BB	BA BB	CP037	in 1047 sarebbero AD BD
+alfanumerico	X(10)	codifica	"ABCDEFGHIJK"	errore	-	-	C1 C2 C3 C4 C5 C6 C7 C8 C9 D1	IBM-PG64-MOVE	il MOVE tronca a destra; il codec rifiuta
+alfanumerico	X(10)	codifica	"€"	errore	-	-	-	CP037	euro: non rappresentabile in 037, errore esplicito
+display-senza-segno	9(1)	decodifica	F5	valido	5	F5	-	IBM-PG62-CLASSE	senza segno: zona F
+display-senza-segno	9(1)	decodifica	F0	valido	0	F0	-	IBM-PG62-CLASSE
+display-senza-segno	9(1)	decodifica	F9	valido	9	F9	-	IBM-PG62-CLASSE	estremo della PICTURE
+display-senza-segno	9(1)	decodifica	40	non-valido	-	-	-	IBM-PG62-CLASSE	spazio
+display-senza-segno	9(1)	decodifica	C1	non-valido	-	-	-	IBM-PG62-CLASSE	zona C in un campo senza segno
+display-senza-segno	9(1)	decodifica	D5	non-valido	-	-	-	IBM-PG62-CLASSE	zona D in un campo senza segno
+display-senza-segno	9(3)	decodifica	F1 F2 F3	valido	123	F1 F2 F3	-	IBM-PG62-CLASSE
+display-senza-segno	9(3)	decodifica	F9 F9 F9	valido	999	F9 F9 F9	-	IBM-PG62-CLASSE	estremo della PICTURE
+display-senza-segno	9(3)	decodifica	40 40 40	non-valido	-	-	-	IBM-PG62-CLASSE	spazi
+display-senza-segno	9(3)	decodifica	F1 C1 F3	non-valido	-	-	-	IBM-PG62-CLASSE	zona non F fra le cifre
+display-senza-segno	9(3)	decodifica	F1 F2 C3	non-valido	-	-	-	IBM-PG62-CLASSE	ultimo byte con zona C
+display-senza-segno	9(4)	decodifica	F1 F2 F3 F4	valido	1234	F1 F2 F3 F4	-	IBM-PG62-CLASSE
+display-senza-segno	9(4)	decodifica	F0 F0 F0 F0	valido	0	F0 F0 F0 F0	-	IBM-PG62-CLASSE
+display-senza-segno	9(4)	decodifica	F9 F9 F9 F9	valido	9999	F9 F9 F9 F9	-	IBM-PG62-CLASSE	estremo della PICTURE
+display-senza-segno	9(4)	decodifica	40 F1 F2 F3	non-valido	-	-	-	IBM-PG62-CLASSE	spazio iniziale
+display-senza-segno	9(4)	decodifica	F1 F2 F3 FA	non-valido	-	-	-	IBM-PG62-CLASSE	semiottetto di cifra A
+display-senza-segno	9(4)	decodifica	00 00 00 00	non-valido	-	-	-	IBM-PG62-CLASSE	X'00'
+display-senza-segno	9(4)	codifica	12	ok	-	F0 F0 F1 F2	F0 F0 F1 F2	IBM-PG63-NUMPROC	zona F, zeri a sinistra
+display-senza-segno	9(4)	codifica	12345	errore	-	-	-	IBM-PG62-FORMATI	oltre la PICTURE: il codec rifiuta; troncamento del MOVE non citato
+display-senza-segno	9(4)	codifica	-5	errore	-	-	-	IBM-PG62-FORMATI	negativo in un campo senza segno: il codec rifiuta
+display-senza-segno	9(7)	decodifica	F1 F2 F3 F4 F5 F6 F7	valido	1234567	F1 F2 F3 F4 F5 F6 F7	-	IBM-PG62-CLASSE
+display-senza-segno	9(7)	decodifica	F9*7	valido	9999999	F9*7	-	IBM-PG62-CLASSE	estremo della PICTURE
+display-senza-segno	9(7)	decodifica	40*7	non-valido	-	-	-	IBM-PG62-CLASSE	spazi
+display-senza-segno	9(7)	decodifica	F1 F2 F3 4B F5 F6 F7	non-valido	-	-	-	IBM-PG62-CLASSE	carattere non numerico
+display-senza-segno	9(9)	decodifica	F1 F2 F3 F4 F5 F6 F7 F8 F9	valido	123456789	F1 F2 F3 F4 F5 F6 F7 F8 F9	-	IBM-PG62-CLASSE
+display-senza-segno	9(9)	decodifica	F0*9	valido	0	F0*9	-	IBM-PG62-CLASSE
+display-senza-segno	9(9)	decodifica	F9*9	valido	999999999	F9*9	-	IBM-PG62-CLASSE	estremo della PICTURE
+display-senza-segno	9(9)	decodifica	40*9	non-valido	-	-	-	IBM-PG62-CLASSE	spazi
+display-senza-segno	9(9)	decodifica	F1 F2 F3 F4 F5 F6 F7 F8 C9	non-valido	-	-	-	IBM-PG62-CLASSE	ultimo byte con zona C in un campo senza segno
+display-senza-segno	9(9)	codifica	123	ok	-	F0*6 F1 F2 F3	F0*6 F1 F2 F3	IBM-PG63-NUMPROC
+display-senza-segno	9(11)	decodifica	F1 F2 F3 F4 F5 F6 F7 F8 F9 F0 F1	valido	12345678901	F1 F2 F3 F4 F5 F6 F7 F8 F9 F0 F1	-	IBM-PG62-CLASSE
+display-senza-segno	9(11)	decodifica	F9*11	valido	99999999999	F9*11	-	IBM-PG62-CLASSE	estremo della PICTURE
+display-senza-segno	9(11)	decodifica	40*11	non-valido	-	-	-	IBM-PG62-CLASSE	spazi
+display-senza-segno	9(11)	decodifica	F0*10 C1	non-valido	-	-	-	IBM-PG62-CLASSE	carattere non numerico
+display-senza-segno	9(11)	codifica	1	ok	-	F0*10 F1	F0*10 F1	IBM-PG63-NUMPROC
+display-senza-segno	9(16)	decodifica	F4 F0 F0 F0 F1 F2 F3 F4 F1 F2 F3 F4 F1 F2 F3 F4	valido	4000123412341234	F4 F0 F0 F0 F1 F2 F3 F4 F1 F2 F3 F4 F1 F2 F3 F4	-	IBM-PG62-CLASSE
+display-senza-segno	9(16)	decodifica	F9*16	valido	9999999999999999	F9*16	-	IBM-PG62-CLASSE	estremo della PICTURE
+display-senza-segno	9(16)	decodifica	40*16	non-valido	-	-	-	IBM-PG62-CLASSE	spazi
+display-senza-segno	9(16)	decodifica	F4 F0 F0 F0 F1 F2 F3 F4 F1 F2 F3 F4 F1 F2 F3 60	non-valido	-	-	-	IBM-PG62-CLASSE	'-' finale
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 C0	valido	123.40	F0*7 F1 F2 F3 F4 C0	-	IBM-PG63-NUMPROC	zona C = positivo, cifra 0
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 C1	valido	123.41	F0*7 F1 F2 F3 F4 C1	-	IBM-PG63-NUMPROC	C1
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 C2	valido	123.42	F0*7 F1 F2 F3 F4 C2	-	IBM-PG63-NUMPROC	C2
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 C3	valido	123.43	F0*7 F1 F2 F3 F4 C3	-	IBM-PG63-NUMPROC	C3
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 C4	valido	123.44	F0*7 F1 F2 F3 F4 C4	-	IBM-PG63-NUMPROC	C4
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 C5	valido	123.45	F0*7 F1 F2 F3 F4 C5	-	IBM-PG63-NUMPROC	C5
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 C6	valido	123.46	F0*7 F1 F2 F3 F4 C6	-	IBM-PG63-NUMPROC	C6
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 C7	valido	123.47	F0*7 F1 F2 F3 F4 C7	-	IBM-PG63-NUMPROC	C7
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 C8	valido	123.48	F0*7 F1 F2 F3 F4 C8	-	IBM-PG63-NUMPROC	C8
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 C9	valido	123.49	F0*7 F1 F2 F3 F4 C9	-	IBM-PG63-NUMPROC	C9
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 D0	valido	-123.40	F0*7 F1 F2 F3 F4 D0	-	IBM-PG63-NUMPROC	zona D = negativo, cifra 0
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 D1	valido	-123.41	F0*7 F1 F2 F3 F4 D1	-	IBM-PG63-NUMPROC	D1
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 D2	valido	-123.42	F0*7 F1 F2 F3 F4 D2	-	IBM-PG63-NUMPROC	D2
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 D3	valido	-123.43	F0*7 F1 F2 F3 F4 D3	-	IBM-PG63-NUMPROC	D3
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 D4	valido	-123.44	F0*7 F1 F2 F3 F4 D4	-	IBM-PG63-NUMPROC	D4
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 D5	valido	-123.45	F0*7 F1 F2 F3 F4 D5	-	IBM-PG63-NUMPROC	D5
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 D6	valido	-123.46	F0*7 F1 F2 F3 F4 D6	-	IBM-PG63-NUMPROC	D6
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 D7	valido	-123.47	F0*7 F1 F2 F3 F4 D7	-	IBM-PG63-NUMPROC	D7
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 D8	valido	-123.48	F0*7 F1 F2 F3 F4 D8	-	IBM-PG63-NUMPROC	D8
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 D9	valido	-123.49	F0*7 F1 F2 F3 F4 D9	-	IBM-PG63-NUMPROC	D9
+display-con-segno	S9(10)V9(2)	decodifica	F0*11 D0	valido	0.00	F0*11 C0	-	IBM-PG63-NUMPROC	zero negativo: valore 0, il valore nuovo 0 si scrive con zona C
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 F4	valido	123.44	F0*7 F1 F2 F3 F4 C4	-	IBM-PG62-CLASSE	zona F in un campo con segno: ammessa con NUMPROC(NOPFD), positiva
+display-con-segno	S9(10)V9(2)	decodifica	F9*11 C9	valido	9999999999.99	F9*11 C9	-	IBM-PG63-NUMPROC	estremo positivo della PICTURE
+display-con-segno	S9(10)V9(2)	decodifica	F9*11 D9	valido	-9999999999.99	F9*11 D9	-	IBM-PG63-NUMPROC	estremo negativo della PICTURE
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 A4	non-valido	-	-	-	IBM-PG62-CLASSE	zona A: non ammessa con NUMCLS(PRIM)
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 B4	non-valido	-	-	-	IBM-PG62-CLASSE	zona B: non ammessa con NUMCLS(PRIM)
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 E4	non-valido	-	-	-	IBM-PG62-CLASSE	zona E: non ammessa con NUMCLS(PRIM)
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 CA	non-valido	-	-	-	IBM-PG62-CLASSE	semiottetto di cifra A nel byte del segno
+display-con-segno	S9(10)V9(2)	decodifica	F0*7 F1 F2 F3 F4 40	non-valido	-	-	-	IBM-PG62-CLASSE	spazio come ultimo byte
+display-con-segno	S9(10)V9(2)	decodifica	C1 F0*6 F1 F2 F3 F4 C0	non-valido	-	-	-	IBM-PG62-CLASSE	zona C fra le cifre
+display-con-segno	S9(10)V9(2)	decodifica	40*12	non-valido	-	-	-	IBM-PG62-CLASSE	spazi
+display-con-segno	S9(10)V9(2)	codifica	-12.34	ok	-	F0*8 F1 F2 F3 D4	F0*8 F1 F2 F3 D4	IBM-PG63-NUMPROC	segno preferito D
+display-con-segno	S9(10)V9(2)	codifica	0.00	ok	-	F0*11 C0	F0*11 C0	IBM-PG63-NUMPROC	zero: segno preferito C
+display-con-segno	S9(10)V9(2)	codifica	-0.01	ok	-	F0*11 D1	F0*11 D1	IBM-PG63-NUMPROC
+display-con-segno	S9(10)V9(2)	codifica	12345678901.00	errore	-	-	-	IBM-PG62-FORMATI	oltre la PICTURE: il codec rifiuta; troncamento del MOVE non citato
+display-con-segno	S9(10)V9(2)	codifica	1.234	errore	-	-	F0*9 F1 F2 C3	IBM-PG64-MOVE	decimali oltre la scala: il MOVE tronca (esempio 3.06 -> 3.0)
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 C0	valido	504.70	F0*6 F5 F0 F4 F7 C0	-	IBM-PG63-NUMPROC	C0
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 C1	valido	504.71	F0*6 F5 F0 F4 F7 C1	-	IBM-PG63-NUMPROC	C1
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 C2	valido	504.72	F0*6 F5 F0 F4 F7 C2	-	IBM-PG63-NUMPROC	C2
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 C3	valido	504.73	F0*6 F5 F0 F4 F7 C3	-	IBM-PG63-NUMPROC	C3
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 C4	valido	504.74	F0*6 F5 F0 F4 F7 C4	-	IBM-PG63-NUMPROC	C4
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 C5	valido	504.75	F0*6 F5 F0 F4 F7 C5	-	IBM-PG63-NUMPROC	C5
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 C6	valido	504.76	F0*6 F5 F0 F4 F7 C6	-	IBM-PG63-NUMPROC	C6
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 C7	valido	504.77	F0*6 F5 F0 F4 F7 C7	-	IBM-PG63-NUMPROC	C7
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 C8	valido	504.78	F0*6 F5 F0 F4 F7 C8	-	IBM-PG63-NUMPROC	C8
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 C9	valido	504.79	F0*6 F5 F0 F4 F7 C9	-	IBM-PG63-NUMPROC	C9
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 D0	valido	-504.70	F0*6 F5 F0 F4 F7 D0	-	IBM-PG63-NUMPROC	D0
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 D1	valido	-504.71	F0*6 F5 F0 F4 F7 D1	-	IBM-PG63-NUMPROC	D1
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 D2	valido	-504.72	F0*6 F5 F0 F4 F7 D2	-	IBM-PG63-NUMPROC	D2
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 D3	valido	-504.73	F0*6 F5 F0 F4 F7 D3	-	IBM-PG63-NUMPROC	D3
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 D4	valido	-504.74	F0*6 F5 F0 F4 F7 D4	-	IBM-PG63-NUMPROC	D4
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 D5	valido	-504.75	F0*6 F5 F0 F4 F7 D5	-	IBM-PG63-NUMPROC	D5
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 D6	valido	-504.76	F0*6 F5 F0 F4 F7 D6	-	IBM-PG63-NUMPROC	D6
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 D7	valido	-504.77	F0*6 F5 F0 F4 F7 D7	-	IBM-PG63-NUMPROC	D7
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 D8	valido	-504.78	F0*6 F5 F0 F4 F7 D8	-	IBM-PG63-NUMPROC	D8
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 D9	valido	-504.79	F0*6 F5 F0 F4 F7 D9	-	IBM-PG63-NUMPROC	D9
+display-con-segno	S9(9)V9(2)	decodifica	F0*10 D0	valido	0.00	F0*10 C0	-	IBM-PG63-NUMPROC	zero negativo
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 F7	valido	504.77	F0*6 F5 F0 F4 F7 C7	-	IBM-PG62-CLASSE	zona F: ammessa, positiva
+display-con-segno	S9(9)V9(2)	decodifica	F9*10 C9	valido	999999999.99	F9*10 C9	-	IBM-PG63-NUMPROC	estremo positivo della PICTURE
+display-con-segno	S9(9)V9(2)	decodifica	F9*10 D9	valido	-999999999.99	F9*10 D9	-	IBM-PG63-NUMPROC	estremo negativo della PICTURE
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 B7	non-valido	-	-	-	IBM-PG62-CLASSE	zona B: non ammessa con NUMCLS(PRIM)
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 F0 F4 F7 E7	non-valido	-	-	-	IBM-PG62-CLASSE	zona E: non ammessa con NUMCLS(PRIM)
+display-con-segno	S9(9)V9(2)	decodifica	F0*6 F5 40 F4 F7 C0	non-valido	-	-	-	IBM-PG62-CLASSE	spazio fra le cifre
+display-con-segno	S9(9)V9(2)	decodifica	40*11	non-valido	-	-	-	IBM-PG62-CLASSE	spazi
+display-con-segno	S9(9)V9(2)	codifica	-12.34	ok	-	F0*7 F1 F2 F3 D4	F0*7 F1 F2 F3 D4	IBM-PG63-NUMPROC
+display-con-segno	S9(9)V9(2)	codifica	0.00	ok	-	F0*10 C0	F0*10 C0	IBM-PG63-NUMPROC
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 C0	valido	1234.50	F1 F2 F3 F4 F5 C0	-	IBM-PG63-NUMPROC	C0
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 C1	valido	1234.51	F1 F2 F3 F4 F5 C1	-	IBM-PG63-NUMPROC	C1
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 C2	valido	1234.52	F1 F2 F3 F4 F5 C2	-	IBM-PG63-NUMPROC	C2
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 C3	valido	1234.53	F1 F2 F3 F4 F5 C3	-	IBM-PG63-NUMPROC	C3
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 C4	valido	1234.54	F1 F2 F3 F4 F5 C4	-	IBM-PG63-NUMPROC	C4
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 C5	valido	1234.55	F1 F2 F3 F4 F5 C5	-	IBM-PG63-NUMPROC	C5
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 C6	valido	1234.56	F1 F2 F3 F4 F5 C6	-	IBM-PG63-NUMPROC	C6
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 C7	valido	1234.57	F1 F2 F3 F4 F5 C7	-	IBM-PG63-NUMPROC	C7
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 C8	valido	1234.58	F1 F2 F3 F4 F5 C8	-	IBM-PG63-NUMPROC	C8
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 C9	valido	1234.59	F1 F2 F3 F4 F5 C9	-	IBM-PG63-NUMPROC	C9
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 D0	valido	-1234.50	F1 F2 F3 F4 F5 D0	-	IBM-PG63-NUMPROC	D0
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 D1	valido	-1234.51	F1 F2 F3 F4 F5 D1	-	IBM-PG63-NUMPROC	D1
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 D2	valido	-1234.52	F1 F2 F3 F4 F5 D2	-	IBM-PG63-NUMPROC	D2
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 D3	valido	-1234.53	F1 F2 F3 F4 F5 D3	-	IBM-PG63-NUMPROC	D3
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 D4	valido	-1234.54	F1 F2 F3 F4 F5 D4	-	IBM-PG63-NUMPROC	D4
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 D5	valido	-1234.55	F1 F2 F3 F4 F5 D5	-	IBM-PG63-NUMPROC	D5
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 D6	valido	-1234.56	F1 F2 F3 F4 F5 D6	-	IBM-PG63-NUMPROC	D6
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 D7	valido	-1234.57	F1 F2 F3 F4 F5 D7	-	IBM-PG63-NUMPROC	D7
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 D8	valido	-1234.58	F1 F2 F3 F4 F5 D8	-	IBM-PG63-NUMPROC	D8
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 D9	valido	-1234.59	F1 F2 F3 F4 F5 D9	-	IBM-PG63-NUMPROC	D9
+display-con-segno	S9(4)V9(2)	decodifica	F0*5 D0	valido	0.00	F0*5 C0	-	IBM-PG63-NUMPROC	zero negativo
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 F9	valido	1234.59	F1 F2 F3 F4 F5 C9	-	IBM-PG62-CLASSE	zona F: ammessa, positiva
+display-con-segno	S9(4)V9(2)	decodifica	F9*5 C9	valido	9999.99	F9*5 C9	-	IBM-PG63-NUMPROC	estremo positivo della PICTURE
+display-con-segno	S9(4)V9(2)	decodifica	F9*5 D9	valido	-9999.99	F9*5 D9	-	IBM-PG63-NUMPROC	estremo negativo della PICTURE
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 A9	non-valido	-	-	-	IBM-PG62-CLASSE	zona A
+display-con-segno	S9(4)V9(2)	decodifica	F1 F2 F3 F4 F5 60	non-valido	-	-	-	IBM-PG62-CLASSE	'-' finale
+display-con-segno	S9(4)V9(2)	decodifica	40*6	non-valido	-	-	-	IBM-PG62-CLASSE	spazi
+display-con-segno	S9(4)V9(2)	codifica	-1.50	ok	-	F0 F0 F0 F1 F5 D0	F0 F0 F0 F1 F5 D0	IBM-PG63-NUMPROC
+display-con-segno	S9(4)V9(2)	codifica	9999.99	ok	-	F9*5 C9	F9*5 C9	IBM-PG63-NUMPROC	estremo della PICTURE
+comp-3	9(3)	decodifica	12 3F	valido	123	12 3F	-	IBM-PG62-CLASSE	senza segno: F
+comp-3	9(3)	decodifica	00 0F	valido	0	00 0F	-	IBM-PG62-CLASSE
+comp-3	9(3)	decodifica	99 9F	valido	999	99 9F	-	IBM-PG62-CLASSE	estremo della PICTURE
+comp-3	9(3)	decodifica	12 3C	non-valido	-	-	-	IBM-PG62-CLASSE	C in un campo senza segno
+comp-3	9(3)	decodifica	12 3D	non-valido	-	-	-	IBM-PG62-CLASSE	D in un campo senza segno
+comp-3	9(3)	decodifica	1A 3F	non-valido	-	-	-	IBM-PG62-CLASSE	semiottetto di cifra A
+comp-3	9(3)	decodifica	40 40	non-valido	-	-	-	IBM-PG62-CLASSE	spazi
+comp-3	9(3)	codifica	123	ok	-	12 3F	12 3F	IBM-PG63-NUMPROC
+comp-3	9(3)	codifica	0	ok	-	00 0F	00 0F	IBM-PG63-NUMPROC
+comp-3	9(3)	codifica	1000	errore	-	-	-	IBM-PG62-FORMATI	oltre la PICTURE: il codec rifiuta
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 6C	valido	1234.56	00 00 01 23 45 6C	-	IBM-PG63-NUMPROC	C positivo
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 6D	valido	-1234.56	00 00 01 23 45 6D	-	IBM-PG63-NUMPROC	D negativo
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 6F	valido	1234.56	00 00 01 23 45 6C	-	IBM-PG62-CLASSE	F ammesso con NUMPROC(NOPFD), positivo
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 6A	non-valido	-	-	-	IBM-PG62-CLASSE	A: non ammesso con NUMCLS(PRIM)
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 6B	non-valido	-	-	-	IBM-PG62-CLASSE	B: non ammesso con NUMCLS(PRIM)
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 6E	non-valido	-	-	-	IBM-PG62-CLASSE	E: non ammesso con NUMCLS(PRIM)
+comp-3	S9(9)V9(2)	decodifica	00*5 0D	valido	0.00	00*5 0C	-	IBM-PG63-NUMPROC	zero negativo
+comp-3	S9(9)V9(2)	decodifica	99*5 9C	valido	999999999.99	99*5 9C	-	IBM-PG63-NUMPROC	estremo positivo della PICTURE
+comp-3	S9(9)V9(2)	decodifica	99*5 9D	valido	-999999999.99	99*5 9D	-	IBM-PG63-NUMPROC	estremo negativo della PICTURE
+comp-3	S9(9)V9(2)	decodifica	00 00 0A 23 45 6C	non-valido	-	-	-	IBM-PG62-CLASSE	semiottetto di cifra A
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 AC	non-valido	-	-	-	IBM-PG62-CLASSE	semiottetto di cifra A nell'ultimo byte
+comp-3	S9(9)V9(2)	decodifica	40*6	non-valido	-	-	-	IBM-PG62-CLASSE	spazi
+comp-3	S9(9)V9(2)	decodifica	00*6	non-valido	-	-	-	IBM-PG62-CLASSE	X'00': semiottetto di segno 0
+comp-3	S9(9)V9(2)	codifica	-0.01	ok	-	00*5 1D	00*5 1D	IBM-PG63-NUMPROC
+comp-3	S9(9)V9(2)	codifica	0.00	ok	-	00*5 0C	00*5 0C	IBM-PG63-NUMPROC
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 6C	valido	1234.56	00 00 00 01 23 45 6C	-	IBM-PG63-NUMPROC	C positivo
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 6D	valido	-1234.56	00 00 00 01 23 45 6D	-	IBM-PG63-NUMPROC	D negativo
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 6F	valido	1234.56	00 00 00 01 23 45 6C	-	IBM-PG62-CLASSE	F ammesso, positivo
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 6A	non-valido	-	-	-	IBM-PG62-CLASSE	A
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 6B	non-valido	-	-	-	IBM-PG62-CLASSE	B
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 6E	non-valido	-	-	-	IBM-PG62-CLASSE	E
+comp-3	S9(10)V9(2)	decodifica	00*6 0D	valido	0.00	00*6 0C	-	IBM-PG63-NUMPROC	zero negativo
+comp-3	S9(10)V9(2)	decodifica	09 99 99 99 99 99 9C	valido	9999999999.99	09 99 99 99 99 99 9C	-	IBM-PG63-NUMPROC	estremo positivo della PICTURE
+comp-3	S9(10)V9(2)	decodifica	09 99 99 99 99 99 9D	valido	-9999999999.99	09 99 99 99 99 99 9D	-	IBM-PG63-NUMPROC	estremo negativo della PICTURE
+comp-3	S9(10)V9(2)	decodifica	10 00 00 01 23 45 6C	non-determinato	-	-	-	ZOS-NONDOC	semiottetto di riempimento diverso da 0: la documentazione consultata non lo determina
+comp-3	S9(10)V9(2)	decodifica	F0 00 00 01 23 45 6C	non-valido	-	-	-	IBM-PG62-CLASSE	semiottetto F dove e' ammessa solo una cifra
+comp-3	S9(10)V9(2)	decodifica	00 00 00 0B 23 45 6C	non-valido	-	-	-	IBM-PG62-CLASSE	semiottetto di cifra B
+comp-3	S9(10)V9(2)	decodifica	40*7	non-valido	-	-	-	IBM-PG62-CLASSE	spazi
+comp-3	S9(10)V9(2)	codifica	-1234.56	ok	-	00 00 00 01 23 45 6D	00 00 00 01 23 45 6D	IBM-PG63-NUMPROC
+comp-3	S9(10)V9(2)	codifica	9999999999.99	ok	-	09 99 99 99 99 99 9C	09 99 99 99 99 99 9C	IBM-PG63-NUMPROC	estremo della PICTURE
+comp	9(3)	decodifica	00 7B	valido	123	00 7B	-	IBM-PG62-FORMATI	2 byte, ordine dei byte di z/Architecture
+comp	9(3)	decodifica	00 00	valido	0	00 00	-	IBM-PG62-FORMATI
+comp	9(3)	decodifica	03 E7	valido	999	03 E7	-	IBM-PG62-FORMATI	estremo della PICTURE
+comp	9(3)	decodifica	03 E8	oltre-picture	-	-	-	IBM-PG63-TRUNC	oltre 9(3): TRUNC(STD) regola i campi riceventi, non il valore letto
+comp	9(3)	decodifica	FF FF	oltre-picture	-	-	-	IBM-PG63-TRUNC	estremo fisico
+comp	9(3)	codifica	123	ok	-	00 7B	00 7B	IBM-PG62-FORMATI
+comp	9(3)	codifica	1000	errore	-	-	00 00	IBM-PG63-TRUNC	TRUNC(STD): il MOVE tronca alle cifre della PICTURE
+comp	9(9)	decodifica	00 01 E2 40	valido	123456	00 01 E2 40	-	IBM-PG62-FORMATI	4 byte
+comp	9(9)	decodifica	00*4	valido	0	00*4	-	IBM-PG62-FORMATI
+comp	9(9)	decodifica	3B 9A C9 FF	valido	999999999	3B 9A C9 FF	-	IBM-PG62-FORMATI	estremo della PICTURE
+comp	9(9)	decodifica	3B 9A CA 00	oltre-picture	-	-	-	IBM-PG63-TRUNC	oltre 9(9)
+comp	9(9)	decodifica	FF*4	oltre-picture	-	-	-	IBM-PG63-TRUNC	estremo fisico
+comp	9(9)	codifica	1234567890	errore	-	-	0D FB 38 D2	IBM-PG63-TRUNC	TRUNC(STD): 234567890
+comp	9(11)	decodifica	00*5 01 E2 40	valido	123456	00*5 01 E2 40	-	IBM-PG62-FORMATI	8 byte
+comp	9(11)	decodifica	00*8	valido	0	00*8	-	IBM-PG62-FORMATI
+comp	9(11)	decodifica	00 00 00 17 48 76 E7 FF	valido	99999999999	00 00 00 17 48 76 E7 FF	-	IBM-PG62-FORMATI	estremo della PICTURE
+comp	9(11)	decodifica	00 00 00 17 48 76 E8 00	oltre-picture	-	-	-	IBM-PG63-TRUNC	oltre 9(11)
+comp	9(11)	decodifica	FF*8	oltre-picture	-	-	-	IBM-PG63-TRUNC	estremo fisico
+comp	9(11)	codifica	123	ok	-	00*7 7B	00*7 7B	IBM-PG62-FORMATI
+comp	S9(10)V9(2)	decodifica	00*5 01 E2 40	valido	1234.56	00*5 01 E2 40	-	IBM-PG62-FORMATI	8 byte, scala 2
+comp	S9(10)V9(2)	decodifica	FF*5 FE 1D C0	valido	-1234.56	FF*5 FE 1D C0	-	ZOS-ARCH	complemento a due
+comp	S9(10)V9(2)	decodifica	00*8	valido	0.00	00*8	-	IBM-PG62-FORMATI
+comp	S9(10)V9(2)	decodifica	FF*8	valido	-0.01	FF*8	-	ZOS-ARCH	-1 in complemento a due
+comp	S9(10)V9(2)	decodifica	00 00 00 E8 D4 A5 0F FF	valido	9999999999.99	00 00 00 E8 D4 A5 0F FF	-	IBM-PG62-FORMATI	estremo positivo della PICTURE
+comp	S9(10)V9(2)	decodifica	FF FF FF 17 2B 5A F0 01	valido	-9999999999.99	FF FF FF 17 2B 5A F0 01	-	ZOS-ARCH	estremo negativo della PICTURE
+comp	S9(10)V9(2)	decodifica	00 00 00 E8 D4 A5 10 00	oltre-picture	-	-	-	IBM-PG63-TRUNC	oltre la PICTURE
+comp	S9(10)V9(2)	decodifica	FF FF FF 17 2B 5A F0 00	oltre-picture	-	-	-	IBM-PG63-TRUNC	oltre la PICTURE (negativo)
+comp	S9(10)V9(2)	decodifica	7F FF FF FF FF FF FF FF	oltre-picture	-	-	-	IBM-PG63-TRUNC	estremo fisico positivo
+comp	S9(10)V9(2)	decodifica	80 00*7	oltre-picture	-	-	-	IBM-PG63-TRUNC	estremo fisico negativo
+comp	S9(10)V9(2)	codifica	-0.01	ok	-	FF*8	FF*8	ZOS-ARCH
+comp	S9(10)V9(2)	codifica	-9999999999.99	ok	-	FF FF FF 17 2B 5A F0 01	FF FF FF 17 2B 5A F0 01	ZOS-ARCH	estremo della PICTURE

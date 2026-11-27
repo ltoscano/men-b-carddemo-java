@@ -1,0 +1,282 @@
+# Vettori di prova del profilo oracle-gnucobol (issue #23). Scritti a mano PRIMA di eseguire le sonde, dalla
+# tabella del segno di oracle/README.md, dalle opzioni di oracle/cobc.opts e dal sorgente di GnuCOBOL 3.2
+# (chiavi della colonna fonte: vedi docs/legacy-map/data-contract/codifica.md, sezione "Fonti").
+# Colonne:
+#   categoria, variante   come nel censimento (out/censimento.tsv)
+#   operazione            decodifica: ingresso = byte del campo (esadecimale; "HH*n" = n volte HH)
+#                         codifica:   ingresso = valore nuovo da scrivere nel campo
+#   stato                 decodifica: valido | non-valido | oltre-picture | non-determinato
+#                         codifica:   ok | errore (il codec rifiuta il valore)
+#   valore                decodifica: il valore che ne ricava il COBOL ("-" = nessun valore); codifica: "-"
+#   byte                  decodifica: byte che il codec produce codificando quel valore come valore nuovo
+#                         codifica:   byte che il codec produce ("-" se errore)
+#   move                  codifica: byte prodotti da un MOVE COBOL di quel valore nel campo; decodifica: "-"
+# La ricodifica conservativa di ogni riga di decodifica deve restituire esattamente i byte d'ingresso.
+categoria	variante	operazione	ingresso	stato	valore	byte	move	fonte	nota
+alfanumerico	X(1)	decodifica	41	valido	"A"	41	-	GC-SRC-ALFA
+alfanumerico	X(2)	decodifica	41 2E	valido	"A."	41 2E	-	GC-SRC-ALFA
+alfanumerico	X(3)	decodifica	41 20 2E	valido	"A ."	41 20 2E	-	GC-SRC-ALFA
+alfanumerico	X(4)	decodifica	41 20 20 2E	valido	"A  ."	41 20 20 2E	-	GC-SRC-ALFA
+alfanumerico	X(5)	decodifica	41 20 20 20 2E	valido	"A   ."	41 20 20 20 2E	-	GC-SRC-ALFA
+alfanumerico	X(7)	decodifica	41 20*5 2E	valido	"A" " "*5 "."	41 20*5 2E	-	GC-SRC-ALFA
+alfanumerico	X(8)	decodifica	41 20*6 2E	valido	"A" " "*6 "."	41 20*6 2E	-	GC-SRC-ALFA
+alfanumerico	X(9)	decodifica	41 20*7 2E	valido	"A" " "*7 "."	41 20*7 2E	-	GC-SRC-ALFA
+alfanumerico	X(10)	decodifica	41 20*8 2E	valido	"A" " "*8 "."	41 20*8 2E	-	GC-SRC-ALFA
+alfanumerico	X(14)	decodifica	41 20*12 2E	valido	"A" " "*12 "."	41 20*12 2E	-	GC-SRC-ALFA
+alfanumerico	X(15)	decodifica	41 20*13 2E	valido	"A" " "*13 "."	41 20*13 2E	-	GC-SRC-ALFA
+alfanumerico	X(16)	decodifica	41 20*14 2E	valido	"A" " "*14 "."	41 20*14 2E	-	GC-SRC-ALFA
+alfanumerico	X(20)	decodifica	41 20*18 2E	valido	"A" " "*18 "."	41 20*18 2E	-	GC-SRC-ALFA
+alfanumerico	X(22)	decodifica	41 20*20 2E	valido	"A" " "*20 "."	41 20*20 2E	-	GC-SRC-ALFA
+alfanumerico	X(23)	decodifica	41 20*21 2E	valido	"A" " "*21 "."	41 20*21 2E	-	GC-SRC-ALFA
+alfanumerico	X(25)	decodifica	41 20*23 2E	valido	"A" " "*23 "."	41 20*23 2E	-	GC-SRC-ALFA
+alfanumerico	X(26)	decodifica	41 20*24 2E	valido	"A" " "*24 "."	41 20*24 2E	-	GC-SRC-ALFA
+alfanumerico	X(28)	decodifica	41 20*26 2E	valido	"A" " "*26 "."	41 20*26 2E	-	GC-SRC-ALFA
+alfanumerico	X(33)	decodifica	41 20*31 2E	valido	"A" " "*31 "."	41 20*31 2E	-	GC-SRC-ALFA
+alfanumerico	X(34)	decodifica	41 20*32 2E	valido	"A" " "*32 "."	41 20*32 2E	-	GC-SRC-ALFA
+alfanumerico	X(43)	decodifica	41 20*41 2E	valido	"A" " "*41 "."	41 20*41 2E	-	GC-SRC-ALFA
+alfanumerico	X(50)	decodifica	41 20*48 2E	valido	"A" " "*48 "."	41 20*48 2E	-	GC-SRC-ALFA
+alfanumerico	X(54)	decodifica	41 20*52 2E	valido	"A" " "*52 "."	41 20*52 2E	-	GC-SRC-ALFA
+alfanumerico	X(58)	decodifica	41 20*56 2E	valido	"A" " "*56 "."	41 20*56 2E	-	GC-SRC-ALFA
+alfanumerico	X(59)	decodifica	41 20*57 2E	valido	"A" " "*57 "."	41 20*57 2E	-	GC-SRC-ALFA
+alfanumerico	X(76)	decodifica	41 20*74 2E	valido	"A" " "*74 "."	41 20*74 2E	-	GC-SRC-ALFA
+alfanumerico	X(80)	decodifica	41 20*78 2E	valido	"A" " "*78 "."	41 20*78 2E	-	GC-SRC-ALFA
+alfanumerico	X(100)	decodifica	41 20*98 2E	valido	"A" " "*98 "."	41 20*98 2E	-	GC-SRC-ALFA
+alfanumerico	X(132)	decodifica	41 20*130 2E	valido	"A" " "*130 "."	41 20*130 2E	-	GC-SRC-ALFA
+alfanumerico	X(134)	decodifica	41 20*132 2E	valido	"A" " "*132 "."	41 20*132 2E	-	GC-SRC-ALFA
+alfanumerico	X(140)	decodifica	41 20*138 2E	valido	"A" " "*138 "."	41 20*138 2E	-	GC-SRC-ALFA
+alfanumerico	X(168)	decodifica	41 20*166 2E	valido	"A" " "*166 "."	41 20*166 2E	-	GC-SRC-ALFA
+alfanumerico	X(178)	decodifica	41 20*176 2E	valido	"A" " "*176 "."	41 20*176 2E	-	GC-SRC-ALFA
+alfanumerico	X(289)	decodifica	41 20*287 2E	valido	"A" " "*287 "."	41 20*287 2E	-	GC-SRC-ALFA
+alfanumerico	X(304)	decodifica	41 20*302 2E	valido	"A" " "*302 "."	41 20*302 2E	-	GC-SRC-ALFA
+alfanumerico	X(318)	decodifica	41 20*316 2E	valido	"A" " "*316 "."	41 20*316 2E	-	GC-SRC-ALFA
+alfanumerico	X(334)	decodifica	41 20*332 2E	valido	"A" " "*332 "."	41 20*332 2E	-	GC-SRC-ALFA
+alfanumerico	X(350)	decodifica	41 20*348 2E	valido	"A" " "*348 "."	41 20*348 2E	-	GC-SRC-ALFA
+alfanumerico	X(352)	decodifica	41 20*350 2E	valido	"A" " "*350 "."	41 20*350 2E	-	GC-SRC-ALFA
+alfanumerico	X(373)	decodifica	41 20*371 2E	valido	"A" " "*371 "."	41 20*371 2E	-	GC-SRC-ALFA
+alfanumerico	X(427)	decodifica	41 20*425 2E	valido	"A" " "*425 "."	41 20*425 2E	-	GC-SRC-ALFA
+alfanumerico	X(460)	decodifica	41 20*458 2E	valido	"A" " "*458 "."	41 20*458 2E	-	GC-SRC-ALFA
+alfanumerico	X(491)	decodifica	41 20*489 2E	valido	"A" " "*489 "."	41 20*489 2E	-	GC-SRC-ALFA
+alfanumerico	X(500)	decodifica	41 20*498 2E	valido	"A" " "*498 "."	41 20*498 2E	-	GC-SRC-ALFA
+alfanumerico	X(10)	decodifica	41 42 43 44 45 46 47 48 49 4A	valido	"ABCDEFGHIJ"	41 42 43 44 45 46 47 48 49 4A	-	GC-SRC-ALFA	campo pieno
+alfanumerico	X(10)	decodifica	00*10	valido	"\u0000"*10	00*10	-	GC-SRC-ALFA	X'00' (defaultbyte 0): nessun dominio di valori non validi
+alfanumerico	X(4)	decodifica	FF 7B 7D 0A	valido	"ÿ{}\n"	FF 7B 7D 0A	-	GC-ALFA-BYTE	ogni byte e' un carattere (ISO-8859-1, identita' sui byte)
+alfanumerico	X(10)	codifica	"AB"	ok	-	41 42 20*8	41 42 20*8	GC-SRC-ALFA	riempimento a destra con spazi
+alfanumerico	X(10)	codifica	"ABCDEFGHIJ"	ok	-	41 42 43 44 45 46 47 48 49 4A	41 42 43 44 45 46 47 48 49 4A	GC-SRC-ALFA	campo pieno
+alfanumerico	X(1)	codifica	""	ok	-	20	20	GC-SRC-ALFA	valore vuoto: solo riempimento
+alfanumerico	X(10)	codifica	"ABCDEFGHIJK"	errore	-	-	41 42 43 44 45 46 47 48 49 4A	GC-SRC-ALFA	il MOVE tronca a destra; il codec rifiuta
+alfanumerico	X(10)	codifica	"Ā"	errore	-	-	-	GC-ALFA-BYTE	carattere fuori da ISO-8859-1: errore esplicito
+display-senza-segno	9(1)	decodifica	35	valido	5	35	-	GC-SRC-NUMDISP
+display-senza-segno	9(1)	decodifica	30	valido	0	30	-	GC-SRC-NUMDISP
+display-senza-segno	9(1)	decodifica	39	valido	9	39	-	GC-SRC-NUMDISP	estremo della PICTURE
+display-senza-segno	9(1)	decodifica	20	non-valido	-	-	-	GC-SRC-NUMDISP	spazio
+display-senza-segno	9(1)	decodifica	41	non-valido	-	-	-	GC-SRC-NUMDISP	carattere non numerico
+display-senza-segno	9(1)	decodifica	7B	non-valido	-	-	-	GC-SRC-NUMDISP	segno incorporato in un campo senza segno
+display-senza-segno	9(3)	decodifica	31 32 33	valido	123	31 32 33	-	GC-SRC-NUMDISP
+display-senza-segno	9(3)	decodifica	39 39 39	valido	999	39 39 39	-	GC-SRC-NUMDISP	estremo della PICTURE
+display-senza-segno	9(3)	decodifica	20 20 20	non-valido	-	-	-	GC-SRC-NUMDISP	spazi
+display-senza-segno	9(3)	decodifica	31 41 33	non-valido	-	-	-	GC-SRC-NUMDISP	carattere non numerico
+display-senza-segno	9(3)	decodifica	31 32 43	non-valido	-	-	-	GC-SRC-NUMDISP	'C' (= +3 nella tabella del segno) in un campo senza segno
+display-senza-segno	9(4)	decodifica	31 32 33 34	valido	1234	31 32 33 34	-	GC-SRC-NUMDISP
+display-senza-segno	9(4)	decodifica	30 30 30 30	valido	0	30 30 30 30	-	GC-SRC-NUMDISP
+display-senza-segno	9(4)	decodifica	39 39 39 39	valido	9999	39 39 39 39	-	GC-SRC-NUMDISP	estremo della PICTURE
+display-senza-segno	9(4)	decodifica	20 31 32 33	non-valido	-	-	-	GC-SRC-NUMDISP	spazio iniziale
+display-senza-segno	9(4)	decodifica	20 20 20 20	non-valido	-	-	-	GC-SRC-NUMDISP	spazi
+display-senza-segno	9(4)	decodifica	31 32 33 7D	non-valido	-	-	-	GC-SRC-NUMDISP	'}' in un campo senza segno
+display-senza-segno	9(4)	decodifica	00 00 00 00	non-valido	-	-	-	GC-SRC-NUMDISP	X'00' (defaultbyte 0)
+display-senza-segno	9(4)	codifica	12	ok	-	30 30 31 32	30 30 31 32	GC-SRC-NUMDISP	zeri a sinistra
+display-senza-segno	9(4)	codifica	12345	errore	-	-	32 33 34 35	GC-SRC-NUMDISP	oltre la PICTURE: il MOVE tronca le cifre alte
+display-senza-segno	9(4)	codifica	-5	errore	-	-	30 30 30 35	GC-SRC-NUMDISP	negativo in un campo senza segno: il MOVE perde il segno
+display-senza-segno	9(7)	decodifica	31 32 33 34 35 36 37	valido	1234567	31 32 33 34 35 36 37	-	GC-SRC-NUMDISP
+display-senza-segno	9(7)	decodifica	39*7	valido	9999999	39*7	-	GC-SRC-NUMDISP	estremo della PICTURE
+display-senza-segno	9(7)	decodifica	20*7	non-valido	-	-	-	GC-SRC-NUMDISP	spazi
+display-senza-segno	9(7)	decodifica	31 32 33 2E 35 36 37	non-valido	-	-	-	GC-SRC-NUMDISP	carattere non numerico
+display-senza-segno	9(9)	decodifica	31 32 33 34 35 36 37 38 39	valido	123456789	31 32 33 34 35 36 37 38 39	-	GC-SRC-NUMDISP
+display-senza-segno	9(9)	decodifica	30*9	valido	0	30*9	-	GC-SRC-NUMDISP
+display-senza-segno	9(9)	decodifica	39*9	valido	999999999	39*9	-	GC-SRC-NUMDISP	estremo della PICTURE
+display-senza-segno	9(9)	decodifica	20*9	non-valido	-	-	-	GC-SRC-NUMDISP	spazi
+display-senza-segno	9(9)	decodifica	31 32 33 34 35 36 37 38 49	non-valido	-	-	-	GC-SRC-NUMDISP	'I' (= +9) in un campo senza segno
+display-senza-segno	9(9)	codifica	123	ok	-	30*6 31 32 33	30*6 31 32 33	GC-SRC-NUMDISP
+display-senza-segno	9(11)	decodifica	31 32 33 34 35 36 37 38 39 30 31	valido	12345678901	31 32 33 34 35 36 37 38 39 30 31	-	GC-SRC-NUMDISP
+display-senza-segno	9(11)	decodifica	39*11	valido	99999999999	39*11	-	GC-SRC-NUMDISP	estremo della PICTURE
+display-senza-segno	9(11)	decodifica	20*11	non-valido	-	-	-	GC-SRC-NUMDISP	spazi
+display-senza-segno	9(11)	decodifica	30*10 41	non-valido	-	-	-	GC-SRC-NUMDISP	carattere non numerico
+display-senza-segno	9(11)	codifica	1	ok	-	30*10 31	30*10 31	GC-SRC-NUMDISP
+display-senza-segno	9(16)	decodifica	34 30 30 30 31 32 33 34 31 32 33 34 31 32 33 34	valido	4000123412341234	34 30 30 30 31 32 33 34 31 32 33 34 31 32 33 34	-	GC-SRC-NUMDISP
+display-senza-segno	9(16)	decodifica	39*16	valido	9999999999999999	39*16	-	GC-SRC-NUMDISP	estremo della PICTURE
+display-senza-segno	9(16)	decodifica	20*16	non-valido	-	-	-	GC-SRC-NUMDISP	spazi
+display-senza-segno	9(16)	decodifica	34 30 30 30 31 32 33 34 31 32 33 34 31 32 33 2D	non-valido	-	-	-	GC-SRC-NUMDISP	'-' finale
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 7B	valido	123.40	30*7 31 32 33 34 7B	-	GC-README-SEGNO	{ = +0
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 41	valido	123.41	30*7 31 32 33 34 41	-	GC-README-SEGNO	A = +1
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 42	valido	123.42	30*7 31 32 33 34 42	-	GC-README-SEGNO	B = +2
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 43	valido	123.43	30*7 31 32 33 34 43	-	GC-README-SEGNO	C = +3
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 44	valido	123.44	30*7 31 32 33 34 44	-	GC-README-SEGNO	D = +4
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 45	valido	123.45	30*7 31 32 33 34 45	-	GC-README-SEGNO	E = +5
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 46	valido	123.46	30*7 31 32 33 34 46	-	GC-README-SEGNO	F = +6
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 47	valido	123.47	30*7 31 32 33 34 47	-	GC-README-SEGNO	G = +7
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 48	valido	123.48	30*7 31 32 33 34 48	-	GC-README-SEGNO	H = +8
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 49	valido	123.49	30*7 31 32 33 34 49	-	GC-README-SEGNO	I = +9
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 7D	valido	-123.40	30*7 31 32 33 34 7D	-	GC-README-SEGNO	} = -0
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 4A	valido	-123.41	30*7 31 32 33 34 4A	-	GC-README-SEGNO	J = -1
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 4B	valido	-123.42	30*7 31 32 33 34 4B	-	GC-README-SEGNO	K = -2
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 4C	valido	-123.43	30*7 31 32 33 34 4C	-	GC-README-SEGNO	L = -3
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 4D	valido	-123.44	30*7 31 32 33 34 4D	-	GC-README-SEGNO	M = -4
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 4E	valido	-123.45	30*7 31 32 33 34 4E	-	GC-README-SEGNO	N = -5
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 4F	valido	-123.46	30*7 31 32 33 34 4F	-	GC-README-SEGNO	O = -6
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 50	valido	-123.47	30*7 31 32 33 34 50	-	GC-README-SEGNO	P = -7
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 51	valido	-123.48	30*7 31 32 33 34 51	-	GC-README-SEGNO	Q = -8
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 52	valido	-123.49	30*7 31 32 33 34 52	-	GC-README-SEGNO	R = -9
+display-con-segno	S9(10)V9(2)	decodifica	30*11 7D	valido	0.00	30*11 7B	-	GC-SRC-SEGNO	zero negativo: valore 0, il valore nuovo 0 si scrive con {
+display-con-segno	S9(10)V9(2)	decodifica	30*11 7B	valido	0.00	30*11 7B	-	GC-README-SEGNO	zero
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 34	valido	123.44	30*7 31 32 33 34 44	-	GC-SRC-NUMDISP	ultima cifra senza segno (4): rappresentazione alternativa, positiva
+display-con-segno	S9(10)V9(2)	decodifica	39*11 49	valido	9999999999.99	39*11 49	-	GC-README-SEGNO	estremo positivo della PICTURE
+display-con-segno	S9(10)V9(2)	decodifica	39*11 52	valido	-9999999999.99	39*11 52	-	GC-README-SEGNO	estremo negativo della PICTURE
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 70	non-valido	-	-	-	GC-SRC-NUMDISP	p (convenzione ASCII, -0): fuori tabella con -fsign=EBCDIC
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 79	non-valido	-	-	-	GC-SRC-NUMDISP	y (convenzione ASCII, -9): fuori tabella
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 53	non-valido	-	-	-	GC-SRC-NUMDISP	S: fuori tabella
+display-con-segno	S9(10)V9(2)	decodifica	30*7 31 32 33 34 20	non-valido	-	-	-	GC-SRC-NUMDISP	spazio come ultimo byte
+display-con-segno	S9(10)V9(2)	decodifica	41 30*6 31 32 33 34 7B	non-valido	-	-	-	GC-SRC-NUMDISP	carattere non numerico fra le cifre
+display-con-segno	S9(10)V9(2)	decodifica	30*6 7B 31 32 33 34 7B	non-valido	-	-	-	GC-SRC-NUMDISP	carattere della tabella del segno non in ultima posizione
+display-con-segno	S9(10)V9(2)	decodifica	20*12	non-valido	-	-	-	GC-SRC-NUMDISP	spazi
+display-con-segno	S9(10)V9(2)	codifica	-12.34	ok	-	30*8 31 32 33 4D	30*8 31 32 33 4D	GC-README-SEGNO	README: -12,34 -> ...123M
+display-con-segno	S9(10)V9(2)	codifica	0.00	ok	-	30*11 7B	30*11 7B	GC-README-SEGNO	README: lo zero si scrive con segno positivo esplicito
+display-con-segno	S9(10)V9(2)	codifica	1.00	ok	-	30*9 31 30 7B	30*9 31 30 7B	GC-README-SEGNO	README: +1,00 -> ...10{
+display-con-segno	S9(10)V9(2)	codifica	-1.00	ok	-	30*9 31 30 7D	30*9 31 30 7D	GC-README-SEGNO	README: -1,00 -> ...10}
+display-con-segno	S9(10)V9(2)	codifica	-0.01	ok	-	30*11 4A	30*11 4A	GC-README-SEGNO
+display-con-segno	S9(10)V9(2)	codifica	12345678901.00	errore	-	-	32 33 34 35 36 37 38 39 30 31 30 7B	GC-SRC-NUMDISP	oltre la PICTURE: il MOVE tronca le cifre alte
+display-con-segno	S9(10)V9(2)	codifica	1.234	errore	-	-	30*9 31 32 43	GC-SRC-NUMDISP	decimali oltre la scala: il MOVE tronca, non arrotonda
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 7B	valido	504.70	30*6 35 30 34 37 7B	-	GC-README-SEGNO	{ = +0
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 41	valido	504.71	30*6 35 30 34 37 41	-	GC-README-SEGNO	A = +1
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 42	valido	504.72	30*6 35 30 34 37 42	-	GC-README-SEGNO	B = +2
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 43	valido	504.73	30*6 35 30 34 37 43	-	GC-README-SEGNO	C = +3
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 44	valido	504.74	30*6 35 30 34 37 44	-	GC-README-SEGNO	D = +4
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 45	valido	504.75	30*6 35 30 34 37 45	-	GC-README-SEGNO	E = +5
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 46	valido	504.76	30*6 35 30 34 37 46	-	GC-README-SEGNO	F = +6
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 47	valido	504.77	30*6 35 30 34 37 47	-	GC-README-SEGNO	G = +7 (record 1 di dailytran.txt, README)
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 48	valido	504.78	30*6 35 30 34 37 48	-	GC-README-SEGNO	H = +8
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 49	valido	504.79	30*6 35 30 34 37 49	-	GC-README-SEGNO	I = +9
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 7D	valido	-504.70	30*6 35 30 34 37 7D	-	GC-README-SEGNO	} = -0
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 4A	valido	-504.71	30*6 35 30 34 37 4A	-	GC-README-SEGNO	J = -1
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 4B	valido	-504.72	30*6 35 30 34 37 4B	-	GC-README-SEGNO	K = -2
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 4C	valido	-504.73	30*6 35 30 34 37 4C	-	GC-README-SEGNO	L = -3
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 4D	valido	-504.74	30*6 35 30 34 37 4D	-	GC-README-SEGNO	M = -4
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 4E	valido	-504.75	30*6 35 30 34 37 4E	-	GC-README-SEGNO	N = -5
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 4F	valido	-504.76	30*6 35 30 34 37 4F	-	GC-README-SEGNO	O = -6
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 50	valido	-504.77	30*6 35 30 34 37 50	-	GC-README-SEGNO	P = -7
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 51	valido	-504.78	30*6 35 30 34 37 51	-	GC-README-SEGNO	Q = -8
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 52	valido	-504.79	30*6 35 30 34 37 52	-	GC-README-SEGNO	R = -9
+display-con-segno	S9(9)V9(2)	decodifica	30*6 39 31 39 30 7D	valido	-919.00	30*6 39 31 39 30 7D	-	GC-README-SEGNO	record 2 di dailytran.txt (README)
+display-con-segno	S9(9)V9(2)	decodifica	30*10 7D	valido	0.00	30*10 7B	-	GC-SRC-SEGNO	zero negativo
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 37	valido	504.77	30*6 35 30 34 37 47	-	GC-SRC-NUMDISP	ultima cifra senza segno: alternativa, positiva
+display-con-segno	S9(9)V9(2)	decodifica	39*10 49	valido	999999999.99	39*10 49	-	GC-README-SEGNO	estremo positivo della PICTURE
+display-con-segno	S9(9)V9(2)	decodifica	39*10 52	valido	-999999999.99	39*10 52	-	GC-README-SEGNO	estremo negativo della PICTURE
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 71	non-valido	-	-	-	GC-SRC-NUMDISP	q (convenzione ASCII): fuori tabella
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 30 34 37 5A	non-valido	-	-	-	GC-SRC-NUMDISP	Z: fuori tabella
+display-con-segno	S9(9)V9(2)	decodifica	30*6 35 20 34 37 7B	non-valido	-	-	-	GC-SRC-NUMDISP	spazio fra le cifre
+display-con-segno	S9(9)V9(2)	decodifica	20*11	non-valido	-	-	-	GC-SRC-NUMDISP	spazi
+display-con-segno	S9(9)V9(2)	codifica	-12.34	ok	-	30*7 31 32 33 4D	30*7 31 32 33 4D	GC-README-SEGNO	README: -12,34 -> 0000000123M
+display-con-segno	S9(9)V9(2)	codifica	0.00	ok	-	30*10 7B	30*10 7B	GC-README-SEGNO	README: 0 -> 0000000000{
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 7B	valido	1234.50	31 32 33 34 35 7B	-	GC-README-SEGNO	{ = +0
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 41	valido	1234.51	31 32 33 34 35 41	-	GC-README-SEGNO	A = +1
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 42	valido	1234.52	31 32 33 34 35 42	-	GC-README-SEGNO	B = +2
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 43	valido	1234.53	31 32 33 34 35 43	-	GC-README-SEGNO	C = +3
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 44	valido	1234.54	31 32 33 34 35 44	-	GC-README-SEGNO	D = +4
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 45	valido	1234.55	31 32 33 34 35 45	-	GC-README-SEGNO	E = +5
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 46	valido	1234.56	31 32 33 34 35 46	-	GC-README-SEGNO	F = +6
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 47	valido	1234.57	31 32 33 34 35 47	-	GC-README-SEGNO	G = +7
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 48	valido	1234.58	31 32 33 34 35 48	-	GC-README-SEGNO	H = +8
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 49	valido	1234.59	31 32 33 34 35 49	-	GC-README-SEGNO	I = +9
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 7D	valido	-1234.50	31 32 33 34 35 7D	-	GC-README-SEGNO	} = -0
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 4A	valido	-1234.51	31 32 33 34 35 4A	-	GC-README-SEGNO	J = -1
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 4B	valido	-1234.52	31 32 33 34 35 4B	-	GC-README-SEGNO	K = -2
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 4C	valido	-1234.53	31 32 33 34 35 4C	-	GC-README-SEGNO	L = -3
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 4D	valido	-1234.54	31 32 33 34 35 4D	-	GC-README-SEGNO	M = -4
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 4E	valido	-1234.55	31 32 33 34 35 4E	-	GC-README-SEGNO	N = -5
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 4F	valido	-1234.56	31 32 33 34 35 4F	-	GC-README-SEGNO	O = -6
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 50	valido	-1234.57	31 32 33 34 35 50	-	GC-README-SEGNO	P = -7
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 51	valido	-1234.58	31 32 33 34 35 51	-	GC-README-SEGNO	Q = -8
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 52	valido	-1234.59	31 32 33 34 35 52	-	GC-README-SEGNO	R = -9
+display-con-segno	S9(4)V9(2)	decodifica	30*5 7D	valido	0.00	30*5 7B	-	GC-SRC-SEGNO	zero negativo
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 39	valido	1234.59	31 32 33 34 35 49	-	GC-SRC-NUMDISP	ultima cifra senza segno: alternativa, positiva
+display-con-segno	S9(4)V9(2)	decodifica	39*5 49	valido	9999.99	39*5 49	-	GC-README-SEGNO	estremo positivo della PICTURE
+display-con-segno	S9(4)V9(2)	decodifica	39*5 52	valido	-9999.99	39*5 52	-	GC-README-SEGNO	estremo negativo della PICTURE
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 72	non-valido	-	-	-	GC-SRC-NUMDISP	r (convenzione ASCII): fuori tabella
+display-con-segno	S9(4)V9(2)	decodifica	31 32 33 34 35 2D	non-valido	-	-	-	GC-SRC-NUMDISP	'-' finale: fuori tabella
+display-con-segno	S9(4)V9(2)	decodifica	20*6	non-valido	-	-	-	GC-SRC-NUMDISP	spazi
+display-con-segno	S9(4)V9(2)	codifica	-1.50	ok	-	30 30 30 31 35 7D	30 30 30 31 35 7D	GC-README-SEGNO
+display-con-segno	S9(4)V9(2)	codifica	9999.99	ok	-	39*5 49	39*5 49	GC-README-SEGNO	estremo della PICTURE
+display-con-segno	S9(4)V9(2)	codifica	10000.00	errore	-	-	30*5 7B	GC-SRC-NUMDISP	oltre la PICTURE: il MOVE tronca le cifre alte
+comp-3	9(3)	decodifica	12 3F	valido	123	12 3F	-	GC-SRC-PACKED	senza segno: semiottetto F
+comp-3	9(3)	decodifica	00 0F	valido	0	00 0F	-	GC-SRC-PACKED
+comp-3	9(3)	decodifica	99 9F	valido	999	99 9F	-	GC-SRC-PACKED	estremo della PICTURE
+comp-3	9(3)	decodifica	12 3C	non-valido	-	-	-	GC-SRC-PACKED	C in un campo senza segno: non numerico
+comp-3	9(3)	decodifica	12 3D	non-valido	-	-	-	GC-SRC-PACKED	D in un campo senza segno: non numerico
+comp-3	9(3)	decodifica	1A 3F	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra A
+comp-3	9(3)	decodifica	40 40	non-valido	-	-	-	GC-SRC-PACKED	spazi
+comp-3	9(3)	codifica	123	ok	-	12 3F	12 3F	GC-SRC-PACKED
+comp-3	9(3)	codifica	0	ok	-	00 0F	00 0F	GC-SRC-PACKED
+comp-3	9(3)	codifica	1000	errore	-	-	00 0F	GC-SRC-PACKED	oltre la PICTURE: il MOVE tronca le cifre alte
+comp-3	9(3)	codifica	-5	errore	-	-	00 5F	GC-SRC-PACKED	negativo in un campo senza segno: il MOVE perde il segno
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 6C	valido	1234.56	00 00 01 23 45 6C	-	GC-SRC-PACKED	C positivo
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 6D	valido	-1234.56	00 00 01 23 45 6D	-	GC-SRC-PACKED	D negativo
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 6F	valido	1234.56	00 00 01 23 45 6C	-	GC-SRC-PACKED	F in campo con segno: ammesso (hostsign di -std=ibm), positivo
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 6A	non-valido	-	-	-	GC-SRC-PACKED	A: codice non ammesso
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 6B	non-valido	-	-	-	GC-SRC-PACKED	B: codice non ammesso
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 6E	non-valido	-	-	-	GC-SRC-PACKED	E: codice non ammesso
+comp-3	S9(9)V9(2)	decodifica	00*5 0D	valido	0.00	00*5 0C	-	GC-SRC-PACKED	zero negativo: valore 0, il valore nuovo 0 si scrive con C
+comp-3	S9(9)V9(2)	decodifica	99*5 9C	valido	999999999.99	99*5 9C	-	GC-SRC-PACKED	estremo positivo della PICTURE
+comp-3	S9(9)V9(2)	decodifica	99*5 9D	valido	-999999999.99	99*5 9D	-	GC-SRC-PACKED	estremo negativo della PICTURE
+comp-3	S9(9)V9(2)	decodifica	00 00 0A 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra A
+comp-3	S9(9)V9(2)	decodifica	00 00 01 23 45 AC	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra A nell'ultimo byte
+comp-3	S9(9)V9(2)	decodifica	40*6	non-valido	-	-	-	GC-SRC-PACKED	spazi
+comp-3	S9(9)V9(2)	decodifica	00*6	non-valido	-	-	-	GC-SRC-PACKED	X'00': semiottetto di segno 0
+comp-3	S9(9)V9(2)	codifica	-0.01	ok	-	00*5 1D	00*5 1D	GC-SRC-PACKED
+comp-3	S9(9)V9(2)	codifica	0.00	ok	-	00*5 0C	00*5 0C	GC-SRC-PACKED
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 6C	valido	1234.56	00 00 00 01 23 45 6C	-	GC-SRC-PACKED	C positivo
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 6D	valido	-1234.56	00 00 00 01 23 45 6D	-	GC-SRC-PACKED	D negativo
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 6F	valido	1234.56	00 00 00 01 23 45 6C	-	GC-SRC-PACKED	F in campo con segno: ammesso, positivo
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 6A	non-valido	-	-	-	GC-SRC-PACKED	A: codice non ammesso
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 6B	non-valido	-	-	-	GC-SRC-PACKED	B: codice non ammesso
+comp-3	S9(10)V9(2)	decodifica	00 00 00 01 23 45 6E	non-valido	-	-	-	GC-SRC-PACKED	E: codice non ammesso
+comp-3	S9(10)V9(2)	decodifica	00*6 0D	valido	0.00	00*6 0C	-	GC-SRC-PACKED	zero negativo
+comp-3	S9(10)V9(2)	decodifica	09 99 99 99 99 99 9C	valido	9999999999.99	09 99 99 99 99 99 9C	-	GC-SRC-PACKED	estremo positivo della PICTURE
+comp-3	S9(10)V9(2)	decodifica	09 99 99 99 99 99 9D	valido	-9999999999.99	09 99 99 99 99 99 9D	-	GC-SRC-PACKED	estremo negativo della PICTURE
+comp-3	S9(10)V9(2)	decodifica	10 00 00 01 23 45 6C	valido	1234.56	00 00 00 01 23 45 6C	-	GC-SRC-PACKED	semiottetto di riempimento 1: cifra valida, ignorata nel valore
+comp-3	S9(10)V9(2)	decodifica	F0 00 00 01 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di riempimento F
+comp-3	S9(10)V9(2)	decodifica	00 00 00 0B 23 45 6C	non-valido	-	-	-	GC-SRC-PACKED	semiottetto di cifra B
+comp-3	S9(10)V9(2)	decodifica	40*7	non-valido	-	-	-	GC-SRC-PACKED	spazi
+comp-3	S9(10)V9(2)	codifica	-1234.56	ok	-	00 00 00 01 23 45 6D	00 00 00 01 23 45 6D	GC-SRC-PACKED
+comp-3	S9(10)V9(2)	codifica	9999999999.99	ok	-	09 99 99 99 99 99 9C	09 99 99 99 99 99 9C	GC-SRC-PACKED	estremo della PICTURE
+comp-3	S9(10)V9(2)	codifica	12345678901.00	errore	-	-	02 34 56 78 90 10 0C	GC-SRC-PACKED	oltre la PICTURE: il MOVE tronca le cifre alte
+comp	9(3)	decodifica	00 7B	valido	123	00 7B	-	GC-README-BINARI	big-endian, 2 byte
+comp	9(3)	decodifica	00 00	valido	0	00 00	-	GC-SRC-BINARY
+comp	9(3)	decodifica	03 E7	valido	999	03 E7	-	GC-SRC-BINARY	estremo della PICTURE
+comp	9(3)	decodifica	03 E8	oltre-picture	1000	-	-	GC-SRC-BINARY	rappresentabile in 2 byte ma oltre 9(3): letto per intero
+comp	9(3)	decodifica	FF FF	oltre-picture	65535	-	-	GC-SRC-BINARY	estremo fisico (senza segno)
+comp	9(3)	codifica	123	ok	-	00 7B	00 7B	GC-SRC-BINARY
+comp	9(3)	codifica	1000	errore	-	-	00 00	GC-README-BINARI	-fbinary-truncate: il MOVE tronca alle cifre della PICTURE
+comp	9(3)	codifica	-5	errore	-	-	00 05	GC-SRC-BINARY	negativo in un campo senza segno: il MOVE perde il segno
+comp	9(9)	decodifica	00 01 E2 40	valido	123456	00 01 E2 40	-	GC-README-BINARI	big-endian, 4 byte
+comp	9(9)	decodifica	00*4	valido	0	00*4	-	GC-SRC-BINARY
+comp	9(9)	decodifica	3B 9A C9 FF	valido	999999999	3B 9A C9 FF	-	GC-SRC-BINARY	estremo della PICTURE
+comp	9(9)	decodifica	3B 9A CA 00	oltre-picture	1000000000	-	-	GC-SRC-BINARY	oltre 9(9)
+comp	9(9)	decodifica	FF*4	oltre-picture	4294967295	-	-	GC-SRC-BINARY	estremo fisico (senza segno)
+comp	9(9)	codifica	1234567890	errore	-	-	0D FB 38 D2	GC-README-BINARI	-fbinary-truncate: 234567890
+comp	9(11)	decodifica	00*5 01 E2 40	valido	123456	00*5 01 E2 40	-	GC-README-BINARI	big-endian, 8 byte
+comp	9(11)	decodifica	00*8	valido	0	00*8	-	GC-SRC-BINARY
+comp	9(11)	decodifica	00 00 00 17 48 76 E7 FF	valido	99999999999	00 00 00 17 48 76 E7 FF	-	GC-SRC-BINARY	estremo della PICTURE
+comp	9(11)	decodifica	00 00 00 17 48 76 E8 00	oltre-picture	100000000000	-	-	GC-SRC-BINARY	oltre 9(11)
+comp	9(11)	decodifica	FF*8	oltre-picture	18446744073709551615	-	-	GC-SRC-BINARY	estremo fisico (senza segno)
+comp	9(11)	codifica	123	ok	-	00*7 7B	00*7 7B	GC-SRC-BINARY
+comp	S9(10)V9(2)	decodifica	00*5 01 E2 40	valido	1234.56	00*5 01 E2 40	-	GC-README-BINARI	big-endian, 8 byte, scala 2
+comp	S9(10)V9(2)	decodifica	FF*5 FE 1D C0	valido	-1234.56	FF*5 FE 1D C0	-	GC-SRC-BINARY	complemento a due
+comp	S9(10)V9(2)	decodifica	00*8	valido	0.00	00*8	-	GC-SRC-BINARY
+comp	S9(10)V9(2)	decodifica	FF*8	valido	-0.01	FF*8	-	GC-SRC-BINARY	-1 in complemento a due
+comp	S9(10)V9(2)	decodifica	00 00 00 E8 D4 A5 0F FF	valido	9999999999.99	00 00 00 E8 D4 A5 0F FF	-	GC-SRC-BINARY	estremo positivo della PICTURE
+comp	S9(10)V9(2)	decodifica	FF FF FF 17 2B 5A F0 01	valido	-9999999999.99	FF FF FF 17 2B 5A F0 01	-	GC-SRC-BINARY	estremo negativo della PICTURE
+comp	S9(10)V9(2)	decodifica	00 00 00 E8 D4 A5 10 00	oltre-picture	10000000000.00	-	-	GC-SRC-BINARY	oltre la PICTURE
+comp	S9(10)V9(2)	decodifica	FF FF FF 17 2B 5A F0 00	oltre-picture	-10000000000.00	-	-	GC-SRC-BINARY	oltre la PICTURE (negativo)
+comp	S9(10)V9(2)	decodifica	7F FF FF FF FF FF FF FF	oltre-picture	92233720368547758.07	-	-	GC-SRC-BINARY	estremo fisico positivo
+comp	S9(10)V9(2)	decodifica	80 00*7	oltre-picture	-92233720368547758.08	-	-	GC-SRC-BINARY	estremo fisico negativo
+comp	S9(10)V9(2)	codifica	-0.01	ok	-	FF*8	FF*8	GC-SRC-BINARY
+comp	S9(10)V9(2)	codifica	-9999999999.99	ok	-	FF FF FF 17 2B 5A F0 01	FF FF FF 17 2B 5A F0 01	GC-SRC-BINARY	estremo della PICTURE
+comp	S9(10)V9(2)	codifica	12345678901.23	errore	-	-	00 00 00 36 9D 55 F4 CB	GC-README-BINARI	-fbinary-truncate: 2345678901.23
