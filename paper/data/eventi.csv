@@ -287,3 +287,13 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T17:41:40Z,issue-22,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
 2026-11-27T17:42:41Z,issue-22,ready,fable,orologio,specifica pubblicata; 4 rilievi accolti; bersagli variabili in 46
 2026-11-27T17:42:41Z,issue-22,esecutore-inizio,opus,orologio,affidata
+2026-11-27T17:43:01Z,processo,risposta-consegnata,fable,orologio,specifica #22 affidata; quattro Esecutori al lavoro
+2026-11-27T17:52:02Z,issue-25,esecutore-fine,opus,orologio,giro di correzione consegnato; SHA 644d53b; 164 prove negative dichiarate; CI verde dichiarata (un job rilanciato per errore di rete)
+2026-11-27T17:52:05Z,issue-25,esecutore-consuntivo,opus,orologio,giro di correzione: durata 1378 s; 64 chiamate a strumenti; contatore token 547732
+2026-11-27T17:52:06Z,pr-44,codex-inizio,codex,orologio,validazione 2 di 2; in forma ristretta
+2026-11-27T17:54:54Z,issue-23,esecutore-fine,opus,orologio,PR #47 aperta; criteri locali dichiarati soddisfatti; CI ancora in corso alla consegna
+2026-11-27T17:54:57Z,issue-23,esecutore-consuntivo,opus,orologio,seconda fase dopo la decisione: durata cumulata 3335 s; 180 chiamate a strumenti; contatore token 533343 (cumulativi)
+2026-11-27T17:55:00Z,pr-47,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T17:56:28Z,issue-23,esecutore-consuntivo,opus,orologio,chiusura: durata cumulata 3444 s; 184 chiamate a strumenti; contatore token 540725 (cumulativi); comprende l'attesa a vuoto della CI
+2026-11-27T17:57:17Z,pr-44,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0; verdetto: APPROVATA
+2026-11-27T17:57:44Z,pr-44,merge,fable,orologio,PR #44 mergiata dopo due validazioni (seconda APPROVATA; 5 min 11 s); chiude #25
