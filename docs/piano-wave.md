@@ -76,7 +76,7 @@ Rischio che controlla: migrare qualcosa che non si è capito, o non avere un rif
 | #25 | 0A-4c: `CBSTM03A`, `CBEXPORT`, `CBIMPORT` nell'oracle | #4 | bloccata |
 | #21 | 0A-1b: completezza dei verdetti e controlli di `analysis/` in CI | #1, #14 | bloccata |
 
-Le dipendenze a valle si leggono di conseguenza: #5 (fixture) dipende anche da #23; #9 (golden dei job) anche da #24 e #25; #7 (flussi batch) e #11 (matrice online) anche da #22. La Wave 0A passa da 12 a 17 issue. Nella Wave 0B, #19 è stata aperta e chiusa come superata (vedi registro delle approvazioni, voce 13).
+Le dipendenze a valle si leggono di conseguenza: #5 (fixture) dipende anche da #23; #9 (golden dei job) anche da #24 e #25; #7 (flussi batch) e #11 (matrice online) anche da #22. La Wave 0A passa da 12 a 17 issue. Nella Wave 0B, #19 è stata aperta e chiusa come superata (vedi registro delle approvazioni, voce 13). Sempre nella 0B, #15 conteneva quattro consegne indipendenti ed è stata divisa: #15 (test di integrazione con PostgreSQL reale), #26 (confini tra moduli, dipendenze vietate, tipi in virgola mobile), #27 (copertura e SpotBugs), #28 (SonarQube in locale), in sequenza. La Wave 0B passa da 4 a 7 issue; #16 (contratti condivisi) dipende da #26 anziché dall'intera vecchia #15.
 
 Dopo 0A-1, le issue 0A-2, 0A-3 e 0A-4 lavorano su cartelle disgiunte e possono procedere insieme. 0A-1 fornisce anche il meccanismo con cui ogni issue aggiunge i propri controlli nella propria cartella, senza toccare file condivisi.
 
