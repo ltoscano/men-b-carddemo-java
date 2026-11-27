@@ -495,6 +495,16 @@ def verifica(legacy, cartella_contratti, contratti_tsv, cartella_sentinelle, vis
             es.errore("copertura", f"contratto {c}: vista {vi} (area REDEFINES del contratto) senza sentinella")
         for vi in sorted(v_dich - v_attese):
             es.errore("copertura", f"contratto {c}: vista {vi} di viste.tsv non e' un'area REDEFINES del contratto")
+        # ogni campo elementare del contratto sta in almeno una vista
+        in_viste_c = set()
+        for vi in sorted(v_attese):
+            try:
+                in_viste_c |= {r["_identita"] for r in vista_contratto(righe, vi)}
+            except ValueError as e:
+                es.errore("copertura", f"contratto {c}: {e}")
+        for r in righe:
+            if r["tipo"] == "elementare" and r["_identita"] not in in_viste_c:
+                es.errore("copertura", f"contratto {c}: campo {r['campo']} ({r['percorso']}) in nessuna vista")
         if c in tutti and tutti[c]["sorgente"] not in {coppie[k]["sorgente"] for k in coppie if k[0] == c}:
             es.errore("copertura", f"contratto {c}: sorgente in viste.tsv diverso da quello del contratto ({tutti[c]['sorgente']})")
     # [sorgente]: viste.tsv contro le REDEFINES del sorgente; sentinelle contro il sorgente
@@ -539,6 +549,17 @@ def verifica(legacy, cartella_contratti, contratti_tsv, cartella_sentinelle, vis
     for s in sentinelle if decodifica else []:
         if s["contratto"] in contratti and (s["contratto"], s["vista"]) in coppie:
             decodifica_sentinella(s, contratti[s["contratto"]], es, conteggi)
-    riepilogo = {"copybook": sorted(copybook), "conteggi": conteggi, "coppie": sorted(coppie),
+    # percorsi ripetuti fra i campi elementari (identita' non ricavabile dal solo percorso), in tutti i contratti
+    ripetuti = {}
+    for f in sorted(os.listdir(cartella_contratti)):
+        if f.endswith(".tsv"):
+            conta = {}
+            for r in righe_contratto(os.path.join(cartella_contratti, f)):
+                if r["tipo"] == "elementare":
+                    conta[r["percorso"]] = conta.get(r["percorso"], 0) + 1
+            for p, n in sorted(conta.items()):
+                if n > 1:
+                    ripetuti.setdefault(f[:-4], []).append((p, n))
+    riepilogo = {"ripetuti": ripetuti, "copybook": sorted(copybook), "conteggi": conteggi, "coppie": sorted(coppie),
                  "tutti": tutti, "sentinelle": sentinelle, "contratti": contratti}
     return es, riepilogo

@@ -11,6 +11,7 @@ Uso: verifica.py LEGACY CONTRATTI CONTRATTI_TSV SENTINELLE VISTE [--doc FILE.md]
 Uscita 1 se c'e' almeno un errore; l'ultima riga e' "verifica riuscita: ..." solo se non ce ne sono.
 """
 import os
+import signal
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -60,6 +61,25 @@ def documento(rie):
       f"tutte le aree comprese): {tot_cb}. Ogni campo elementare di ogni contratto compare in almeno una vista; "
       f"in `CVEXPORT.EXPORT-RECORD` i campi fuori dalle `REDEFINES` compaiono in tutte e sette le viste.")
     a("")
+    a("## Identità dei campi")
+    a("")
+    a("Un campo si identifica con contratto, vista, numero d'ordine della dichiarazione elementare nel tracciato (tutte "
+      "le aree comprese, `OCCURS` non espansi) e indici `OCCURS`; l'offset non ne fa parte, perché è ciò che si prova. "
+      "Nella sentinella l'ordinale è scritto a mano e confrontato con quello che la verifica ricava dal sorgente; nel "
+      "contratto si ricava dall'ordine delle righe, e due righe con lo stesso percorso e gli stessi indici contano come "
+      "dichiarazioni distinte. Percorsi ripetuti fra i campi elementari dei contratti di #3:")
+    a("")
+    rip = rie["ripetuti"]
+    coperti = {c for c, _ in coppie}
+    for c in sorted(rip):
+        a(f"- `{c}`{' (con sentinella)' if c in coperti else ''}: " +
+          "; ".join(f"`{p}` {n} volte" for p, n in rip[c]))
+    if not rip:
+        a("- nessuno")
+    a("")
+    a(f"Nei {len(coperti)} contratti con sentinella: "
+      + ("nessun percorso ripetuto." if not (set(rip) & coperti) else "vedi sopra."))
+    a("")
     a("## Contratti senza sentinella")
     a("")
     senza = sorted(c for c, r in tutti.items() if r["righe"] != "copybook" and c != VARIABILE)
@@ -90,10 +110,16 @@ def documento(rie):
       "codice `F` è accettato anche con segno, in COMP un valore positivo sotto 2^(8n-1) ha la stessa rappresentazione;")
     a("  - nei campi di una sola cifra (`CDEMO-PGM-CONTEXT`, `9(01)`) non si può accorciare la `PICTURE` né spostare la "
       "scala senza cambiare la lunghezza: quelle due mutazioni non sono applicabili;")
-    a("  - in COMP una `PICTURE` più lunga che resta nella stessa ampiezza (per esempio `9(9)` letto come `9(8)` è "
-      "rilevato, ma `9(5)`-`9(9)` occupano tutti 4 byte e un valore di 9 cifre letto con `9(9)` o con una `PICTURE` "
-      "più lunga nella stessa ampiezza non cambia);")
+    a("  - una `PICTURE` con una cifra **in più** che resta nella stessa ampiezza: in COMP `9(03)` e `9(04)` occupano "
+      "2 byte, `9(11)` e `9(12)` 8 byte, `S9(10)V99` e `S9(11)V99` 8 byte (`EXP-CARD-CVV-CD`, `EXP-XREF-ACCT-ID`, "
+      "`EXP-CARD-ACCT-ID`, `EXP-ACCT-CURR-CYC-DEBIT`); in COMP-3 con un numero pari di cifre il semiottetto di "
+      "riempimento diventa una cifra zero in testa (`S9(10)V99` e `S9(11)V99` occupano 7 byte: `EXP-ACCT-CURR-BAL`, "
+      "`EXP-ACCT-CASH-CREDIT-LIMIT`). Una cifra **in meno** invece è sempre rilevata, perché ogni valore usa tutte le "
+      "cifre della propria `PICTURE`;")
     a("  - USAGE equivalenti (`COMP`, `COMP-4`, `BINARY`) e `PICTURE` scritte in modi equivalenti (`X(04)` e `X(4)`).")
+    a("- **Mutazioni non applicabili.** `check.sh` elenca, con il motivo, le prove negative che non si possono costruire "
+      "(per esempio spostare di un byte il confine di un campo binario, che occupa solo 2, 4 o 8 byte, o accorciare un "
+      "campo di un byte solo): non sono contate come superate. Per quei confini la proprietà resta affidata a #3.")
     a("- **Lunghezza dichiarata altrove.** La somma delle lunghezze a mano è confrontata con una lunghezza dichiarata "
       "altrove (commento `RECLN` del copybook, `RECORDSIZE` del JCL, `FD` del programma), con la riga citata e "
       "verificata sul file. Per `COCOM01Y.CARDDEMO-COMMAREA` nessuna fonte esterna dichiara la lunghezza: 160 byte è "
@@ -112,7 +138,13 @@ def documento(rie):
     return "\n".join(righe)
 
 
+def scaduto(*_):
+    raise SystemExit("verifica: tempo scaduto (300 s)")
+
+
 def main(argv):
+    signal.signal(signal.SIGALRM, scaduto)
+    signal.alarm(300)
     doc = None
     deco = True
     pos = []
