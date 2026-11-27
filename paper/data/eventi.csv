@@ -187,3 +187,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T15:17:37Z,pr-31,codex-inizio,codex,orologio,validazione giro 3 (finale)
 2026-11-27T15:18:56Z,issue-3,esecutore-fine,opus,orologio,giro di correzione 2 consegnato; SHA 353e3bc; CI verde; 59 contratti
 2026-11-27T15:18:59Z,issue-3,esecutore-consuntivo,opus,orologio,giro di correzione 2: durata 1259 s; 52 chiamate a strumenti; contatore token 773396 (cumulativo)
+2026-11-27T15:19:00Z,pr-32,codex-inizio,codex,orologio,validazione giro 3 (finale)
+2026-11-27T15:24:29Z,issue-2,esecutore-fine,sonnet,orologio,giro di correzione 2 consegnato; SHA 9304eef; CI verde
+2026-11-27T15:24:32Z,issue-2,esecutore-consuntivo,sonnet,orologio,giro di correzione 2: durata 1417 s; 21 chiamate a strumenti; contatore token 484742 (cumulativo)
