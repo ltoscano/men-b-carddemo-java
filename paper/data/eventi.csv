@@ -101,3 +101,8 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T13:00:09Z,pr-20,approvazione,fable,orologio,giro 2: BOCCIATA da Codex per un rilievo che l'Approvatore respinge (strumento che restituisce dati falsi); merge
 2026-11-27T13:01:09Z,P13,inizio,fable,orologio,riallineamento delle specifiche #15 e #21
 2026-11-27T13:01:09Z,P13,contestazione-inizio,codex,orologio,specifiche di #15 e #21
+2026-11-27T13:01:59Z,processo,risposta-consegnata,fable,orologio,PR #20 mergiata; Esecutori di #2 #3 #4 in corso; contestazione di #15 #21 in corso
+2026-11-27T13:05:15Z,P13,contestazione-fine,codex,orologio,exit=0; token: 120.056
+2026-11-27T13:06:48Z,P13,fine,fable,orologio,13 rilievi (1 bloccante) accolti; #15 ristretta; aperte #26 #27 #28
+2026-11-27T13:06:48Z,issue-15,esecutore-inizio,opus,orologio,worktree isolato
+2026-11-27T13:06:48Z,issue-21,esecutore-inizio,sonnet,orologio,worktree isolato
