@@ -1,0 +1,11 @@
+== codice di uscita
+0
+== stdout
+M03BCALL TRNXFILE O RC=35
+M03BCALL XREFFILE O RC=35
+M03BCALL CUSTFILE O RC=35
+M03BCALL ACCTFILE O RC=35
+M03BCALL NONGEST  O RC=XX
+== stderr
+Warning: program compiled against libxml 212 using older 209
+== file nella cartella di lavoro

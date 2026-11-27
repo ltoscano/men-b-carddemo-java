@@ -1,0 +1,16 @@
+# Programmi del legacy compilati dall'oracle (elenco della build). Colonne separate da TAB:
+# programma, sorgente (relativo al submodule legacy), tipo (eseguibile | modulo), motivo del tipo letto nel sorgente.
+# eseguibile = avviato come passo di job (EXEC PGM=); modulo = richiamato con CALL da un altro programma.
+# Il controllo (oracle/build/check.sh) ha un proprio elenco fisso e lo confronta con questo.
+programma	sorgente	tipo	motivo
+CBACT01C	app/cbl/CBACT01C.cbl	eseguibile	PROCEDURE DIVISION senza USING; avviato da app/jcl/READACCT.jcl (EXEC PGM=CBACT01C)
+CBACT02C	app/cbl/CBACT02C.cbl	eseguibile	PROCEDURE DIVISION senza USING; avviato da app/jcl/READCARD.jcl (EXEC PGM=CBACT02C)
+CBACT03C	app/cbl/CBACT03C.cbl	eseguibile	PROCEDURE DIVISION senza USING; avviato da app/jcl/READXREF.jcl (EXEC PGM=CBACT03C)
+CBACT04C	app/cbl/CBACT04C.cbl	eseguibile	PROCEDURE DIVISION USING EXTERNAL-PARMS (area del PARM); avviato da app/jcl/INTCALC.jcl (EXEC PGM=CBACT04C,PARM='2022071800')
+CBCUS01C	app/cbl/CBCUS01C.cbl	eseguibile	PROCEDURE DIVISION senza USING; avviato da app/jcl/READCUST.jcl (EXEC PGM=CBCUS01C)
+CBSTM03B	app/cbl/CBSTM03B.CBL	modulo	PROCEDURE DIVISION USING LK-M03B-AREA; richiamato da CBSTM03A (CALL 'CBSTM03B', righe 351 e 377)
+CBTRN01C	app/cbl/CBTRN01C.cbl	eseguibile	PROCEDURE DIVISION senza USING; nessun JCL del repository lo avvia e nessun programma lo richiama
+CBTRN02C	app/cbl/CBTRN02C.cbl	eseguibile	PROCEDURE DIVISION senza USING; avviato da app/jcl/POSTTRAN.jcl (EXEC PGM=CBTRN02C)
+CBTRN03C	app/cbl/CBTRN03C.cbl	eseguibile	PROCEDURE DIVISION senza USING; avviato da app/jcl/TRANREPT.jcl e app/proc/TRANREPT.prc (EXEC PGM=CBTRN03C)
+COBSWAIT	app/cbl/COBSWAIT.cbl	eseguibile	PROCEDURE DIVISION senza USING; avviato da app/jcl/WAITSTEP.jcl (EXEC PGM=COBSWAIT)
+CSUTLDTC	app/cbl/CSUTLDTC.cbl	modulo	PROCEDURE DIVISION USING LS-DATE, LS-DATE-FORMAT, LS-RESULT; richiamato da CORPT00C (CALL 'CSUTLDTC', righe 392 e 412)

@@ -1,0 +1,22 @@
+# Opzioni di cobc: le stesse per tutti i programmi compilati dall'oracle (gli 11 del legacy, lo stub di
+# CEE3ABD, i segnaposto e i programmi di prova). Una opzione per riga, senza spazi; dopo '#' il motivo.
+# Le sole aggiunte per tipo di artefatto sono -c / -x (eseguibile, collegato con l'avviatore) e -m
+# (modulo richiamabile): sono in oracle/build/compile.sh e non cambiano il codice generato del programma.
+#
+# Dialetto IBM di GnuCOBOL (config/ibm.conf): lo stesso con cui #1 ha verificato che gli 11 compilano.
+# Fissa, tra l'altro: binary-size 2-4-8 (COMP di 2, 4, 8 byte come IBM), binary-byteorder big-endian
+# (COMP in ordine dei byte di z/OS), assign-clause external e filename-mapping yes (ASSIGN TO nome ->
+# variabile DD_nome), arithmetic-osvs yes, perform-osvs yes, move-ibm yes, hostsign yes, defaultbyte 0.
+-std=ibm
+# TRUNC(STD): il JCL di compilazione del legacy (scripts/compile_batch.jcl.template e
+# samples/proc/BUILDBAT.prc, PARM=(APOST,LIST,MAP,NUMBER[,NOSEQ])) non indica TRUNC, quindi vale il
+# default di Enterprise COBOL, TRUNC(STD): un binario si tronca alle cifre della PICTURE. ibm.conf
+# imposta invece binary-truncate: no (equivalente a TRUNC(BIN)); qui si riporta a yes.
+-fbinary-truncate
+# APOST: stesso JCL di compilazione. QUOTE vale l'apice singolo. Nessuno degli 11 programmi usa QUOTE:
+# oggi l'opzione non ha effetto, e' presente per fedelta' alle opzioni originali.
+-fsingle-quote
+# Solo diagnostica (avvertimenti nel log di compilazione): non cambia il codice generato.
+-Wall
+# Cartella dei copybook del legacy, letta dal volume sensibile alle maiuscole montato in sola lettura.
+-I/legacy/app/cpy
