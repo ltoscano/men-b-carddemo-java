@@ -39,7 +39,7 @@ jobs:
         timeout-minutes: 5
         run: |
           set -euo pipefail
-          ORACLE_ROOT="$PWD/oracle" ORACLE_NAME=uid bash -c '. "$ORACLE_ROOT/lib.sh"; orun -- id'
+          ORACLE_ROOT="$PWD/oracle" ORACLE_NAME=uid bash -c '. "$ORACLE_ROOT/lib.sh"; orun -- timeout 60 id'
       # Prove negative e controprove eseguite per passo, e quelle con file illeggibili: da confrontare con
       # lo stesso comando eseguito in locale sul log di ./oracle/run.sh --all --check (oracle/README.md).
       - name: Prove eseguite per passo

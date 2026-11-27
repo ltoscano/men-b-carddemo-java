@@ -446,14 +446,46 @@ done <<< "$PUNTI_BUILD"
 clean_dir "$rout"
 build_copia > "$tmp/passa.log" 2>&1 || { indent "$tmp/passa.log" >&2; fail "controprova: la build con gli involucri in modo passa e' fallita"; }
 [ -f "$rout/IMPRONTA" ] || fail "controprova: la build riuscita non ha scritto l'impronta"
+# passato_intatto REGISTRO ID: ID raggiunto almeno una volta, sempre con l'esito reale restituito tale e quale.
+passato_intatto() {
+  awk -v id="$2" '$1==id {n++; if ($3!=$4) bad++} END {exit !(n>0 && !bad)}' "$1" \
+    || { echo "$2 non raggiunto o con l'esito alterato (registro $(rel "$1"))"; return 1; }
+}
+# risultati_identici CARTELLA: i risultati dell'ambiente e delle compilazioni coincidono con la build del punto 1.
+risultati_identici() {
+  local f
+  for f in ambiente.txt ambiente-cobc.txt ambiente-run.txt cobc-info.txt configurazione.sha256 runtime-config.txt compilazione.tsv opzioni.txt; do
+    cmp -s "$BUILD_OUT/$f" "$1/$f" || { echo "$f diverso da quello della build di produzione"; return 1; }
+  done
+}
 while IFS='|' read -r id pre modo reale motivo; do
-  awk -v id="$id" '$1==id {n++; if ($3!=$4) bad++} END {exit !(n>0 && !bad)}' "$rout/registro" \
-    || fail "controprova: $id non raggiunto o con esito alterato in modo passa"
+  passato_intatto "$rout/registro" "$id" > "$tmp/pi.out" 2>&1 || { indent "$tmp/pi.out" >&2; fail "controprova: $id"; }
 done <<< "$PUNTI_BUILD"
-for f in ambiente.txt ambiente-cobc.txt ambiente-run.txt cobc-info.txt configurazione.sha256 runtime-config.txt compilazione.tsv opzioni.txt; do
-  cmp -s "$BUILD_OUT/$f" "$rout/$f" || fail "controprova: $f con gli involucri diverso da quello della build di produzione"
-done
+risultati_identici "$rout" > "$tmp/ri.out" 2>&1 || { indent "$tmp/ri.out" >&2; fail "controprova: risultati con gli involucri diversi"; }
 log "   controprova ok: involucri in modo passa su tutti i punti, build riuscita con impronta, risultati identici"
+# Prove negative dei controlli della controprova e di bersaglio.
+cp -R "$rout" "$tmp/rout-alt" || fail "copia dei risultati della controprova fallita"
+mutate "$tmp/rout-alt/runtime-config.txt" '$a\
+riga in piu'
+expect_fail "controprova: runtime-config.txt con una riga in piu'" "runtime-config.txt diverso" risultati_identici "$tmp/rout-alt"
+mutate "$tmp/rout-alt/registro" 's/^A01 1 0 0 /A01 1 0 42 /'
+expect_fail "controprova: involucro che ha alterato l'esito (registro)" "A01 non raggiunto o con l'esito alterato" passato_intatto "$tmp/rout-alt/registro" A01
+expect_fail "controprova: comando mai raggiunto (registro)" "Z99 non raggiunto" passato_intatto "$tmp/rout-alt/registro" Z99
+expect_fail "bersaglio: nessuna invocazione restituita come 42 (registro della controprova)" "comando bersaglio A02 non raggiunto" \
+  bash -c '. "$ORACLE_ROOT/lib.sh"; eval "$1"; bersaglio "$2" A02 0' _ "$(declare -f bersaglio)" "$rout/registro"
+expect_fail "bersaglio: esito reale diverso dall'atteso" "comando bersaglio A01 non raggiunto" \
+  bash -c '. "$ORACLE_ROOT/lib.sh"; eval "$1"; bersaglio "$2" A01 1' _ "$(declare -f bersaglio)" "$tmp/rout-alt/registro"
+# Residuo sano: l'impronta e il registro della controprova restano nella cartella; una build con A01 a 42 deve
+# fallire senza impronta e con un registro che contiene solo la sua invocazione (build/run.sh cancella l'output).
+cp "$ORACLE_ROOT/build/compile.sh" "$radice/oracle/build/compile.sh" || fail "copia di compile.sh fallita"
+avvolgi_in "$radice/oracle/build/compile.sh" 'env -i $AMBIENTE_COBC cobc --version' A01 42
+[ -f "$rout/IMPRONTA" ] && [ -s "$rout/registro" ] || fail "residuo: impronta o registro della controprova assenti"
+expect_fail "residuo sano della controprova, poi cobc --version a 42" "acquisizione fallita: cobc --version (codice 42)" build_copia
+[ ! -e "$rout/IMPRONTA" ] || fail "residuo: l'impronta della corsa precedente e' sopravvissuta a una build fallita"
+solo_a01() { awk '$1!="A01" {bad=1} END {exit !(NR==1 && !bad)}' "$1" || { echo "il registro $(rel "$1") contiene righe di un'altra corsa"; return 1; }; }
+solo_a01 "$rout/registro" > "$tmp/sa.out" 2>&1 || { indent "$rout/registro" >&2; fail "residuo: il registro contiene righe di una corsa precedente"; }
+expect_fail "residuo: registro con le righe della controprova" "contiene righe di un'altra corsa" solo_a01 "$tmp/rout-alt/registro"
+log "     residuo sano rimosso: nessuna impronta, registro con la sola invocazione della corsa"
 
 # 6b. Esiti ammessi di grep -c: la build sana ha programmi con conteggi a zero (grep -c esce con 1) ed e' verde.
 zeri="$(awk -F'\t' 'NR>1 && $5==0 && $6==0 {n++} END {print n+0}' "$BUILD_OUT/compilazione.tsv")" || fail "lettura di compilazione.tsv fallita"
@@ -479,15 +511,23 @@ esegui_avvolto() {
   prepara_avvolti "$d" "$@"
   mkdir -p "$d/res/out" || fail "cartella dei risultati non creabile"
   orun -v "$d/avv:/avv:ro" -v "$d/res:/res" -v "$BUILD_OUT/bin:/oracle-bin:ro" -e PATH=/avv:/usr/bin:/bin \
-    -- sh /oracle/esegui.sh /res/out PARMECHO --parm 2022071800
+    -- timeout -k 10 120 sh /oracle/esegui.sh /res/out PARMECHO --parm 2022071800
 }
 esegui_avvolto rif > "$tmp/es-rif.log" 2>&1 || { indent "$tmp/es-rif.log" >&2; fail "esegui.sh senza involucri fallito"; }
 esegui_avvolto passa ls=passa cat=passa sort=passa wc=passa tr=passa rm=passa mkdir=passa env=passa > "$tmp/es-passa.log" 2>&1 \
   || { indent "$tmp/es-passa.log" >&2; fail "controprova: esegui.sh con gli involucri in modo passa fallito"; }
-cmp -s "$tmp/es-rif/res/out/PARMECHO.txt" "$tmp/es-passa/res/out/PARMECHO.txt" && cmp -s "$tmp/es-rif/res/out/PARMECHO.ambiente" "$tmp/es-passa/res/out/PARMECHO.ambiente" \
-  || fail "controprova: rapporto di esegui.sh con gli involucri diverso da quello senza"
+# rapporti_identici CARTELLA-A CARTELLA-B: rapporto e ambiente di PARMECHO uguali byte per byte.
+rapporti_identici() {
+  cmp -s "$1/PARMECHO.txt" "$2/PARMECHO.txt" && cmp -s "$1/PARMECHO.ambiente" "$2/PARMECHO.ambiente" \
+    || { echo "rapporto o ambiente di PARMECHO diversi tra $(rel "$1") e $(rel "$2")"; return 1; }
+}
+rapporti_identici "$tmp/es-rif/res/out" "$tmp/es-passa/res/out" > "$tmp/rid.out" 2>&1 \
+  || { indent "$tmp/rid.out" >&2; fail "controprova: rapporto di esegui.sh con gli involucri diverso da quello senza"; }
+mkdir -p "$tmp/es-alt" && cp "$tmp/es-passa/res/out/PARMECHO.txt" "$tmp/es-passa/res/out/PARMECHO.ambiente" "$tmp/es-alt/" || fail "copia del rapporto fallita"
+mutate "$tmp/es-alt/PARMECHO.txt" 's/^PARMDUMP /PARMDUMQ /'
+expect_fail "controprova di esegui.sh: rapporto con un nome di file alterato" "rapporto o ambiente di PARMECHO diversi" rapporti_identici "$tmp/es-rif/res/out" "$tmp/es-alt"
 for c in ls cat sort wc tr rm mkdir env; do
-  awk -v id="$c" '$1==id {n++; if ($3!=$4) bad++} END {exit !(n>0 && !bad)}' "$tmp/es-passa/res/registro" || fail "controprova: $c non raggiunto in esegui.sh"
+  passato_intatto "$tmp/es-passa/res/registro" "$c" > "$tmp/pi.out" 2>&1 || { indent "$tmp/pi.out" >&2; fail "controprova di esegui.sh: $c"; }
 done
 grep -qx 'PARMDUMP [0-9][0-9]*' "$tmp/es-rif/res/out/PARMECHO.txt" || fail "PARMECHO non ha creato PARMDUMP: wc e tr non sarebbero provati"
 log "   controprova ok: esegui.sh con gli involucri in modo passa, rapporto e ambiente identici"
@@ -520,7 +560,7 @@ verifica_avvolta() {
 verifica_avvolta passa comm=passa grep=passa tail=passa nm=passa > "$tmp/vf-passa.log" 2>&1 \
   || { indent "$tmp/vf-passa.log" >&2; fail "controprova: verifica.sh con gli involucri in modo passa fallita"; }
 for c in comm grep tail nm; do
-  awk -v id="$c" '$1==id {n++; if ($3!=$4) bad++} END {exit !(n>0 && !bad)}' "$tmp/vf-passa/res/registro" || fail "controprova: $c non raggiunto in verifica.sh"
+  passato_intatto "$tmp/vf-passa/res/registro" "$c" > "$tmp/pi.out" 2>&1 || { indent "$tmp/pi.out" >&2; fail "controprova di verifica.sh: $c"; }
 done
 log "   controprova ok: verifica.sh con gli involucri in modo passa supera la verifica della build sana"
 # ID;COMANDO=MODO;ESITO REALE;MOTIVO ATTESO (separatore ';': un modello di grep contiene '|')
