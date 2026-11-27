@@ -19,3 +19,7 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T09:59:29Z,P7,contestazione-inizio,codex,orologio,specifiche di #1 e #13: secondo tentativo con stdin chiuso
 2026-11-27T10:00:47Z,P7,richiesta-autore,autore,orologio,chiede se deve fare qualcosa
 2026-11-27T10:02:09Z,P0,richiesta-autore,autore,orologio,dichiara: i due documenti di partenza generati interrogando un'AI; circa 5 minuti. Conferma il NOTICE
+2026-11-27T10:02:11Z,P0,risposta-consegnata,fable,orologio,
+2026-11-27T10:02:20Z,P7,contestazione-fine,codex,orologio,exit=0; token: 72.056
+2026-11-27T10:02:23Z,P7,inizio,fable,orologio,lettura dei rilievi e correzione delle specifiche di #1 e #13
+2026-11-27T10:03:59Z,P7,fine,fable,orologio,12 rilievi (2 bloccanti) tutti accolti; #1 e #13 aggiornate e passate a ready
