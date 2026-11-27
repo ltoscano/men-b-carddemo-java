@@ -90,9 +90,14 @@ Dal 27 nov 2026 l'autore ha delegato a Fable l'approvazione e il merge delle PR,
 2. il Validatore (Codex) ha eseguito da sé i criteri di accettazione su un clone pulito e nel suo ultimo giro non resta aperto alcun rilievo bloccante;
 3. ogni rilievo del Validatore ha un esito scritto: corretto, respinto con motivo verificato sul sorgente, o rinviato a una issue esistente o nuova;
 4. il diff è nel perimetro della specifica;
-5. sono stati fatti al massimo due giri di correzione.
+5. sono stati fatti al massimo due giri di correzione (oltre, vale la regola sui contrasti qui sotto).
 
-**Fable non approva e scala all'autore quando:** il secondo giro di correzione fallisce; serve cambiare il perimetro o l'obiettivo di una specifica già approvata; Fable e Codex restano in disaccordo su un rilievo bloccante; la decisione è irreversibile o esce dal repository.
+**Contrasti dopo il secondo giro (regola dell'autore, 27 nov 2026, dopo il caso della PR #17): li risolve Fable, con pragmatismo, e li registra.** Se dopo due giri di correzione il Validatore boccia ancora:
+- se i rilievi residui **non sono bloccanti** e nessuno può far passare per buono un lavoro sbagliato (niente falsi verdi, niente perdita o alterazione di dati, niente violazione di parità), Fable mergia e apre una issue per ogni rilievo residuo, con la prova del Validatore e criteri di accettazione;
+- se resta un rilievo **bloccante**, o un rischio di falso verde o sui dati, Fable non mergia: sceglie tra un giro in più mirato a quel solo rilievo, la riscrittura della specifica, o la divisione dell'issue, e registra perché;
+- in ogni caso la voce di registro dice cosa chiedeva il Validatore, cosa si è deciso, perché, e dove è finito ciò che resta.
+
+**Fable scala all'autore solo quando:** serve cambiare l'obiettivo del progetto o il perimetro di una wave; un contrasto bloccante resta dopo il giro in più; la decisione è irreversibile o esce dal repository.
 
 **Coerenza.** Fable ha scritto la specifica, quindi non è un giudice indipendente del proprio lavoro: l'indipendenza viene da Codex. Fable non respinge un rilievo senza un'evidenza verificata, e a parità di dubbio dà ragione al Validatore. Rilievi simili ricevono lo stesso trattamento: prima di decidere si rilegge il registro.
 

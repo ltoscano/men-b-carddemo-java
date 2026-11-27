@@ -53,3 +53,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T10:36:15Z,pr-18,codex-inizio,codex,orologio,validazione giro 1; scrittura nel clone e Docker
 2026-11-27T10:40:39Z,pr-17,codex-fine,codex,orologio,giro 3; exit=0; token: 84.419
 2026-11-27T10:40:59Z,pr-17,escalation,fable,orologio,giro 3: BOCCIATA per un rilievo importante nuovo (falso rosso); giri esauriti; decisione all'autore
+2026-11-27T10:44:28Z,pr-18,codex-fine,codex,orologio,giro 1; exit=0; token: 134.846
+2026-11-27T11:42:34Z,pr-17,decisione-autore,autore,orologio,mergiare e aprire una issue per il falso rosso
+2026-11-27T11:43:02Z,processo,richiesta-autore,autore,orologio,i prossimi contrasti li gestisce Fable con lo stesso pragmatismo; registro aggiornato sulle scelte
