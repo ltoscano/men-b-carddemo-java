@@ -28,8 +28,8 @@ Un'analisi è una cartella `analysis/<nome>/` con `run.sh` (produce), `check.sh`
 | `inventory-cics` | i comandi `EXEC CICS` dei programmi online: passaggi di controllo, mappe, file, code, punti di chiusura della transazione | un piccolo programma Java sopra ProLeap che elenca i blocchi; colla Python per estrazione, risoluzione dei bersagli e grafo; un verificatore con implementazione separata | [`legacy-map/inventario-cics.md`](legacy-map/inventario-cics.md), `graph-cics.json` | #22 / PR #50 |
 | `data-contract` | il contratto dati: per ogni tracciato, posizione, lunghezza e tipo di ogni campo; chiavi dei file; relazioni tra strutture e record | colla Python sopra cb2xml; censimento e relazioni scritti a mano e controllati | [`legacy-map/data-contract/`](legacy-map/data-contract/) (`contratti.md`, `chiavi.md`, `censimento.md`, `discordanze.md`) | #3, #41 / PR #32, #42 |
 | `data-codec` | le regole con cui i byte di un campo diventano un valore e viceversa, in due profili (z/OS e oracle GnuCOBOL) | una libreria Python (`glue/codec.py`); vettori di prova scritti a mano; due programmi COBOL di prova eseguiti nell'ambiente dell'oracle | [`legacy-map/data-contract/codifica.md`](legacy-map/data-contract/codifica.md) | #23 / PR #47 |
+| `data-sentinelle` | la prova che il contratto dati mette ogni campo al posto giusto: 23 record di prova scritti a mano dai copybook (241 campi), decodificati con le regole di `data-codec` | record di prova e attesi scritti a mano; uno strumento che compone i byte senza leggere il contratto; un adattatore dal contratto alla libreria di codifica; un verificatore in cui ogni controllo ha una prova negativa dedicata | [`legacy-map/data-contract/sentinelle.md`](legacy-map/data-contract/sentinelle.md) | #43 / PR #51 |
 
-In arrivo: `data-sentinelle` (record di prova per i tracciati, issue #43, PR #51 in validazione).
 
 ## Oracle GnuCOBOL (`oracle/`)
 
@@ -74,7 +74,7 @@ Misura del 21:31 UTC su `main`, righe dei file versionati esclusi dati, attesi, 
 
 | Area | Righe |
 | --- | ---: |
-| `analysis/` (cinque analisi e parti comuni) | circa 13.300 |
+| `analysis/` (sei analisi e parti comuni; la misura non comprende `data-sentinelle`, aggiunta dopo) | circa 13.300 |
 | `oracle/` | circa 5.100 |
 | `quality/` | circa 1.100 |
 | `verify.sh`, `smoke.sh`, `analysis/run.sh`, `oracle/run.sh` | circa 1.000 |

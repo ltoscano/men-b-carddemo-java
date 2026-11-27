@@ -390,3 +390,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T22:05:16Z,pr-51,codex-inizio,codex,orologio,validazione 2 di 2; in forma ristretta
 2026-11-27T22:11:27Z,processo,richiesta-autore,autore,orologio,scrivere nel paper il ragionamento che sottende alla Wave 0
 2026-11-27T22:12:15Z,paper,aggiornamento,fable,orologio,sezione 2.1: il ragionamento dietro la Wave 0
+2026-11-27T22:12:17Z,processo,risposta-consegnata,fable,orologio,sezione 2.1 scritta
+2026-11-27T22:25:39Z,pr-51,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0; verdetto: APPROVATA
+2026-11-27T22:26:07Z,pr-51,merge,fable,orologio,PR #51 mergiata dopo due validazioni (seconda APPROVATA; 20 min 23 s); chiude #43
