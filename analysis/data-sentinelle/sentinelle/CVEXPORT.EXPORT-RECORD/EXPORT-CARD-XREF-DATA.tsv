@@ -1,0 +1,22 @@
+# Sentinella scritta a mano leggendo app/cpy/CVEXPORT.cpy, righe 9-19 e 84-88 (issue #43). Non generata dal contratto.
+# Vista EXPORT-CARD-XREF-DATA: timestamp in forma base (riga 11), area dati ridefinita dalle righe 84-88.
+# La riga 'record' e' composta da glue/componi.py a partire dai valori, dalle PICTURE e dagli intervalli qui sotto.
+contratto	CVEXPORT.EXPORT-RECORD
+vista	EXPORT-CARD-XREF-DATA
+sentinella	EXPORT-CARD-XREF-DATA
+sorgente	app/cpy/CVEXPORT.cpy
+radice	9	EXPORT-RECORD
+lunghezza	500
+fonte-lunghezza	app/cpy/CVEXPORT.cpy:5	Total Record Length: 500 bytes
+fonte-lunghezza	app/jcl/CBEXPORT.jcl:33	RECORDSIZE(500 500)
+record	58 32 30 32 36 2D 31 31 2D 32 37 2D 31 36 2E 31 37 2E 31 38 2E 31 39 32 30 32 31 35 A4 E9 04 42 52 58 36 49 53 4C 45 34 34 33 32 31 34 33 32 31 34 33 32 31 34 33 32 31 34 35 36 37 38 39 31 32 33 00 00 00 12 E9 F5 22 D2 5B 46 49 4C 4C 45 52 7A*419 5D
+ordinale	riga	nome	picture	usage	indici	da	a	tipo	valore
+1	10	EXPORT-REC-TYPE	X(1)	-	-	1	1	testo	"X"
+2	11	EXPORT-TIMESTAMP	X(26)	-	-	2	27	testo	"2026-11-27-16.17.18.192021"
+6	16	EXPORT-SEQUENCE-NUM	9(9)	COMP	-	28	31	intero	900000004
+7	17	EXPORT-BRANCH-ID	X(4)	-	-	32	35	testo	"BRX6"
+8	18	EXPORT-REGION-CODE	X(5)	-	-	36	40	testo	"ISLE4"
+53	85	EXP-XREF-CARD-NUM	X(16)	-	-	41	56	testo	"4321432143214321"
+54	86	EXP-XREF-CUST-ID	9(09)	-	-	57	65	intero	456789123
+55	87	EXP-XREF-ACCT-ID	9(11)	COMP	-	66	73	intero	81234567890
+56	88	FILLER	X(427)	-	-	74	500	testo	"[FILLER" "z"*419 "]"

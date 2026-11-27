@@ -1,0 +1,17 @@
+# Sentinella scritta a mano leggendo app/cpy/CSUSR01Y.cpy, righe 17-23 (issue #43). Non generata dal contratto.
+# La riga 'record' e' composta da glue/componi.py a partire dai valori, dalle PICTURE e dagli intervalli qui sotto.
+contratto	CSUSR01Y.SEC-USER-DATA
+vista	base
+sentinella	base
+sorgente	app/cpy/CSUSR01Y.cpy
+radice	17	SEC-USER-DATA
+lunghezza	80
+fonte-lunghezza	app/jcl/DUSRSECJ.jcl:66	RECORDSIZE(80,80)
+record	41 44 4D 49 4E 30 30 31 5B 53 45 43 2D 55 53 52 2D 46 4E 41 4D 45 66*5 5D 5B 53 45 43 2D 55 53 52 2D 4C 4E 41 4D 45 6C*5 5D 50 41 53 53 57 44 30 31 55 5B 53 45 43 2D 55 53 52 2D 46 49 4C 4C 45 52 71*7 5D
+ordinale	riga	nome	picture	usage	indici	da	a	tipo	valore
+1	18	SEC-USR-ID	X(08)	-	-	1	8	testo	"ADMIN001"
+2	19	SEC-USR-FNAME	X(20)	-	-	9	28	testo	"[SEC-USR-FNAME" "f"*5 "]"
+3	20	SEC-USR-LNAME	X(20)	-	-	29	48	testo	"[SEC-USR-LNAME" "l"*5 "]"
+4	21	SEC-USR-PWD	X(08)	-	-	49	56	testo	"PASSWD01"
+5	22	SEC-USR-TYPE	X(01)	-	-	57	57	testo	"U"
+6	23	SEC-USR-FILLER	X(23)	-	-	58	80	testo	"[SEC-USR-FILLER" "q"*7 "]"

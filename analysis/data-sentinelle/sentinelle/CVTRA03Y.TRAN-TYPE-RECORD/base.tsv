@@ -1,0 +1,14 @@
+# Sentinella scritta a mano leggendo app/cpy/CVTRA03Y.cpy, righe 4-7 (issue #43). Non generata dal contratto.
+# La riga 'record' e' composta da glue/componi.py a partire dai valori, dalle PICTURE e dagli intervalli qui sotto.
+contratto	CVTRA03Y.TRAN-TYPE-RECORD
+vista	base
+sentinella	base
+sorgente	app/cpy/CVTRA03Y.cpy
+radice	4	TRAN-TYPE-RECORD
+lunghezza	60
+fonte-lunghezza	app/cpy/CVTRA03Y.cpy:2	RECLN = 60
+record	50 52 5B 54 52 41 4E 2D 54 59 50 45 2D 44 45 53 43 74*34 5D 5B 46 49 4C 4C 45 52 5D
+ordinale	riga	nome	picture	usage	indici	da	a	tipo	valore
+1	5	TRAN-TYPE	X(02)	-	-	1	2	testo	"PR"
+2	6	TRAN-TYPE-DESC	X(50)	-	-	3	52	testo	"[TRAN-TYPE-DESC" "t"*34 "]"
+3	7	FILLER	X(08)	-	-	53	60	testo	"[FILLER]"
