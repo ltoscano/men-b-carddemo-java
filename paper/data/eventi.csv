@@ -393,3 +393,10 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T22:12:17Z,processo,risposta-consegnata,fable,orologio,sezione 2.1 scritta
 2026-11-27T22:25:39Z,pr-51,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0; verdetto: APPROVATA
 2026-11-27T22:26:07Z,pr-51,merge,fable,orologio,PR #51 mergiata dopo due validazioni (seconda APPROVATA; 20 min 23 s); chiude #43
+2026-11-27T22:27:16Z,issue-5,specifica-scritta,fable,orologio,riallineata a #23 e #43; divisa (caricamento nell'oracle a parte)
+2026-11-27T22:27:16Z,issue-5,codex-inizio,codex,orologio,contestazione della specifica; sola lettura
+2026-11-27T22:27:21Z,processo,richiesta-autore,autore,orologio,quanto manca per la Wave 0
+2026-11-27T22:27:21Z,processo,risposta-consegnata,fable,orologio,stima di ciò che manca alla Wave 0 e proposta di restringere i golden al pilota
+2026-11-27T22:31:41Z,issue-5,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-27T22:32:45Z,issue-5,ready,fable,orologio,specifica pubblicata; 6 rilievi accolti; caricamento in 53
+2026-11-27T22:32:45Z,issue-5,esecutore-inizio,opus,orologio,affidata
