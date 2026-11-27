@@ -1,0 +1,3 @@
+[submodule "legacy/aws-mainframe-modernization-carddemo"]
+	path = legacy/aws-mainframe-modernization-carddemo
+	url = https://github.com/aws-samples/aws-mainframe-modernization-carddemo.git

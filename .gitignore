@@ -1,0 +1,10 @@
+.DS_Store
+target/
+build/
+*.class
+.idea/
+.vscode/
+*.iml
+.env
+.claude/settings.local.json
+.worktrees/
