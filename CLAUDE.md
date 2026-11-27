@@ -90,12 +90,16 @@ Dal 27 nov 2026 l'autore ha delegato a Fable l'approvazione e il merge delle PR,
 2. il Validatore (Codex) ha eseguito da sé i criteri di accettazione su un clone pulito e nel suo ultimo giro non resta aperto alcun rilievo bloccante;
 3. ogni rilievo del Validatore ha un esito scritto: corretto, respinto con motivo verificato sul sorgente, o rinviato a una issue esistente o nuova;
 4. il diff è nel perimetro della specifica;
-5. sono stati fatti al massimo due giri di correzione (oltre, vale la regola sui contrasti qui sotto).
+5. sono state fatte **al massimo due validazioni avversariali** (regola dell'autore, 27 nov 2026, 15:35 UTC): prima validazione, un giro di correzione, seconda validazione, che è l'ultima. Niente terzo giro di Codex.
 
-**Contrasti dopo il secondo giro (regola dell'autore, 27 nov 2026, dopo il caso della PR #17): li risolve Fable, con pragmatismo, e li registra.** Se dopo due giri di correzione il Validatore boccia ancora:
+**Dopo la seconda validazione decide Fable, con pragmatismo, e registra** (regola dell'autore del 27 nov 2026, resa più stretta alle 15:35 UTC: le validazioni sono al massimo due). Se la seconda validazione boccia ancora:
 - se i rilievi residui **non sono bloccanti** e nessuno può far passare per buono un lavoro sbagliato (niente falsi verdi, niente perdita o alterazione di dati, niente violazione di parità), Fable mergia e apre una issue per ogni rilievo residuo, con la prova del Validatore e criteri di accettazione;
-- se resta un rilievo **bloccante**, o un rischio di falso verde o sui dati, Fable non mergia: sceglie tra un giro in più mirato a quel solo rilievo, la riscrittura della specifica, o la divisione dell'issue, e registra perché;
+- se resta un rilievo **bloccante**, o un rischio di falso verde o sui dati, Fable non mergia subito: l'Esecutore corregge quel solo rilievo e **Fable verifica da sé la correzione** rieseguendo su un clone pulito il controesempio del Validatore e i criteri di accettazione (senza un terzo giro di Codex); poi mergia. Se la correzione non regge, sceglie tra riscrivere la specifica o dividere l'issue, e registra perché;
 - in ogni caso la voce di registro dice cosa chiedeva il Validatore, cosa si è deciso, perché, e dove è finito ciò che resta.
+
+**Fin dove arriva la sfiducia negli script (regola nata dalla PR #20).** Uno script di verifica deve accorgersi di un comando che fallisce, di un'attesa che non finisce, di una risposta malformata o incompleta, di un risultato rimasto da una corsa precedente. Non gli si chiede di difendersi da uno strumento che restituisce dati falsi ma ben formati con esito positivo (per esempio un `docker` sostituito che dichiara assente una risorsa presente): la difesa userebbe lo stesso strumento e non avrebbe fine. Un rilievo di questo secondo tipo si registra come limite dichiarato, non blocca il merge, e nei prompt di validazione non si chiede di cercarlo.
+
+Per far bastare due validazioni: la prima deve essere completa (il prompt elenca tutte le verifiche attese, comprese le mutazioni), e nel giro di correzione l'Esecutore cerca in tutto il lavoro lo stesso schema di difetto, non solo il caso segnalato.
 
 **Fable scala all'autore solo quando:** serve cambiare l'obiettivo del progetto o il perimetro di una wave; un contrasto bloccante resta dopo il giro in più; la decisione è irreversibile o esce dal repository.
 

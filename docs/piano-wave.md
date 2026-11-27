@@ -33,7 +33,7 @@ flowchart LR
 
 | Wave | Scopo | Issue (ordine di grandezza) | Parallelismo | Si chiude quando |
 | --- | --- | ---: | --- | --- |
-| 0A | Capire il legacy e costruire l'oracle | 12 | parziale | l'oracle rigenera i golden con un comando |
+| 0A | Capire il legacy e costruire l'oracle | 17 (8 nella prima versione del piano, 12 nella seconda) | parziale | l'oracle rigenera i golden con un comando |
 | 0B | Scheletro Java che gira in container | 4 | in parallelo a 0A | `docker compose up` porta su un'applicazione vuota ma sana, CI verde |
 | 1 | Schema e caricamento dati | 13 | alto (una tabella per issue) | i dati di esempio sono in PostgreSQL, verificati contro le fixture |
 | 2 | Pilota: una fetta batch e una online, da capo a fondo | 3–4 | no | due test di parità verdi e template di issue ritarato |
@@ -62,6 +62,36 @@ Rischio che controlla: migrare qualcosa che non si è capito, o non avere un rif
 | 0A-10 | Golden degli scenari batch concatenati, compresa la riesecuzione | 0A-9, decisione sugli scenari | Opus |
 | 0A-11 | Matrice di comportamento online: formato e pilota su `COSGN00C` | 0A-2, 0A-3 | Opus |
 | 0A-12 | Chiusura della wave: registro delle decisioni e riallineamento delle issue a valle | tutte | Fable + gate umano |
+
+**Aggiornamento del 27 novembre 2026, dopo il merge di 0A-1.** La contestazione delle specifiche ha mostrato che 0A-2, 0A-3 e 0A-4 contenevano ciascuna più lavori indipendenti. Sono state ristrette e ne sono nate altre issue (numeri di GitHub):
+
+| # | Issue | Dipende da | Stato |
+| --- | --- | --- | --- |
+| #2 | 0A-2: inventario strutturale e dipendenze statiche (`COPY`, `CALL`, JCL, transazioni) | #1 | in corso |
+| #22 | 0A-2b: collegamenti `EXEC CICS` nel grafo | #2 | bloccata |
+| #3 | 0A-3: censimento dei tracciati e contratto dati fisico | #1 | in corso |
+| #23 | 0A-3b: record sentinella e regole di codifica dei campi | #3 | bloccata |
+| #4 | 0A-4: immagine GnuCOBOL, compilazione e avvio degli 11 batch compilabili | #1 | in corso |
+| #24 | 0A-4b: routine esterne dell'oracle (`COBDATFT`, `MVSWAIT`, `CEEDAYS`) | #4 | bloccata |
+| #25 | 0A-4c: `CBSTM03A`, `CBEXPORT`, `CBIMPORT` nell'oracle | #4 | bloccata |
+| #21 | 0A-1b: completezza dei verdetti e controlli di `analysis/` in CI | #1, #14 | bloccata |
+
+Le dipendenze a valle si leggono di conseguenza: #5 (fixture) dipende anche da #23; #9 (golden dei job) anche da #24 e #25; #7 (flussi batch) e #11 (matrice online) anche da #22. La Wave 0A passa da 12 a 17 issue. Nella Wave 0B, #19 è stata aperta e chiusa come superata (vedi registro delle approvazioni, voce 13). Sempre nella 0B, #15 conteneva quattro consegne indipendenti ed è stata divisa: #15 (test di integrazione con PostgreSQL reale), #26 (confini tra moduli, dipendenze vietate, tipi in virgola mobile), #27 (copertura e SpotBugs), #28 (SonarQube in locale), in sequenza. La Wave 0B passa da 4 a 7 issue; #16 (contratti condivisi) dipende da #26 anziché dall'intera vecchia #15.
+
+**Aggiornamento delle 15:10 UTC del 27 novembre 2026.** Mergiate: #1, #4, #13, #14, #15 (PR #18, #29, #17, #20, #33). In correzione: #2, #3, #21. Issue nate dopo l'aggiornamento precedente:
+
+| # | Issue | Dipende da | Stato |
+| --- | --- | --- | --- |
+| #24 | 0A-4b: routine `COBDATFT` dell'oracle (ristretta: prima comprendeva tre routine) | #4 | in corso |
+| #36 | 0A-4e: routine `MVSWAIT` | #24 | bloccata |
+| #37 | 0A-4f: routine `CEEDAYS` | #24 | rinviata |
+| #25 | 0A-4c: `CBSTM03A` nell'oracle (da riscrivere dopo #24) | #24 | bloccata |
+| #38 | 0A-4g: `CBEXPORT` e `CBIMPORT` | #25 | bloccata |
+| #35 | 0A-4d: esito delle acquisizioni di configurazione; controlli dell'oracle in CI | #24 | bloccata |
+| #26 | 0B-3b: confini tra moduli, database vietati, tipi in virgola mobile | #15 | in corso |
+| #34 | 0B-3e: limiti di tempo e processi figli | #26 | bloccata |
+
+Le issue che toccano `oracle/build/` vanno in sequenza, perché condividono gli stessi file: #24, #25, #35, #36, #38. La Wave 0A conta ora 22 issue, la 0B 8.
 
 Dopo 0A-1, le issue 0A-2, 0A-3 e 0A-4 lavorano su cartelle disgiunte e possono procedere insieme. 0A-1 fornisce anche il meccanismo con cui ogni issue aggiunge i propri controlli nella propria cartella, senza toccare file condivisi.
 

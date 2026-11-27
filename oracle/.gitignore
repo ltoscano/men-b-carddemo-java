@@ -1,0 +1,5 @@
+# Il .gitignore della radice esclude ogni cartella build/: il passo oracle/build/ va invece versionato
+# (il suo output build/out/ resta escluso dalla regola */out/ qui sotto).
+!/build/
+.work/
+*/out/

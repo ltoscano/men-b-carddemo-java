@@ -84,3 +84,128 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T12:36:22Z,P12,contestazione-fine,codex,orologio,exit=0; token: 126.820
 2026-11-27T12:39:20Z,pr-20,codex-fine,codex,orologio,giro 1; exit=0; token: 87.641
 2026-11-27T12:39:27Z,P12,fine,fable,orologio,18 rilievi (2 bloccanti) accolti; #2 #3 #4 ristrette e ready; aperte #22 #23 #24 #25
+2026-11-27T12:41:08Z,issue-2,esecutore-inizio,sonnet,orologio,worktree isolato
+2026-11-27T12:41:08Z,issue-3,esecutore-inizio,opus,orologio,worktree isolato
+2026-11-27T12:41:08Z,issue-4,esecutore-inizio,opus,orologio,worktree isolato
+2026-11-27T12:41:36Z,pr-20,validazione-fine,fable,orologio,giro 1: BOCCIATA; 1 rilievo bloccante (falso verde nella pulizia)
+2026-11-27T12:41:36Z,issue-14,esecutore-inizio,opus,orologio,giro di correzione 1
+2026-11-27T12:41:51Z,processo,risposta-consegnata,fable,orologio,quattro Esecutori in corso (#2 #3 #4 e correzione di #14)
+2026-11-27T12:48:23Z,issue-2,esecutore-fermo,sonnet,orologio,needs-spec-update: mapa non analizza 3 JCL e non risolve le procedure; nessun codice scritto
+2026-11-27T12:48:27Z,issue-2,specifica-aggiornata,fable,orologio,voce 24 del registro
+2026-11-27T12:48:27Z,issue-2,esecutore-inizio,sonnet,orologio,ripresa dopo l'aggiornamento della specifica
+2026-11-27T12:48:32Z,issue-2,esecutore-consuntivo,sonnet,orologio,prima fase fino al fermo: durata 393 s; 36 chiamate a strumenti; contatore token 161440
+2026-11-27T12:50:22Z,issue-14,esecutore-fine,opus,orologio,giro di correzione 1 consegnato; SHA 7833340; CI verde
+2026-11-27T12:50:25Z,issue-14,esecutore-consuntivo,opus,orologio,giro di correzione 1: durata 506 s; 34 chiamate a strumenti; contatore token 376456 (cumulativo)
+2026-11-27T12:50:29Z,pr-20,codex-inizio,codex,orologio,validazione giro 2
+2026-11-27T12:59:22Z,pr-20,codex-fine,codex,orologio,giro 2; exit=0; token: 110.119
+2026-11-27T13:00:09Z,pr-20,approvazione,fable,orologio,giro 2: BOCCIATA da Codex per un rilievo che l'Approvatore respinge (strumento che restituisce dati falsi); merge
+2026-11-27T13:01:09Z,P13,inizio,fable,orologio,riallineamento delle specifiche #15 e #21
+2026-11-27T13:01:09Z,P13,contestazione-inizio,codex,orologio,specifiche di #15 e #21
+2026-11-27T13:01:59Z,processo,risposta-consegnata,fable,orologio,PR #20 mergiata; Esecutori di #2 #3 #4 in corso; contestazione di #15 #21 in corso
+2026-11-27T13:05:15Z,P13,contestazione-fine,codex,orologio,exit=0; token: 120.056
+2026-11-27T13:06:48Z,P13,fine,fable,orologio,13 rilievi (1 bloccante) accolti; #15 ristretta; aperte #26 #27 #28
+2026-11-27T13:06:48Z,issue-15,esecutore-inizio,opus,orologio,worktree isolato
+2026-11-27T13:06:48Z,issue-21,esecutore-inizio,sonnet,orologio,worktree isolato
+2026-11-27T13:07:27Z,processo,risposta-consegnata,fable,orologio,cinque Esecutori in corso: #2 #3 #4 #15 #21
+2026-11-27T13:21:44Z,issue-15,esecutore-fermo,opus,orologio,needs-spec-update: con tag e digest Docker ignora il tag; criterio sull'immagine irrealizzabile
+2026-11-27T13:21:48Z,issue-15,specifica-aggiornata,fable,orologio,voce 28 del registro
+2026-11-27T13:21:48Z,issue-15,esecutore-inizio,opus,orologio,ripresa dopo l'aggiornamento della specifica
+2026-11-27T13:21:53Z,issue-15,esecutore-consuntivo,opus,orologio,prima fase fino al fermo: durata 841 s; 49 chiamate a strumenti; contatore token 203309
+2026-11-27T13:26:17Z,issue-4,esecutore-fine,opus,orologio,PR #29 aperta; SHA 811660e; rapporto: 8 criteri su 8 dichiarati soddisfatti; CI verde
+2026-11-27T13:26:19Z,issue-4,esecutore-consuntivo,opus,orologio,durata 2686 s; contatore token 409750; 193 chiamate a strumenti; PR #29: 49 file
+2026-11-27T13:26:23Z,pr-29,codex-inizio,codex,orologio,validazione giro 1
+2026-11-27T13:27:41Z,issue-2,esecutore-fine,sonnet,orologio,PR #30 aperta; SHA 0dd95d2; rapporto: tutti i criteri dichiarati soddisfatti; CI verde
+2026-11-27T13:27:44Z,issue-2,esecutore-consuntivo,sonnet,orologio,seconda fase dopo la ripresa: durata 2329 s; 76 chiamate a strumenti; contatore token 363642 (cumulativo)
+2026-11-27T13:27:47Z,pr-30,codex-inizio,codex,orologio,validazione giro 1
+2026-11-27T13:36:07Z,issue-21,esecutore-fine,sonnet,orologio,PR #31 aperta; SHA d79caab; rapporto: 7 criteri su 7 dichiarati soddisfatti; CI verde compreso il nuovo workflow
+2026-11-27T13:36:10Z,issue-21,esecutore-consuntivo,sonnet,orologio,durata 1709 s; contatore token 136856; 88 chiamate a strumenti; PR #31: 5 file
+2026-11-27T13:36:15Z,pr-31,codex-inizio,codex,orologio,validazione giro 1
+2026-11-27T13:38:34Z,pr-29,codex-fine,codex,orologio,giro 1; exit=0; token: 220.275
+2026-11-27T13:39:12Z,pr-29,validazione-fine,fable,orologio,giro 1: BOCCIATA; 1 bloccante (opzioni) e 1 importante (segno)
+2026-11-27T13:39:12Z,issue-4,esecutore-inizio,opus,orologio,giro di correzione 1
+2026-11-27T13:43:37Z,issue-3,esecutore-fine,opus,orologio,PR #32 aperta; SHA 46bc43d; rapporto: 7 criteri su 7 dichiarati soddisfatti; CI verde
+2026-11-27T13:43:44Z,issue-3,esecutore-consuntivo,opus,orologio,durata 3722 s; contatore token 607216; 177 chiamate a strumenti; PR #32: 254 file
+2026-11-27T13:43:45Z,pr-32,codex-inizio,codex,orologio,validazione giro 1
+2026-11-27T13:51:37Z,issue-15,esecutore-fine,opus,orologio,PR #33 aperta; SHA 8e1a4a1; rapporto: 7 criteri su 7 dichiarati soddisfatti; CI verde
+2026-11-27T13:51:43Z,issue-15,esecutore-consuntivo,opus,orologio,seconda fase dopo la ripresa: durata 2635 s; 111 chiamate a strumenti; contatore token 304110 (cumulativo); PR #33: 7 file
+2026-11-27T13:51:45Z,pr-33,codex-inizio,codex,orologio,validazione giro 1
+2026-11-27T14:00:42Z,issue-4,esecutore-fine,opus,orologio,giro di correzione 1 consegnato; SHA 486d069; CI verde
+2026-11-27T14:00:44Z,issue-4,esecutore-consuntivo,opus,orologio,giro di correzione 1: durata 1266 s; 61 chiamate a strumenti; contatore token 517081 (cumulativo)
+2026-11-27T14:00:46Z,pr-29,codex-inizio,codex,orologio,validazione giro 2
+2026-11-27T14:02:11Z,pr-30,codex-fine,codex,orologio,giro 1; exit=0; token: 206.655
+2026-11-27T14:02:24Z,pr-31,codex-fine,codex,orologio,giro 1; exit=0; token: 94.177
+2026-11-27T14:02:55Z,pr-30,validazione-fine,fable,orologio,giro 1: BOCCIATA; 2 bloccanti e 3 importanti accolti
+2026-11-27T14:02:55Z,issue-2,esecutore-inizio,sonnet,orologio,giro di correzione 1
+2026-11-27T14:03:26Z,pr-31,validazione-fine,fable,orologio,giro 1: BOCCIATA; 2 importanti (falsi verdi) accolti
+2026-11-27T14:03:26Z,issue-21,esecutore-inizio,sonnet,orologio,giro di correzione 1
+2026-11-27T14:03:32Z,pr-32,codex-fine,codex,orologio,giro 1; exit=0; token: 397.177
+2026-11-27T14:04:15Z,pr-32,validazione-fine,fable,orologio,giro 1: BOCCIATA; 2 bloccanti e 1 minore accolti; contratti corretti nei campioni
+2026-11-27T14:04:15Z,issue-3,esecutore-inizio,opus,orologio,giro di correzione 1
+2026-11-27T14:06:44Z,pr-33,codex-fine,codex,orologio,giro 1; exit=0; token: 127.305
+2026-11-27T14:07:19Z,pr-33,validazione-fine,fable,orologio,giro 1: BOCCIATA; 2 rilievi accolti
+2026-11-27T14:07:19Z,issue-15,esecutore-inizio,opus,orologio,giro di correzione 1
+2026-11-27T14:11:15Z,pr-29,codex-fine,codex,orologio,giro 2; exit=0; token: 157.065
+2026-11-27T14:11:51Z,pr-29,validazione-fine,fable,orologio,giro 2: BOCCIATA; 1 importante (configurazione dall'ambiente); ultimo giro di correzione
+2026-11-27T14:11:51Z,issue-4,esecutore-inizio,opus,orologio,giro di correzione 2
+2026-11-27T14:26:02Z,issue-21,esecutore-fine,sonnet,orologio,giro di correzione 1 consegnato; SHA 4b70d0e; CI verde
+2026-11-27T14:26:05Z,issue-21,esecutore-consuntivo,sonnet,orologio,giro di correzione 1: 48 chiamate a strumenti in piu; contatore token 202038 (cumulativo); durata riportata cumulativa e comprensiva di attese: fa fede l'intervallo inizio-fine
+2026-11-27T14:26:06Z,pr-31,codex-inizio,codex,orologio,validazione giro 2
+2026-11-27T14:26:42Z,issue-15,esecutore-fine,opus,orologio,giro di correzione 1 consegnato; SHA 02a8741; CI verde
+2026-11-27T14:26:45Z,issue-15,esecutore-consuntivo,opus,orologio,giro di correzione 1: durata 1142 s; 46 chiamate a strumenti; contatore token 388988 (cumulativo)
+2026-11-27T14:26:47Z,pr-33,codex-inizio,codex,orologio,validazione giro 2
+2026-11-27T14:29:42Z,issue-3,esecutore-fine,opus,orologio,giro di correzione 1 consegnato; SHA 48f491e; CI verde; 58 contratti
+2026-11-27T14:29:45Z,issue-3,esecutore-consuntivo,opus,orologio,giro di correzione 1: durata 1506 s; 65 chiamate a strumenti; contatore token 706950 (cumulativo)
+2026-11-27T14:29:46Z,pr-32,codex-inizio,codex,orologio,validazione giro 2
+2026-11-27T14:30:06Z,issue-2,esecutore-fine,sonnet,orologio,giro di correzione 1 consegnato; SHA c7f30f7; CI verde
+2026-11-27T14:30:06Z,issue-2,esecutore-consuntivo,sonnet,orologio,giro di correzione 1: durata 1608 s; 27 chiamate a strumenti; contatore token 436934 (cumulativo)
+2026-11-27T14:30:11Z,pr-30,codex-inizio,codex,orologio,validazione giro 2
+2026-11-27T14:41:42Z,issue-4,esecutore-fine,opus,orologio,giro di correzione 2 consegnato; SHA e34fcce; CI verde; 72 prove negative
+2026-11-27T14:41:44Z,issue-4,esecutore-consuntivo,opus,orologio,giro di correzione 2: durata 1769 s; 91 chiamate a strumenti; contatore token 626035 (cumulativo)
+2026-11-27T14:41:46Z,pr-29,codex-inizio,codex,orologio,validazione giro 3 (finale)
+2026-11-27T14:50:47Z,pr-33,codex-fine,codex,orologio,giro 2; exit=0; token: 169.102
+2026-11-27T14:51:23Z,pr-33,approvazione,fable,orologio,giro 2: APPROVATA CON RISERVE; rilievo residuo rinviato a #34
+2026-11-27T14:57:05Z,pr-32,codex-fine,codex,orologio,giro 2; exit=0; token: 138.808
+2026-11-27T14:57:37Z,pr-32,validazione-fine,fable,orologio,giro 2: BOCCIATA; 1 bloccante (due trasferimenti non rilevati in CBACT04C)
+2026-11-27T14:57:37Z,issue-3,esecutore-inizio,opus,orologio,giro di correzione 2
+2026-11-27T14:58:40Z,pr-29,codex-fine,codex,orologio,giro 3; exit=0; token: 152.470
+2026-11-27T14:59:15Z,pr-29,approvazione,fable,orologio,giro 3: BOCCIATA da Codex per 1 importante e 1 minore; giri esauriti; merge con issue di seguito #35
+2026-11-27T14:59:29Z,pr-31,codex-fine,codex,orologio,giro 2; exit=0; token: 129.653
+2026-11-27T14:59:47Z,pr-30,codex-fine,codex,orologio,giro 2; exit=0; token: 146.185
+2026-11-27T15:00:01Z,pr-31,validazione-fine,fable,orologio,giro 2: BOCCIATA; 2 importanti
+2026-11-27T15:00:01Z,issue-21,esecutore-inizio,sonnet,orologio,giro di correzione 2
+2026-11-27T15:00:32Z,pr-30,validazione-fine,fable,orologio,giro 2: BOCCIATA; 1 bloccante (attributi non verificati) e 1 importante
+2026-11-27T15:00:32Z,issue-2,esecutore-inizio,sonnet,orologio,giro di correzione 2
+2026-11-27T15:00:56Z,P15,contestazione-inizio,codex,orologio,bozze di #24 #25 #26
+2026-11-27T15:01:27Z,processo,risposta-consegnata,fable,orologio,PR #29 e #33 mergiate; #30 #31 #32 in correzione; contestazione di #24 #25 #26 in corso
+2026-11-27T15:06:11Z,P15,contestazione-fine,codex,orologio,exit=0; token: 159.373
+2026-11-27T15:08:01Z,P15,fine,fable,orologio,17 rilievi (7 bloccanti); #24 ristretta e #26 pronte; aperte #36 #37 #38
+2026-11-27T15:08:01Z,issue-24,esecutore-inizio,opus,orologio,worktree isolato
+2026-11-27T15:08:01Z,issue-26,esecutore-inizio,sonnet,orologio,worktree isolato
+2026-11-27T15:08:44Z,processo,risposta-consegnata,fable,orologio,Esecutori in corso: #2 #3 #21 (correzione); #24; #26
+2026-11-27T15:17:32Z,issue-21,esecutore-fine,sonnet,orologio,giro di correzione 2 consegnato; SHA ceeddcf; CI verde
+2026-11-27T15:17:35Z,issue-21,esecutore-consuntivo,sonnet,orologio,giro di correzione 2: durata 1033 s; 32 chiamate a strumenti; contatore token 238129 (cumulativo)
+2026-11-27T15:17:37Z,pr-31,codex-inizio,codex,orologio,validazione giro 3 (finale)
+2026-11-27T15:18:56Z,issue-3,esecutore-fine,opus,orologio,giro di correzione 2 consegnato; SHA 353e3bc; CI verde; 59 contratti
+2026-11-27T15:18:59Z,issue-3,esecutore-consuntivo,opus,orologio,giro di correzione 2: durata 1259 s; 52 chiamate a strumenti; contatore token 773396 (cumulativo)
+2026-11-27T15:19:00Z,pr-32,codex-inizio,codex,orologio,validazione giro 3 (finale)
+2026-11-27T15:24:29Z,issue-2,esecutore-fine,sonnet,orologio,giro di correzione 2 consegnato; SHA 9304eef; CI verde
+2026-11-27T15:24:32Z,issue-2,esecutore-consuntivo,sonnet,orologio,giro di correzione 2: durata 1417 s; 21 chiamate a strumenti; contatore token 484742 (cumulativo)
+2026-11-27T15:24:33Z,pr-30,codex-inizio,codex,orologio,validazione giro 3 (finale)
+2026-11-27T15:29:47Z,processo,richiesta-autore,autore,orologio,chiede lo stato
+2026-11-27T15:31:26Z,issue-26,esecutore-fermo,sonnet,orologio,needs-spec-update: i controlli nel ciclo Maven girano anche nella build delle immagini e la configurazione non e nel contesto Docker
+2026-11-27T15:31:30Z,issue-26,specifica-aggiornata,fable,orologio,voce 46 del registro
+2026-11-27T15:31:30Z,issue-26,esecutore-inizio,sonnet,orologio,ripresa dopo l'aggiornamento della specifica
+2026-11-27T15:31:52Z,processo,richiesta-autore,autore,orologio,massimo 2 validazioni avversariali per PR; tenere aggiornato il registro
+2026-11-27T15:31:52Z,issue-26,esecutore-consuntivo,sonnet,orologio,prima fase fino al fermo: durata 1349 s; 55 chiamate a strumenti; contatore token 164594
+2026-11-27T15:32:17Z,issue-24,esecutore-fine,opus,orologio,PR #39 aperta; SHA 5c63275; 7 criteri dichiarati soddisfatti; CI verde
+2026-11-27T15:32:17Z,issue-24,esecutore-consuntivo,opus,orologio,durata 1390 s; 67 chiamate a strumenti; contatore token 225553
+2026-11-27T15:32:23Z,pr-39,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T15:44:16Z,issue-26,esecutore-fine,sonnet,orologio,PR #40 aperta; SHA b6b501e; CI verde; 31 casi di regressione dichiarati
+2026-11-27T15:44:16Z,issue-26,esecutore-consuntivo,sonnet,orologio,seconda fase dopo la ripresa: durata 2118 s; 70 chiamate a strumenti; contatore token 179444
+2026-11-27T15:44:17Z,processo,risposta-consegnata,fable,orologio,PR #40 in validazione 1 di 2; in attesa di cinque verdetti Codex
+2026-11-27T15:44:23Z,pr-40,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T15:47:01Z,pr-39,codex-fine,codex,orologio,validazione 1; exit=0; token: 
+2026-11-27T15:47:39Z,pr-39,decisione,fable,orologio,validazione 1: rilievo bloccante accolto; rinvio all'Esecutore per l'unico giro di correzione
+2026-11-27T15:47:39Z,issue-24,esecutore-inizio,opus,orologio,giro di correzione unico
+2026-11-27T15:51:24Z,pr-31,codex-fine,codex,orologio,giro 3; exit=0; token: 104.651
+2026-11-27T15:51:52Z,pr-31,merge,fable,orologio,PR #31 mergiata dopo il giro 3 (APPROVATA); chiude #21

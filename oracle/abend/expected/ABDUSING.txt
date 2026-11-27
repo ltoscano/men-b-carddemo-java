@@ -1,0 +1,10 @@
+== codice di uscita
+99
+== stdout
+ABDUSING OPEN 00
+ABDUSING WRITE 00
+== stderr
+Warning: program compiled against libxml 212 using older 209
+MENB-ORACLE CEE3ABD: ARRESTO ANOMALO ABCODE=+0000000999 TIMING=+0000000000
+libcob: warning: implicit CLOSE of ABD-FILE ('ABDFILE')
+== file nella cartella di lavoro

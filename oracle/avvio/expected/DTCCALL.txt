@@ -1,0 +1,8 @@
+== codice di uscita
+98
+== stdout
+DTCCALL CALL CSUTLDTC
+== stderr
+Warning: program compiled against libxml 212 using older 209
+MENB-ORACLE SEGNAPOSTO: CEEDAYS NON IMPLEMENTATO (ISSUE #24)
+== file nella cartella di lavoro

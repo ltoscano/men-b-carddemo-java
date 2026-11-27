@@ -1,5 +1,7 @@
 # Prompt del Validatore sulle pull request
 
+> Dal 27 novembre 2026, 15:35 UTC, per decisione dell'autore le validazioni avversariali sono al massimo due per PR. Le PR #17, #18, #29, #30, #31, #32 ne hanno avute tre.
+
 Testo dato a Codex per validare una PR. Cambiano solo `{N}` (issue) e `{PR}`. Codex gira in una copia pulita del ramo della PR, senza accesso alla conversazione dell'Esecutore.
 
 Comando:

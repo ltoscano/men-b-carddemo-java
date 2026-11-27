@@ -1,0 +1,70 @@
+# Stack CardDemo: database, servizio online, runner batch.
+#   docker compose up -d --wait        avvia db e online (batch non parte)
+#   docker compose run --rm batch      esegue installationCheckJob e termina
+# Funziona da clone pulito senza creare file: ogni variabile ha un valore predefinito di
+# sviluppo, documentato in .env.example (copiarlo in .env solo per cambiarlo).
+
+x-database-env: &database-env
+  SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${MENB_DB_NAME:-carddemo}
+  SPRING_DATASOURCE_USERNAME: ${MENB_DB_USER:-carddemo}
+  SPRING_DATASOURCE_PASSWORD: ${MENB_DB_PASSWORD:-carddemo-sviluppo}
+
+services:
+  db:
+    # PostgreSQL 18.7 (verificato su postgresql.org e Docker Hub il 27 nov 2026)
+    image: postgres:18.7-trixie@sha256:64c8b0d31e4ab6ea665e8426ea406a94bf52de3c05b3a4a8bf713704eefa9328
+    environment:
+      POSTGRES_DB: ${MENB_DB_NAME:-carddemo}
+      POSTGRES_USER: ${MENB_DB_USER:-carddemo}
+      POSTGRES_PASSWORD: ${MENB_DB_PASSWORD:-carddemo-sviluppo}
+    volumes:
+      # Dalla 18 l'immagine ufficiale tiene i dati sotto /var/lib/postgresql/<versione>.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      # Via TCP: durante l'inizializzazione il server temporaneo ascolta solo sul socket
+      # locale, quindi il servizio risulta sano solo quando accetta connessioni vere.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+      start_period: 60s
+      start_interval: 1s
+
+  online:
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+      args:
+        MODULE: online
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *database-env
+    ports:
+      - "${MENB_ONLINE_PORT:-8080}:8080"
+    healthcheck:
+      # HTTP 200 solo se lo stato complessivo e' UP; il componente "db" ne fa parte.
+      test: ["CMD", "wget", "-q", "-T", "3", "-O", "/dev/null", "http://127.0.0.1:8080/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 6
+      start_period: 90s
+      start_interval: 2s
+
+  batch:
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+      args:
+        MODULE: batch
+    # Il profilo esclude batch da "docker compose up"; "docker compose run batch" lo attiva.
+    profiles: ["batch"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *database-env
+
+volumes:
+  pgdata:

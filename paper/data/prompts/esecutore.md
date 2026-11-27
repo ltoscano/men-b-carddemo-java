@@ -29,3 +29,10 @@ Consegna:
 Rapporto finale (a me, non nella PR): numero e URL della PR, esito di ogni criterio di accettazione, cosa non sei riuscito a fare, difficoltà incontrate e tentativi falliti, e ogni dubbio sulla specifica. Sii esatto: un criterio non soddisfatto va detto come tale.
 
 Note per questa issue: {note}
+
+---
+
+Aggiunte successive al testo di base (27 novembre 2026), nate dall'esperienza delle prime PR e inserite nelle note:
+- "Il lavoro verrà validato da un revisore avversariale che eseguirà ogni criterio in un clone pulito…", con l'elenco dei difetti trovati nelle PR precedenti dello stesso genere e l'invito a leggerne i commenti prima di cominciare.
+- Convivenza su Docker tra Esecutori in parallelo: prefisso proprio per le risorse, nessun comando globale, risorse condivise in sola lettura.
+- Da aggiungere d'ora in poi: i file temporanei nella cartella di appoggio condivisa hanno nomi univoci con il numero dell'issue. Due Esecutori in parallelo hanno usato lo stesso nome per il testo della PR e uno ha sovrascritto il file dell'altro (accortosene, lo ha riscritto).
