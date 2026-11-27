@@ -209,3 +209,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T15:47:39Z,issue-24,esecutore-inizio,opus,orologio,giro di correzione unico
 2026-11-27T15:51:24Z,pr-31,codex-fine,codex,orologio,giro 3; exit=0; token: 104.651
 2026-11-27T15:51:52Z,pr-31,merge,fable,orologio,PR #31 mergiata dopo il giro 3 (APPROVATA); chiude #21
+2026-11-27T15:52:04Z,pr-32,codex-fine,codex,orologio,giro 3; exit=0; token: 171.206
+2026-11-27T15:53:03Z,pr-32,decisione,fable,orologio,giro 3 APPROVATA CON RISERVE; rilievo minore rinviato a #41; ramo allineato a main; attesa CI integrata
+2026-11-27T15:57:47Z,pr-32,merge,fable,orologio,PR #32 mergiata dopo il giro 3 e CI integrata verde su f9d7888; chiude #3; residuo in #41
