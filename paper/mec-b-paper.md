@@ -70,6 +70,15 @@ flowchart LR
 
 Il Validatore è volutamente un modello di un altro fornitore rispetto all'Esecutore: non ne condivide il contesto né le abitudini. Interviene due volte: sulla specifica, prima che il lavoro cominci, e sulla PR, a lavoro fatto.
 
+**La catena: specifica → test → issue → implementazione agentica.** È l'ossatura del metodo, e ogni altra regola serve a tenerla in piedi.
+
+1. *Specifica.* Che cosa deve fare il pezzo, ricavato dal sorgente originale e contestato dal Validatore prima di cominciare.
+2. *Test.* Il controllo eseguibile che dirà se il pezzo è giusto. Esiste prima dell'implementazione ed è scritto da chi non la scriverà. Per un programma tradotto è il confronto con l'output dell'originale; prima che la traduzione esista, quel test fallisce.
+3. *Issue.* L'ordine di lavoro: specifica, perimetro e il comando che esegue il test. È l'unica cosa che l'Esecutore riceve.
+4. *Implementazione agentica.* Un agente implementa finché il test passa, senza poter toccare né il test né i valori attesi. Un secondo agente prova a far passare il test con un lavoro sbagliato. La persona non scrive codice e non approva ogni modifica: fissa le regole, legge il registro, può annullare.
+
+L'ordine conta. Se il test nasce insieme all'implementazione, o dopo, chi implementa finisce per scrivere il test che il proprio lavoro supera: è il difetto che il Validatore ha trovato più spesso nel primo giorno (sezione 7.1). Nella preparazione la catena ha preso questa forma: valori attesi scritti a mano e registrati *prima* dello strumento che doveva produrli, con l'ordine dei commit verificato dal Validatore. Nella traduzione prende la forma piena: l'output di riferimento e il test di parità entrano nel ramo principale prima che l'issue di traduzione sia affidata.
+
 *Brownfield* indica un sistema che esiste già e il cui comportamento va preservato; *greenfield* un sistema costruito da zero. Questa migrazione è entrambe le cose: il comportamento da preservare è brownfield, lo stack di arrivo è greenfield. Servono quindi due preparazioni ("Fasi 0") prima di qualsiasi logica di business: capire il legacy e costruire un riferimento con cui confrontarsi, e preparare lo scheletro del nuovo sistema. Il riferimento si chiama *oracle*: qualcosa che, dato un ingresso, dice quale deve essere l'uscita giusta.
 
 ### 2.1 Il ragionamento dietro la Wave 0
@@ -137,22 +146,23 @@ Questa sezione descrive un cambio di rotta deciso dall'autore alle 22:53 UTC del
 | | A: tutta la preparazione, poi si traduce (piano iniziale) | B: il minimo per un programma, poi si traduce (piano in vigore) |
 | --- | --- | --- |
 | Che cosa si prepara prima della prima traduzione | dati di prova, output di riferimento e routine esterne per *tutti* i programmi batch; descrizione del comportamento di *tutti* i programmi a schermo | le stesse cose, ma solo per il programma pilota `CBACT01C` |
-| Quando arriva il primo confronto tra Java e originale | dopo tutta la Wave 0 | dopo cinque lavori in fila (figura qui sotto) |
+| Quando arriva il primo confronto tra Java e originale | dopo tutta la Wave 0 | dopo sei lavori in fila (figura qui sotto) |
 | Che cosa si sa presto | che i riferimenti sono completi | se una traduzione supera il confronto, e quanto costa |
 | Rischio | preparare cose che la traduzione mostrerà inutili o sbagliate nella forma | scoprire tardi che a un programma serve qualcosa di non preparato |
 | Quando finisce la preparazione | quando tutti i riferimenti si rigenerano con un comando | non finisce in un momento solo: ogni programma ha la sua, subito prima |
 
 Il rischio di B è attenuato da ciò che esiste già: la mappa dice che cosa chiama ogni programma e quali file usa, e l'oracle compila già tutti i batch. Manca, programma per programma, l'ultimo tratto: i suoi dati d'ingresso e i suoi output di riferimento.
 
-**Il percorso al pilota.** Cinque lavori in fila, più due in parallelo che non li rallentano.
+**Il percorso al pilota.** Sei lavori in fila, più due in parallelo che non li rallentano. Il quinto e il sesto sono la catena della sezione 2 applicata alla traduzione: prima il test, scritto da un Esecutore, poi l'implementazione, affidata a un altro che il test non può modificarlo.
 
 ```mermaid
 flowchart LR
     A[1. Dati di esempio<br/>decodificati e verificati] --> B[2. File dei conti<br/>caricato nell'oracle]
     B --> C[3. Output di riferimento<br/>di CBACT01C]
-    C --> E[5. CBACT01C in Java,<br/>confronto byte per byte]
-    D[4. Tabella dei conti<br/>in PostgreSQL] --> E
+    C --> T[5. Test di parità,<br/>che fallisce: manca il Java]
+    D[4. Tabella dei conti<br/>in PostgreSQL] --> T
     A --> D
+    T --> E[6. CBACT01C in Java:<br/>il test passa]
     P1[Codifica dei campi in Java] -.-> E
     P2[Routine MVSWAIT<br/>nell'oracle] -.-> B
 ```
@@ -686,7 +696,7 @@ Ogni riga dice che cosa è successo, in quale passo della sezione 5.0 lo si legg
 3. Si costruiscono il riferimento eseguibile (oracle) e lo scheletro del sistema nuovo, in container, ciascuno con un comando che dice se funziona (9-15).
 4. Si scrive che cosa richiede la conferma di una persona e che cosa è delegato (9, 10).
 
-**Per ogni lavoro**
+**Per ogni lavoro** (la catena specifica → test → issue → implementazione della sezione 2: i punti 1-3 sono la specifica e l'issue, il test è nei criteri dell'issue o in una issue precedente, i punti 4-8 l'implementazione automatizzata)
 
 | # | Chi | Che cosa fa | Come si capisce che è riuscito |
 | --- | --- | --- | --- |

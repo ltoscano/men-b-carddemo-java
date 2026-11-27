@@ -248,7 +248,10 @@ Questa sezione prevale sulle precedenti dove differiscono. In particolare la con
 | 2. File dei conti caricato nell'oracle | #53 (ristretta al solo file dei conti) | bloccata da #5 e #36 |
 | 3. Output di riferimento di `CBACT01C` | #55 (divisa da #9) | bloccata da #53 |
 | 4. Tabella dei conti in PostgreSQL e suo caricamento | Wave 1, una sola tabella: da aprire | — |
-| 5. `CBACT01C` tradotto, con parità byte per byte | Wave 2, pilota batch: da aprire | — |
+| 5. Test di parità di `CBACT01C` contro il golden, scritto prima della traduzione e rosso finché il Java non esiste | Wave 2: da aprire | — |
+| 6. `CBACT01C` tradotto: il test del passo 5 passa, senza che l'Esecutore lo modifichi | Wave 2, pilota batch: da aprire | — |
+
+I passi 5 e 6 applicano la catena del metodo (specifica → test → issue → implementazione agentica): due issue, due Esecutori diversi.
 
 In parallelo, senza dipendenze dal percorso: codifica dei campi in Java (#54, in corso), routine `MVSWAIT` (#36, in validazione).
 

@@ -36,6 +36,8 @@ Baseline misurata (27 nov 2026): `app/cbl` 31 programmi / 20.650 righe; 44 `.cbl
 
 ## Il metodo in breve
 
+**La catena (richiamata dall'autore il 27 nov 2026): specifica → test → issue → implementazione agentica altamente automatizzata.** Il test esiste prima dell'implementazione ed è scritto da chi non la scriverà; l'issue lo indica come comando di accettazione; l'Esecutore non modifica né il test né i valori attesi. Per un programma tradotto: golden e test di parità (rosso) sono su `main` prima che l'issue di traduzione diventi `ready`. La persona non scrive codice: fissa le regole, legge il registro, può annullare.
+
 Migrazione **ibrida**: il comportamento da preservare è brownfield, lo stack target è greenfield. Quindi due Fasi 0 prima di qualsiasi logica di business.
 
 **Fonte unica per wave, numerazione e dipendenze: `docs/piano-wave.md`.** In caso di discordanza con altri documenti (compreso `paper/piano-migrazione-carddemo-java.md`, che è la proposta iniziale) vale il piano. In sintesi:

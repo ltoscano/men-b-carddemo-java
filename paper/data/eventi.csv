@@ -422,3 +422,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T22:53:28Z,processo,risposta-consegnata,fable,orologio,decisione B applicata: piano; registro; issue; paper
 2026-11-27T22:56:03Z,paper,richiesta-autore,autore,orologio,aggiornare il paper con l'approccio B; chiarezza per narrazione; lezioni; processo
 2026-11-27T22:58:19Z,paper,fine,fable,orologio,sezioni 2.2; 7.1; 7.2; voce 87
+2026-11-27T22:58:25Z,paper,risposta-consegnata,fable,orologio,paper aggiornato; commit 992d0e6
+2026-11-27T22:59:58Z,paper,richiesta-autore,autore,orologio,regola 1 confermata; ricordare la catena specifiche-test-issue-implementazione agentica
