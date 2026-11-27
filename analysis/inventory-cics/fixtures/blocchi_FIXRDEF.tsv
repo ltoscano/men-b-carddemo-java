@@ -1,0 +1,27 @@
+file	riga	riga_fine	comando	categoria	attributi	opzioni	bersagli	archi
+app/cbl/FIXRDEF.cbl	49	49	XCTL	trasferimento	-	PROGRAM(WS-PGM)	PROGRAM=PROGRAM(WS-PGM) non_risolto !modificato	-
+app/cbl/FIXRDEF.cbl	50	50	LINK	trasferimento	-	PROGRAM(WS-PGM3)	PROGRAM=PROGRAM(WS-PGM3) non_risolto !modificato	-
+app/cbl/FIXRDEF.cbl	51	51	XCTL	trasferimento	-	PROGRAM(WS-PGM-C)	PROGRAM=PROGRAM(WS-PGM-C) non_risolto !modificato	-
+app/cbl/FIXRDEF.cbl	52	52	XCTL	trasferimento	-	PROGRAM(WS-PGM-OK)	PROGRAM=PROGRAM(WS-PGM-OK) costante FIXTGT @app/cbl/FIXRDEF.cbl:27	PROGRAM>program:FIXTGT
+app/cbl/FIXRDEF.cbl	53	53	ASSIGN	altro	-	PROGRAM(WS-PGM-A)	-	-
+app/cbl/FIXRDEF.cbl	54	54	LINK	trasferimento	-	PROGRAM(WS-PGM-A)	PROGRAM=PROGRAM(WS-PGM-A) non_risolto !modificato	-
+app/cbl/FIXRDEF.cbl	55	55	READ	file	modalita=lettura	FILE('FIXFILE') | INTO(WS-K-INTO)	FILE=FILE('FIXFILE') letterale FIXFILE	FILE>cics-file:FIXFILE
+app/cbl/FIXRDEF.cbl	56	57	READNEXT	file	modalita=scorrimento-avanti	FILE('FIXFILE') | INTO(WS-REC) | RIDFLD(WS-K-RID)	FILE=FILE('FIXFILE') letterale FIXFILE	FILE>cics-file:FIXFILE
+app/cbl/FIXRDEF.cbl	58	58	RETRIEVE	altro	-	INTO(WS-K-RET)	-	-
+app/cbl/FIXRDEF.cbl	59	59	ASKTIME	altro	-	ABSTIME(WS-K-ABS)	-	-
+app/cbl/FIXRDEF.cbl	60	61	FORMATTIME	altro	-	ABSTIME(WS-REC) | YYYYMMDD(WS-K-FMT)	-	-
+app/cbl/FIXRDEF.cbl	62	63	RECEIVE MAP	mappe	-	MAP('FIXMAP') | MAPSET('FIXSET') | INTO(WS-K-MAPI)	MAP=MAP('FIXMAP') letterale FIXMAP | MAPSET=MAPSET('FIXSET') letterale FIXSET	MAP>cics-map:FIXSET/FIXMAP | MAPSET>cics-mapset:FIXSET
+app/cbl/FIXRDEF.cbl	64	65	LINK	trasferimento	-	PROGRAM('FIXTGT') | COMMAREA(WS-K-COMM)	PROGRAM=PROGRAM('FIXTGT') letterale FIXTGT	PROGRAM>program:FIXTGT
+app/cbl/FIXRDEF.cbl	66	67	READ	file	modalita=lettura	FILE('FIXFILE') | INTO(WS-REC) | RESP(WS-K-RESP)	FILE=FILE('FIXFILE') letterale FIXFILE	FILE>cics-file:FIXFILE
+app/cbl/FIXRDEF.cbl	68	68	INQUIRE PROGRAM	altro	-	PROGRAM(WS-K-INQ)	-	-
+app/cbl/FIXRDEF.cbl	69	69	RECEIVE	altro	-	INTO(WS-REC) | LENGTH(WS-K-LEN)	-	-
+app/cbl/FIXRDEF.cbl	70	70	XCTL	trasferimento	-	PROGRAM(WS-K-INTO)	PROGRAM=PROGRAM(WS-K-INTO) non_risolto !modificato	-
+app/cbl/FIXRDEF.cbl	71	71	XCTL	trasferimento	-	PROGRAM(WS-K-RID)	PROGRAM=PROGRAM(WS-K-RID) non_risolto !modificato	-
+app/cbl/FIXRDEF.cbl	72	72	XCTL	trasferimento	-	PROGRAM(WS-K-RET)	PROGRAM=PROGRAM(WS-K-RET) non_risolto !modificato	-
+app/cbl/FIXRDEF.cbl	73	73	XCTL	trasferimento	-	PROGRAM(WS-K-ABS)	PROGRAM=PROGRAM(WS-K-ABS) non_risolto !modificato	-
+app/cbl/FIXRDEF.cbl	74	74	XCTL	trasferimento	-	PROGRAM(WS-K-FMT)	PROGRAM=PROGRAM(WS-K-FMT) non_risolto !modificato	-
+app/cbl/FIXRDEF.cbl	75	75	XCTL	trasferimento	-	PROGRAM(WS-K-MAPI)	PROGRAM=PROGRAM(WS-K-MAPI) non_risolto !modificato	-
+app/cbl/FIXRDEF.cbl	76	76	XCTL	trasferimento	-	PROGRAM(WS-K-COMM)	PROGRAM=PROGRAM(WS-K-COMM) non_risolto !modificato	-
+app/cbl/FIXRDEF.cbl	77	77	XCTL	trasferimento	-	PROGRAM(WS-K-RESP)	PROGRAM=PROGRAM(WS-K-RESP) non_risolto !modificato	-
+app/cbl/FIXRDEF.cbl	78	78	XCTL	trasferimento	-	PROGRAM(WS-K-INQ)	PROGRAM=PROGRAM(WS-K-INQ) non_risolto !modificato	-
+app/cbl/FIXRDEF.cbl	79	79	XCTL	trasferimento	-	PROGRAM(WS-K-LEN)	PROGRAM=PROGRAM(WS-K-LEN) non_risolto !modificato	-

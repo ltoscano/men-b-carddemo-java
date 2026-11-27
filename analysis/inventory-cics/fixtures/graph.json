@@ -6,6 +6,7 @@
   {"id": "program:FIXCICS", "tipo": "program", "nome": "FIXCICS", "file": "app/cbl/FIXCICS.cbl", "modulo": "base"},
   {"id": "program:FIXCOPY2", "tipo": "program", "nome": "FIXCOPY2", "file": "app/cbl/FIXCOPY2.cbl", "modulo": "base"},
   {"id": "program:FIXTGT", "tipo": "program", "nome": "FIXTGT", "file": "app/cbl/FIXTGT.cbl", "modulo": "base"},
+  {"id": "program:FIXRDEF", "tipo": "program", "nome": "FIXRDEF", "file": "app/cbl/FIXRDEF.cbl", "modulo": "base"},
   {"id": "copybook:FIXCPY", "tipo": "copybook", "nome": "FIXCPY", "file": "app/cpy/FIXCPY.cpy", "modulo": "base"},
   {"id": "external:NOEXIST", "tipo": "external", "nome": "NOEXIST", "origine": "COPY non risolta: nessun copybook con questo nome nel manifesto"},
   {"id": "external:EXTBASE", "tipo": "external", "nome": "EXTBASE", "origine": "nodo external gia' presente nel grafo di base"},
