@@ -218,3 +218,15 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T15:59:41Z,processo,richiesta-autore,autore,orologio,approvate le tre leve per velocizzare; compresa la validazione proporzionata al rischio
 2026-11-27T16:01:05Z,pr-40,decisione,fable,orologio,validazione 1: tre rilievi accolti (uno bloccante); due respinti con motivo; rinvio all'Esecutore
 2026-11-27T16:01:05Z,issue-26,esecutore-inizio,sonnet,orologio,giro di correzione unico
+2026-11-27T16:01:28Z,issue-41,esecutore-inizio,sonnet,orologio,issue a basso rischio; senza Codex
+2026-11-27T16:01:31Z,processo,risposta-consegnata,fable,orologio,tre leve applicate; PR #40 rinviata; #41 affidata senza Codex
+2026-11-27T16:03:30Z,issue-41,esecutore-fine,sonnet,orologio,PR #42 aperta; diff di una riga
+2026-11-27T16:03:34Z,pr-42,verifica-inizio,fable,orologio,criteri rieseguiti su clone pulito; senza Codex
+2026-11-27T16:03:34Z,pr-42,verifica-fine,fable,orologio,data-contract --check rieseguito
+2026-11-27T16:03:42Z,issue-41,esecutore-consuntivo,sonnet,orologio,durata 114 s; 8 chiamate a strumenti; contatore token 66543
+2026-11-27T16:03:42Z,pr-42,verifica-inizio,fable,orologio,ripetizione: il primo tentativo non è partito (comando timeout assente sull'host); la riga verifica-fine precedente non vale
+2026-11-27T16:05:36Z,pr-42,verifica-fine,fable,orologio,data-contract --check rieseguito su clone pulito; codice di uscita 0
+2026-11-27T16:08:46Z,issue-24,esecutore-fine,opus,orologio,giro di correzione consegnato; SHA 2874e77; CI verde dichiarata; 13 casi; 97 prove negative
+2026-11-27T16:08:48Z,issue-24,esecutore-consuntivo,opus,orologio,giro di correzione: durata 1250 s; 43 chiamate a strumenti; contatore token 276964
+2026-11-27T16:08:49Z,pr-39,codex-inizio,codex,orologio,validazione 2 di 2; in forma ristretta
+2026-11-27T16:10:33Z,pr-42,merge,fable,orologio,PR #42 mergiata senza Codex; chiude #41
