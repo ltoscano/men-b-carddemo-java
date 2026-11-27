@@ -35,6 +35,17 @@
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <checkstyle.version>14.4.0</checkstyle.version>
     <archunit.version>1.5.1</archunit.version>
+    <!-- Versioni fissate dei controlli di #27: ne' JaCoCo ne' SpotBugs sono gestiti da Spring
+         Boot 4.2.0 (spring-boot-dependencies-4.2.0.pom non li contiene): ultime versioni
+         stabili su Maven Central al 27 nov 2026. SpotBugs si fissa anche nel motore
+         (com.github.spotbugs:spotbugs), non solo nel plugin. -->
+    <jacoco.version>0.8.16</jacoco.version>
+    <spotbugs-maven-plugin.version>4.10.5.0</spotbugs-maven-plugin.version>
+    <spotbugs.version>4.10.5</spotbugs.version>
+    <!-- Identificativo della corsa: ./verify.sh lo passa con -Dmenb.verify.run=<corsa>; senza,
+         resta "locale". Surefire lo registra nel rapporto dei test, l'agente JaCoCo come
+         identificativo di sessione nel file di esecuzione di ogni modulo. -->
+    <menb.verify.run>locale</menb.verify.run>
   </properties>
 
   <dependencyManagement>
@@ -101,10 +112,62 @@
             </execution>
           </executions>
         </plugin>
+        <!-- Analisi statica dei difetti sul codice di produzione (vedi docs/sviluppo.md): i
+             moduli di produzione lo dichiarano, cosi' riceve versione e configurazione da qui. -->
+        <plugin>
+          <groupId>com.github.spotbugs</groupId>
+          <artifactId>spotbugs-maven-plugin</artifactId>
+          <version>${spotbugs-maven-plugin.version}</version>
+          <dependencies>
+            <dependency>
+              <groupId>com.github.spotbugs</groupId>
+              <artifactId>spotbugs</artifactId>
+              <version>${spotbugs.version}</version>
+            </dependency>
+          </dependencies>
+          <executions>
+            <execution>
+              <id>analisi-difetti</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+              <configuration>
+                <effort>Max</effort>
+                <threshold>Medium</threshold>
+                <failOnError>true</failOnError>
+                <xmlOutput>true</xmlOutput>
+                <includeTests>false</includeTests>
+                <!-- niente file di esclusioni: ne' oggi ne' per default -->
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
 
     <plugins>
+      <!-- Copertura dei test: l'agente JaCoCo si attiva in tutti i moduli (fase initialize) e
+           scrive target/jacoco.exec, con la corsa come identificativo di sessione. Il rapporto
+           aggregato lo produce solo carddemo-parity (fase verify, vedi il suo POM). -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <execution>
+            <id>agente-copertura</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <destFile>${project.build.directory}/jacoco.exec</destFile>
+              <sessionId>${menb.verify.run}</sessionId>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <!-- Database incorporati vietati in ogni modulo e ambito. Due esecuzioni: la ricerca
            transitiva non vede le dipendenze dirette optional, quella diretta si'. -->
       <plugin>
