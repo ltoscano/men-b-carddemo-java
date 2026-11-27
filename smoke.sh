@@ -123,7 +123,8 @@ EOF
 }
 
 # Spegne e rimuove container, reti e volumi del progetto, poi verifica per etichetta.
-# Restituisce 0 solo se "down" riesce e non resta nulla.
+# Restituisce 0 solo se "down" riesce e non resta nulla. La verifica per etichetta serve
+# anche perche' "down" termina con 0 quando un volume non si puo' rimuovere perche' in uso.
 cleanup_project() {
   local rc=0 leftovers
   log "docker compose down --volumes del progetto ${PROJECT}"
@@ -160,7 +161,7 @@ cleanup_project() {
 on_exit() {
   local rc=$?
   local failed_step="${STEP}"
-  trap - EXIT INT TERM
+  trap - EXIT HUP INT TERM
   # Interrotto da un segnale durante un comando lungo: lo si ferma prima della pulizia,
   # perche' non ricrei risorse mentre "down" le rimuove.
   if [ -n "${LIMITED_PID}" ] && kill -0 "${LIMITED_PID}" 2>/dev/null; then
@@ -194,6 +195,7 @@ on_exit() {
   exit "${rc}"
 }
 trap on_exit EXIT
+trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
@@ -220,7 +222,7 @@ SQL
 # Righe "esecuzione|istanza|stato|exit_code|passi|passi_ok" delle esecuzioni del job.
 query_executions() {
   psql_db -f - <<SQL
-select e.job_execution_id || '|' || e.job_instance_id || '|' || e.status || '|'
+select e.job_execution_id || '|' || e.job_instance_id || '|' || coalesce(e.status, '<null>') || '|'
        || coalesce(e.exit_code, '') || '|'
        || (select count(*) from batch_step_execution s
            where s.job_execution_id = e.job_execution_id) || '|'
