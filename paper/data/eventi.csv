@@ -60,3 +60,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T11:43:41Z,issue-1,esecutore-inizio,sonnet,orologio,giro di correzione 1
 2026-11-27T11:44:14Z,issue-14,riallineamento-inizio,fable,orologio,specifica di #14 riallineata all'esito di #13
 2026-11-27T11:44:15Z,P10,contestazione-inizio,codex,orologio,specifiche di #14 e #19
+2026-11-27T11:47:00Z,P10,contestazione-fine,codex,orologio,exit=0; token: 45.899
+2026-11-27T11:48:17Z,P10,fine,fable,orologio,11 rilievi (2 bloccanti); #14 riscritta e ready; #19 chiusa come superata
+2026-11-27T11:48:19Z,issue-14,esecutore-inizio,sonnet,orologio,worktree isolato
