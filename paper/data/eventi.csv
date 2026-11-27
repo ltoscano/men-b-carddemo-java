@@ -164,3 +164,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T14:41:46Z,pr-29,codex-inizio,codex,orologio,validazione giro 3 (finale)
 2026-11-27T14:50:47Z,pr-33,codex-fine,codex,orologio,giro 2; exit=0; token: 169.102
 2026-11-27T14:51:23Z,pr-33,approvazione,fable,orologio,giro 2: APPROVATA CON RISERVE; rilievo residuo rinviato a #34
+2026-11-27T14:57:05Z,pr-32,codex-fine,codex,orologio,giro 2; exit=0; token: 138.808
+2026-11-27T14:57:37Z,pr-32,validazione-fine,fable,orologio,giro 2: BOCCIATA; 1 bloccante (due trasferimenti non rilevati in CBACT04C)
+2026-11-27T14:57:37Z,issue-3,esecutore-inizio,opus,orologio,giro di correzione 2
