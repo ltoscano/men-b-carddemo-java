@@ -26,10 +26,12 @@
       <property name="format" value="^(Double|Float|doubleValue|floatValue|DoubleStream|DoubleSupplier|DoubleFunction|DoubleUnaryOperator|DoubleBinaryOperator)$"/>
       <message key="illegal.token.text" value="FP-VIETATO: tipo o metodo in virgola mobile"/>
     </module>
-    <!-- var: il tipo dedotto non e' visibile nel sorgente. -->
-    <module name="IllegalToken">
-      <property name="tokens" value="LITERAL_VAR"/>
-      <message key="illegal.token" value="VAR-VIETATO: {0}"/>
+    <!-- var: il tipo dedotto non e' visibile nel sorgente. Nella grammatica var e' un
+         identificatore, quindi si vieta il nome (vieta anche una variabile chiamata var). -->
+    <module name="IllegalTokenText">
+      <property name="tokens" value="IDENT"/>
+      <property name="format" value="^var$"/>
+      <message key="illegal.token.text" value="VAR-VIETATO: var nasconde il tipo dichiarato"/>
     </module>
   </module>
 </module>
