@@ -139,3 +139,32 @@ Verificate il 27 novembre 2026.
 | Immagine PostgreSQL del test di integrazione | quella di `compose.yaml`, letta dal test | — |
 
 Boot e tutte le librerie Spring sono quelle gestite dal parent `spring-boot-starter-parent`; nessuna versione dinamica. I digest completi sono in `docker/app.Dockerfile`, `compose.yaml` e `smoke.sh`.
+
+## Regole sui moduli (#26)
+
+Tre regole fanno parte di `mvn verify`, quindi di `./verify.sh` e della CI, senza modificare `verify.sh`. Nel log di Maven ogni controllo compare con il proprio nome di esecuzione.
+
+| Regola | Strumento (versione) | Dove | Esecuzione nel log |
+| --- | --- | --- | --- |
+| Archi interni tra moduli (matrice sotto) | maven-enforcer-plugin 3.6.3 (gestita da Spring Boot 4.2.0), regola `bannedDependencies` | `pom.xml` di ogni modulo | `enforce (archi-interni)`, 4 moduli |
+| Database incorporati vietati (H2, HSQLDB, Derby, anche transitivi o `optional`) | stesso plugin | `pom.xml` padre | `enforce (database-incorporati)` e `(database-incorporati-diretti)`, padre e 5 moduli |
+| Accessi tra classi | ArchUnit 1.5.1 in `carddemo-parity` | `ArchitetturaTest` | test `ArchitetturaTest`, 2 casi |
+| Tipi in virgola mobile, letterali e `var` | maven-checkstyle-plugin 3.6.0 con Checkstyle 14.4.0 | `quality/regole/checkstyle.xml` | `check (tipi-vietati)`, 4 moduli |
+
+Versioni: il plugin Enforcer è quella gestita da Spring Boot 4.2.0; Checkstyle (plugin e libreria) e ArchUnit non sono gestiti da Spring Boot e sono fissati nel POM padre alle ultime versioni stabili su Maven Central al 27 nov 2026.
+
+Matrice degli archi interni ammessi: `domain` nessuno; `loader`, `online`, `batch` solo `domain`; `parity` tutti. La regola vale in ogni ambito e anche per `optional`; vede le dipendenze dichiarate (non il bytecode), quindi una dichiarazione non usata viene rilevata. Per questo l'esecuzione `archi-interni` usa `searchTransitive=false`: con la ricerca transitiva Enforcer salta le dipendenze dirette `optional`. Gli archi interni indiretti non servono: ogni modulo controlla le proprie dichiarazioni.
+
+Database incorporati: due esecuzioni, perché la ricerca transitiva (che trova H2 portato da un'altra libreria) non vede una dipendenza diretta `optional`, quella diretta sì.
+
+ArchUnit analizza il codice di produzione dei pacchetti `io.github.ltoscano.carddemo.<domain|loader|online|batch>` (test esclusi) e fallisce se l'insieme è vuoto o se manca un modulo.
+
+Tipi: Checkstyle legge il sorgente di produzione di `domain`, `loader`, `online`, `batch` e vieta i token `double` e `float` (campi, parametri, ritorni, locali, cast, array, `.class`), i letterali in virgola mobile (`1.0`, `1e3`, `2f`, `2d`), gli identificatori `Double`, `Float` (anche qualificati, argomenti di tipo, import), `doubleValue`, `floatValue` e alcune interfacce `Double*` di `java.util.function`, e l'identificatore `var`. Nessuna esclusione.
+
+**Limiti dichiarati.**
+- `var` è vietato come identificatore: nella grammatica di Checkstyle non è un token a sé (`LITERAL_VAR` non esiste in Checkstyle 14.4.0), quindi anche una variabile chiamata `var` viene respinta.
+- Il controllo sul sorgente vede ciò che è scritto, non i tipi inferiti: `Math.sqrt(x)` usato dentro un'espressione, o un metodo di libreria che restituisce `double` il cui risultato non viene dichiarato, non sono rilevati. L'elenco dei nomi vietati è finito: un tipo in virgola mobile con un nome non elencato (per esempio `DoubleSummaryStatistics`) non è rilevato.
+- Le dipendenze esterne non sono toccate dalle regole sugli archi interni. I test e `carddemo-parity` non sono soggetti al divieto dei tipi in virgola mobile.
+- `-Denforcer.skip=true` o `-Dcheckstyle.skip=true` sulla riga di comando disattivano il controllo corrispondente: `./verify.sh`, la CI e lo script delle regressioni non li passano, e le regressioni verificano dal log che ogni controllo sia stato eseguito.
+
+**Regressioni:** `./quality/regressioni-regole.sh`, a richiesta (non nella CI obbligatoria). Per ogni caso applica una mutazione al working tree (i file di prova sono in `quality/regole/casi/` e vengono copiati nel modulo solo durante il caso), esegue Maven in un container, verifica codice di uscita e messaggio del controllo atteso (non errori di compilazione o di download, non scadenza del limite) e ripristina anche su interruzione. Il working tree deve essere pulito all'avvio e lo è alla fine. Casi: base (ogni controllo eseguito, contato nel log); archi vietati (`domain→loader`, `loader→online`, `online→batch`, `batch→online`, `batch→loader` in ambito test, `online→loader` optional); H2, HSQLDB, Derby, H2 optional, HSQLDB transitivo; ArchUnit (`online` usa `batch` fallisce, `online` usa `domain` passa); dodici violazioni di tipo; sei cancelli disattivati o rimossi (`skip`, plugin tolto da un modulo, test ArchUnit eliminato) che la corsa di base deve riconoscere. Nel caso `archi-domain-loader` viene tolta anche la dipendenza `loader→domain`, altrimenti Maven rifiuterebbe il ciclo prima del controllo. Nel caso ArchUnit l'Enforcer è spento da riga di comando, altrimenti fermerebbe la corsa prima del test. Variabili: `MENB_REGOLE_TIMEOUT` (secondi per caso, predefinito 900), `MENB_REGOLE_SHORT_TIMEOUT` (altri comandi, 60).
