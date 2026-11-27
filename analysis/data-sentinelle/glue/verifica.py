@@ -15,7 +15,7 @@ import signal
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from controlli import RIEMPIMENTO, VARIABILE, verifica  # noqa: E402
+from controlli import PREFISSI_VARIABILE, RIEMPIMENTO, VARIABILE, verifica  # noqa: E402
 
 
 def tabella_conteggi(rie):
@@ -50,6 +50,13 @@ def documento(rie):
     a("")
     a(f"Contratti dei copybook in `contratti.tsv` (colonna `righe` = `copybook`): {len(rie['copybook'])}; più "
       f"`{VARIABILE}` (record variabile). Coppie contratto/vista: {len(coppie)}; sentinelle: {len(conteggi)}.")
+    a("")
+    a(f"L'insieme **atteso** delle sentinelle ({len(rie['atteso'])}) non viene dall'elenco scritto a mano "
+      "(`viste.tsv`): la verifica lo ricava dai contratti dei copybook in `contratti.tsv` più il record variabile, "
+      "dalle aree `REDEFINES` di ciascun contratto (una sentinella per vista, con il nome della vista) e, per "
+      f"`{VARIABILE}`, dall'insieme fisso dei prefissi {{{', '.join(str(p) for p in PREFISSI_VARIABILE)}}} "
+      "(`CBACT01C.cbl` righe 288 e 303). Atteso, elenco e file presenti si confrontano a coppie nelle due direzioni: "
+      "togliere una sentinella insieme alla sua riga dell'elenco non accorcia l'atteso.")
     a("")
     a("| contratto | vista | sentinella | campi attesi | campi della vista nel contratto |")
     a("| --- | --- | --- | ---: | ---: |")
@@ -108,8 +115,11 @@ def documento(rie):
       "scala del contratto con cb2xml):")
     a("  - un segno **aggiunto** a un campo senza segno: in DISPLAY una cifra semplice si legge positiva, in COMP-3 il "
       "codice `F` è accettato anche con segno, in COMP un valore positivo sotto 2^(8n-1) ha la stessa rappresentazione;")
-    a("  - nei campi di una sola cifra (`CDEMO-PGM-CONTEXT`, `9(01)`) non si può accorciare la `PICTURE` né spostare la "
-      "scala senza cambiare la lunghezza: quelle due mutazioni non sono applicabili;")
+    a("  - nei campi di una sola cifra (`CDEMO-PGM-CONTEXT`, `9(01)`) la `PICTURE` non si accorcia (resterebbero zero "
+      "cifre). La scala invece si sposta: la prova `scala` usa `9(1)V9(1)`, che allunga il campo di un byte assorbito "
+      "dal campo adiacente. `PIC V9` (nessuna cifra intera, un byte: GnuCOBOL legge `.7`) è COBOL valido con la stessa "
+      "lunghezza, ma il codec di #23 non accetta una variante senza cifre intere, quindi quella mutazione non si può "
+      "esprimere contro il codec e la scala di un campo di una cifra resta affidata anche al confronto con cb2xml di #3;")
     a("  - una `PICTURE` con una cifra **in più** che resta nella stessa ampiezza: in COMP `9(03)` e `9(04)` occupano "
       "2 byte, `9(11)` e `9(12)` 8 byte, `S9(10)V99` e `S9(11)V99` 8 byte (`EXP-CARD-CVV-CD`, `EXP-XREF-ACCT-ID`, "
       "`EXP-CARD-ACCT-ID`, `EXP-ACCT-CURR-CYC-DEBIT`); in COMP-3 con un numero pari di cifre il semiottetto di "
@@ -122,8 +132,13 @@ def documento(rie):
       "campo di un byte solo): non sono contate come superate. Per quei confini la proprietà resta affidata a #3.")
     a("- **Lunghezza dichiarata altrove.** La somma delle lunghezze a mano è confrontata con una lunghezza dichiarata "
       "altrove (commento `RECLN` del copybook, `RECORDSIZE` del JCL, `FD` del programma), con la riga citata e "
-      "verificata sul file. Per `COCOM01Y.CARDDEMO-COMMAREA` nessuna fonte esterna dichiara la lunghezza: 160 byte è "
-      "solo la somma dei campi, e il confronto non è richiesto.")
+      "verificata sul file. Una fonte è obbligatoria per ogni contratto, salvo quelli di "
+      "`analysis/data-sentinelle/senza-fonte.tsv`, e un contratto vi è ammesso solo se né `contratti.tsv` di #3 "
+      "(`recordsize`, `lunghezze_scritte`, `dcb_osservata`) né il suo sorgente (`RECLN`, `RECORD LENGTH`, "
+      "`RECORDSIZE`, `RECORD CONTAINS`, `RECORD IS VARYING`, `LRECL`) dichiarano una lunghezza. Contratti senza fonte "
+      "esterna:")
+    for c, motivo in sorted(rie["senza_fonte"].items()):
+        a(f"  - `{c}`: {motivo}.")
     a("")
     a("## Fonti della lunghezza")
     a("")

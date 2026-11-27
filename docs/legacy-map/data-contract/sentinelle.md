@@ -8,6 +8,8 @@ Una sentinella è un record di prova scritto a mano dal copybook: per ogni campo
 
 Contratti dei copybook in `contratti.tsv` (colonna `righe` = `copybook`): 15; più `CBACT01C.VBR-REC` (record variabile). Coppie contratto/vista: 22; sentinelle: 23.
 
+L'insieme **atteso** delle sentinelle (23) non viene dall'elenco scritto a mano (`viste.tsv`): la verifica lo ricava dai contratti dei copybook in `contratti.tsv` più il record variabile, dalle aree `REDEFINES` di ciascun contratto (una sentinella per vista, con il nome della vista) e, per `CBACT01C.VBR-REC`, dall'insieme fisso dei prefissi {12, 39} (`CBACT01C.cbl` righe 288 e 303). Atteso, elenco e file presenti si confrontano a coppie nelle due direzioni: togliere una sentinella insieme alla sua riga dell'elenco non accorcia l'atteso.
+
 | contratto | vista | sentinella | campi attesi | campi della vista nel contratto |
 | --- | --- | --- | ---: | ---: |
 | `CBACT01C.VBR-REC` | base | prefisso-12 | 1 | 1 |
@@ -99,11 +101,12 @@ I 43 contratti dichiarati nei programmi (record di `FD` e aree di lavoro, per lo
 - **Profilo.** Solo `oracle-gnucobol`: il profilo `zos-ebcdic` è fuori ambito.
 - **Dichiarazioni che nessun valore distingue.** Dove due dichiarazioni danno gli stessi byte e lo stesso valore, nemmeno un valore discriminante le separa, e la proprietà resta affidata a #3 (confronto di `PICTURE`, segno e scala del contratto con cb2xml):
   - un segno **aggiunto** a un campo senza segno: in DISPLAY una cifra semplice si legge positiva, in COMP-3 il codice `F` è accettato anche con segno, in COMP un valore positivo sotto 2^(8n-1) ha la stessa rappresentazione;
-  - nei campi di una sola cifra (`CDEMO-PGM-CONTEXT`, `9(01)`) non si può accorciare la `PICTURE` né spostare la scala senza cambiare la lunghezza: quelle due mutazioni non sono applicabili;
+  - nei campi di una sola cifra (`CDEMO-PGM-CONTEXT`, `9(01)`) la `PICTURE` non si accorcia (resterebbero zero cifre). La scala invece si sposta: la prova `scala` usa `9(1)V9(1)`, che allunga il campo di un byte assorbito dal campo adiacente. `PIC V9` (nessuna cifra intera, un byte: GnuCOBOL legge `.7`) è COBOL valido con la stessa lunghezza, ma il codec di #23 non accetta una variante senza cifre intere, quindi quella mutazione non si può esprimere contro il codec e la scala di un campo di una cifra resta affidata anche al confronto con cb2xml di #3;
   - una `PICTURE` con una cifra **in più** che resta nella stessa ampiezza: in COMP `9(03)` e `9(04)` occupano 2 byte, `9(11)` e `9(12)` 8 byte, `S9(10)V99` e `S9(11)V99` 8 byte (`EXP-CARD-CVV-CD`, `EXP-XREF-ACCT-ID`, `EXP-CARD-ACCT-ID`, `EXP-ACCT-CURR-CYC-DEBIT`); in COMP-3 con un numero pari di cifre il semiottetto di riempimento diventa una cifra zero in testa (`S9(10)V99` e `S9(11)V99` occupano 7 byte: `EXP-ACCT-CURR-BAL`, `EXP-ACCT-CASH-CREDIT-LIMIT`). Una cifra **in meno** invece è sempre rilevata, perché ogni valore usa tutte le cifre della propria `PICTURE`;
   - USAGE equivalenti (`COMP`, `COMP-4`, `BINARY`) e `PICTURE` scritte in modi equivalenti (`X(04)` e `X(4)`).
 - **Mutazioni non applicabili.** `check.sh` elenca, con il motivo, le prove negative che non si possono costruire (per esempio spostare di un byte il confine di un campo binario, che occupa solo 2, 4 o 8 byte, o accorciare un campo di un byte solo): non sono contate come superate. Per quei confini la proprietà resta affidata a #3.
-- **Lunghezza dichiarata altrove.** La somma delle lunghezze a mano è confrontata con una lunghezza dichiarata altrove (commento `RECLN` del copybook, `RECORDSIZE` del JCL, `FD` del programma), con la riga citata e verificata sul file. Per `COCOM01Y.CARDDEMO-COMMAREA` nessuna fonte esterna dichiara la lunghezza: 160 byte è solo la somma dei campi, e il confronto non è richiesto.
+- **Lunghezza dichiarata altrove.** La somma delle lunghezze a mano è confrontata con una lunghezza dichiarata altrove (commento `RECLN` del copybook, `RECORDSIZE` del JCL, `FD` del programma), con la riga citata e verificata sul file. Una fonte è obbligatoria per ogni contratto, salvo quelli di `analysis/data-sentinelle/senza-fonte.tsv`, e un contratto vi è ammesso solo se né `contratti.tsv` di #3 (`recordsize`, `lunghezze_scritte`, `dcb_osservata`) né il suo sorgente (`RECLN`, `RECORD LENGTH`, `RECORDSIZE`, `RECORD CONTAINS`, `RECORD IS VARYING`, `LRECL`) dichiarano una lunghezza. Contratti senza fonte esterna:
+  - `COCOM01Y.CARDDEMO-COMMAREA`: COMMAREA CICS: nessun file, quindi nessun JCL ne FD; COCOM01Y.cpy non ha commenti con la lunghezza; i programmi online usano LENGTH OF CARDDEMO-COMMAREA o DFHCOMMAREA a lunghezza variabile (per esempio COMEN01C.cbl righe 67-69), mai il numero 160.
 
 ## Fonti della lunghezza
 

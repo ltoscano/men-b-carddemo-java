@@ -7,7 +7,10 @@
 #  2. conteggi: contratti dei copybook in contratti.tsv, coppie contratto/vista, campi attesi per coppia e campi
 #     elementari della vista nel contratto (la verifica li confronta per identita'; qui si stampano)
 #  3. prove negative sulle copie private di contratti e sentinelle (glue/negativi.py): ognuna riportata con nome e
-#     diagnosi; le mutazioni non applicabili sono elencate con il motivo e non contate come superate
+#     diagnosi; le mutazioni non applicabili sono elencate con il motivo e non contate come superate; inventario: ogni
+#     asserzione di glue/controlli.py (codice [X00]) ha almeno una prova superata che la pretende
+#  Gli esiti dei comandi usati dalle prove negative sono distinti: per diff, 1 e' una differenza, ogni altro esito
+#  diverso da 0 un errore operativo.
 #  4. prove negative su questo script e sulla generazione: documento alterato rilevato dal confronto; generazione
 #     fallita con un documento buono rimasto da una corsa precedente: errore, e il residuo e' rimosso
 . "$ANALYSIS_ROOT/lib/common.sh"
@@ -29,10 +32,15 @@ log "   ok: run.sh, check.sh, deps presenti ed eseguibili; sentinelle, viste.tsv
 
 log "1. verifica completa e rigenerazione del documento"
 dsen_genera "$tmp/gen"
-if ! diff "$tmp/gen/sentinelle.md" "$DSEN_DOC" > "$tmp/diff.txt" 2>&1; then
-  head -30 "$tmp/diff.txt" >&2
-  fail "sentinelle.md versionato diverso da quello rigenerato: rieseguire './analysis/run.sh data-sentinelle'"
-fi
+# confronta A B OUT: esito di diff (0 uguali, 1 diversi); ogni altro esito e' un errore operativo, non una differenza
+confronta() { local rc=0; diff "$1" "$2" > "$3" 2>&1 || rc=$?; return "$rc"; }
+rc=0; confronta "$tmp/gen/sentinelle.md" "$DSEN_DOC" "$tmp/diff.txt" || rc=$?
+case "$rc" in
+  0) ;;
+  1) head -30 "$tmp/diff.txt" >&2
+     fail "sentinelle.md versionato diverso da quello rigenerato: rieseguire './analysis/run.sh data-sentinelle'" ;;
+  *) cat "$tmp/diff.txt" >&2; fail "confronto del documento non eseguito (diff uscito con $rc)" ;;
+esac
 esito="$(tail -n 1 "$tmp/gen/verifica.txt")" || fail "esito della verifica illeggibile"
 log "   ok: $esito; documento identico al versionato"
 
@@ -73,10 +81,17 @@ log "4. prove negative sulla generazione"
 # 4a. documento versionato alterato: il confronto con il rigenerato deve trovarlo
 cp "$DSEN_DOC" "$tmp/alterato.md" || fail "copia del documento fallita"
 printf '\n- riga aggiunta da una prova negativa\n' >> "$tmp/alterato.md" || fail "alterazione del documento fallita"
-if diff -q "$tmp/gen/sentinelle.md" "$tmp/alterato.md" > /dev/null 2>&1; then
-  fail "PROVA NEGATIVA FALLITA (documento-alterato): nessuna differenza con il documento rigenerato"
-fi
-log "   ok: documento-alterato -> il confronto con la rigenerazione trova la differenza"
+rc=0; confronta "$tmp/gen/sentinelle.md" "$tmp/alterato.md" "$tmp/diff-alterato.txt" || rc=$?
+case "$rc" in
+  1) ;;
+  0) fail "PROVA NEGATIVA FALLITA (documento-alterato): nessuna differenza con il documento rigenerato" ;;
+  *) cat "$tmp/diff-alterato.txt" >&2; fail "prova documento-alterato: diff uscito con $rc (errore operativo, non una differenza)" ;;
+esac
+log "   ok: documento-alterato -> il confronto con la rigenerazione trova la differenza (diff uscito con 1)"
+# il confronto distingue un errore operativo (file assente: diff esce con 2) da una differenza
+rc=0; confronta "$tmp/gen/sentinelle.md" "$tmp/inesistente.md" "$tmp/diff-inesistente.txt" || rc=$?
+[ "$rc" -ne 0 ] && [ "$rc" -ne 1 ] || fail "PROVA NEGATIVA FALLITA (confronto-file-assente): diff uscito con $rc, scambiabile per uguaglianza o differenza"
+log "   ok: confronto-file-assente -> diff uscito con $rc, trattato come errore operativo e non come differenza"
 # 4b. residuo: un documento buono di una corsa precedente e una verifica che fallisce (un valore atteso alterato)
 mkdir -p "$tmp/rotte" || fail "cartella delle sentinelle alterate non creata"
 cp -R "$DSEN_DIR/sentinelle" "$tmp/rotte/sentinelle" || fail "copia delle sentinelle fallita"
@@ -86,7 +101,7 @@ sed 's/"PR"$/"PQ"/' "$f" > "$f.nuovo" && mv "$f.nuovo" "$f" || fail "alterazione
 grep -q '"PQ"$' "$f" || fail "alterazione della sentinella non applicata"
 mkdir -p "$tmp/res" && cp "$tmp/gen/sentinelle.md" "$tmp/gen/verifica.txt" "$tmp/res/" || fail "residuo non preparato"
 rc=0; ( dsen_genera "$tmp/res" "$tmp/rotte/sentinelle" ) > "$tmp/res.log" 2>&1 || rc=$?
-[ "$rc" -ne 0 ] || fail "PROVA NEGATIVA FALLITA (residuo): la generazione con una sentinella alterata e' riuscita"
+[ "$rc" -eq 1 ] || fail "PROVA NEGATIVA FALLITA (residuo): la generazione con una sentinella alterata e' uscita con $rc invece di 1"
 grep -qF 'ERRORE [decodifica] CVTRA03Y.TRAN-TYPE-RECORD@base/base #1 TRAN-TYPE: atteso testo "PQ", ottenuto testo "PR"' "$tmp/res.log" \
   || { cat "$tmp/res.log" >&2; fail "prova negativa (residuo): fallita ma non per il valore alterato"; }
 [ ! -e "$tmp/res/sentinelle.md" ] || fail "PROVA NEGATIVA FALLITA (residuo): il documento della corsa precedente e' rimasto"
