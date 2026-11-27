@@ -332,3 +332,7 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T19:54:52Z,issue-43,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
 2026-11-27T19:55:58Z,issue-43,ready,fable,orologio,specifica pubblicata; 7 rilievi accolti
 2026-11-27T19:55:58Z,issue-43,esecutore-inizio,opus,orologio,affidata
+2026-11-27T19:56:04Z,processo,risposta-consegnata,fable,orologio,specifica #43 affidata
+2026-11-27T19:56:52Z,pr-49,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: **BOCCIATA — restano falsi verdi nel perimetro; incluso un rapporto dell’oracle infedele ai file realmente prodotti.**
+2026-11-27T19:57:37Z,pr-49,decisione,fable,orologio,validazione 1: cinque rilievi accolti (tre bloccanti)
+2026-11-27T19:57:37Z,issue-35,esecutore-inizio,opus,orologio,giro di correzione unico
