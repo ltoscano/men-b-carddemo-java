@@ -110,7 +110,7 @@ Prima di scrivere un tool di analisi, verificare se ne esiste uno. Si scrive cod
 | --- | --- | --- |
 | Sintassi, warning, cross-reference, esecuzione batch come oracle | **GnuCOBOL 3.2** (`cobc`) | adottato; immagine propria con versione fissata |
 | Inventario e grafi `CALL` / `COPY` | `cobol-migration-toolkit` (Python, basato su regex) | da provare su CardDemo in Wave 0A |
-| AST, CFG, gerarchia copybook, overlay di memoria | `cobmix` (Python), ProLeap COBOL parser (Java, AGPL-3), Koopa | da provare in Wave 0A |
+| AST, CFG, gerarchia copybook, overlay di memoria | `cobmix` (Python), ProLeap COBOL parser (Java, MIT; da non confondere con `proleap/proleap-cobol`, che è AGPL-3), Koopa | da provare in Wave 0A |
 | Copybook → schema, lettura record in Java | cb2xml, JRecord | da provare in Wave 0A |
 | Analisi JCL | `mapa` | da provare in Wave 0A |
 | Conteggi e complessità di base | scc | da usare via container |

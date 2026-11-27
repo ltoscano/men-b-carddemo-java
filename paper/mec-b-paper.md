@@ -77,7 +77,7 @@ Principio: si scrive codice proprio solo per incollare strumenti esistenti.
 | Qualità COBOL | SonarQube | COBOL da Enterprise Edition | scartato: nessuna licenza |
 | Compilazione, cross-reference, oracle batch | GnuCOBOL 3.2 | GPL | adottato |
 | Grafi `CALL` / `COPY` | cobol-migration-toolkit | da verificare | *(Wave 0A)* |
-| AST, CFG, gerarchia copybook | cobmix, ProLeap, Koopa | ProLeap AGPL-3; altri da verificare | *(Wave 0A)* |
+| AST, CFG, gerarchia copybook | cobmix, ProLeap, Koopa | ProLeap parser: MIT (verificato alla fonte; la ricognizione iniziale aveva riportato AGPL-3, che è la licenza di un altro progetto dallo stesso nome); altri da verificare | *(Wave 0A)* |
 | Copybook → schema e lettura record | cb2xml, JRecord | da verificare | *(Wave 0A)* |
 | Analisi JCL | mapa | da verificare | *(Wave 0A)* |
 | Metriche di base | scc | open source | *(Wave 0A)* |
