@@ -78,6 +78,21 @@ Rischio che controlla: migrare qualcosa che non si è capito, o non avere un rif
 
 Le dipendenze a valle si leggono di conseguenza: #5 (fixture) dipende anche da #23; #9 (golden dei job) anche da #24 e #25; #7 (flussi batch) e #11 (matrice online) anche da #22. La Wave 0A passa da 12 a 17 issue. Nella Wave 0B, #19 è stata aperta e chiusa come superata (vedi registro delle approvazioni, voce 13). Sempre nella 0B, #15 conteneva quattro consegne indipendenti ed è stata divisa: #15 (test di integrazione con PostgreSQL reale), #26 (confini tra moduli, dipendenze vietate, tipi in virgola mobile), #27 (copertura e SpotBugs), #28 (SonarQube in locale), in sequenza. La Wave 0B passa da 4 a 7 issue; #16 (contratti condivisi) dipende da #26 anziché dall'intera vecchia #15.
 
+**Aggiornamento delle 15:10 UTC del 27 novembre 2026.** Mergiate: #1, #4, #13, #14, #15 (PR #18, #29, #17, #20, #33). In correzione: #2, #3, #21. Issue nate dopo l'aggiornamento precedente:
+
+| # | Issue | Dipende da | Stato |
+| --- | --- | --- | --- |
+| #24 | 0A-4b: routine `COBDATFT` dell'oracle (ristretta: prima comprendeva tre routine) | #4 | in corso |
+| #36 | 0A-4e: routine `MVSWAIT` | #24 | bloccata |
+| #37 | 0A-4f: routine `CEEDAYS` | #24 | rinviata |
+| #25 | 0A-4c: `CBSTM03A` nell'oracle (da riscrivere dopo #24) | #24 | bloccata |
+| #38 | 0A-4g: `CBEXPORT` e `CBIMPORT` | #25 | bloccata |
+| #35 | 0A-4d: esito delle acquisizioni di configurazione; controlli dell'oracle in CI | #24 | bloccata |
+| #26 | 0B-3b: confini tra moduli, database vietati, tipi in virgola mobile | #15 | in corso |
+| #34 | 0B-3e: limiti di tempo e processi figli | #26 | bloccata |
+
+Le issue che toccano `oracle/build/` vanno in sequenza, perché condividono gli stessi file: #24, #25, #35, #36, #38. La Wave 0A conta ora 22 issue, la 0B 8.
+
 Dopo 0A-1, le issue 0A-2, 0A-3 e 0A-4 lavorano su cartelle disgiunte e possono procedere insieme. 0A-1 fornisce anche il meccanismo con cui ogni issue aggiunge i propri controlli nella propria cartella, senza toccare file condivisi.
 
 Due oracle, di forza diversa, e il paper lo dichiara:
