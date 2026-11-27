@@ -1,0 +1,227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "graph.schema.json",
+  "title": "Grafo delle dipendenze statiche di CardDemo",
+  "description": "Formato di graph.json (analysis/inventory). Nodi con identificatore tipo:NOME; archi che raggruppano le occorrenze, ciascuna con file e riga. Il grafo non e' completo: i comandi EXEC CICS, EXEC SQL, le chiamate IMS, i tracciati, i flussi batch e il comportamento sono fuori ambito (docs/legacy-map/inventario.md).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["versione_schema", "descrizione", "livelli_jcl", "nodi", "archi"],
+  "properties": {
+    "versione_schema": { "const": 1 },
+    "descrizione": { "type": "string" },
+    "livelli_jcl": {
+      "description": "Livello di copertura di ogni file jcl del manifesto: A = mapa (il suo output coincide con il conteggio indipendente), B = estrattore di schede.",
+      "type": "object",
+      "additionalProperties": { "enum": ["A", "B"] }
+    },
+    "nodi": { "type": "array", "items": { "$ref": "#/$defs/nodo" } },
+    "archi": { "type": "array", "items": { "$ref": "#/$defs/arco" } }
+  },
+  "$defs": {
+    "percorso": { "type": "string", "pattern": "^app/[^\\s]+$" },
+    "riga": { "type": "integer", "minimum": 1 },
+    "fonte": { "enum": ["mapa", "schede"] },
+    "nodo": {
+      "type": "object",
+      "required": ["id", "tipo", "nome"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^(program|copybook|transaction|jcl-job|jcl-step|proc|dataset|asm|external|utility):.+$" },
+        "tipo": { "enum": ["program", "copybook", "transaction", "jcl-job", "jcl-step", "proc", "dataset", "asm", "external", "utility"] },
+        "nome": { "type": "string", "minLength": 1 },
+        "file": { "$ref": "#/$defs/percorso" },
+        "modulo": { "type": "string" },
+        "riga": { "$ref": "#/$defs/riga" },
+        "ordinale": { "type": "integer", "minimum": 1 },
+        "contenitore": { "type": "string", "pattern": "^(jcl-job|proc):.+$" },
+        "fonte": { "$ref": "#/$defs/fonte" },
+        "classe": { "enum": ["reale", "instream", "sysout", "dummy", "temporaneo", "senza-dsn"] },
+        "simbolico": { "type": "boolean" },
+        "origine": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "tipo": { "enum": ["program", "copybook", "asm", "proc", "jcl-job", "jcl-step", "transaction"] } } },
+          "then": { "required": ["file"] }
+        },
+        {
+          "if": { "properties": { "tipo": { "const": "jcl-step" } } },
+          "then": { "required": ["riga", "ordinale", "contenitore", "fonte"] }
+        },
+        {
+          "if": { "properties": { "tipo": { "const": "dataset" } } },
+          "then": { "required": ["classe"] }
+        },
+        {
+          "if": { "properties": { "tipo": { "const": "external" } } },
+          "then": { "required": ["origine"] }
+        }
+      ]
+    },
+    "sostituzione": {
+      "type": "object",
+      "required": ["da", "a"],
+      "additionalProperties": false,
+      "properties": { "da": { "type": "string" }, "a": { "type": "string" } }
+    },
+    "occ_copy": {
+      "type": "object",
+      "required": ["file", "riga"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "$ref": "#/$defs/percorso" },
+        "riga": { "$ref": "#/$defs/riga" },
+        "sostituzioni": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/sostituzione" } }
+      }
+    },
+    "occ_call": {
+      "type": "object",
+      "required": ["file", "riga"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "$ref": "#/$defs/percorso" },
+        "riga": { "$ref": "#/$defs/riga" },
+        "non_risolto": { "const": true },
+        "operando": { "type": "string", "minLength": 1 }
+      },
+      "dependentRequired": { "non_risolto": ["operando"], "operando": ["non_risolto"] }
+    },
+    "occ_transazione": {
+      "type": "object",
+      "required": ["file", "riga", "riga_programma"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "$ref": "#/$defs/percorso" },
+        "riga": { "$ref": "#/$defs/riga" },
+        "riga_programma": { "$ref": "#/$defs/riga" }
+      }
+    },
+    "occ_contiene": {
+      "type": "object",
+      "required": ["file", "riga", "fonte"],
+      "additionalProperties": false,
+      "properties": { "file": { "$ref": "#/$defs/percorso" }, "riga": { "$ref": "#/$defs/riga" }, "fonte": { "$ref": "#/$defs/fonte" } }
+    },
+    "occ_esegue": {
+      "type": "object",
+      "required": ["file", "riga", "esecuzione", "fonte"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "$ref": "#/$defs/percorso" },
+        "riga": { "$ref": "#/$defs/riga" },
+        "esecuzione": { "enum": ["PGM", "PROC"] },
+        "parm": { "type": "string" },
+        "fonte": { "$ref": "#/$defs/fonte" }
+      }
+    },
+    "occ_dd": {
+      "type": "object",
+      "required": ["file", "riga", "dd", "livello", "fonte", "classe", "gdg"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "$ref": "#/$defs/percorso" },
+        "riga": { "$ref": "#/$defs/riga" },
+        "dd": { "type": "string" },
+        "livello": { "enum": ["passo", "job"] },
+        "fonte": { "$ref": "#/$defs/fonte" },
+        "classe": { "enum": ["reale", "instream", "sysout", "dummy", "temporaneo", "senza-dsn"] },
+        "dsn_sorgente": { "type": "string" },
+        "dsn_risolto": { "type": "string" },
+        "disp_sorgente": { "type": "string" },
+        "disp_effettivo": { "type": "string" },
+        "gdg": { "type": "boolean" },
+        "generazione": { "type": "string", "pattern": "^[+-]?[0-9]+$" },
+        "membro": { "type": "string" }
+      },
+      "allOf": [
+        { "if": { "properties": { "gdg": { "const": true } } }, "then": { "required": ["generazione"] } },
+        { "if": { "properties": { "fonte": { "const": "schede" } } }, "then": { "not": { "anyOf": [{ "required": ["dsn_risolto"] }, { "required": ["disp_effettivo"] }] } } }
+      ]
+    },
+    "arco": {
+      "type": "object",
+      "required": ["tipo", "da", "a", "occorrenze"],
+      "additionalProperties": false,
+      "properties": {
+        "tipo": { "enum": ["COPY", "CALL", "TRANSAZIONE_PROGRAMMA", "JOB_PASSO", "PROC_PASSO", "PASSO_ESEGUE", "PASSO_DD", "JOB_DD"] },
+        "da": { "type": "string" },
+        "a": { "type": "string" },
+        "occorrenze": { "type": "array", "minItems": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "tipo": { "const": "COPY" } } },
+          "then": {
+            "properties": {
+              "da": { "pattern": "^(program|copybook):" }, "a": { "pattern": "^(copybook|external):" },
+              "occorrenze": { "items": { "$ref": "#/$defs/occ_copy" } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "tipo": { "const": "CALL" } } },
+          "then": {
+            "properties": {
+              "da": { "pattern": "^(program|copybook):" }, "a": { "pattern": "^(program|asm|external):" },
+              "occorrenze": { "items": { "$ref": "#/$defs/occ_call" } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "tipo": { "const": "TRANSAZIONE_PROGRAMMA" } } },
+          "then": {
+            "properties": {
+              "da": { "pattern": "^transaction:" }, "a": { "pattern": "^(program|external):" },
+              "occorrenze": { "items": { "$ref": "#/$defs/occ_transazione" } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "tipo": { "const": "JOB_PASSO" } } },
+          "then": {
+            "properties": {
+              "da": { "pattern": "^jcl-job:" }, "a": { "pattern": "^jcl-step:" },
+              "occorrenze": { "items": { "$ref": "#/$defs/occ_contiene" } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "tipo": { "const": "PROC_PASSO" } } },
+          "then": {
+            "properties": {
+              "da": { "pattern": "^proc:" }, "a": { "pattern": "^jcl-step:" },
+              "occorrenze": { "items": { "$ref": "#/$defs/occ_contiene" } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "tipo": { "const": "PASSO_ESEGUE" } } },
+          "then": {
+            "properties": {
+              "da": { "pattern": "^jcl-step:" }, "a": { "pattern": "^(program|asm|utility|proc|external):" },
+              "occorrenze": { "items": { "$ref": "#/$defs/occ_esegue" } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "tipo": { "const": "PASSO_DD" } } },
+          "then": {
+            "properties": {
+              "da": { "pattern": "^jcl-step:" }, "a": { "pattern": "^dataset:" },
+              "occorrenze": { "items": { "allOf": [{ "$ref": "#/$defs/occ_dd" }, { "properties": { "livello": { "const": "passo" } } }] } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "tipo": { "const": "JOB_DD" } } },
+          "then": {
+            "properties": {
+              "da": { "pattern": "^(jcl-job|proc):" }, "a": { "pattern": "^dataset:" },
+              "occorrenze": { "items": { "allOf": [{ "$ref": "#/$defs/occ_dd" }, { "properties": { "livello": { "const": "job" } } }] } }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,47 @@
+file	livello	exec_sorgente	dd_sorgente	exec_mapa	dd_mapa	motivo
+app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl	A	1	17	1	17	
+app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl	A	2	19	2	19	
+app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL	A	1	14	1	14	
+app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL	A	1	16	1	16	
+app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL	A	2	21	2	21	
+app/app-transaction-type-db2/jcl/CREADB21.jcl	B	5	30	5	27	DD: mapa 27, sorgente 30
+app/app-transaction-type-db2/jcl/MNTTRDB2.jcl	A	1	7	1	7	
+app/app-transaction-type-db2/jcl/TRANEXTR.jcl	B	5	28	0	0	passi: mapa 0, sorgente 5
+app/jcl/ACCTFILE.jcl	A	3	8	3	8	
+app/jcl/CARDFILE.jcl	A	8	20	8	20	
+app/jcl/CBADMCDJ.jcl	A	1	5	1	5	
+app/jcl/CBEXPORT.jcl	A	2	11	2	11	
+app/jcl/CBIMPORT.jcl	A	1	9	1	9	
+app/jcl/CLOSEFIL.jcl	A	1	3	1	3	
+app/jcl/COMBTRAN.jcl	A	2	10	2	10	
+app/jcl/CREASTMT.JCL	A	5	22	5	22	
+app/jcl/CUSTFILE.jcl	A	5	14	5	14	
+app/jcl/DALYREJS.jcl	A	1	2	1	2	
+app/jcl/DEFCUST.jcl	A	2	4	2	4	
+app/jcl/DEFGDGB.jcl	A	1	2	1	2	
+app/jcl/DEFGDGD.jcl	A	6	18	6	18	
+app/jcl/DISCGRP.jcl	A	3	8	3	8	
+app/jcl/DUSRSECJ.jcl	A	4	12	4	12	
+app/jcl/ESDSRRDS.jcl	A	6	19	6	19	
+app/jcl/FTPJCL.JCL	A	1	1	1	1	
+app/jcl/INTCALC.jcl	A	1	9	1	9	
+app/jcl/INTRDRJ1.JCL	A	2	8	2	8	
+app/jcl/INTRDRJ2.JCL	A	1	4	1	4	
+app/jcl/OPENFIL.jcl	A	1	3	1	3	
+app/jcl/POSTTRAN.jcl	A	1	9	1	9	
+app/jcl/PRTCATBL.jcl	A	3	8	3	8	
+app/jcl/READACCT.jcl	A	2	10	2	10	
+app/jcl/READCARD.jcl	A	1	4	1	4	
+app/jcl/READCUST.jcl	A	1	4	1	4	
+app/jcl/READXREF.jcl	A	1	4	1	4	
+app/jcl/REPTFILE.jcl	A	1	2	1	2	
+app/jcl/TCATBALF.jcl	A	3	8	3	8	
+app/jcl/TRANBKP.jcl	A	3	6	3	6	
+app/jcl/TRANCATG.jcl	A	3	8	3	8	
+app/jcl/TRANFILE.jcl	A	8	20	8	20	
+app/jcl/TRANIDX.jcl	A	3	6	3	6	
+app/jcl/TRANREPT.jcl	B	3	16	2	4	passi: mapa 2, sorgente 3
+app/jcl/TRANTYPE.jcl	A	3	8	3	8	
+app/jcl/TXT2PDF1.JCL	B	1	6	0	0	passi: mapa 0, sorgente 1
+app/jcl/WAITSTEP.jcl	A	1	3	1	3	
+app/jcl/XREFFILE.jcl	A	6	14	6	14	

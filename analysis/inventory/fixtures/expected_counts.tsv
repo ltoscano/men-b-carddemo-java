@@ -1,0 +1,9 @@
+call	app/cbl/FIXPROG.cbl	2
+call	app/cpy/FIXCPY.cpy	1
+call_var	app/cbl/FIXPROG.cbl	2
+call_var	app/cpy/FIXCPY.cpy	0
+copy	app/cbl/FIXPROG.cbl	3
+copy	app/cpy/FIXCPY.cpy	0
+dd	app/jcl/FIXJOB.jcl	5
+exec	app/jcl/FIXJOB.jcl	2
+transazioni	app/csd/FIX.CSD	2

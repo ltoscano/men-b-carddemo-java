@@ -1,0 +1,8 @@
+PATH=/usr/bin:/bin
+HOME=/tmp
+LC_ALL=C
+COB_LIBRARY_PATH=/oracle-bin
+DD_TRNXFILE=/out/dati/TRNXFILE.dat
+DD_XREFFILE=/out/dati/XREFFILE.dat
+DD_CUSTFILE=/out/dati/CUSTFILE.dat
+DD_ACCTFILE=/out/dati/ACCTFILE.dat

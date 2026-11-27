@@ -199,3 +199,37 @@ Tre filoni indipendenti, in ordine di difficoltà crescente: tipi transazione su
 | Golden dai soli dati di esempio | Anche fixture costruite apposta | i dati di esempio non esercitano troncamenti, duplicati e limiti |
 | Un programma online = una issue | Matrice approvata, poi implementazione; i programmi grandi divisi | l'oracle dell'online va approvato prima del codice che lo deve soddisfare |
 | Validatore solo sulle PR | Validatore anche sulle specifiche | l'errore più costoso è a monte |
+
+## Stato delle issue della Wave 0 (aggiornato il 27 novembre 2026, 16:59 UTC)
+
+Questa tabella sostituisce la colonna "Stato" delle tabelle precedenti, che restano come erano quando sono state scritte. Fonte: GitHub e `docs/registro-approvazioni.md`.
+
+| # | Issue | Dipende da | Stato |
+| --- | --- | --- | --- |
+| #1 | 0A-1: strumenti di analisi | — | chiusa (PR #18) |
+| #21 | 0A-1b: verdetti e controlli di `analysis/` in CI | #1, #14 | chiusa (PR #31) |
+| #2 | 0A-2: inventario e dipendenze statiche | #1 | in revisione (PR #30: correzione mirata dopo il terzo giro) |
+| #22 | 0A-2b: collegamenti `EXEC CICS` nel grafo | #2 | bloccata |
+| #3 | 0A-3: contratto dati fisico | #1 | chiusa (PR #32) |
+| #41 | 0A-2a: motivazione di `WS-DATE` nel contratto dati | #3 | chiusa (PR #42, senza Codex) |
+| #23 | 0A-3b: regole di codifica dei campi e vettori di prova | #3, #4 | in corso |
+| #43 | 0A-3c: sentinelle dei 15 tracciati dei copybook (divisa da #23) | #23 | bloccata |
+| #4 | 0A-4: oracle GnuCOBOL, 11 batch | #1 | chiusa (PR #29) |
+| #24 | 0A-4b: routine `COBDATFT` | #4 | chiusa (PR #39) |
+| #25 | 0A-4c: `CBSTM03A` nell'oracle | #24 | in corso |
+| #35 | 0A-4d: acquisizioni di configurazione; oracle in CI | #25 | bloccata |
+| #36 | 0A-4e: routine `MVSWAIT` | #35 | bloccata |
+| #37 | 0A-4f: routine `CEEDAYS` | — | rinviata |
+| #38 | 0A-4g: `CBEXPORT` e `CBIMPORT` | #36 | bloccata |
+| #5 | 0A-5: fixture dai dati di esempio | #3, #4, #23, #43 | bloccata |
+| #6–#12 | 0A-6 … 0A-12 | vedi sopra | bloccate |
+| #13 | 0B-1: scheletro Java | — | chiusa (PR #17) |
+| #14 | 0B-2: Compose e smoke | #13 | chiusa (PR #20) |
+| #15 | 0B-3: test con PostgreSQL reale | #14 | chiusa (PR #33) |
+| #26 | 0B-3b: confini tra moduli, database vietati, tipi in virgola mobile | #15 | chiusa (PR #40) |
+| #27 | 0B-3c: copertura (JaCoCo) e analisi statica (SpotBugs) | #26 | in corso |
+| #34 | 0B-3e: limiti di tempo e processi figli | #27 (stesso file `verify.sh`) | bloccata |
+| #28 | 0B-3d: SonarQube in locale | #27 | bloccata |
+| #16 | 0B-4: contratti condivisi | #26, #3, #23 | bloccata (aspetta le regole di codifica di #23) |
+
+Le issue sull'oracle condividono i file di `oracle/build/` e vanno in sequenza: #25 → #35 → #36 → #38. Le issue su `verify.sh` e sui POM vanno in sequenza: #27 → #34 → #28.

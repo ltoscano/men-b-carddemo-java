@@ -265,3 +265,51 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T16:58:33Z,issue-27,ready,fable,orologio,specifica pubblicata
 2026-11-27T16:58:33Z,issue-23,esecutore-inizio,opus,orologio,affidata
 2026-11-27T16:58:33Z,issue-27,esecutore-inizio,sonnet,orologio,affidata
+2026-11-27T16:59:18Z,processo,risposta-consegnata,fable,orologio,specifiche #23 e #27 affidate; piano aggiornato
+2026-11-27T17:16:15Z,issue-25,esecutore-fine,opus,orologio,PR #44 aperta; SHA 96e384c; criteri dichiarati soddisfatti; 41 prove negative nel passo; CI verde dichiarata
+2026-11-27T17:16:16Z,issue-25,esecutore-consuntivo,opus,orologio,durata 3196 s; 169 chiamate a strumenti; contatore token 461572
+2026-11-27T17:16:21Z,pr-44,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T17:26:59Z,issue-2,esecutore-fine,sonnet,orologio,correzione mirata consegnata; SHA 211723d; CI verde dichiarata
+2026-11-27T17:27:09Z,issue-2,esecutore-consuntivo,sonnet,orologio,correzione mirata: durata 3477 s; 87 chiamate a strumenti; contatore token 203376
+2026-11-27T17:27:11Z,pr-30,verifica-inizio,fable,orologio,tre mutazioni di Codex e criteri su clone pulito
+2026-11-27T17:27:53Z,pr-44,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T17:28:04Z,issue-23,esecutore-fermo,opus,orologio,un'osservazione smentisce un atteso: 9(9) COMP con FF FF FF FF vale 4294967295 con MOVE e -1 con ADD
+2026-11-27T17:28:08Z,issue-23,esecutore-inizio,opus,orologio,ripresa dopo la decisione (voce 63)
+2026-11-27T17:28:12Z,issue-23,esecutore-consuntivo,opus,orologio,prima fase fino al fermo: durata 1725 s; 95 chiamate a strumenti; contatore token 366051
+2026-11-27T17:28:44Z,pr-44,decisione,fable,orologio,validazione 1: tre rilievi accolti (uno bloccante); uno respinto
+2026-11-27T17:28:44Z,issue-25,esecutore-inizio,opus,orologio,giro di correzione unico
+2026-11-27T17:28:49Z,processo,risposta-consegnata,fable,orologio,PR #44 rinviata; decisione sui binari oltre la PICTURE; verifica PR #30 in corso
+2026-11-27T17:34:23Z,pr-30,verifica-fine,fable,orologio,verifica dell'Approvatore conclusa
+2026-11-27T17:35:03Z,pr-30,merge,fable,orologio,PR #30 mergiata dopo tre giri e verifica dell'Approvatore; chiude #2
+2026-11-27T17:36:04Z,processo,risposta-consegnata,fable,orologio,PR #30 mergiata; specifica #22 in contestazione
+2026-11-27T17:36:05Z,issue-22,specifica-scritta,fable,orologio,bozza riallineata a #2; issue divisa (bersagli in variabile a parte)
+2026-11-27T17:36:05Z,issue-22,codex-inizio,codex,orologio,contestazione della specifica; sola lettura
+2026-11-27T17:41:40Z,issue-22,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-27T17:42:41Z,issue-22,ready,fable,orologio,specifica pubblicata; 4 rilievi accolti; bersagli variabili in 46
+2026-11-27T17:42:41Z,issue-22,esecutore-inizio,opus,orologio,affidata
+2026-11-27T17:43:01Z,processo,risposta-consegnata,fable,orologio,specifica #22 affidata; quattro Esecutori al lavoro
+2026-11-27T17:52:02Z,issue-25,esecutore-fine,opus,orologio,giro di correzione consegnato; SHA 644d53b; 164 prove negative dichiarate; CI verde dichiarata (un job rilanciato per errore di rete)
+2026-11-27T17:52:05Z,issue-25,esecutore-consuntivo,opus,orologio,giro di correzione: durata 1378 s; 64 chiamate a strumenti; contatore token 547732
+2026-11-27T17:52:06Z,pr-44,codex-inizio,codex,orologio,validazione 2 di 2; in forma ristretta
+2026-11-27T17:54:54Z,issue-23,esecutore-fine,opus,orologio,PR #47 aperta; criteri locali dichiarati soddisfatti; CI ancora in corso alla consegna
+2026-11-27T17:54:57Z,issue-23,esecutore-consuntivo,opus,orologio,seconda fase dopo la decisione: durata cumulata 3335 s; 180 chiamate a strumenti; contatore token 533343 (cumulativi)
+2026-11-27T17:55:00Z,pr-47,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T17:56:28Z,issue-23,esecutore-consuntivo,opus,orologio,chiusura: durata cumulata 3444 s; 184 chiamate a strumenti; contatore token 540725 (cumulativi); comprende l'attesa a vuoto della CI
+2026-11-27T17:57:17Z,pr-44,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0; verdetto: APPROVATA
+2026-11-27T17:57:44Z,pr-44,merge,fable,orologio,PR #44 mergiata dopo due validazioni (seconda APPROVATA; 5 min 11 s); chiude #25
+2026-11-27T17:58:13Z,processo,risposta-consegnata,fable,orologio,PR #44 mergiata; specifica #35 in contestazione
+2026-11-27T17:58:14Z,issue-35,specifica-scritta,fable,orologio,riallineata dopo #24 e #25
+2026-11-27T17:58:14Z,issue-35,codex-inizio,codex,orologio,contestazione della specifica; sola lettura
+2026-11-27T18:02:49Z,issue-35,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-27T18:03:44Z,issue-35,ready,fable,orologio,specifica pubblicata; 7 rilievi accolti
+2026-11-27T18:03:44Z,issue-35,esecutore-inizio,opus,orologio,affidata
+2026-11-27T18:03:50Z,processo,risposta-consegnata,fable,orologio,specifica #35 affidata
+2026-11-27T18:07:19Z,pr-47,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T18:07:58Z,pr-47,decisione,fable,orologio,validazione 1: quattro rilievi accolti (due bloccanti)
+2026-11-27T18:07:58Z,issue-23,esecutore-inizio,opus,orologio,giro di correzione unico
+2026-11-27T18:20:46Z,issue-27,esecutore-fine,sonnet,orologio,PR #48 aperta; criteri dichiarati soddisfatti; 29 casi di regressione; CI verde dichiarata
+2026-11-27T18:20:48Z,issue-27,esecutore-consuntivo,sonnet,orologio,durata 4889 s; 123 chiamate a strumenti; contatore token 307545
+2026-11-27T18:20:54Z,pr-48,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-27T19:15:18Z,pr-48,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: BOCCIATA
+2026-11-27T19:16:15Z,pr-48,decisione,fable,orologio,validazione 1: quattro rilievi accolti (uno bloccante); uno respinto come limite; uno risolto nella specifica
+2026-11-27T19:16:15Z,issue-27,esecutore-inizio,sonnet,orologio,giro di correzione unico

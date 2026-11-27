@@ -1,0 +1,23 @@
+# Provenienza dei record dello scenario di CBSTM03A (issue #25). Colonne separate da TAB:
+# file dello scenario, riga nel file dello scenario, file dei dati di esempio (in app/data/ASCII/ del legacy),
+# riga nel file dei dati di esempio, trasformazione.
+# copia     = la riga dello scenario e' identica byte per byte alla riga dei dati di esempio.
+# outrec    = la riga e' la trasformazione OUTREC di app/jcl/CREASTMT.JCL (STEP010, righe 53-54) applicata
+#             alla riga dei dati di esempio: byte 263-278 (numero di carta), poi byte 1-262, poi byte
+#             279-328, poi 22 spazi fino a 350 (vedi registro.md, "Movimenti").
+# Il controllo (oracle/adattamenti/check.sh) rifa' entrambe le trasformazioni sui dati di esempio e
+# pretende righe identiche.
+file	riga	sorgente	riga_sorgente	trasformazione
+xreffile.txt	1	cardxref.txt	1	copia
+xreffile.txt	2	cardxref.txt	2	copia
+xreffile.txt	3	cardxref.txt	3	copia
+custfile.txt	1	custdata.txt	2	copia
+custfile.txt	2	custdata.txt	27	copia
+custfile.txt	3	custdata.txt	50	copia
+acctfile.txt	1	acctdata.txt	2	copia
+acctfile.txt	2	acctdata.txt	27	copia
+acctfile.txt	3	acctdata.txt	50	copia
+trnxfile.txt	1	dailytran.txt	21	outrec
+trnxfile.txt	2	dailytran.txt	184	outrec
+trnxfile.txt	3	dailytran.txt	24	outrec
+trnxfile.txt	4	dailytran.txt	87	outrec

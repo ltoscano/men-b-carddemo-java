@@ -1,0 +1,11 @@
+# Attesi scritti a mano leggendo app/cbl/COBIL00C.cbl (COPY e CALL fuori dai commenti; nessuna CALL). tipo, da, a, file, riga, dettaglio
+COPY	program:COBIL00C	copybook:COCOM01Y	app/cbl/COBIL00C.cbl	63	
+COPY	program:COBIL00C	copybook:COBIL00	app/cbl/COBIL00C.cbl	74	
+COPY	program:COBIL00C	copybook:COTTL01Y	app/cbl/COBIL00C.cbl	76	
+COPY	program:COBIL00C	copybook:CSDAT01Y	app/cbl/COBIL00C.cbl	77	
+COPY	program:COBIL00C	copybook:CSMSG01Y	app/cbl/COBIL00C.cbl	78	
+COPY	program:COBIL00C	copybook:CVACT01Y	app/cbl/COBIL00C.cbl	80	
+COPY	program:COBIL00C	copybook:CVACT03Y	app/cbl/COBIL00C.cbl	81	
+COPY	program:COBIL00C	copybook:CVTRA05Y	app/cbl/COBIL00C.cbl	82	
+COPY	program:COBIL00C	external:DFHAID	app/cbl/COBIL00C.cbl	84	
+COPY	program:COBIL00C	external:DFHBMSCA	app/cbl/COBIL00C.cbl	85	

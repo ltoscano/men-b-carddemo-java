@@ -1,0 +1,35 @@
+# Attesi scritti a mano leggendo app/app-transaction-type-db2/jcl/TRANEXTR.jcl (livello B: mapa non riporta nessun passo). I simboli restano come scritti.
+# STEP	id	riga	esecuzione	esegue	parm	fonte	bersaglio   DD	proprietario	riga	dd	dsn_sorgente	disp_sorgente	dataset	generazione	livello	fonte	dsn_risolto	disp_effettivo (colonne separate da tab)
+STEP	jcl-step:TRANEXTR/STEP10	31	PGM	IEBGENER		schede	utility:IEBGENER
+DD	jcl-step:TRANEXTR/STEP10	32	SYSPRINT			dataset:~SYSOUT		passo	schede		
+DD	jcl-step:TRANEXTR/STEP10	33	SYSIN			dataset:~DUMMY		passo	schede		
+DD	jcl-step:TRANEXTR/STEP10	34	SYSUT1	&HLQ..TRANTYPE.PS	SHR	dataset:&HLQ..TRANTYPE.PS		passo	schede		
+DD	jcl-step:TRANEXTR/STEP10	35	SYSUT2	&HLQ..TRANTYPE.BKUP(+1)	(NEW,CATLG)	dataset:&HLQ..TRANTYPE.BKUP	+1	passo	schede		
+STEP	jcl-step:TRANEXTR/STEP20	42	PGM	IEBGENER		schede	utility:IEBGENER
+DD	jcl-step:TRANEXTR/STEP20	43	SYSPRINT			dataset:~SYSOUT		passo	schede		
+DD	jcl-step:TRANEXTR/STEP20	44	SYSIN			dataset:~DUMMY		passo	schede		
+DD	jcl-step:TRANEXTR/STEP20	45	SYSUT1	&HLQ..TRANCATG.PS	SHR	dataset:&HLQ..TRANCATG.PS		passo	schede		
+DD	jcl-step:TRANEXTR/STEP20	46	SYSUT2	&HLQ..TRANCATG.PS.BKUP(+1)	(NEW,CATLG)	dataset:&HLQ..TRANCATG.PS.BKUP	+1	passo	schede		
+STEP	jcl-step:TRANEXTR/STEP30	53	PGM	IEFBR14		schede	utility:IEFBR14
+DD	jcl-step:TRANEXTR/STEP30	54	DD01	&HLQ..TRANTYPE.PS	(MOD,DELETE,DELETE)	dataset:&HLQ..TRANTYPE.PS		passo	schede		
+DD	jcl-step:TRANEXTR/STEP30	58	DD02	&HLQ..TRANCATG.PS	(MOD,DELETE,DELETE)	dataset:&HLQ..TRANCATG.PS		passo	schede		
+STEP	jcl-step:TRANEXTR/STEP40	65	PGM	IKJEFT01		schede	utility:IKJEFT01
+DD	jcl-step:TRANEXTR/STEP40	66	STEPLIB	OEM.DB2.DAZ1.RUNLIB.LOAD	SHR	dataset:OEM.DB2.DAZ1.RUNLIB.LOAD		passo	schede		
+DD	jcl-step:TRANEXTR/STEP40	67		OEMA.DB2.VERSIONA.SDSNLOAD	SHR	dataset:OEMA.DB2.VERSIONA.SDSNLOAD		passo	schede		
+DD	jcl-step:TRANEXTR/STEP40	68	SYSTSPRT			dataset:~SYSOUT		passo	schede		
+DD	jcl-step:TRANEXTR/STEP40	69	SYSPRINT			dataset:~SYSOUT		passo	schede		
+DD	jcl-step:TRANEXTR/STEP40	70	SYSUDUMP			dataset:~SYSOUT		passo	schede		
+DD	jcl-step:TRANEXTR/STEP40	71	SYSPUNCH			dataset:~DUMMY		passo	schede		
+DD	jcl-step:TRANEXTR/STEP40	72	SYSREC00	&HLQ..TRANTYPE.PS	(NEW,CATLG,DELETE)	dataset:&HLQ..TRANTYPE.PS		passo	schede		
+DD	jcl-step:TRANEXTR/STEP40	75	SYSIN			dataset:~INSTREAM		passo	schede		
+DD	jcl-step:TRANEXTR/STEP40	86	SYSTSIN			dataset:~INSTREAM		passo	schede		
+STEP	jcl-step:TRANEXTR/STEP50	95	PGM	IKJEFT01		schede	utility:IKJEFT01
+DD	jcl-step:TRANEXTR/STEP50	96	STEPLIB	OEM.DB2.DAZ1.RUNLIB.LOAD	SHR	dataset:OEM.DB2.DAZ1.RUNLIB.LOAD		passo	schede		
+DD	jcl-step:TRANEXTR/STEP50	97		OEMA.DB2.VERSIONA.SDSNLOAD	SHR	dataset:OEMA.DB2.VERSIONA.SDSNLOAD		passo	schede		
+DD	jcl-step:TRANEXTR/STEP50	98	SYSTSPRT			dataset:~SYSOUT		passo	schede		
+DD	jcl-step:TRANEXTR/STEP50	99	SYSPRINT			dataset:~SYSOUT		passo	schede		
+DD	jcl-step:TRANEXTR/STEP50	100	SYSUDUMP			dataset:~SYSOUT		passo	schede		
+DD	jcl-step:TRANEXTR/STEP50	101	SYSPUNCH			dataset:~DUMMY		passo	schede		
+DD	jcl-step:TRANEXTR/STEP50	102	SYSREC00	&HLQ..TRANCATG.PS	(NEW,CATLG,DELETE)	dataset:&HLQ..TRANCATG.PS		passo	schede		
+DD	jcl-step:TRANEXTR/STEP50	105	SYSIN			dataset:~INSTREAM		passo	schede		
+DD	jcl-step:TRANEXTR/STEP50	117	SYSTSIN			dataset:~INSTREAM		passo	schede		

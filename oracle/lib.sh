@@ -175,26 +175,47 @@ in_container() {
 # ricalcolano e rifiutano una build assente, interrotta, vecchia o con artefatti cambiati dopo la build.
 build_inputs() {
   printf '%s\n' "$ORACLE_ROOT/Dockerfile" "$ORACLE_ROOT/cobc.opts" "$ORACLE_ROOT/programs.tsv" \
-    "$ORACLE_ROOT/launcher/avvia.c" "$ORACLE_ROOT/build/compile.sh" "$ORACLE_ROOT/ambiente.sh"
+    "$ORACLE_ROOT/launcher/avvia.c" "$ORACLE_ROOT/build/compile.sh" "$ORACLE_ROOT/ambiente.sh" \
+    "$ORACLE_ROOT/adattamenti/adatta.sh"
   ls "$ORACLE_ROOT"/stubs/*.cbl "$ORACLE_ROOT"/tests/*.cbl
+}
+
+# hash_righe CARTELLA PREFISSO: una riga "<hash> <PREFISSO><nome>" per ogni file della cartella, in ordine.
+# Ogni passo ha l'esito controllato (enumerazione e ogni git hash-object): un file illeggibile o una
+# cartella non elencabile fanno fallire la funzione, e con essa l'impronta (rilievo 3, giro 1 della PR #44).
+hash_righe() {
+  local dir="$1" pre="$2" nomi f h
+  nomi="$(ls -A "$dir")" || return 1
+  [ -n "$nomi" ] || return 0
+  nomi="$(printf '%s\n' "$nomi" | LC_ALL=C sort)" || return 1
+  while IFS= read -r f; do
+    h="$(git hash-object "$dir/$f")" || return 1
+    [ -n "$h" ] || return 1
+    printf '%s %s%s\n' "$h" "$pre" "$f"
+  done <<< "$nomi"
 }
 
 fingerprint() {
   ensure_image
-  {
-    build_inputs | while IFS= read -r f; do
-      printf '%s %s\n' "$(git hash-object "$f")" "${f#"$ORACLE_ROOT"/}"
-    done
-    echo "immagine $(image_id)"
-    echo "legacy $(legacy_commit)"
-    # Contenuto della configurazione di compilatore e runtime dell'immagine (file .conf, .words, runtime.cfg).
-    config_hash
-  } | git hash-object --stdin
+  local ingressi f h righe="" img leg cfg
+  ingressi="$(build_inputs)" || return 1
+  while IFS= read -r f; do
+    h="$(git hash-object "$f")" || return 1
+    [ -n "$h" ] || return 1
+    righe="$righe$h ${f#"$ORACLE_ROOT"/}
+"
+  done <<< "$ingressi"
+  img="$(image_id)" || return 1
+  leg="$(legacy_commit)" || return 1
+  # Contenuto della configurazione di compilatore e runtime dell'immagine (file .conf, .words, runtime.cfg).
+  cfg="$(config_hash)" || return 1
+  printf '%simmagine %s\nlegacy %s\n%s\n' "$righe" "$img" "$leg" "$cfg" | git hash-object --stdin
 }
 
-# SHA-256 di ogni file della cartella di configurazione di GnuCOBOL nell'immagine.
+# SHA-256 di ogni file della cartella di configurazione di GnuCOBOL nell'immagine (ogni sha256sum controllato).
 config_hash() {
-  orun -- timeout 60 sh -c 'cd /usr/share/gnucobol/config && LC_ALL=C ls -A | while read -r f; do sha256sum "$f"; done' \
+  orun -- timeout 60 sh -c 'cd /usr/share/gnucobol/config || exit 1; l="$(LC_ALL=C ls -A)" || exit 1
+                            for f in $l; do sha256sum "$f" || exit 1; done' \
     || fail "lettura della configurazione dell'immagine fallita"
 }
 
@@ -206,10 +227,14 @@ config_alternativa() {
     || fail "creazione della configurazione alternativa fallita"
 }
 
+# Artefatti: i file di bin/ e le copie di compilazione adattate di adattati/ (issue #25), ciascuno con
+# l'hash del contenuto. Una copia adattata cambiata, aggiunta o tolta dopo la build invalida l'impronta.
 artifacts_hash() { # artifacts_hash CARTELLA-DELLA-BUILD
   [ -d "$1/bin" ] || { echo "nessun-artefatto"; return 0; }
-  (cd "$1/bin" && for f in $(ls -A | sort); do printf '%s %s\n' "$(git hash-object "$f")" "$f"; done) \
-    | git hash-object --stdin
+  local bin ada="nessuna-copia-adattata"
+  bin="$(hash_righe "$1/bin" "")" || return 1
+  if [ -d "$1/adattati" ]; then ada="$(hash_righe "$1/adattati" "adattati/")" || return 1; fi
+  printf '%s\n%s\n' "$bin" "$ada" | git hash-object --stdin
 }
 
 build_stamp() { # build_stamp CARTELLA-DELLA-BUILD: il contenuto atteso di IMPRONTA

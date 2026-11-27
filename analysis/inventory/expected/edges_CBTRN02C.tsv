@@ -1,0 +1,7 @@
+# Attesi scritti a mano leggendo app/cbl/CBTRN02C.cbl (COPY righe 102-126, CALL riga 711). tipo, da, a, file, riga, dettaglio
+COPY	program:CBTRN02C	copybook:CVTRA06Y	app/cbl/CBTRN02C.cbl	102	
+COPY	program:CBTRN02C	copybook:CVTRA05Y	app/cbl/CBTRN02C.cbl	107	
+COPY	program:CBTRN02C	copybook:CVACT03Y	app/cbl/CBTRN02C.cbl	112	
+COPY	program:CBTRN02C	copybook:CVACT01Y	app/cbl/CBTRN02C.cbl	121	
+COPY	program:CBTRN02C	copybook:CVTRA01Y	app/cbl/CBTRN02C.cbl	126	
+CALL	program:CBTRN02C	external:CEE3ABD	app/cbl/CBTRN02C.cbl	711	

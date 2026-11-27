@@ -1,0 +1,5 @@
+# Elenco dei JCL passati al livello B (mapa non coincide con il conteggio indipendente), con la causa letta nel sorgente e nel log di mapa. file, esecuzioni nel sorgente, DD nel sorgente, causa
+app/app-transaction-type-db2/jcl/CREADB21.jcl	5	30	mapa riporta 27 DD su 30: non riporta le 3 DD a livello di job (JOBLIB e due concatenate, righe 32-34); avvisi sul dataset &CODER..M2.CARDDEMO.CNTL
+app/app-transaction-type-db2/jcl/TRANEXTR.jcl	5	28	mapa riporta il job senza passi e senza avvisi; prima del primo EXEC il file ha //   SET HLQ=AWS.M2.CARDDEMO (riga 25)
+app/jcl/TRANREPT.jcl	3	16	mapa riporta 2 passi su 3 e 4 DD su 16; il sorgente ha due passi con lo stesso nome STEP05R (righe 23 e 37)
+app/jcl/TXT2PDF1.JCL	1	6	errore di analisi di mapa alla riga 25 (PARM=('')): nessun job nell output

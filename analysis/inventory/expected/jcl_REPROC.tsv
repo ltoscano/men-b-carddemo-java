@@ -1,0 +1,7 @@
+# Attesi scritti a mano leggendo app/proc/REPROC.prc (la procedura eseguita da TRANREPT.jcl riga 23).
+# STEP	id	riga	esecuzione	esegue	parm	fonte	bersaglio   DD	proprietario	riga	dd	dsn_sorgente	disp_sorgente	dataset	generazione	livello	fonte	dsn_risolto	disp_effettivo (colonne separate da tab)
+STEP	jcl-step:proc.REPROC/PRC001	21	PGM	IDCAMS		schede	utility:IDCAMS
+DD	jcl-step:proc.REPROC/PRC001	22	SYSPRINT			dataset:~SYSOUT		passo	schede		
+DD	jcl-step:proc.REPROC/PRC001	23	FILEIN	NULLFILE	SHR	dataset:NULLFILE		passo	schede		
+DD	jcl-step:proc.REPROC/PRC001	25	FILEOUT	NULLFILE	SHR	dataset:NULLFILE		passo	schede		
+DD	jcl-step:proc.REPROC/PRC001	27	SYSIN	&CNTLLIB(REPROCT)	SHR	dataset:&CNTLLIB		passo	schede		
