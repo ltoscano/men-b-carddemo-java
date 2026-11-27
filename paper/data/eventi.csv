@@ -94,3 +94,8 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T12:48:27Z,issue-2,specifica-aggiornata,fable,orologio,voce 24 del registro
 2026-11-27T12:48:27Z,issue-2,esecutore-inizio,sonnet,orologio,ripresa dopo l'aggiornamento della specifica
 2026-11-27T12:48:32Z,issue-2,esecutore-consuntivo,sonnet,orologio,prima fase fino al fermo: durata 393 s; 36 chiamate a strumenti; contatore token 161440
+2026-11-27T12:50:22Z,issue-14,esecutore-fine,opus,orologio,giro di correzione 1 consegnato; SHA 7833340; CI verde
+2026-11-27T12:50:25Z,issue-14,esecutore-consuntivo,opus,orologio,giro di correzione 1: durata 506 s; 34 chiamate a strumenti; contatore token 376456 (cumulativo)
+2026-11-27T12:50:29Z,pr-20,codex-inizio,codex,orologio,validazione giro 2
+2026-11-27T12:59:22Z,pr-20,codex-fine,codex,orologio,giro 2; exit=0; token: 110.119
+2026-11-27T13:00:09Z,pr-20,approvazione,fable,orologio,giro 2: BOCCIATA da Codex per un rilievo che l'Approvatore respinge (strumento che restituisce dati falsi); merge

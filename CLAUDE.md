@@ -97,6 +97,8 @@ Dal 27 nov 2026 l'autore ha delegato a Fable l'approvazione e il merge delle PR,
 - se resta un rilievo **bloccante**, o un rischio di falso verde o sui dati, Fable non mergia: sceglie tra un giro in più mirato a quel solo rilievo, la riscrittura della specifica, o la divisione dell'issue, e registra perché;
 - in ogni caso la voce di registro dice cosa chiedeva il Validatore, cosa si è deciso, perché, e dove è finito ciò che resta.
 
+**Fin dove arriva la sfiducia negli script (regola nata dalla PR #20).** Uno script di verifica deve accorgersi di un comando che fallisce, di un'attesa che non finisce, di una risposta malformata o incompleta, di un risultato rimasto da una corsa precedente. Non gli si chiede di difendersi da uno strumento che restituisce dati falsi ma ben formati con esito positivo (per esempio un `docker` sostituito che dichiara assente una risorsa presente): la difesa userebbe lo stesso strumento e non avrebbe fine. Un rilievo di questo secondo tipo si registra come limite dichiarato, non blocca il merge, e nei prompt di validazione non si chiede di cercarlo.
+
 **Fable scala all'autore solo quando:** serve cambiare l'obiettivo del progetto o il perimetro di una wave; un contrasto bloccante resta dopo il giro in più; la decisione è irreversibile o esce dal repository.
 
 **Coerenza.** Fable ha scritto la specifica, quindi non è un giudice indipendente del proprio lavoro: l'indipendenza viene da Codex. Fable non respinge un rilievo senza un'evidenza verificata, e a parità di dubbio dà ragione al Validatore. Rilievi simili ricevono lo stesso trattamento: prima di decidere si rilegge il registro.
