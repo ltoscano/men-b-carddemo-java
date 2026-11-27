@@ -21,7 +21,7 @@ Regole:
 - Il repository è pubblico: nessun percorso assoluto della macchina locale, nessun dato personale, nessun segreto in file, commit o PR.
 - Non fare merge. Non modificare altre issue. Non chiudere l'issue.
 
-Prima di aprire la PR, autocontrollo obbligatorio (dal 27 novembre 2026, 16:10 UTC). Sono le quattro famiglie di difetto che il Validatore ha trovato più spesso. Per ogni script, controllo o test che hai scritto o modificato verifica, e riporta nella descrizione della PR con comando ed esito:
+Prima di aprire la PR, autocontrollo obbligatorio (dal 27 novembre 2026, 16:00 UTC). Sono le quattro famiglie di difetto che il Validatore ha trovato più spesso. Per ogni script, controllo o test che hai scritto o modificato verifica, e riporta nella descrizione della PR con comando ed esito:
 - **Esiti ignorati.** Ogni comando il cui fallimento cambierebbe il risultato ha l'esito controllato, anche dentro pipeline, sottoshell, `trap` e comandi eseguiti in un container. Prova: fai fallire il comando e osserva che lo script termina con errore.
 - **Risultati residui.** Nessun file, verdetto, artefatto o risorsa rimasto da una corsa precedente può soddisfare un controllo della corsa corrente. Prova: lascia un residuo sano e rompi la produzione corrente.
 - **Attese senza limite.** Ogni attesa, richiesta di rete e arresto di processo ha un limite di tempo, e allo scadere lo script termina con errore.

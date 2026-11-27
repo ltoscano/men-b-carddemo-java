@@ -99,7 +99,7 @@ Dal 27 nov 2026 l'autore ha delegato a Fable l'approvazione e il merge delle PR,
 
 **Fin dove arriva la sfiducia negli script (regola nata dalla PR #20).** Uno script di verifica deve accorgersi di un comando che fallisce, di un'attesa che non finisce, di una risposta malformata o incompleta, di un risultato rimasto da una corsa precedente. Non gli si chiede di difendersi da uno strumento che restituisce dati falsi ma ben formati con esito positivo (per esempio un `docker` sostituito che dichiara assente una risorsa presente): la difesa userebbe lo stesso strumento e non avrebbe fine. Un rilievo di questo secondo tipo si registra come limite dichiarato, non blocca il merge, e nei prompt di validazione non si chiede di cercarlo.
 
-**Validazione proporzionata al rischio** (decisione dell'autore, 27 nov 2026, 16:10 UTC).
+**Validazione proporzionata al rischio** (decisione dell'autore, 27 nov 2026, 16:00 UTC).
 - *Rischio pieno, Codex obbligatorio*: la PR tocca `oracle/`, golden, parità, schema o dati, logica di business Java, script di verifica (`verify.sh`, `smoke.sh`, `quality/`, `check.sh` e colla di `analysis/`), CI, Dockerfile o Compose. Nel dubbio è rischio pieno.
 - *Basso rischio, senza Codex*: solo documentazione, testi e motivazioni, correzioni che non cambiano alcun valore atteso né alcun controllo. Bastano CI verde e la lettura integrale del diff da parte di Fable, che riesegue i criteri di accettazione su un clone pulito. La voce di registro dichiara "senza Codex" e la classe di rischio.
 - La classe si scrive nell'issue quando passa a `ready`. Se il diff della PR esce dalla classe dichiarata, torna a rischio pieno.
