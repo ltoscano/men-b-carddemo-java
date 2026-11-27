@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CSUTLDWY.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--******************************************************************-->
+    <!--*Working Storage Copybook for DATE related code-->
+    <!--******************************************************************-->
+    <item level="10" name="WS-EDIT-DATE-CCYYMMDD" position="1" storage-length="8" display-length="8" display-position="1" redefined="true">
+        <item level="20" name="WS-EDIT-DATE-CCYY" position="1" storage-length="4" display-length="4" display-position="1" redefined="true">
+            <item level="25" name="WS-EDIT-DATE-CC" picture="X(2)" position="1" storage-length="2" display-length="2" display-position="1" redefined="true"/>
+            <item level="25" name="WS-EDIT-DATE-CC-N" picture="9(2)" position="1" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="1" redefines="WS-EDIT-DATE-CC">
+                <condition name="THIS-CENTURY">
+                    <condition value="20"/>
+                </condition>
+                <condition name="LAST-CENTURY">
+                    <condition value="19"/>
+                </condition>
+            </item>
+            <item level="25" name="WS-EDIT-DATE-YY" picture="X(2)" position="3" storage-length="2" display-length="2" display-position="3" redefined="true"/>
+            <item level="25" name="WS-EDIT-DATE-YY-N" picture="9(2)" position="3" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="3" redefines="WS-EDIT-DATE-YY"/>
+        </item>
+        <item level="20" name="WS-EDIT-DATE-CCYY-N" picture="9(4)" position="1" storage-length="4" display-length="4" numeric="COBOL_NUMERIC" display-position="1" redefines="WS-EDIT-DATE-CCYY"/>
+        <item level="20" name="WS-EDIT-DATE-MM" picture="X(2)" position="5" storage-length="2" display-length="2" display-position="5" redefined="true"/>
+        <item level="20" name="WS-EDIT-DATE-MM-N" picture="9(2)" position="5" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="5" redefines="WS-EDIT-DATE-MM">
+            <condition name="WS-VALID-MONTH">
+                <condition value="1" through="12"/>
+            </condition>
+            <condition name="WS-31-DAY-MONTH">
+                <condition value="1"/>
+                <condition value="3"/>
+                <condition value="5"/>
+                <condition value="7"/>
+                <condition value="8"/>
+                <condition value="10"/>
+                <condition value="12"/>
+            </condition>
+            <condition name="WS-FEBRUARY">
+                <condition value="2"/>
+            </condition>
+        </item>
+        <item level="20" name="WS-EDIT-DATE-DD" picture="X(2)" position="7" storage-length="2" display-length="2" display-position="7" redefined="true"/>
+        <item level="20" name="WS-EDIT-DATE-DD-N" picture="9(2)" position="7" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="7" redefines="WS-EDIT-DATE-DD">
+            <condition name="WS-VALID-DAY">
+                <condition value="1" through="31"/>
+            </condition>
+            <condition name="WS-DAY-31">
+                <condition value="31"/>
+            </condition>
+            <condition name="WS-DAY-30">
+                <condition value="30"/>
+            </condition>
+            <condition name="WS-DAY-29">
+                <condition value="29"/>
+            </condition>
+            <condition name="WS-VALID-FEB-DAY">
+                <condition value="1" through="28"/>
+            </condition>
+        </item>
+    </item>
+    <item level="10" name="WS-EDIT-DATE-CCYYMMDD-N" picture="9(8)" position="1" storage-length="8" display-length="8" numeric="COBOL_NUMERIC" display-position="1" redefines="WS-EDIT-DATE-CCYYMMDD"/>
+    <item level="10" name="WS-EDIT-DATE-BINARY" picture="S9(9)" usage="binary" position="9" storage-length="4" display-length="9" numeric="COBOL_NUMERIC" display-position="9"/>
+    <item level="10" name="WS-CURRENT-DATE" position="13" storage-length="12" display-length="17" display-position="18">
+        <item level="20" name="WS-CURRENT-DATE-YYYYMMDD" picture="X(8)" position="13" storage-length="8" display-length="8" display-position="18" redefined="true"/>
+        <item level="20" name="WS-CURRENT-DATE-YYYYMMDD-N" picture="9(8)" position="13" storage-length="8" display-length="8" numeric="COBOL_NUMERIC" display-position="18" redefines="WS-CURRENT-DATE-YYYYMMDD"/>
+        <item level="20" name="WS-CURRENT-DATE-BINARY" picture="S9(9)" usage="binary" position="21" storage-length="4" display-length="9" numeric="COBOL_NUMERIC" display-position="26"/>
+    </item>
+    <item level="10" name="WS-EDIT-DATE-FLGS" position="25" storage-length="3" display-length="3" display-position="35">
+        <condition name="WS-EDIT-DATE-IS-VALID">
+            <condition value="low-values"/>
+        </condition>
+        <condition name="WS-EDIT-DATE-IS-INVALID">
+            <condition value="&quot;000&quot;"/>
+        </condition>
+        <item level="20" name="WS-EDIT-YEAR-FLG" picture="X(01)" position="25" storage-length="1" display-length="1" display-position="35">
+            <condition name="FLG-YEAR-ISVALID">
+                <condition value="low-values"/>
+            </condition>
+            <condition name="FLG-YEAR-NOT-OK">
+                <condition value="&quot;0&quot;"/>
+            </condition>
+            <condition name="FLG-YEAR-BLANK">
+                <condition value="&quot;B&quot;"/>
+            </condition>
+        </item>
+        <item level="20" name="WS-EDIT-MONTH" picture="X(01)" position="26" storage-length="1" display-length="1" display-position="36">
+            <condition name="FLG-MONTH-ISVALID">
+                <condition value="low-values"/>
+            </condition>
+            <condition name="FLG-MONTH-NOT-OK">
+                <condition value="&quot;0&quot;"/>
+            </condition>
+            <condition name="FLG-MONTH-BLANK">
+                <condition value="&quot;B&quot;"/>
+            </condition>
+        </item>
+        <item level="20" name="WS-EDIT-DAY" picture="X(01)" position="27" storage-length="1" display-length="1" display-position="37">
+            <condition name="FLG-DAY-ISVALID">
+                <condition value="low-values"/>
+            </condition>
+            <condition name="FLG-DAY-NOT-OK">
+                <condition value="&quot;0&quot;"/>
+            </condition>
+            <condition name="FLG-DAY-BLANK">
+                <condition value="&quot;B&quot;"/>
+            </condition>
+        </item>
+    </item>
+    <item level="10" name="WS-DATE-FORMAT" picture="X(08)" position="28" storage-length="8" display-length="8" display-position="38" value="&quot;YYYYMMDD&quot;"/>
+    <item level="10" name="WS-DATE-VALIDATION-RESULT" position="36" storage-length="80" display-length="80" display-position="46">
+        <item level="20" name="WS-SEVERITY" picture="X(04)" position="36" storage-length="4" display-length="4" display-position="46" redefined="true"/>
+        <item level="20" name="WS-SEVERITY-N" picture="9(4)" position="36" storage-length="4" display-length="4" numeric="COBOL_NUMERIC" display-position="46" redefines="WS-SEVERITY"/>
+        <item level="20" name="FILLER" picture="X(11)" position="40" storage-length="11" display-length="11" display-position="50" value="&quot;Mesg Code:&quot;"/>
+        <item level="20" name="WS-MSG-NO" picture="X(04)" position="51" storage-length="4" display-length="4" display-position="61" redefined="true"/>
+        <item level="20" name="WS-MSG-NO-N" picture="9(4)" position="51" storage-length="4" display-length="4" numeric="COBOL_NUMERIC" display-position="61" redefines="WS-MSG-NO"/>
+        <item level="20" name="FILLER" picture="X(01)" position="55" storage-length="1" display-length="1" display-position="65" value="spaces"/>
+        <item level="20" name="WS-RESULT" picture="X(15)" position="56" storage-length="15" display-length="15" display-position="66"/>
+        <item level="20" name="FILLER" picture="X(01)" position="71" storage-length="1" display-length="1" display-position="81" value="spaces"/>
+        <item level="20" name="FILLER" picture="X(09)" position="72" storage-length="9" display-length="9" display-position="82" value="&quot;TstDate:&quot;"/>
+        <item level="20" name="WS-DATE" picture="X(10)" position="81" storage-length="10" display-length="10" display-position="91"/>
+        <item level="20" name="FILLER" picture="X(01)" position="91" storage-length="1" display-length="1" display-position="101" value="spaces"/>
+        <item level="20" name="FILLER" picture="X(10)" position="92" storage-length="10" display-length="10" display-position="102" value="&quot;Mask used:&quot;"/>
+        <item level="20" name="WS-DATE-FMT" picture="X(10)" position="102" storage-length="10" display-length="10" display-position="112"/>
+        <item level="20" name="FILLER" picture="X(01)" position="112" storage-length="1" display-length="1" display-position="122" value="spaces"/>
+        <item level="20" name="FILLER" picture="X(03)" position="113" storage-length="3" display-length="3" display-position="123" value="spaces"/>
+    </item>
+</copybook>

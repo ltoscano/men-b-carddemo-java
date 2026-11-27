@@ -1,0 +1,6 @@
+PATH=/usr/bin:/bin
+HOME=/tmp
+LC_ALL=C
+COB_LIBRARY_PATH=/oracle-bin
+DD_DALYTRAN=/legacy/app/data/ASCII/dailytran.txt
+DD_SEGNOOUT=/out/dd/SEGNOOUT.dat

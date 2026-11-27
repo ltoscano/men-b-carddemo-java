@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBACT01C.ARR-ARRAY-REC.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="ARR-ARRAY-REC" position="1" storage-length="110" display-length="135" display-position="1">
+        <item level="05" name="ARR-ACCT-ID" picture="9(11)" position="1" storage-length="11" display-length="11" numeric="COBOL_NUMERIC" display-position="1"/>
+        <item level="05" name="ARR-ACCT-BAL" occurs="5" position="12" storage-length="19" display-length="24" display-position="12">
+            <item level="10" name="ARR-ACCT-CURR-BAL" picture="S9(10)V99" position="12" storage-length="12" display-length="12" scale="2" numeric="COBOL_NUMERIC" display-position="12"/>
+            <item level="10" name="ARR-ACCT-CURR-CYC-DEBIT" picture="S9(10)V99" usage="computational-3" position="24" storage-length="7" display-length="12" scale="2" numeric="COBOL_NUMERIC" display-position="24"/>
+        </item>
+        <item level="05" name="ARR-FILLER" picture="X(04)" position="107" storage-length="4" display-length="4" display-position="132"/>
+    </item>
+</copybook>

@@ -1,0 +1,7 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+FD-DISCGRP-REC	01	gruppo	-	-	-	-	-	0	50	-	-	-	-	FD-DISCGRP-REC
+FD-DISCGRP-KEY	05	gruppo	-	-	-	-	-	0	16	-	-	-	-	FD-DISCGRP-REC/FD-DISCGRP-KEY
+FD-DIS-ACCT-GROUP-ID	10	elementare	X(10)	DISPLAY	-	-	-	0	10	-	-	-	-	FD-DISCGRP-REC/FD-DISCGRP-KEY/FD-DIS-ACCT-GROUP-ID
+FD-DIS-TRAN-TYPE-CD	10	elementare	X(02)	DISPLAY	-	-	-	10	2	-	-	-	-	FD-DISCGRP-REC/FD-DISCGRP-KEY/FD-DIS-TRAN-TYPE-CD
+FD-DIS-TRAN-CAT-CD	10	elementare	9(04)	DISPLAY	-	4	0	12	4	-	-	-	-	FD-DISCGRP-REC/FD-DISCGRP-KEY/FD-DIS-TRAN-CAT-CD
+FD-DISCGRP-DATA	05	elementare	X(34)	DISPLAY	-	-	-	16	34	-	-	-	-	FD-DISCGRP-REC/FD-DISCGRP-DATA

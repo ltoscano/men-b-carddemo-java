@@ -1,0 +1,21 @@
+# Lunghezze attese dei record (criterio di accettazione di #3), calcolate a mano dalle PIC del copybook.
+# Procedimento: somma delle lunghezze dei campi elementari non ridefiniti; DISPLAY = un byte per carattere o cifra
+# (segno incorporato nell'ultima cifra), COMP = 2/4/8 byte per 1-4/5-9/10-18 cifre, COMP-3 = cifre/2 + 1 byte.
+# CSUSR01Y.cpy 18-23: 8+20+20+8+1+23. CVACT01Y.cpy 5-17: 11+1+12+12+12+10+10+10+12+12+10+10+178.
+# CVACT02Y.cpy 5-11: 16+11+3+50+10+1+59. CVACT03Y.cpy 5-8: 16+9+11+14. CVCUS01Y.cpy 5-23: 9+25+25+25+50+50+50+2+3+10+15+15+9+20+10+10+1+3+168.
+# CVTRA05Y.cpy 5-18: 16+2+4+10+100+11+9+50+50+10+16+26+26+20. CVTRA06Y.cpy 5-18: come CVTRA05Y. CVTRA01Y.cpy 6-10: 11+2+4+11+22.
+# CVTRA02Y.cpy 6-10: 10+2+4+6+28. CVTRA03Y.cpy 5-7: 2+50+8. CVTRA04Y.cpy 6-9: 2+4+50+4.
+# CVEXPORT.cpy 10-19: 1+26+4 (9(9) COMP)+4+5+460 (le aree con REDEFINES non si sommano).
+copybook	radice	lunghezza
+CSUSR01Y	SEC-USER-DATA	80
+CVACT01Y	ACCOUNT-RECORD	300
+CVACT02Y	CARD-RECORD	150
+CVACT03Y	CARD-XREF-RECORD	50
+CVCUS01Y	CUSTOMER-RECORD	500
+CVTRA05Y	TRAN-RECORD	350
+CVTRA06Y	DALYTRAN-RECORD	350
+CVTRA01Y	TRAN-CAT-BAL-RECORD	50
+CVTRA02Y	DIS-GROUP-RECORD	50
+CVTRA03Y	TRAN-TYPE-RECORD	60
+CVTRA04Y	TRAN-CAT-RECORD	60
+CVEXPORT	EXPORT-RECORD	500

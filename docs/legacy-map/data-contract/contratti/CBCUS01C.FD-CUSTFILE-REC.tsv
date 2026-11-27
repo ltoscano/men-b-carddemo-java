@@ -1,0 +1,4 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+FD-CUSTFILE-REC	01	gruppo	-	-	-	-	-	0	500	-	-	-	-	FD-CUSTFILE-REC
+FD-CUST-ID	05	elementare	9(09)	DISPLAY	-	9	0	0	9	-	-	-	-	FD-CUSTFILE-REC/FD-CUST-ID
+FD-CUST-DATA	05	elementare	X(491)	DISPLAY	-	-	-	9	491	-	-	-	-	FD-CUSTFILE-REC/FD-CUST-DATA

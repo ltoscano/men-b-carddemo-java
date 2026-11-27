@@ -224,6 +224,122 @@ Dall'avvio al merge: 2 ore e 26 minuti. Lavoro degli agenti: 84 minuti (50 dell'
 
 Un punto di metodo. Al secondo giro l'Esecutore aveva scoperto che scc sbaglia la ripartizione tra codice e commenti, e aveva risolto registrando l'errore come "atteso", così che il controllo passasse. Il Validatore lo ha respinto: un errore noto resta un errore. La soluzione corretta è stata cambiare la specifica, dividendo la capacità in due e dichiarando non disponibile la parte che lo strumento non sa fare. **Quando un controllo non passa, la tentazione è aggiustare l'atteso; va invece deciso, per iscritto, se cambia la richiesta.**
 
+**Passo 12 — Specifiche che si dividono.** Con gli strumenti scelti, le tre issue successive della mappa (inventario, contratto dati, oracle) potevano partire. Prima di affidarle il pianificatore le ha riallineate a ciò che #1 aveva scoperto e le ha fatte contestare: 4 minuti e 36 secondi, 18 rilievi, 2 bloccanti. Sei rilievi dicevano la stessa cosa in modi diversi: ogni specifica conteneva più lavori indipendenti. Le tre issue sono diventate sette.
+
+Due rilievi mostrano bene che cosa trova un revisore che legge il sorgente:
+
+- Il programma degli estratti conto, `CBSTM03A`, non solo non compila per via di caratteri TAB in un copybook: una volta compilato non potrebbe comunque girare, perché nelle prime righe legge aree di memoria del sistema operativo del mainframe per stampare il nome del job. In un container quella memoria non esiste. Il pianificatore ha letto quelle 26 righe, ha verificato che servono solo a stampare a console, e ha autorizzato a neutralizzarle su una copia di compilazione, con registro e controllo. È la prima modifica di sorgente ammessa nel progetto, ed è delimitata per numero di riga.
+- La specifica del contratto dati chiedeva "un record di prova con un valore diverso in ogni campo". Ma alcuni tracciati descrivono gli stessi byte in più modi (`REDEFINES`): un solo record con tutti i campi valorizzati non può esistere. Serve un record per ciascuna vista.
+
+**Passo 13 — Un Esecutore che si ferma.** L'Esecutore dell'inventario (issue #2) ha cominciato provando lo strumento per il JCL su tutti i 46 file, non solo sui 4 usati per sceglierlo. Su tre file lo strumento falliva, in un caso senza alcun avviso: restituiva un job vuoto. In totale vedeva 112 passi su 119. L'Esecutore si è fermato dopo 6 minuti e mezzo senza scrivere codice, ha lasciato un commento tecnico sull'issue e ha applicato l'etichetta `needs-spec-update`.
+
+Aveva due scorciatoie a portata di mano: scrivere in proprio un analizzatore di JCL, vietato dalla specifica, oppure registrare i tre file come "mancanti attesi", cioè il difetto già bocciato sulla PR #18. Non ne ha presa nessuna. Il pianificatore ha aggiornato la specifica e l'Esecutore è ripartito meno di un minuto dopo il fermo (due livelli dichiarati: lo strumento dove il suo risultato coincide con un conteggio indipendente, un estrattore minimo di schede a formato fisso per gli altri file).
+
+La lezione riguarda la specifica di #1, non l'Esecutore: **provare uno strumento su 4 file su 46 non bastava per adottarlo.** Un campione serve a controllare la correttezza; la copertura va misurata su tutto.
+
+**Passo 14 — La PR #20: l'applicazione parte, e un rilievo respinto.** L'issue #14 chiedeva che `docker compose up`, da clone pulito, avviasse database, servizio online e runner batch, con uno *smoke test*: uno script che avvia tutto, controlla che funzioni e ripulisce. Visti i tre giri della PR #17, il pianificatore ha affidato questa issue a Claude Opus anziché a Sonnet, chiedendo di leggere prima i rilievi già ricevuti dall'altro Esecutore.
+
+**Tabella 7 — Storia della PR #20** (ora UTC)
+
+| Fase | Chi | Inizio | Durata | Esito |
+| --- | --- | --- | ---: | --- |
+| Implementazione | Esecutore (Opus) | 11:48:19 | 40 min 25 s | PR aperta, CI verde |
+| Validazione 1 | Codex | 12:29:33 | 9 min 47 s | bocciata: 1 bloccante (21 prove su 22 corrette) |
+| Correzione 1 | Esecutore | 12:41 | 8 min 26 s | corretto; trovato e corretto un secondo difetto dello stesso tipo |
+| Validazione 2 | Codex | 12:50:29 | 8 min 53 s | bocciata: 1 bloccante, respinto dall'Approvatore |
+| Merge | pianificatore | 13:00:12 | — | `main` a `780692b` |
+
+Dall'avvio al merge: 1 ora e 12 minuti, senza attese di persone. Lavoro degli agenti: 67 minuti.
+
+Il confronto tra i due modelli sullo stesso genere di lavoro (script di shell che devono fallire quando qualcosa va storto) è questo: Sonnet ha consegnato in meno di 6 minuti e ha richiesto tre validazioni e due correzioni, per 14 minuti di lavoro suo in tutto; Opus ha consegnato in 40 minuti, con un solo difetto, e ha richiesto due validazioni e una correzione. È un caso solo per modello, su compiti non identici: non è una misura, è un'osservazione. Ma indica che il tempo di prima consegna dice poco, e che conta il tempo fino al merge.
+
+Il rilievo respinto merita di essere raccontato, perché è il primo dissenso tra chi approva e chi valida. Al secondo giro il Validatore ha sostituito il comando `docker` con uno falso che rispondeva "nessuna risorsa presente", con esito positivo, mentre una risorsa c'era. Lo smoke test ha creduto alla risposta e ha dichiarato la pulizia riuscita. Per il Validatore era un falso verde bloccante.
+
+Il pianificatore lo ha respinto, per iscritto, con tre motivi. Non è un errore che lo script ignora: è uno strumento che mente in modo plausibile. La correzione proposta, chiedere la stessa cosa a Docker per un'altra via, userebbe lo stesso strumento, che potrebbe mentire anche lì: non c'è un punto in cui ci si ferma. E l'attacco lo aveva chiesto il pianificatore stesso nelle istruzioni al Validatore, andando oltre la specifica. Ne è uscita una regola scritta: uno script deve accorgersi di uno strumento che fallisce o risponde in modo malformato; non gli si chiede di difendersi da uno strumento che restituisce dati falsi ma ben formati.
+
+*Cosa si trasferisce:* un validatore avversariale non ha un freno proprio. Più gli si chiede di attaccare, più trova, e a un certo punto ciò che trova non riguarda più il lavoro ma i limiti di qualsiasi lavoro. Serve qualcuno che dica dove ci si ferma, e che lo scriva perché la stessa soglia valga la volta dopo. Qui lo ha fatto il pianificatore, che però aveva scritto anche la specifica: è il punto in cui l'approvazione delegata è più debole, e la voce del registro lo segnala all'autore.
+
+Con questo merge il ramo principale contiene un'applicazione che parte. È vuota (nessuna funzione di CardDemo è ancora migrata), ma ogni passo da qui in avanti aggiunge qualcosa a un sistema che gira.
+
+**Passo 15 — Cinque issue in parallelo.** Tra le 12:41 e le 13:07 UTC il pianificatore ha avviato cinque Esecutori su cinque issue con cartelle disgiunte: inventario delle dipendenze (#2), contratto dati (#3), oracle GnuCOBOL (#4), test con PostgreSQL reale (#15), completezza dei controlli e CI dell'analisi (#21). È la prima volta che il metodo lavora davvero in parallelo.
+
+**Tabella 8 — Le cinque PR in parallelo** (stato alle 15:00 UTC; tempi di lavoro dal registro degli eventi)
+
+| PR | Issue | Esecutore | Lavoro dell'Esecutore | Validazioni di Codex | Esito |
+| --- | --- | --- | ---: | ---: | --- |
+| #29 | #4 oracle GnuCOBOL | Opus | 97 min in 3 fasi | 3, per 40 min | mergiata alle 14:59, dopo 2 h 18 min |
+| #33 | #15 test con PostgreSQL | Opus | 64 min in 3 fasi | 2, per 39 min | mergiata alle 14:51, dopo 1 h 45 min |
+| #30 | #2 inventario | Sonnet | 74 min in 3 fasi | 2, per 64 min | secondo giro di correzione |
+| #32 | #3 contratto dati | Opus | 88 min in 2 fasi | 2, per 47 min | secondo giro di correzione |
+| #31 | #21 verdetti e CI | Sonnet | 52 min in 2 fasi | 2, per 60 min | secondo giro di correzione |
+
+Cose osservate, utili a chi replica.
+
+*Tutte e cinque le PR sono state bocciate alla prima validazione.* In quattro casi su cinque il contenuto consegnato era giusto: il Validatore ha ricalcolato a mano 87 campi del contratto dati e le dipendenze di undici oggetti dell'inventario, trovando una sola dipendenza mancante. I difetti stavano nei controlli che dovrebbero proteggere quel contenuto: controlli che contano senza guardare dove puntano gli archi, che prendono per vero un elenco scritto a mano, che ignorano l'errore di un comando. Un Esecutore produce volentieri molte prove; che quelle prove discriminino lo stabilisce solo qualcuno che prova ad aggirarle.
+
+*La dipendenza mancante era del tipo previsto.* Un copybook, `CSUTLDPY`, contiene una chiamata a un altro programma; il programma che lo include eredita quella dipendenza, ma l'inventario cercava le chiamate solo nei programmi. Il piano aveva elencato "logica nascosta nei copybook" tra i rischi prima di cominciare: scriverlo non è bastato a evitarlo, è servito a riconoscerlo.
+
+*Due Esecutori si sono fermati da soli su criteri irrealizzabili.* Oltre al caso del JCL (passo 13), l'Esecutore di #15 ha dimostrato con quattro prove che un criterio della specifica non poteva essere soddisfatto: quando un'immagine Docker è indicata con nome di versione e impronta insieme, Docker usa l'impronta e ignora il nome, quindi "un nome di versione inesistente deve far fallire la verifica" è falso per costruzione. La contestazione preventiva delle specifiche non aveva visto né l'uno né l'altro: sono errori che emergono solo provando.
+
+*L'oracle leggeva i segni al contrario.* I file di esempio scrivono il segno degli importi con la convenzione del mainframe (l'ultima cifra porta il segno: `0000009190}` vale −919,00). Con le opzioni predefinite GnuCOBOL leggeva quell'importo come +919,00, e il programma che registra i movimenti sceglie quale saldo aggiornare proprio in base al segno. L'Esecutore lo aveva notato e proponeva di rinviare la decisione; il Validatore lo ha confermato leggendo i dati con il tracciato originale; l'Approvatore ha deciso di correggerlo subito, con un'opzione di compilazione e una prova automatica su quattro importi decodificati a mano dai byte. Se fosse sfuggito, ogni saldo negativo del riferimento sarebbe stato sbagliato, e un Java "identico al riferimento" lo sarebbe stato a un errore.
+
+*Il parallelismo allunga le validazioni.* Con quattro o cinque validazioni contemporanee sulla stessa macchina, ciascuna è passata da 8–13 minuti a 25–35. Il calendario complessivo si accorcia comunque, ma il guadagno non è lineare.
+
+*Due inconvenienti del lavoro in parallelo.* Due Esecutori hanno scritto un file di appoggio con lo stesso nome in una cartella condivisa, e uno ha sovrascritto quello dell'altro (se n'è accorto e l'ha rifatto): ora i nomi portano il numero dell'issue. E un Esecutore che si ferma senza modifiche si vede rimuovere la cartella di lavoro dall'ambiente: alla ripresa l'ha ricreata.
+
+*Tre modi diversi di chiudere una validazione negativa*, tutti scritti nel registro. PR #33: approvata con riserve, il difetto residuo non può far passare un lavoro sbagliato, quindi merge e issue di seguito. PR #29 al secondo giro: il difetto residuo non era bloccante, ma poteva alterare il comportamento dei programmi di riferimento, quindi niente merge e un giro in più. PR #29 al terzo giro: ancora bocciata, ma per un difetto che non tocca il comportamento, quindi merge e issue di seguito. La regola è una sola (si può mergiare ciò che non rischia di far passare per buono un risultato sbagliato) e va applicata guardando che cosa protegge ciascun controllo.
+
+**Passo 16 — Tre PR al terzo giro, e l'autore cambia le regole.** Alle 15:00 UTC tre delle cinque PR del passo 15 erano ancora aperte dopo due validazioni, ciascuna con rilievi nuovi. Il pianificatore ha concesso a tutte un terzo giro. Alle 15:31 l'autore, visti i tempi, ha posto un limite: **al massimo due validazioni avversariali per PR**. Le tre già partite sono state lasciate finire; la regola vale dalle PR successive.
+
+La regola ha bisogno di una risposta alla domanda "e se la seconda validazione boccia ancora?". Quella scritta in `CLAUDE.md` è: se il difetto rimasto non può far passare per buono un lavoro sbagliato, si mergia e si apre una issue; se può (un *falso verde*: un controllo che resta verde davanti a un errore), l'Esecutore corregge quel solo punto e la correzione la verifica l'Approvatore, rieseguendo il controesempio del Validatore su un clone pulito, senza un terzo giro.
+
+**Tabella 9 — Come sono finite le tre PR al terzo giro** (durate dal registro degli eventi)
+
+| PR | Issue | Validazioni di Codex | Esito del terzo giro | Chiusura |
+| --- | --- | --- | --- | --- |
+| #31 | #21 verdetti e CI | 26 + 33 + 34 min | approvata, nessun rilievo | mergiata alle 15:51 |
+| #32 | #3 contratto dati | 20 + 27 + 33 min | approvata con una riserva minore (una motivazione che cita la struttura sbagliata) | mergiata alle 15:57; riserva nella issue #41 |
+| #30 | #2 inventario | 34 + 30 + 63 min | bocciata: tre falsi verdi nuovi | correzione mirata in corso |
+
+Due osservazioni. La prima: un terzo giro costa quanto il primo, perché il Validatore riparte da zero. La seconda riguarda la PR #30: a ogni giro il Validatore ha trovato rilievi nuovi dello stesso schema (un attributo della mappa delle dipendenze che il controllo non confronta con una fonte indipendente), alterando ogni volta un punto diverso del programma che costruisce la mappa. La mappa consegnata è giusta in tutti i campioni riletti a mano; è il controllo che non la proteggerebbe da una modifica futura. Un'issue che produce 268 file o un grafo con decine di attributi offre troppa superficie: andava divisa.
+
+Prima di mergiare la PR #32 il pianificatore ha fatto una cosa non prevista dalle regole e che conviene prevedere: il merge della PR #31, sei minuti prima, aveva aggiunto alla CI un controllo nuovo, che sul ramo della #32 non era mai girato. Il ramo è stato riallineato a `main`, la CI è stata rieseguita (verde in 6 minuti), e solo allora la PR è stata mergiata. Due PR verdi ciascuna per conto suo non garantiscono un `main` verde.
+
+**Passo 17 — Le prime due PR con la regola delle due validazioni.** Nel frattempo erano partite due issue nuove, preparate durante il passo 16: #24, la routine `COBDATFT`, e #26, le regole sul codice Java.
+
+`COBDATFT` è un piccolo programma in assembler che converte una data da un formato all'altro; il batch pilota lo chiama. GnuCOBOL non esegue assembler, quindi l'oracle ha bisogno di un equivalente scritto in COBOL. La contestazione della specifica aveva già scoperto un'insidia: due istruzioni dell'assembler confrontano o copiano più byte di quanti ne contenga il valore scritto nel sorgente, e i byte in più dipendono da ciò che si trova in memoria accanto. Inventarli avrebbe falsificato il riferimento. La decisione (voce 42 del registro) è stata: riprodurre solo i casi interamente determinati dal sorgente, e fermarsi con un codice riconoscibile sugli altri.
+
+L'Esecutore ha applicato la decisione in modo troppo prudente: ha dichiarato non determinato ogni ingresso con un trattino in una certa posizione. Il Validatore ha letto il manuale dell'assembler e ha mostrato che i byte "in più" del confronto non sono ignoti: i primi tredici sono il testo `INVALID INPUT`, che l'assembler colloca subito dopo. Quasi tutti quegli ingressi sono quindi determinati, e uno dei valori attesi scritti dall'Esecutore certificava il comportamento sbagliato. L'Approvatore ha riletto le righe 36-44 dell'assembler prima di accogliere il rilievo. Corretto in un giro; la seconda validazione ha approvato.
+
+Le regole sul codice Java (#26) rendono automatici tre divieti: dipendenze tra moduli non previste, database in memoria al posto di PostgreSQL, numeri in virgola mobile dove passano importi. La prima validazione ha trovato cinque rilievi. Tre sono stati accolti; il più istruttivo: Java accetta `\u0064ouble` come modo alternativo di scrivere `double`, e il controllo sul testo non lo vedeva. Due sono stati respinti con motivo scritto, uno dei quali per un errore della specifica (chiedeva un limite di tempo su "ogni comando", anche su quelli che non possono restare in attesa). La seconda validazione ha chiuso i rilievi accolti tranne uno: il controllo sui database guardava solo le dipendenze di un modulo. È un falso verde, quindi la regola del passo 16 si è applicata per la prima volta: correzione mirata, verifica dell'Approvatore.
+
+**Tabella 10 — Le due PR con al massimo due validazioni**
+
+| PR | Issue | Esecutore | Lavoro dell'Esecutore | Validazione 1 | Validazione 2 | Esito |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| #39 | #24 routine `COBDATFT` | Opus | 23 min + 21 min di correzione | 14 min 38 s, bocciata (1 rilievo) | 7 min 16 s, approvata | mergiata alle 16:16, 68 minuti dopo l'affidamento |
+| #40 | #26 regole sul codice Java | Sonnet | 58 min in 2 fasi + 20 min di correzione | 15 min 16 s, bocciata (5 rilievi) | 5 min 45 s, bocciata (1 rilievo) | correzione mirata in corso |
+
+L'Esecutore di #26 si era fermato una volta da solo (`needs-spec-update`): i controlli nuovi girano anche quando si costruiscono le immagini Docker, e lì il loro file di configurazione non veniva copiato. Aveva scartato da sé due scorciatoie, una delle quali avrebbe lasciato verde una verifica con il controllo spento.
+
+**Passo 18 — "Come si può andare più veloci?"** Alle 15:58 l'autore ha posto la domanda. La risposta del pianificatore è partita dai dati del registro: il tempo va quasi tutto nelle validazioni (10-35 minuti l'una, e le successive alla prima duravano quanto la prima), e i rilievi bloccanti ricadono in quattro famiglie. L'autore ha approvato tre misure, in vigore dalle 16:00.
+
+1. **Autocontrollo dell'Esecutore.** Prima di aprire la PR, l'Esecutore verifica e riporta quattro cose per ogni script o controllo che ha scritto: nessun esito di comando ignorato; nessun risultato rimasto da una corsa precedente che possa soddisfare un controllo; nessuna attesa senza limite di tempo; nessun controllo che non sia stato visto fallire. Sono i difetti che il Validatore ha trovato più spesso (testo in `paper/data/prompts/esecutore.md`).
+2. **Seconda validazione ristretta.** Il Validatore riceve i propri rilievi del primo giro e il solo diff di correzione: riesegue i controesempi, cerca difetti introdotti dalla correzione, esegue una volta i criteri. Non rifà il resto.
+3. **Validazione proporzionata al rischio.** Il Validatore resta obbligatorio per tutto ciò che tocca il riferimento, i dati, la logica, gli script di verifica, la CI, i container. Per le PR di solo testo o documentazione bastano CI verde, lettura integrale del diff e criteri rieseguiti dall'Approvatore su un clone pulito. La classe di rischio si scrive nell'issue; nel dubbio è rischio pieno.
+
+**Tabella 11 — Prime misure dopo il cambio** (poche, da non generalizzare)
+
+| Misura | Prima | Dopo |
+| --- | --- | --- |
+| Durata della seconda validazione | da 10 a 33 min (cinque PR del passo 15, forma completa) | 7 min 16 s (PR #39) e 5 min 45 s (PR #40), forma ristretta |
+| PR di solo testo, dall'affidamento al merge | non applicabile: tutte passavano dal Validatore | 9 min 3 s (PR #42: Esecutore 1 min 54 s, il resto è CI e verifica dell'Approvatore) |
+| Effetto dell'autocontrollo dell'Esecutore | — | non ancora misurato: la prima PR scritta con la nuova lista è quella dell'issue #25 |
+
+La differenza sulla seconda validazione non dipende solo dalla forma ristretta: le due PR del passo 17 sono anche più piccole di quelle del passo 15, e nel frattempo giravano meno validazioni in parallelo.
+
+Un errore dell'Approvatore, per completezza. In dieci voci del registro delle approvazioni l'ora era stata scritta a memoria ed era in anticipo fino a 14 minuti rispetto al registro degli eventi; in una voce una durata era stata scritta "a occhio" (15 minuti invece di 9). Entrambe le cose sono state rettificate con voci aggiunte, senza toccare le voci originali. È lo stesso errore già commesso e dichiarato per le voci 11-26 dello stesso registro: chi tiene un registro tende a ricostruire, e l'unica difesa è leggere l'orologio ogni volta.
+
 *(passi successivi: da compilare)*
 
 **Come si misurano i tempi.** Su richiesta dell'autore, da questo punto ogni passaggio è cronometrato nel momento in cui avviene. Un piccolo script, `paper/data/tlog.sh`, aggiunge una riga con l'ora corrente al registro `paper/data/eventi.csv`; il registro non si modifica mai, si aggiunge soltanto. Per i passi precedenti i tempi sono stati ricostruiti da fonti verificabili (date dei commit, date di creazione su GitHub, date dei file) e ogni riga dichiara la propria fonte.

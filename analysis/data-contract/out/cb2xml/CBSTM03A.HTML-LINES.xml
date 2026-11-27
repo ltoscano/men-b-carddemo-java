@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBSTM03A.HTML-LINES.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="HTML-LINES" position="1" storage-length="535" display-length="535" display-position="1">
+        <item level="05" name="HTML-FIXED-LN" picture="X(100)" position="1" storage-length="100" display-length="100" display-position="1">
+            <condition name="HTML-L01">
+                <condition value="&quot;&lt;!DOCTYPE html&gt;&quot;"/>
+            </condition>
+            <condition name="HTML-L02">
+                <condition value="'&lt;html lang=&quot;en&quot;&gt;'"/>
+            </condition>
+            <condition name="HTML-L03">
+                <condition value="&quot;&lt;head&gt;&quot;"/>
+            </condition>
+            <condition name="HTML-L04">
+                <condition value="'&lt;meta charset=&quot;utf-8&quot;&gt;'"/>
+            </condition>
+            <condition name="HTML-L05">
+                <condition value="&quot;&lt;title&gt;HTML Table Layout&lt;/title&gt;&quot;"/>
+            </condition>
+            <condition name="HTML-L06">
+                <condition value="&quot;&lt;/head&gt;&quot;"/>
+            </condition>
+            <condition name="HTML-L07">
+                <condition value="'&lt;body style=&quot;margin:0px;&quot;&gt;'"/>
+            </condition>
+            <condition name="HTML-L08">
+                <condition value="'&lt;table  align=&quot;center&quot; frame=&quot;box&quot; style=&quot;width:70%; font:12px Segoe UI,sans-serif;&quot;&gt;'"/>
+            </condition>
+            <condition name="HTML-LTRS">
+                <condition value="&quot;&lt;tr&gt;&quot;"/>
+            </condition>
+            <condition name="HTML-LTRE">
+                <condition value="&quot;&lt;/tr&gt;&quot;"/>
+            </condition>
+            <condition name="HTML-LTDS">
+                <condition value="&quot;&lt;td&gt;&quot;"/>
+            </condition>
+            <condition name="HTML-LTDE">
+                <condition value="&quot;&lt;/td&gt;&quot;"/>
+            </condition>
+            <condition name="HTML-L10">
+                <condition value="'&lt;td colspan=&quot;3&quot; style=&quot;padding:0px 5px;background-color:#1d1d96b3;&quot;&gt;'"/>
+            </condition>
+            <condition name="HTML-L15">
+                <condition value="'&lt;td colspan=&quot;3&quot; style=&quot;padding:0px 5px;background-color:#FFAF33;&quot;&gt;'"/>
+            </condition>
+            <condition name="HTML-L16">
+                <condition value="'&lt;p style=&quot;font-size:16px&quot;&gt;Bank of XYZ&lt;/p&gt;'"/>
+            </condition>
+            <condition name="HTML-L17">
+                <condition value="&quot;&lt;p&gt;410 Terry Ave N&lt;/p&gt;&quot;"/>
+            </condition>
+            <condition name="HTML-L18">
+                <condition value="&quot;&lt;p&gt;Seattle WA 99999&lt;/p&gt;&quot;"/>
+            </condition>
+            <condition name="HTML-L22-35">
+                <condition value="'&lt;td colspan=&quot;3&quot; style=&quot;padding:0px 5px;background-color:#f2f2f2;&quot;&gt;'"/>
+            </condition>
+            <condition name="HTML-L30-42">
+                <condition value="'&lt;td colspan=&quot;3&quot; style=&quot;padding:0px 5px;background-color:#33FFD1; text-align:center;&quot;&gt;'"/>
+            </condition>
+            <condition name="HTML-L31">
+                <condition value="'&lt;p style=&quot;font-size:16px&quot;&gt;Basic Details&lt;/p&gt;'"/>
+            </condition>
+            <condition name="HTML-L43">
+                <condition value="'&lt;p style=&quot;font-size:16px&quot;&gt;Transaction Summary&lt;/p&gt;'"/>
+            </condition>
+            <condition name="HTML-L47">
+                <condition value="'&lt;td style=&quot;width:25%; padding:0px 5px; background-color:#33FF5E; text-align:left;&quot;&gt;'"/>
+            </condition>
+            <condition name="HTML-L48">
+                <condition value="'&lt;p style=&quot;font-size:16px&quot;&gt;Tran ID&lt;/p&gt;'"/>
+            </condition>
+            <condition name="HTML-L50">
+                <condition value="'&lt;td style=&quot;width:55%; padding:0px 5px; background-color:#33FF5E; text-align:left;&quot;&gt;'"/>
+            </condition>
+            <condition name="HTML-L51">
+                <condition value="'&lt;p style=&quot;font-size:16px&quot;&gt;Tran Details&lt;/p&gt;'"/>
+            </condition>
+            <condition name="HTML-L53">
+                <condition value="'&lt;td style=&quot;width:20%; padding:0px 5px; background-color:#33FF5E; text-align:right;&quot;&gt;'"/>
+            </condition>
+            <condition name="HTML-L54">
+                <condition value="'&lt;p style=&quot;font-size:16px&quot;&gt;Amount&lt;/p&gt;'"/>
+            </condition>
+            <condition name="HTML-L58">
+                <condition value="'&lt;td style=&quot;width:25%; padding:0px 5px; background-color:#f2f2f2; text-align:left;&quot;&gt;'"/>
+            </condition>
+            <condition name="HTML-L61">
+                <condition value="'&lt;td style=&quot;width:55%; padding:0px 5px; background-color:#f2f2f2; text-align:left;&quot;&gt;'"/>
+            </condition>
+            <condition name="HTML-L64">
+                <condition value="'&lt;td style=&quot;width:20%; padding:0px 5px; background-color:#f2f2f2; text-align:right;&quot;&gt;'"/>
+            </condition>
+            <condition name="HTML-L75">
+                <condition value="&quot;&lt;h3&gt;End of Statement&lt;/h3&gt;&quot;"/>
+            </condition>
+            <condition name="HTML-L78">
+                <condition value="&quot;&lt;/table&gt;&quot;"/>
+            </condition>
+            <condition name="HTML-L79">
+                <condition value="&quot;&lt;/body&gt;&quot;"/>
+            </condition>
+            <condition name="HTML-L80">
+                <condition value="&quot;&lt;/html&gt;&quot;"/>
+            </condition>
+        </item>
+        <item level="05" name="HTML-L11" position="101" storage-length="59" display-length="59" display-position="101">
+            <item level="10" name="FILLER" picture="X(34)" position="101" storage-length="34" display-length="34" display-position="101" value="&quot;&lt;h3&gt;Statement for Account Number: &quot;"/>
+            <item level="10" name="L11-ACCT" picture="X(20)" position="135" storage-length="20" display-length="20" display-position="135"/>
+            <item level="10" name="FILLER" picture="X(05)" position="155" storage-length="5" display-length="5" display-position="155" value="&quot;&lt;/h3&gt;&quot;"/>
+        </item>
+        <item level="05" name="HTML-L23" position="160" storage-length="76" display-length="76" display-position="160">
+            <item level="10" name="FILLER" picture="X(26)" position="160" storage-length="26" display-length="26" display-position="160" value="'&lt;p style=&quot;font-size:16px&quot;&gt;'"/>
+            <item level="10" name="L23-NAME" picture="X(50)" position="186" storage-length="50" display-length="50" display-position="186"/>
+        </item>
+        <item level="05" name="HTML-ADDR-LN" picture="X(100)" position="236" storage-length="100" display-length="100" display-position="236"/>
+        <item level="05" name="HTML-BSIC-LN" picture="X(100)" position="336" storage-length="100" display-length="100" display-position="336"/>
+        <item level="05" name="HTML-TRAN-LN" picture="X(100)" position="436" storage-length="100" display-length="100" display-position="436"/>
+    </item>
+</copybook>

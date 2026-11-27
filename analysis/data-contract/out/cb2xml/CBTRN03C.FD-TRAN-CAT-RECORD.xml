@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBTRN03C.FD-TRAN-CAT-RECORD.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="FD-TRAN-CAT-RECORD" position="1" storage-length="60" display-length="60" display-position="1">
+        <item level="05" name="FD-TRAN-CAT-KEY" position="1" storage-length="6" display-length="6" display-position="1">
+            <item level="10" name="FD-TRAN-TYPE-CD" picture="X(02)" position="1" storage-length="2" display-length="2" display-position="1"/>
+            <item level="10" name="FD-TRAN-CAT-CD" picture="9(04)" position="3" storage-length="4" display-length="4" numeric="COBOL_NUMERIC" display-position="3"/>
+        </item>
+        <item level="05" name="FD-TRAN-CAT-DATA" picture="X(54)" position="7" storage-length="54" display-length="54" display-position="7"/>
+    </item>
+</copybook>

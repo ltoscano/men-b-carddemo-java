@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="COMEN02Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--******************************************************************-->
+    <!--* CardDemo - Admin Menu Options-->
+    <!--******************************************************************-->
+    <!--* Copyright Amazon.com, Inc. or its affiliates.-->
+    <!--* All Rights Reserved.-->
+    <!--*-->
+    <!--* Licensed under the Apache License, Version 2.0 (the "License").-->
+    <!--* You may not use this file except in compliance with the License.-->
+    <!--* You may obtain a copy of the License at-->
+    <!--*-->
+    <!--*    http://www.apache.org/licenses/LICENSE-2.0-->
+    <!--*-->
+    <!--* Unless required by applicable law or agreed to in writing,-->
+    <!--* software distributed under the License is distributed on an-->
+    <!--* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,-->
+    <!--* either express or implied. See the License for the specific-->
+    <!--* language governing permissions and limitations under the License-->
+    <!--******************************************************************-->
+    <item level="01" name="CARDDEMO-MAIN-MENU-OPTIONS" position="1" storage-length="554" display-length="554" display-position="1">
+        <item level="05" name="CDEMO-MENU-OPT-COUNT" picture="9(02)" position="1" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="1" value="11"/>
+        <item level="05" name="CDEMO-MENU-OPTIONS-DATA" position="3" storage-length="506" display-length="506" display-position="3" redefined="true">
+            <item level="10" name="FILLER" picture="9(02)" position="3" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="3" value="1"/>
+            <item level="10" name="FILLER" picture="X(35)" position="5" storage-length="35" display-length="35" display-position="5" value="&quot;Account View                       &quot;"/>
+            <item level="10" name="FILLER" picture="X(08)" position="40" storage-length="8" display-length="8" display-position="40" value="&quot;COACTVWC&quot;"/>
+            <item level="10" name="FILLER" picture="X(01)" position="48" storage-length="1" display-length="1" display-position="48" value="&quot;U&quot;"/>
+            <item level="10" name="FILLER" picture="9(02)" position="49" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="49" value="2"/>
+            <item level="10" name="FILLER" picture="X(35)" position="51" storage-length="35" display-length="35" display-position="51" value="&quot;Account Update                     &quot;"/>
+            <item level="10" name="FILLER" picture="X(08)" position="86" storage-length="8" display-length="8" display-position="86" value="&quot;COACTUPC&quot;"/>
+            <item level="10" name="FILLER" picture="X(01)" position="94" storage-length="1" display-length="1" display-position="94" value="&quot;U&quot;"/>
+            <item level="10" name="FILLER" picture="9(02)" position="95" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="95" value="3"/>
+            <item level="10" name="FILLER" picture="X(35)" position="97" storage-length="35" display-length="35" display-position="97" value="&quot;Credit Card List                   &quot;"/>
+            <item level="10" name="FILLER" picture="X(08)" position="132" storage-length="8" display-length="8" display-position="132" value="&quot;COCRDLIC&quot;"/>
+            <item level="10" name="FILLER" picture="X(01)" position="140" storage-length="1" display-length="1" display-position="140" value="&quot;U&quot;"/>
+            <item level="10" name="FILLER" picture="9(02)" position="141" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="141" value="4"/>
+            <item level="10" name="FILLER" picture="X(35)" position="143" storage-length="35" display-length="35" display-position="143" value="&quot;Credit Card View                   &quot;"/>
+            <item level="10" name="FILLER" picture="X(08)" position="178" storage-length="8" display-length="8" display-position="178" value="&quot;COCRDSLC&quot;"/>
+            <item level="10" name="FILLER" picture="X(01)" position="186" storage-length="1" display-length="1" display-position="186" value="&quot;U&quot;"/>
+            <item level="10" name="FILLER" picture="9(02)" position="187" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="187" value="5"/>
+            <item level="10" name="FILLER" picture="X(35)" position="189" storage-length="35" display-length="35" display-position="189" value="&quot;Credit Card Update                 &quot;"/>
+            <item level="10" name="FILLER" picture="X(08)" position="224" storage-length="8" display-length="8" display-position="224" value="&quot;COCRDUPC&quot;"/>
+            <item level="10" name="FILLER" picture="X(01)" position="232" storage-length="1" display-length="1" display-position="232" value="&quot;U&quot;"/>
+            <item level="10" name="FILLER" picture="9(02)" position="233" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="233" value="6"/>
+            <item level="10" name="FILLER" picture="X(35)" position="235" storage-length="35" display-length="35" display-position="235" value="&quot;Transaction List                   &quot;"/>
+            <item level="10" name="FILLER" picture="X(08)" position="270" storage-length="8" display-length="8" display-position="270" value="&quot;COTRN00C&quot;"/>
+            <item level="10" name="FILLER" picture="X(01)" position="278" storage-length="1" display-length="1" display-position="278" value="&quot;U&quot;"/>
+            <item level="10" name="FILLER" picture="9(02)" position="279" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="279" value="7"/>
+            <item level="10" name="FILLER" picture="X(35)" position="281" storage-length="35" display-length="35" display-position="281" value="&quot;Transaction View                   &quot;"/>
+            <item level="10" name="FILLER" picture="X(08)" position="316" storage-length="8" display-length="8" display-position="316" value="&quot;COTRN01C&quot;"/>
+            <item level="10" name="FILLER" picture="X(01)" position="324" storage-length="1" display-length="1" display-position="324" value="&quot;U&quot;"/>
+            <item level="10" name="FILLER" picture="9(02)" position="325" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="325" value="8"/>
+            <item level="10" name="FILLER" picture="X(35)" position="327" storage-length="35" display-length="35" display-position="327" value="&quot;Transaction Add                    &quot;"/>
+            <item level="10" name="FILLER" picture="X(08)" position="362" storage-length="8" display-length="8" display-position="362" value="&quot;COTRN02C&quot;"/>
+            <item level="10" name="FILLER" picture="X(01)" position="370" storage-length="1" display-length="1" display-position="370" value="&quot;U&quot;"/>
+            <item level="10" name="FILLER" picture="9(02)" position="371" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="371" value="9"/>
+            <item level="10" name="FILLER" picture="X(35)" position="373" storage-length="35" display-length="35" display-position="373" value="&quot;Transaction Reports                &quot;"/>
+            <item level="10" name="FILLER" picture="X(08)" position="408" storage-length="8" display-length="8" display-position="408" value="&quot;CORPT00C&quot;"/>
+            <item level="10" name="FILLER" picture="X(01)" position="416" storage-length="1" display-length="1" display-position="416" value="&quot;U&quot;"/>
+            <item level="10" name="FILLER" picture="9(02)" position="417" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="417" value="10"/>
+            <item level="10" name="FILLER" picture="X(35)" position="419" storage-length="35" display-length="35" display-position="419" value="&quot;Bill Payment                       &quot;"/>
+            <item level="10" name="FILLER" picture="X(08)" position="454" storage-length="8" display-length="8" display-position="454" value="&quot;COBIL00C&quot;"/>
+            <item level="10" name="FILLER" picture="X(01)" position="462" storage-length="1" display-length="1" display-position="462" value="&quot;U&quot;"/>
+            <item level="10" name="FILLER" picture="9(02)" position="463" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="463" value="11"/>
+            <item level="10" name="FILLER" picture="X(35)" position="465" storage-length="35" display-length="35" display-position="465" value="&quot;Pending Authorization View         &quot;"/>
+            <item level="10" name="FILLER" picture="X(08)" position="500" storage-length="8" display-length="8" display-position="500" value="&quot;COPAUS0C&quot;"/>
+            <item level="10" name="FILLER" picture="X(01)" position="508" storage-length="1" display-length="1" display-position="508" value="&quot;U&quot;"/>
+        </item>
+        <item level="05" name="CDEMO-MENU-OPTIONS" position="3" storage-length="552" display-length="552" display-position="3" redefines="CDEMO-MENU-OPTIONS-DATA">
+            <item level="10" name="CDEMO-MENU-OPT" occurs="12" position="3" storage-length="46" display-length="46" display-position="3">
+                <item level="15" name="CDEMO-MENU-OPT-NUM" picture="9(02)" position="3" storage-length="2" display-length="2" numeric="COBOL_NUMERIC" display-position="3"/>
+                <item level="15" name="CDEMO-MENU-OPT-NAME" picture="X(35)" position="5" storage-length="35" display-length="35" display-position="5"/>
+                <item level="15" name="CDEMO-MENU-OPT-PGMNAME" picture="X(08)" position="40" storage-length="8" display-length="8" display-position="40"/>
+                <item level="15" name="CDEMO-MENU-OPT-USRTYPE" picture="X(01)" position="48" storage-length="1" display-length="1" display-position="48"/>
+            </item>
+        </item>
+    </item>
+</copybook>

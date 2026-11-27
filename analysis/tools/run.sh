@@ -13,24 +13,32 @@ trial() { bash "$TOOLS_DIR/trials/$1.sh"; }
 
 # verdict CHECK [TOOL] [DIRECTORY-DEL-VERDETTO]: esegue il confronto e salva l'esito; ritorna 0 se pass, 1 se fail.
 verdict() {
-  local check="$1" tool="${2:-}" dir="${3:-${2:-}}" file rc=0
+  local check="$1" tool="${2:-}" dir="${3:-${2:-}}" file text rc=0
   [ -n "$dir" ] || dir="$check"
   mkdir -p "$OUT/$dir"
   file="$OUT/$dir/verdetto-$check.txt"
-  verdict_text "$check" "$tool" > "$file"
+  verdict_require_declared "$dir/verdetto-$check.txt"
+  text="$(verdict_compute "$check" "$tool")" || fail "confronto '$check $tool' non concluso: nessun verdetto scritto"
+  printf '%s\n' "$text" > "$file" || fail "scrittura del verdetto $dir/verdetto-$check.txt fallita"
+  verdict_record "$dir/verdetto-$check.txt" "$check" "$tool"
   [ "$(tail -1 "$file")" = "VERDETTO: pass" ] || rc=1
   log "verdetto $check ${tool}: $(tail -1 "$file")"
   return $rc
 }
 
 mkdir -p "$OUT"
+# Registro delle scritture azzerato incondizionatamente: un valore ereditato dall'ambiente non deve contare.
+verdict_register_reset
 
 # --- conteggi
 trial 10-scc
 verdict scc "" scc || true
 # Capacita' ripartizione-codice-commenti: i campioni a mano smentiscono scc. Il fallimento e' la prova richiesta
 # per una capacita' unavailable e si salva come tale (campioni, valori di scc e differenze).
-verdict_text scc-split > "$OUT/scc/prova-fallita-ripartizione.txt"
+verdict_require_declared "scc/prova-fallita-ripartizione.txt"
+prova_text="$(verdict_compute scc-split)" || fail "confronto 'scc-split' non concluso: nessuna prova scritta"
+printf '%s\n' "$prova_text" > "$OUT/scc/prova-fallita-ripartizione.txt" || fail "scrittura di scc/prova-fallita-ripartizione.txt fallita"
+verdict_record "scc/prova-fallita-ripartizione.txt" scc-split ""
 log "prova del fallimento (ripartizione codice/commenti): $(tail -1 "$OUT/scc/prova-fallita-ripartizione.txt")"
 
 # --- compilazione e diagnostica
@@ -65,5 +73,10 @@ verdict layout "" cb2xml || true
 # --- JCL
 trial 50-mapa
 verdict jcl "" mapa || true
+
+# I verdetti scritti in QUESTA corsa devono essere esattamente quelli dichiarati in verdetti.tsv (un file preesistente
+# non vale), e sul disco non deve esserci nient'altro.
+verdict_written_check || fail "i verdetti scritti in questa corsa non coincidono con analysis/tools/verdetti.tsv"
+verdict_set_check "$OUT" || fail "i verdetti presenti non coincidono con analysis/tools/verdetti.tsv"
 
 log "prove completate; i verdetti sono in analysis/tools/out/*/verdetto-*.txt"

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBIMPORT.ERROR-OUTPUT-RECORD.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="ERROR-OUTPUT-RECORD" picture="X(132)" position="1" storage-length="132" display-length="132" display-position="1"/>
+</copybook>

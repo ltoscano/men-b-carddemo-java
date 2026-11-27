@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="COSTM01.CPY" dialect="Mainframe" cb2xml-format="2017">
+    <!--******************************************************************-->
+    <!--* CardDemo - Transaction altered Layout for use in reporting-->
+    <!--******************************************************************-->
+    <!--* Copyright Amazon.com, Inc. or its affiliates.-->
+    <!--* All Rights Reserved.-->
+    <!--*-->
+    <!--* Licensed under the Apache License, Version 2.0 (the "License").-->
+    <!--* You may not use this file except in compliance with the License.-->
+    <!--* You may obtain a copy of the License at-->
+    <!--*-->
+    <!--*    http://www.apache.org/licenses/LICENSE-2.0-->
+    <!--*-->
+    <!--* Unless required by applicable law or agreed to in writing,-->
+    <!--* software distributed under the License is distributed on an-->
+    <!--* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,-->
+    <!--* either express or implied. See the License for the specific-->
+    <!--* language governing permissions and limitations under the License-->
+    <!--******************************************************************-->
+    <!--*-->
+    <item level="01" name="TRNX-RECORD" position="1" storage-length="350" display-length="350" display-position="1">
+        <item level="05" name="TRNX-KEY" position="1" storage-length="32" display-length="32" display-position="1">
+            <item level="10" name="TRNX-CARD-NUM" picture="X(16)" position="1" storage-length="16" display-length="16" display-position="1"/>
+            <item level="10" name="TRNX-ID" picture="X(16)" position="17" storage-length="16" display-length="16" display-position="17"/>
+        </item>
+        <item level="05" name="TRNX-REST" position="33" storage-length="318" display-length="318" display-position="33">
+            <item level="10" name="TRNX-TYPE-CD" picture="X(02)" position="33" storage-length="2" display-length="2" display-position="33"/>
+            <item level="10" name="TRNX-CAT-CD" picture="9(04)" position="35" storage-length="4" display-length="4" numeric="COBOL_NUMERIC" display-position="35"/>
+            <item level="10" name="TRNX-SOURCE" picture="X(10)" position="39" storage-length="10" display-length="10" display-position="39"/>
+            <item level="10" name="TRNX-DESC" picture="X(100)" position="49" storage-length="100" display-length="100" display-position="49"/>
+            <item level="10" name="TRNX-AMT" picture="S9(09)V99" position="149" storage-length="11" display-length="11" scale="2" numeric="COBOL_NUMERIC" display-position="149"/>
+            <item level="10" name="TRNX-MERCHANT-ID" picture="9(09)" position="160" storage-length="9" display-length="9" numeric="COBOL_NUMERIC" display-position="160"/>
+            <item level="10" name="TRNX-MERCHANT-NAME" picture="X(50)" position="169" storage-length="50" display-length="50" display-position="169"/>
+            <item level="10" name="TRNX-MERCHANT-CITY" picture="X(50)" position="219" storage-length="50" display-length="50" display-position="219"/>
+            <item level="10" name="TRNX-MERCHANT-ZIP" picture="X(10)" position="269" storage-length="10" display-length="10" display-position="269"/>
+            <item level="10" name="TRNX-ORIG-TS" picture="X(26)" position="279" storage-length="26" display-length="26" display-position="279"/>
+            <item level="10" name="TRNX-PROC-TS" picture="X(26)" position="305" storage-length="26" display-length="26" display-position="305"/>
+            <item level="10" name="FILLER" picture="X(20)" position="331" storage-length="20" display-length="20" display-position="331"/>
+        </item>
+    </item>
+</copybook>

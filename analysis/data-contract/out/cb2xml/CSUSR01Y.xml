@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CSUSR01Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--******************************************************************-->
+    <!--* Copyright Amazon.com, Inc. or its affiliates.-->
+    <!--* All Rights Reserved.-->
+    <!--*-->
+    <!--* Licensed under the Apache License, Version 2.0 (the "License").-->
+    <!--* You may not use this file except in compliance with the License.-->
+    <!--* You may obtain a copy of the License at-->
+    <!--*-->
+    <!--*    http://www.apache.org/licenses/LICENSE-2.0-->
+    <!--*-->
+    <!--* Unless required by applicable law or agreed to in writing,-->
+    <!--* software distributed under the License is distributed on an-->
+    <!--* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,-->
+    <!--* either express or implied. See the License for the specific-->
+    <!--* language governing permissions and limitations under the License-->
+    <!--******************************************************************-->
+    <item level="01" name="SEC-USER-DATA" position="1" storage-length="80" display-length="80" display-position="1">
+        <item level="05" name="SEC-USR-ID" picture="X(08)" position="1" storage-length="8" display-length="8" display-position="1"/>
+        <item level="05" name="SEC-USR-FNAME" picture="X(20)" position="9" storage-length="20" display-length="20" display-position="9"/>
+        <item level="05" name="SEC-USR-LNAME" picture="X(20)" position="29" storage-length="20" display-length="20" display-position="29"/>
+        <item level="05" name="SEC-USR-PWD" picture="X(08)" position="49" storage-length="8" display-length="8" display-position="49"/>
+        <item level="05" name="SEC-USR-TYPE" picture="X(01)" position="57" storage-length="1" display-length="1" display-position="57"/>
+        <item level="05" name="SEC-USR-FILLER" picture="X(23)" position="58" storage-length="23" display-length="23" display-position="58"/>
+    </item>
+</copybook>

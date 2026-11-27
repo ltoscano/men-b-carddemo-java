@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBIMPORT.WS-ERROR-RECORD.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="WS-ERROR-RECORD" position="1" storage-length="130" display-length="130" display-position="1">
+        <item level="05" name="ERR-TIMESTAMP" picture="X(26)" position="1" storage-length="26" display-length="26" display-position="1"/>
+        <item level="05" name="FILLER" picture="X(01)" position="27" storage-length="1" display-length="1" display-position="27" value="&quot;|&quot;"/>
+        <item level="05" name="ERR-RECORD-TYPE" picture="X(01)" position="28" storage-length="1" display-length="1" display-position="28"/>
+        <item level="05" name="FILLER" picture="X(01)" position="29" storage-length="1" display-length="1" display-position="29" value="&quot;|&quot;"/>
+        <item level="05" name="ERR-SEQUENCE" picture="9(07)" position="30" storage-length="7" display-length="7" numeric="COBOL_NUMERIC" display-position="30"/>
+        <item level="05" name="FILLER" picture="X(01)" position="37" storage-length="1" display-length="1" display-position="37" value="&quot;|&quot;"/>
+        <item level="05" name="ERR-MESSAGE" picture="X(50)" position="38" storage-length="50" display-length="50" display-position="38"/>
+        <item level="05" name="FILLER" picture="X(43)" position="88" storage-length="43" display-length="43" display-position="88" value="spaces"/>
+    </item>
+</copybook>

@@ -1,0 +1,6 @@
+# Discordanze che la specifica di #3 chiede di trovare: devono essere rilevate dal confronto delle fonti e scritte in discordanze.md.
+# id: identificativo con cui la discordanza compare in analysis/data-contract/out/discordanze-rilevate.tsv e in discordanze.md.
+id	fonte
+chiave-unicita:AWS.M2.CARDDEMO.CARDXREF.VSAM.AIX:CBACT04C	XREFFILE.jcl 75 (NONUNIQUEKEY) contro CBACT04C.cbl 38 (ALTERNATE RECORD KEY senza WITH DUPLICATES)
+chiave-allineamento:AWS.M2.CARDDEMO.EXPORT.DATA:app/jcl/CBEXPORT.jcl:30	CBEXPORT.jcl 32 KEYS(4 28) contro CVEXPORT.cpy 16 (EXPORT-SEQUENCE-NUM a offset 27)
+chiave-fuori-dal-record:CBEXPORT.EXPORT-OUTPUT	CBEXPORT.cbl 68 (RECORD KEY IS EXPORT-SEQUENCE-NUM) contro 92 (record dell'FD PIC X(500)) e 96 (COPY CVEXPORT in WORKING-STORAGE)

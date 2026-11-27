@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CVTRA07Y.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--*****************************************************************-->
+    <!--*    Reporting data structure for transaction report-->
+    <!--*****************************************************************-->
+    <item level="01" name="REPORT-NAME-HEADER" position="1" storage-length="115" display-length="115" display-position="1">
+        <item level="05" name="REPT-SHORT-NAME" picture="X(38)" position="1" storage-length="38" display-length="38" display-position="1" value="&quot;DALYREPT&quot;"/>
+        <item level="05" name="REPT-LONG-NAME" picture="X(41)" position="39" storage-length="41" display-length="41" display-position="39" value="&quot;Daily Transaction Report&quot;"/>
+        <item level="05" name="REPT-DATE-HEADER" picture="X(12)" position="80" storage-length="12" display-length="12" display-position="80" value="&quot;Date Range: &quot;"/>
+        <item level="05" name="REPT-START-DATE" picture="X(10)" position="92" storage-length="10" display-length="10" display-position="92" value="spaces"/>
+        <item level="05" name="FILLER" picture="X(04)" position="102" storage-length="4" display-length="4" display-position="102" value="&quot; to &quot;"/>
+        <item level="05" name="REPT-END-DATE" picture="X(10)" position="106" storage-length="10" display-length="10" display-position="106" value="spaces"/>
+    </item>
+    <item level="01" name="TRANSACTION-DETAIL-REPORT" position="1" storage-length="114" display-length="114" display-position="1">
+        <item level="05" name="TRAN-REPORT-TRANS-ID" picture="X(16)" position="1" storage-length="16" display-length="16" display-position="1"/>
+        <item level="05" name="FILLER" picture="X(01)" position="17" storage-length="1" display-length="1" display-position="17" value="spaces"/>
+        <item level="05" name="TRAN-REPORT-ACCOUNT-ID" picture="X(11)" position="18" storage-length="11" display-length="11" display-position="18"/>
+        <item level="05" name="FILLER" picture="X(01)" position="29" storage-length="1" display-length="1" display-position="29" value="spaces"/>
+        <item level="05" name="TRAN-REPORT-TYPE-CD" picture="X(02)" position="30" storage-length="2" display-length="2" display-position="30"/>
+        <item level="05" name="FILLER" picture="X(01)" position="32" storage-length="1" display-length="1" display-position="32" value="&quot;-&quot;"/>
+        <item level="05" name="TRAN-REPORT-TYPE-DESC" picture="X(15)" position="33" storage-length="15" display-length="15" display-position="33"/>
+        <item level="05" name="FILLER" picture="X(01)" position="48" storage-length="1" display-length="1" display-position="48" value="spaces"/>
+        <item level="05" name="TRAN-REPORT-CAT-CD" picture="9(04)" position="49" storage-length="4" display-length="4" numeric="COBOL_NUMERIC" display-position="49"/>
+        <item level="05" name="FILLER" picture="X(01)" position="53" storage-length="1" display-length="1" display-position="53" value="&quot;-&quot;"/>
+        <item level="05" name="TRAN-REPORT-CAT-DESC" picture="X(29)" position="54" storage-length="29" display-length="29" display-position="54"/>
+        <item level="05" name="FILLER" picture="X(01)" position="83" storage-length="1" display-length="1" display-position="83" value="spaces"/>
+        <item level="05" name="TRAN-REPORT-SOURCE" picture="X(10)" position="84" storage-length="10" display-length="10" display-position="84"/>
+        <item level="05" name="FILLER" picture="X(04)" position="94" storage-length="4" display-length="4" display-position="94" value="spaces"/>
+        <item level="05" name="TRAN-REPORT-AMT" picture="-ZZZ,ZZZ,ZZZ.ZZ" position="98" storage-length="15" display-length="15" numeric="Numeric_Edited" display-position="98"/>
+        <item level="05" name="FILLER" picture="X(02)" position="113" storage-length="2" display-length="2" display-position="113" value="spaces"/>
+    </item>
+    <item level="01" name="TRANSACTION-HEADER-1" position="1" storage-length="114" display-length="114" display-position="1">
+        <item level="05" name="FILLER" picture="X(17)" position="1" storage-length="17" display-length="17" display-position="1" value="&quot;Transaction ID&quot;"/>
+        <item level="05" name="FILLER" picture="X(12)" position="18" storage-length="12" display-length="12" display-position="18" value="&quot;Account ID&quot;"/>
+        <item level="05" name="FILLER" picture="X(19)" position="30" storage-length="19" display-length="19" display-position="30" value="&quot;Transaction Type&quot;"/>
+        <item level="05" name="FILLER" picture="X(35)" position="49" storage-length="35" display-length="35" display-position="49" value="&quot;Tran Category&quot;"/>
+        <item level="05" name="FILLER" picture="X(14)" position="84" storage-length="14" display-length="14" display-position="84" value="&quot;Tran Source&quot;"/>
+        <item level="05" name="FILLER" picture="X" position="98" storage-length="1" display-length="1" display-position="98" value="spaces"/>
+        <item level="05" name="FILLER" picture="X(16)" position="99" storage-length="16" display-length="16" display-position="99" value="&quot;        Amount&quot;"/>
+    </item>
+    <item level="01" name="TRANSACTION-HEADER-2" picture="X(133)" position="1" storage-length="133" display-length="133" display-position="1" value="&quot;-&quot;"/>
+    <item level="01" name="REPORT-PAGE-TOTALS" position="1" storage-length="112" display-length="112" display-position="1">
+        <item level="05" name="FILLER" picture="X(11)" position="1" storage-length="11" display-length="11" display-position="1" value="&quot;Page Total&quot;"/>
+        <item level="05" name="FILLER" picture="X(86)" position="12" storage-length="86" display-length="86" display-position="12" value="&quot;.&quot;"/>
+        <item level="05" name="REPT-PAGE-TOTAL" picture="+ZZZ,ZZZ,ZZZ.ZZ" position="98" storage-length="15" display-length="15" numeric="Numeric_Edited" display-position="98"/>
+    </item>
+    <item level="01" name="REPORT-ACCOUNT-TOTALS" position="1" storage-length="112" display-length="112" display-position="1">
+        <item level="05" name="FILLER" picture="X(13)" position="1" storage-length="13" display-length="13" display-position="1" value="&quot;Account Total&quot;"/>
+        <item level="05" name="FILLER" picture="X(84)" position="14" storage-length="84" display-length="84" display-position="14" value="&quot;.&quot;"/>
+        <item level="05" name="REPT-ACCOUNT-TOTAL" picture="+ZZZ,ZZZ,ZZZ.ZZ" position="98" storage-length="15" display-length="15" numeric="Numeric_Edited" display-position="98"/>
+    </item>
+    <item level="01" name="REPORT-GRAND-TOTALS" position="1" storage-length="112" display-length="112" display-position="1">
+        <item level="05" name="FILLER" picture="X(11)" position="1" storage-length="11" display-length="11" display-position="1" value="&quot;Grand Total&quot;"/>
+        <item level="05" name="FILLER" picture="X(86)" position="12" storage-length="86" display-length="86" display-position="12" value="&quot;.&quot;"/>
+        <item level="05" name="REPT-GRAND-TOTAL" picture="+ZZZ,ZZZ,ZZZ.ZZ" position="98" storage-length="15" display-length="15" numeric="Numeric_Edited" display-position="98"/>
+    </item>
+</copybook>

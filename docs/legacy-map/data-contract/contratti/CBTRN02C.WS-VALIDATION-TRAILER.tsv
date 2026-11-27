@@ -1,0 +1,4 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+WS-VALIDATION-TRAILER	01	gruppo	-	-	-	-	-	0	80	-	-	-	-	WS-VALIDATION-TRAILER
+WS-VALIDATION-FAIL-REASON	05	elementare	9(04)	DISPLAY	-	4	0	0	4	-	-	-	-	WS-VALIDATION-TRAILER/WS-VALIDATION-FAIL-REASON
+WS-VALIDATION-FAIL-REASON-DESC	05	elementare	X(76)	DISPLAY	-	-	-	4	76	-	-	-	-	WS-VALIDATION-TRAILER/WS-VALIDATION-FAIL-REASON-DESC

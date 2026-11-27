@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CODATECN.cpy" dialect="Mainframe" cb2xml-format="2017">
+    <!--******************************************************************-->
+    <!--* Copyright Amazon.com, Inc. or its affiliates.-->
+    <!--* All Rights Reserved.-->
+    <!--*-->
+    <!--* Licensed under the Apache License, Version 2.0 (the "License").-->
+    <!--* You may not use this file except in compliance with the License.-->
+    <!--* You may obtain a copy of the License at-->
+    <!--*-->
+    <!--*    http://www.apache.org/licenses/LICENSE-2.0-->
+    <!--*-->
+    <!--* Unless required by applicable law or agreed to in writing,-->
+    <!--* software distributed under the License is distributed on an-->
+    <!--* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,-->
+    <!--* either express or implied. See the License for the specific-->
+    <!--* language governing permissions and limitations under the License-->
+    <!--******************************************************************-->
+    <item level="01" name="CODATECN-REC" position="1" storage-length="80" display-length="80" display-position="1">
+        <item level="05" name="CODATECN-IN-REC" position="1" storage-length="21" display-length="21" display-position="1">
+            <item level="10" name="CODATECN-TYPE" picture="X" position="1" storage-length="1" display-length="1" display-position="1">
+                <condition name="YYYYMMDD-IN">
+                    <condition value="&quot;1&quot;"/>
+                </condition>
+                <condition name="YYYY-MM-DD-IN">
+                    <condition value="&quot;2&quot;"/>
+                </condition>
+            </item>
+            <item level="10" name="CODATECN-INP-DATE" picture="X(20)" position="2" storage-length="20" display-length="20" display-position="2" redefined="true"/>
+            <item level="10" name="CODATECN-1INP" position="2" storage-length="20" display-length="20" display-position="2" redefines="CODATECN-INP-DATE">
+                <item level="15" name="CODATECN-1YYYY" picture="XXXX" position="2" storage-length="4" display-length="4" display-position="2"/>
+                <item level="15" name="CODATECN-1MM" picture="XX" position="6" storage-length="2" display-length="2" display-position="6"/>
+                <item level="15" name="CODATECN-1DD" picture="XX" position="8" storage-length="2" display-length="2" display-position="8"/>
+                <item level="15" name="CODATECN-1FIL" picture="X(12)" position="10" storage-length="12" display-length="12" display-position="10"/>
+            </item>
+            <item level="10" name="CODATECN-2INP" position="2" storage-length="20" display-length="20" display-position="2" redefines="CODATECN-INP-DATE">
+                <item level="15" name="CODATECN-1O-YYYY" picture="XXXX" position="2" storage-length="4" display-length="4" display-position="2"/>
+                <item level="15" name="CODATECN-1I-S1" picture="X" position="6" storage-length="1" display-length="1" display-position="6"/>
+                <item level="15" name="CODATECN-1MM" picture="XX" position="7" storage-length="2" display-length="2" display-position="7"/>
+                <item level="15" name="CODATECN-1I-S2" picture="X" position="9" storage-length="1" display-length="1" display-position="9"/>
+                <item level="15" name="CODATECN-2YY" picture="XX" position="10" storage-length="2" display-length="2" display-position="10"/>
+                <item level="15" name="CODATECN-2FIL" picture="X(10)" position="12" storage-length="10" display-length="10" display-position="12"/>
+            </item>
+        </item>
+        <item level="05" name="CODATECN-OUT-REC" position="22" storage-length="21" display-length="21" display-position="22">
+            <item level="10" name="CODATECN-OUTTYPE" picture="X" position="22" storage-length="1" display-length="1" display-position="22">
+                <condition name="YYYY-MM-DD-OP">
+                    <condition value="&quot;1&quot;"/>
+                </condition>
+                <condition name="YYYYMMDD-OP">
+                    <condition value="&quot;2&quot;"/>
+                </condition>
+            </item>
+            <item level="10" name="CODATECN-0UT-DATE" picture="X(20)" position="23" storage-length="20" display-length="20" display-position="23" redefined="true"/>
+            <item level="10" name="CODATECN-1OUT" position="23" storage-length="20" display-length="20" display-position="23" redefines="CODATECN-0UT-DATE">
+                <item level="15" name="CODATECN-1O-YYYY" picture="XXXX" position="23" storage-length="4" display-length="4" display-position="23"/>
+                <item level="15" name="CODATECN-1O-S1" picture="X" position="27" storage-length="1" display-length="1" display-position="27"/>
+                <item level="15" name="CODATECN-1O-MM" picture="XX" position="28" storage-length="2" display-length="2" display-position="28"/>
+                <item level="15" name="CODATECN-1O-S2" picture="X" position="30" storage-length="1" display-length="1" display-position="30"/>
+                <item level="15" name="CODATECN-1O-DD" picture="XX" position="31" storage-length="2" display-length="2" display-position="31"/>
+                <item level="15" name="CODATECN-1OFIl" picture="X(10)" position="33" storage-length="10" display-length="10" display-position="33"/>
+            </item>
+            <item level="10" name="CODATECN-2OUT" position="23" storage-length="20" display-length="20" display-position="23" redefines="CODATECN-0UT-DATE">
+                <item level="15" name="CODATECN-2O-YYYY" picture="XXXX" position="23" storage-length="4" display-length="4" display-position="23"/>
+                <item level="15" name="CODATECN-2O-MM" picture="XX" position="27" storage-length="2" display-length="2" display-position="27"/>
+                <item level="15" name="CODATECN-2O-DD" picture="XX" position="29" storage-length="2" display-length="2" display-position="29"/>
+                <item level="15" name="CODATECN-2OFIl" picture="X(12)" position="31" storage-length="12" display-length="12" display-position="31"/>
+            </item>
+        </item>
+        <item level="05" name="CODATECN-ERROR-MSG" picture="X(38)" position="43" storage-length="38" display-length="38" display-position="43"/>
+    </item>
+</copybook>

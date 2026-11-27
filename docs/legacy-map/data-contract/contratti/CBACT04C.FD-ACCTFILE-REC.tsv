@@ -1,0 +1,4 @@
+campo	livello	tipo	pic	usage	segno	cifre_intere	cifre_decimali	offset	lunghezza	redefines	area	occurs	indice	percorso
+FD-ACCTFILE-REC	01	gruppo	-	-	-	-	-	0	300	-	-	-	-	FD-ACCTFILE-REC
+FD-ACCT-ID	05	elementare	9(11)	DISPLAY	-	11	0	0	11	-	-	-	-	FD-ACCTFILE-REC/FD-ACCT-ID
+FD-ACCT-DATA	05	elementare	X(289)	DISPLAY	-	-	-	11	289	-	-	-	-	FD-ACCTFILE-REC/FD-ACCT-DATA

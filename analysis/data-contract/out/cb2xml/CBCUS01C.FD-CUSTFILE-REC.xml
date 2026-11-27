@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBCUS01C.FD-CUSTFILE-REC.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="FD-CUSTFILE-REC" position="1" storage-length="500" display-length="500" display-position="1">
+        <item level="05" name="FD-CUST-ID" picture="9(09)" position="1" storage-length="9" display-length="9" numeric="COBOL_NUMERIC" display-position="1"/>
+        <item level="05" name="FD-CUST-DATA" picture="X(491)" position="10" storage-length="491" display-length="491" display-position="10"/>
+    </item>
+</copybook>
