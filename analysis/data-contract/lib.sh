@@ -9,6 +9,9 @@
 DC_DIR="$ANALYSIS_ROOT/data-contract"
 DC_DOCS="$REPO_ROOT/docs/legacy-map/data-contract"
 DC_DOCS_IN="${DC_DOCS_IN:-$DC_DOCS}"
+# Percorso, nei container della colla, del volume del legacy (menb-analysis-legacy-<commit>, sensibile alle maiuscole).
+# glue_run (lib/common.sh, fuori perimetro) monta comunque anche la copia dell'host su /legacy: qui non la si usa.
+DC_LEGACY=/legvol
 
 # Percorso, visto dai container della colla (analysis/ montata su /analysis), di una cartella sotto analysis/.
 dc_cont() { echo "/analysis/${1#"$ANALYSIS_ROOT"/}"; }
@@ -41,16 +44,18 @@ genera() {
   w="$(mktmp)"
   rm -rf "$out/cb2xml" "$out/fonti"
   mkdir -p "$out" "$doc"
-  local docsm=(--mount "$DC_DOCS_IN:/docs:ro")
+  # il legacy si legge dal volume sensibile alle maiuscole (DC_LEGACY), in sola lettura, anche nella colla
+  ensure_legacy_volume
+  local docsm=(--mount "$DC_DOCS_IN:/docs:ro" --mount "$LEGACY_VOL:$DC_LEGACY:ro")
   # 1. frammenti dei programmi (righe dichiarate nel censimento) ed elenco degli input di cb2xml
-  glue_run --rw "$w" "${docsm[@]}" -- /analysis/data-contract/glue/fonti.py frammenti /legacy /analysis/manifest/sources.tsv /docs/censimento.tsv /work \
+  glue_run --rw "$w" "${docsm[@]}" -- /analysis/data-contract/glue/fonti.py frammenti "$DC_LEGACY" /analysis/manifest/sources.tsv /docs/censimento.tsv /work \
     || fail "estrazione dei frammenti fallita"
   # 2. cb2xml su copybook e frammenti
   dc_cb2xml_image
   dc_cb2xml "$w/lavori.tsv" "$w/frag" "$out/cb2xml"
   cp "$w/lavori.tsv" "$out/cb2xml/lavori.tsv"
   # 3. estrazione testuale delle altre fonti (SELECT, FD, I/O, DEFINE, LISTCAT, voci)
-  glue_run --rw "$out" "${docsm[@]}" -- /analysis/data-contract/glue/fonti.py estrai /legacy /analysis/manifest/sources.tsv /docs/censimento.tsv /work/fonti \
+  glue_run --rw "$out" "${docsm[@]}" -- /analysis/data-contract/glue/fonti.py estrai "$DC_LEGACY" /analysis/manifest/sources.tsv /docs/censimento.tsv /work/fonti \
     || fail "estrazione testuale delle fonti fallita"
   # 4. contratti, chiavi e viste generate
   rm -rf "$doc/contratti"

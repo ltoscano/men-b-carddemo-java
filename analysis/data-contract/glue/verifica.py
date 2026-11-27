@@ -99,6 +99,10 @@ class Dati:
         self.define = leggi_tsv(os.path.join(f, "define.tsv"))
         self.voci = leggi_tsv(os.path.join(f, "voci.tsv"))
         self.progr = leggi_tsv(os.path.join(f, "programmi.tsv"))
+        self.est = leggi_tsv(os.path.join(f, "estensioni.tsv"))
+        self.trasf = leggi_tsv(os.path.join(f, "trasferimenti.tsv"))
+        self.nonc = leggi_tsv(os.path.join(f, "non-coperti.tsv"))
+        self.comp = leggi_tsv(os.path.join(gen, "composizioni.tsv"))
         self.chiavi = leggi_tsv(os.path.join(gen, "chiavi.tsv"))
         self.indice = leggi_tsv(os.path.join(gen, "contratti.tsv"))
         self.rilevate = leggi_tsv(os.path.join(out, "discordanze-rilevate.tsv"))
@@ -201,7 +205,29 @@ def controlla_censimento(D):
             rad = [r["radice"] for r in D.radici if r["id"] == id_lavoro(c)]
             if rad != [c["radice"]]:
                 err("censimento", f"{c['sorgente']} {c['radice']}: il frammento {c['frammento']} contiene le radici {rad}, attesa solo {c['radice']}")
-    ok(f"censimento: {len(copy_manif)} copybook del manifesto, {len(D.cens)} radici, righe citate e frammenti verificati sul sorgente")
+    # confini ricavati dal sorgente completo: l'intervallo dichiarato deve coincidere; la sezione deve essere quella del tipo;
+    # cb2xml deve avere per la radice tante voci quante il sorgente fino al confine
+    est = {(e["sorgente"], e["radice"], e["inizio"]): e for e in D.est}
+    for c in D.cens:
+        if c["radice"] == "-" or c["frammento"].startswith("COPY "):
+            continue
+        e = est.get((c["sorgente"], c["radice"], c["riga"]))
+        if e is None or e["fine"] == "-":
+            err("censimento", f"{c['sorgente']} {c['radice']}: confini non ricavabili dal sorgente a partire dalla riga {c['riga']}")
+            continue
+        m = re.match(r"^(\d+)-(\d+)$", c["frammento"])
+        if m and (m.group(1), m.group(2)) != (e["inizio"], e["fine"]):
+            err("censimento", f"{c['sorgente']} {c['radice']}: intervallo dichiarato {c['frammento']}, nel sorgente la struttura va "
+                              f"da {e['inizio']} a {e['fine']} (confine: {e['confine']})")
+        attesa = {"WORKING-STORAGE": "WORKING-STORAGE", "LINKAGE": "LINKAGE"}.get(c["tipo"], "FILE" if c["tipo"].startswith("FD:") else "-")
+        if c["tipo"] != "copybook" and e["sezione"] != attesa:
+            err("censimento", f"{c['sorgente']} {c['radice']}: tipo {c['tipo']}, ma la riga {c['riga']} e' nella sezione {e['sezione']}")
+        ident = id_lavoro(c)
+        n = sum(1 for t in D.trac if t["id"] == ident and t["radice"] == c["radice"])
+        if str(n) != e["voci"]:
+            err("tracciati", f"{c['sorgente']} {c['radice']}: cb2xml ha {n} voci, il sorgente ne ha {e['voci']} fino al confine ({e['confine']})")
+    ok(f"censimento: {len(copy_manif)} copybook del manifesto, {len(D.cens)} radici, righe citate verificate; confini, sezioni "
+       f"e numero di voci di ogni radice ricavati dal sorgente completo e uguali a censimento e cb2xml")
     # FD dei programmi batch
     batch = [p["programma"] for p in D.progr if p["batch"] == "si"]
     nfd = 0
@@ -345,6 +371,26 @@ def controlla_relazioni(D):
                 err("relazioni", f"{r['programma']} righe {r['righe']}: {ref} non e' una radice del censimento")
             elif not cl <= {"record-di-file", "riga-di-report"}:
                 err("relazioni", f"{r['programma']} righe {r['righe']}: {ref} e' letto o scritto in un file ma e' classificato {sorted(cl)}")
+    for r in D.rel:
+        for ref in (r["da"], r["a"]):
+            if ":" in ref and ref.partition(":")[0] not in classe:
+                err("relazioni", f"{r['programma']} righe {r['righe']}: la radice di {ref} non e' nel censimento")
+    # trasferimenti di strutture intere verso i record scritti, ricavati dal sorgente completo: ognuno deve essere una
+    # relazione MOVE e la struttura sorgente deve essere censita come record (o riga di report)
+    for t in D.trasf:
+        p, n = t["programma"], int(t["riga"])
+        if not any(r["programma"] == p and r["verbo"] == "MOVE" and str(n) in r["righe"].split(",")
+                   and nome_ref(r["da"]) == t["sorgente"] and nome_ref(r["a"]) == t["destinazione"] for r in D.rel):
+            err("relazioni", f"{p}:{n}: MOVE {t['sorgente']} TO {t['destinazione']} (struttura intera verso il record "
+                             f"{t['record']}) non coperta da una relazione")
+        chiavi = [k for k in classe if k.endswith("." + t["radice_sorgente"])
+                  and (k.startswith(stem(p) + ".") or k.split(".")[0] in {stem(x["sorgente"]) for x in D.cens if x["tipo"] == "copybook"})]
+        if not chiavi:
+            err("censimento", f"{p}:{n}: la struttura {t['radice_sorgente']}, trasferita intera nel record {t['record']}, "
+                              f"non e' nel censimento")
+        elif not any(classe[k] <= {"record-di-file", "stato-di-conversazione", "riga-di-report"} for k in chiavi):
+            err("censimento", f"{p}:{n}: la struttura {t['radice_sorgente']}, trasferita nel record {t['record']}, e' classificata "
+                              f"{sorted(set().union(*(classe[k] for k in chiavi)))}")
     usate = {ref.partition(":")[0] for r in D.rel for ref in (r["da"], r["a"])}
     for c in D.cens:
         if c["tipo"] in ("WORKING-STORAGE", "LINKAGE") and f"{stem(c['sorgente'])}.{c['radice']}" not in usate:
@@ -650,6 +696,32 @@ def controlla_assegnazioni(D):
             t = righe[int(a["riga_dcb"]) - 1]
             if f"LRECL={a['lrecl']}" not in t or f"RECFM={a['recfm']}" not in t:
                 err("assegnazioni", f"{a['jcl']}:{a['riga_dcb']}: la riga non contiene LRECL={a['lrecl']} e RECFM={a['recfm']}")
+    # file.tsv: il contratto dichiarato per un dataset deve essere il tracciato con cui i programmi batch assegnati a quel
+    # dataset leggono o scrivono il record (COPY nell'FD, READ ... INTO, WRITE/REWRITE ... FROM), quando c'e' questa evidenza
+    cpy = {stem(c["sorgente"]) for c in D.cens if c["tipo"] == "copybook"}
+    evid = {}
+    for a in D.asse:
+        fdr = next((c for c in D.cens if c["sorgente"] == a["programma"] and c["tipo"] == "FD:" + a["file"]), None)
+        if fdr is None or a["dataset"] in ("-", ""):
+            continue
+        e = evid.setdefault(a["dataset"], set())
+        if fdr["frammento"].startswith("COPY "):
+            e.add(fdr["contratto"])
+            continue
+        ref = f"{stem(fdr['sorgente'])}.{fdr['radice']}"
+        for r in D.rel:
+            if r["programma"] != a["programma"]:
+                continue
+            altro = r["a"] if r["da"] == ref and r["verbo"] == "READ-INTO" else (r["da"] if r["a"] == ref and r["verbo"] in ("WRITE-FROM", "REWRITE-FROM") else None)
+            if altro and ":" not in altro and altro.split(".")[0] in cpy:
+                e.add(altro)
+    nevid = 0
+    for f in D.files:
+        e = evid.get(f["dataset"], set())
+        if e:
+            nevid += 1
+            if e != {f["contratto"]}:
+                err("assegnazioni", f"file.tsv: {f['dataset']} ha contratto {f['contratto']}, ma i programmi lo leggono o scrivono con {sorted(e)}")
     clusters = {d["nome"] for d in D.define if d["tipo"] == "CLUSTER"}
     fset = {f["dataset"] for f in D.files}
     for x in sorted(clusters - fset):
@@ -659,7 +731,28 @@ def controlla_assegnazioni(D):
     for f in D.files:
         if f["contratto"] != "-" and f["contratto"] not in D.contratti:
             err("assegnazioni", f"file.tsv: contratto {f['contratto']} di {f['dataset']} inesistente")
-    ok(f"assegnazioni: {len(D.asse)} SELECT ricondotte alle DD (righe verificate sul JCL); {len(fset)} DEFINE CLUSTER in file.tsv")
+    ok(f"assegnazioni: {len(D.asse)} SELECT ricondotte alle DD (righe verificate sul JCL); {len(fset)} DEFINE CLUSTER in file.tsv, "
+       f"{nevid} con il contratto confermato dai programmi che li usano")
+
+
+def controlla_composizioni(D):
+    """Posizione nel record dei campi delle strutture trasferite: generata dalle relazioni MOVE e da cb2xml, contro gli attesi."""
+    gen = {(c["struttura"], c["record"], c["campo"], c["indice"]): c for c in D.comp}
+    att = leggi_tsv(os.path.join(D.exp, "composizioni.tsv"))
+    for e in att:
+        g = gen.get((e["struttura"], e["record"], e["campo"], e["indice"]))
+        if g is None:
+            err("composizioni", f"{e['struttura']} -> {e['record']}: campo {e['campo']} atteso e assente dalle composizioni generate")
+        elif (g["offset_nel_record"], g["lunghezza"]) != (e["offset_nel_record"], e["lunghezza"]):
+            err("composizioni", f"{e['struttura']} -> {e['record']}: {e['campo']} atteso a offset {e['offset_nel_record']} per "
+                                f"{e['lunghezza']} byte, generato a {g['offset_nel_record']} per {g['lunghezza']}")
+    if not any(e["struttura"] == "CBTRN02C.WS-VALIDATION-TRAILER" for e in att):
+        err("attesi", "composizioni.tsv: manca la composizione del trailer di validazione di CBTRN02C")
+    strutture = {r["da"] for r in D.rel if r["verbo"] == "MOVE" and r["da"] in D.contratti}
+    for s in sorted(strutture - {c["struttura"] for c in D.comp}):
+        err("composizioni", f"{s}: struttura trasferita in un record senza composizione generata")
+    ok(f"composizioni: {len(D.comp)} campi di {len(strutture)} strutture trasferite con la loro posizione nel record; "
+       f"{len(att)} attesi scritti a mano coincidono")
 
 
 def main(argv):
@@ -667,7 +760,7 @@ def main(argv):
     for nome, f in (("A. censimento", controlla_censimento), ("A. relazioni", controlla_relazioni),
                     ("B. contratti", controlla_contratti), ("B. tracciati", controlla_tracciati),
                     ("C. attesi", controlla_attesi), ("C. presenza degli attesi", controlla_presenza_attesi), ("C. chiavi", controlla_chiavi), ("C. discordanze", controlla_discordanze),
-                    ("E. assegnazioni", controlla_assegnazioni)):
+                    ("E. assegnazioni", controlla_assegnazioni), ("F. composizioni", controlla_composizioni)):
         print(f"{nome}")
         INIZIO[0] = len(ERRORI)
         f(D)

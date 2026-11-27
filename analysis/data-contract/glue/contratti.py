@@ -427,6 +427,23 @@ def main(out, docs, dest):
                "variabile", "lunghezze_scritte", "recordsize", "dcb_osservata"]
     scrivi_tsv(os.path.join(dest, "contratti.tsv"), COL_IND, indice)
 
+    # composizioni: dove finiscono, nel record di destinazione, i campi delle strutture (con contratto) trasferite con MOVE
+    comp = []
+    for r in rel:
+        if r["verbo"] != "MOVE" or r["da"] not in contratti:
+            continue
+        base_ref, _, sub = r["a"].partition(":")
+        v = risolvi(r["a"], radici)
+        base = (v.pos - 1) if (v and sub) else 0
+        for c in elementari_base(contratti[r["da"]]):
+            comp.append({"programma": r["programma"], "righe": r["righe"], "struttura": r["da"], "record": base_ref,
+                         "campo_record": sub or "-", "campo": c["campo"], "indice": c["indice"],
+                         "offset_nel_record": base + c["offset"], "lunghezza": c["lunghezza"]})
+    scrivi_tsv(os.path.join(dest, "composizioni.tsv"),
+               ["programma", "righe", "struttura", "record", "campo_record", "campo", "indice", "offset_nel_record", "lunghezza"], comp)
+    nonc = leggi_tsv(os.path.join(fonti, "non-coperti.tsv"))
+    trasf = leggi_tsv(os.path.join(fonti, "trasferimenti.tsv"))
+
     # chiavi e discordanze rilevate automaticamente
     scoperte = []
     chiavi = calcola_chiavi(fonti, docs, contratti, fd_contratto, scoperte)
@@ -535,6 +552,28 @@ def main(out, docs, dest):
                  [[r["programma"].split("/")[-1], r["verbo"], r["righe"].replace(",", ", "), r["da"], r["a"],
                    f"{r['lunghezza_da']} / {lung_ref[r['da']]}", f"{r['lunghezza_a']} / {lung_ref[r['a']]}", r["trasferita"],
                    r["fonte_trasferita"], r["nota"]] for r in rel]), ""]
+    g += ["### Trasferimenti di strutture intere verso i record scritti (ricavati dal sorgente)", "",
+          "Ogni `MOVE` di una voce di livello 01 o di un gruppo verso un record che finisce in un file (record di una `WRITE`/"
+          "`REWRITE` o struttura di una `WRITE`/`REWRITE ... FROM`) o verso una sua parte. Il controllo pretende per ciascuno "
+          "una relazione in `relazioni.tsv` e la struttura sorgente nel censimento.", "",
+          md_tab(["programma", "riga", "struttura", "destinazione", "record"],
+                 [[t["programma"].split("/")[-1], t["riga"], t["sorgente"], t["destinazione"] + (" (con posizione)" if t["posizione_destinazione"] == "si" else ""),
+                   t["record"]] for t in trasf]), "",
+          "### Posizione nel record dei campi delle strutture trasferite", "",
+          "Da `composizioni.tsv`: offset (base 0) del campo nel record di destinazione = offset della parte di destinazione + "
+          "offset del campo nella struttura, entrambi da cb2xml.", "",
+          md_tab(["struttura", "record", "parte del record", "campo", "indice", "offset nel record", "byte"],
+                 [[c["struttura"], c["record"], c["campo_record"], c["campo"], c["indice"], c["offset_nel_record"], c["lunghezza"]] for c in comp]), "",
+          "### Scritture nei record non coperte dai trasferimenti di strutture", "",
+          "Istruzioni che scrivono dentro un record che finisce in un file senza trasferire una struttura intera: composizione "
+          f"campo per campo, letterali, riferimenti con posizione, `STRING`, `INITIALIZE`, aritmetica. Non sono ricondotte a "
+          f"relazioni: l'elenco completo ({len(nonc)} punti) e' in `analysis/data-contract/out/fonti/non-coperti.tsv`.", ""]
+    conta = {}
+    for x in nonc:
+        k = (x["programma"].split("/")[-1], x["record"], x["tipo"])
+        conta.setdefault(k, []).append(x["riga"])
+    g += [md_tab(["programma", "record", "tipo", "quante", "righe"],
+                 [[p, rec, t, len(rr), ", ".join(rr)] for (p, rec, t), rr in sorted(conta.items())]), ""]
     open(os.path.join(dest, "censimento.md"), "w", encoding="utf-8").write(testa + "\n".join(g).rstrip() + "\n")
 
 

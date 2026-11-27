@@ -19,7 +19,11 @@ Cosa si estrae e come (tutto riga per riga, senza interpretare la semantica):
     UNIQUEKEY/NONUNIQUEKEY, RELATE, PATHENTRY, INDEXED/NONINDEXED/NUMBERED;
   - LISTCAT.txt: per ogni componente DATA, KEYLEN, RKP, AXRKP, AVGLRECL, MAXLRECL, NONUNIQKEY, l'associazione;
   - voci: livello, nome, PIC, USAGE, OCCURS, REDEFINES di ogni voce dei sorgenti dati dati a cb2xml, nell'ordine
-    del sorgente (serve a confrontare nomi, ordine e PIC dei contratti con il sorgente).
+    del sorgente (serve a confrontare nomi, ordine e PIC dei contratti con il sorgente); per i frammenti dei programmi
+    le voci si prendono dalla radice fino al suo confine nel programma completo, non dall'intervallo dichiarato;
+  - estensioni: per ogni radice censita, la riga finale ricavata dal sorgente completo e la sezione (struttura.py);
+  - trasferimenti e non coperti: MOVE di strutture intere verso i record scritti (o loro parti) e, a parte, tutto cio'
+    che scrive in un record scritto senza essere un trasferimento di struttura (struttura.py).
 """
 import os
 import re
@@ -28,6 +32,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comune import (area_programma, frasi, leggi_righe, leggi_tsv, parole, scrivi_tsv,  # noqa: E402
                     senza_letterali, stem)
+from struttura import albero, estensione, scansiona, sezione_di  # noqa: E402
 
 RE_INTERVALLO = re.compile(r"^(\d+)-(\d+)$")
 
@@ -358,19 +363,55 @@ def cmd_estrai(legacy, manifesto, censimento, outdir):
     scrivi_tsv(os.path.join(outdir, "listcat.tsv"),
                ["listcat", "riga", "componente", "associato", "keylen", "rkp", "axrkp", "avglrecl", "maxlrecl",
                 "unicita", "organizzazione"], estrai_listcat(legacy))
+    # confini di ogni radice censita, ricavati dal sorgente completo (non dagli intervalli dichiarati)
+    cens = leggi_tsv(censimento)
+    est = []
+    for c in cens:
+        if c["radice"] == "-" or c["frammento"].startswith("COPY ") or not c["riga"].isdigit():
+            continue
+        righe = leggi_righe(os.path.join(legacy, c["sorgente"]))
+        e = estensione(righe, int(c["riga"]))
+        sez = sezione_di(righe)
+        fine, confine = e if e else ("-", "nessuna voce 01/77 inizia a questa riga")
+        nv = len(voci("x", righe[int(c["riga"]) - 1:fine])) if e else "-"
+        est.append({"sorgente": c["sorgente"], "radice": c["radice"], "inizio": c["riga"], "fine": fine,
+                    "confine": confine, "sezione": sez.get(int(c["riga"]), "-") if c["tipo"] != "copybook" else "-",
+                    "voci": nv})
+    scrivi_tsv(os.path.join(outdir, "estensioni.tsv"), ["sorgente", "radice", "inizio", "fine", "confine", "sezione", "voci"], est)
+    # voci di ogni input di cb2xml: per i frammenti, dalla radice al suo confine nel programma completo
     vv = []
     for j in lavori(legacy, manifesto, censimento):
         righe = leggi_righe(os.path.join(legacy, j["sorgente"]))
         if j["righe"] != "-":
-            a, b = map(int, RE_INTERVALLO.match(j["righe"]).groups())
-            base = righe[a - 1:b]
-            for v in voci(j["id"], base):
+            a = int(RE_INTERVALLO.match(j["righe"]).group(1))
+            e = estensione(righe, a)
+            b = e[0] if e else int(RE_INTERVALLO.match(j["righe"]).group(2))
+            for v in voci(j["id"], righe[a - 1:b]):
                 v["riga"] = v["riga"] + a - 1
                 vv.append(v)
         else:
             vv += voci(j["id"], righe)
     scrivi_tsv(os.path.join(outdir, "voci.tsv"),
                ["id", "riga", "livello", "nome", "pic", "usage", "occurs", "redefines"], vv)
+    # trasferimenti di strutture verso i record scritti, e cio' che scrive nei record senza esserlo
+    copie = {stem(p).upper(): p for p in copybook_del_manifesto(manifesto)}
+
+    def leggi_copy(nome):
+        p = copie.get(nome.upper())
+        if p is None:
+            return None
+        return [(int(v["livello"]), v["nome"].upper(), v["riga"]) for v in voci(nome, leggi_righe(os.path.join(legacy, p)))]
+    tr, nc = [], []
+    for p in (x["programma"] for x in progs if x["batch"] == "si"):
+        righe = leggi_righe(os.path.join(legacy, p))
+        scritti = {r["oggetto"] for r in ios if r["programma"] == p and r["verbo"] in ("WRITE", "REWRITE")}
+        scritti |= {r["struttura"] for r in ios if r["programma"] == p and r["verbo"] in ("WRITE", "REWRITE") and r["prep"] == "FROM"}
+        t, n = scansiona(righe, albero(righe, None, leggi_copy), scritti)
+        tr += [dict(programma=p, **x) for x in t]
+        nc += [{"programma": p, "riga": a, "tipo": b, "sorgente": c, "destinazione": d, "record": e} for a, b, c, d, e in n]
+    scrivi_tsv(os.path.join(outdir, "trasferimenti.tsv"),
+               ["programma", "riga", "verbo", "sorgente", "radice_sorgente", "destinazione", "posizione_destinazione", "record"], tr)
+    scrivi_tsv(os.path.join(outdir, "non-coperti.tsv"), ["programma", "riga", "tipo", "sorgente", "destinazione", "record"], nc)
 
 
 if __name__ == "__main__":

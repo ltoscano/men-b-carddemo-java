@@ -49,6 +49,7 @@ Colonne: posizione (`offset`) a base 0 e `lunghezza` in byte, da cb2xml; `segno`
 | `CBTRN02C.FD-REJS-RECORD` | FD-REJS-RECORD | app/cbl/CBTRN02C.cbl | 82-84 | record-di-file | 430 | 2 | 430 | - | 430 | - | LRECL=430 RECFM=F (app/jcl/POSTTRAN.jcl:36) |
 | `CBTRN02C.FD-ACCTFILE-REC` | FD-ACCTFILE-REC | app/cbl/CBTRN02C.cbl | 87-89 | record-di-file | 300 | 2 | 300 | - | 300 | - | - |
 | `CBTRN02C.FD-TRAN-CAT-BAL-RECORD` | FD-TRAN-CAT-BAL-RECORD | app/cbl/CBTRN02C.cbl | 92-97 | record-di-file | 50 | 4 | 50 | - | 50 | - | - |
+| `CBTRN02C.DB2-FORMAT-TS` | DB2-FORMAT-TS | app/cbl/CBTRN02C.cbl | 159-159 | record-di-file | 26 | 1 | 26 | - | - | - | - |
 | `CBTRN02C.REJECT-RECORD` | REJECT-RECORD | app/cbl/CBTRN02C.cbl | 176-178 | record-di-file | 430 | 2 | 430 | - | - | - | - |
 | `CBTRN02C.WS-VALIDATION-TRAILER` | WS-VALIDATION-TRAILER | app/cbl/CBTRN02C.cbl | 180-182 | record-di-file | 80 | 2 | 80 | - | - | - | - |
 | `CBTRN03C.FD-TRANFILE-REC` | FD-TRANFILE-REC | app/cbl/CBTRN03C.cbl | 62-65 | record-di-file | 350 | 3 | 350 | - | - | - | - |
@@ -710,6 +711,14 @@ Radice `FD-TRAN-CAT-BAL-RECORD` di `app/cbl/CBTRN02C.cbl` (92-97), 50 byte.
 | FD-TRANCAT-TYPE-CD | 10 | elementare | X(02) | DISPLAY | - | - | - | 11 | 2 | - | - | - |
 | FD-TRANCAT-CD | 10 | elementare | 9(04) | DISPLAY | - | 4 | 0 | 13 | 4 | - | - | - |
 | FD-FD-TRAN-CAT-DATA | 05 | elementare | X(33) | DISPLAY | - | - | - | 17 | 33 | - | - | - |
+
+## `CBTRN02C.DB2-FORMAT-TS`
+
+Radice `DB2-FORMAT-TS` di `app/cbl/CBTRN02C.cbl` (159-159), 26 byte.
+
+| campo | liv. | tipo | PIC | USAGE | segno | int. | dec. | offset | byte | REDEFINES | area | indice |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| DB2-FORMAT-TS | 01 | elementare | X(26) | DISPLAY | - | - | - | 0 | 26 | - | - | - |
 
 ## `CBTRN02C.REJECT-RECORD`
 

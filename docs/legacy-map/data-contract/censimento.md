@@ -23,6 +23,7 @@ Serve solo Docker. Lo strumento è cb2xml 1.01.08 (dialetto `Mainframe`), lo ste
 | `discordanze.md` | a mano | le differenze tra le fonti, ciascuna con file e riga |
 | `contratti/<contratto>.tsv` | generato | il contratto fisico di ogni radice classificata record di file o stato di conversazione |
 | `contratti.tsv`, `contratti.md` | generato | indice dei contratti e vista Markdown di tutti i contratti |
+| `composizioni.tsv` | generato | per ogni struttura trasferita con `MOVE` in un record, la posizione di ciascun suo campo nel record di destinazione |
 | `chiavi.tsv`, `chiavi.md` | generato | chiavi primarie e alternative di ogni file, dalle quattro fonti, ricondotte ai campi |
 | questo file, da "Tabelle generate" in poi | generato | censimento e relazioni con le lunghezze di cb2xml accanto a quelle scritte a mano |
 
@@ -32,6 +33,8 @@ L'output grezzo e intermedio è in `analysis/data-contract/out/`: gli XML e i lo
 
 - **Tutti i 30 copybook di `app/cpy/`**, presi dal manifesto (`analysis/manifest/sources.tsv`), non da un glob. Per ognuno, le radici di livello 01 che contiene: un copybook può averne più d'una (`CVTRA07Y` ne ha sette, `CSLKPCDY` tre) o nessuna (`CSUTLDWY` ha voci di livello 10 e 20 da includere sotto un gruppo del programma).
 - **I 14 programmi batch di `app/cbl/`**: i programmi del manifesto senza `EXEC CICS`. Dodici hanno file (49 `FD` in tutto); `COBSWAIT` e `CSUTLDTC` non ne hanno. Per ogni `FD`, il suo 01 (o la `COPY` che lo fornisce). Per ogni istruzione `READ`, `WRITE`, `REWRITE` e per ogni `MOVE` di una struttura nel record di un `FD`, la struttura da cui il record è composto prima della scrittura (`WRITE ... FROM`, `MOVE` verso il record) o in cui è letto (`READ ... INTO`); in `CBSTM03A`, anche lo spostamento dei record letti da `CBSTM03B` (area `WS-M03B-FLDT`) nei tracciati dei copybook. Le strutture di `WORKING-STORAGE` e `LINKAGE` coinvolte sono radici del censimento come gli 01 degli `FD`.
+- **I trasferimenti di strutture intere verso i record scritti, anche verso una loro parte**, ricavati dal programma completo (`glue/struttura.py`): ogni `MOVE` di una voce di livello 01 o di un gruppo verso un record che finisce in un file (record di una `WRITE`/`REWRITE`, o struttura di una `WRITE`/`REWRITE ... FROM`) o verso un suo sotto-campo. Nei 12 programmi batch con file sono 14: `VBRC-REC1` e `VBRC-REC2` in `VBR-REC` (CBACT01C), `DALYTRAN-RECORD` e `WS-VALIDATION-TRAILER` nelle due parti di `REJECT-RECORD`, `DB2-FORMAT-TS` in `TRAN-PROC-TS` di `TRAN-RECORD` (CBTRN02C), le nove righe di report in `FD-REPTFILE-REC` (CBTRN03C). Rispetto alla prima consegna si aggiunge una struttura, `DB2-FORMAT-TS`; le altre erano già censite. Per ciascuno il controllo pretende la relazione e la struttura nel censimento; `composizioni.tsv` dà la posizione di ogni campo trasferito nel record (per esempio motivo dello scarto a offset 350 per 4 byte, descrizione a 354 per 76).
+- **Non coperto dai trasferimenti** (elencato punto per punto in `analysis/data-contract/out/fonti/non-coperti.tsv` e riassunto in fondo a questo documento): ciò che scrive dentro un record senza trasferire una struttura intera, cioè composizione campo per campo, letterali, riferimenti con posizione nella sorgente, `STRING`, `INITIALIZE`, aritmetica. Per queste istruzioni non si chiede una relazione; il tracciato del record che le riceve ha comunque il suo contratto.
 - Fuori: i copybook delle mappe (`app/cpy-bms/`), i moduli opzionali, i programmi online (le loro strutture di file vengono dai copybook, già censiti).
 
 ## Come si classifica
@@ -59,6 +62,10 @@ Gli 01 "generici" degli `FD` (per esempio `FD-ACCTFILE-REC` con la sola chiave e
 
 Le stesse regole sono applicate dal controllo a **ogni** voce degli 80 input dati a cb2xml (30 copybook e 50 frammenti di programma, 763 voci gruppi compresi): per ogni voce elementare la lunghezza calcolata dalla PIC coincide con quella di cb2xml, e nomi, livelli, ordine, PIC, `USAGE`, `OCCURS` e `REDEFINES` di cb2xml coincidono con quelli letti dal testo del sorgente. **Non è emersa alcuna divergenza tra cb2xml e il calcolo a mano.**
 
+**Confini delle strutture.** L'intervallo `frammento` di `censimento.tsv` dice quali righe si danno a cb2xml, ma non è la verità su cui si controlla: i confini di ogni radice si ricavano dal sorgente completo (`glue/struttura.py`). Una voce di livello 01 (o 77) comprende tutte le frasi che la seguono fino alla prima che sia un'altra voce 01/77, una `FD`/`SD`, una `COPY`, un'intestazione di sezione o di divisione; la sua ultima riga è l'ultima riga di codice prima di quel confine. Il controllo fallisce se l'intervallo dichiarato non coincide, se cb2xml trova per la radice un numero di voci diverso da quello del sorgente fino al confine (anche per le radici dei copybook) e se la sezione della radice non è quella del suo `tipo`. Le voci lette dal testo per il confronto con cb2xml si prendono anch'esse fino al confine ricavato, non dall'intervallo dichiarato.
+
+**Lettura del legacy.** Tutta l'estrazione testuale e la verifica leggono il legacy dal volume Docker sensibile alle maiuscole (`menb-analysis-legacy-<commit>`), montato in sola lettura, come cb2xml.
+
 ## Colonne del contratto
 
 `campo`, `livello`, `tipo` (`gruppo` o `elementare`), `pic` e `usage` come nel sorgente (`DISPLAY` se assente), `segno` (`S` se la PIC inizia con S), `cifre_intere` e `cifre_decimali` (scala) per i numerici non editati, `offset` (base 0) e `lunghezza` in byte, `redefines` (area ridefinita), `area` (la voce con `REDEFINES` che contiene il campo; `-` = record base), `occurs` e `indice` (elemento dell'`OCCURS`), `percorso`. I `FILLER` restano, con nomi, ordine e ampiezze del sorgente: nessuna normalizzazione.
@@ -75,6 +82,21 @@ L'unico file a lunghezza variabile dei programmi batch è `VBRCFILE` di `CBACT01
 - **`WS-ERROR-RECORD` di `CBIMPORT`** e il record degli scarti di `CBTRN02C` (`REJECT-RECORD` con `WS-VALIDATION-TRAILER`) sono `record-di-file` (campi fissi in dataset catalogati); le righe di `CVTRA07Y` e dell'estratto conto di `CBSTM03A` sono `riga-di-report`.
 - **`AWS.CUSTDATA.CLUSTER`** (`DEFCUST.jcl`), che nessun programma usa, è associato al tracciato cliente sulla base del solo `RECORDSIZE(500 500)` (vedi `file.tsv` e `discordanze.md`).
 - **`CBTRN01C`** non è eseguito da alcun JCL: le sue `SELECT` non sono ricondotte a un dataset.
+- **`DB2-FORMAT-TS` di `CBTRN02C`** (riga 159, `PIC X(26)`) è `record-di-file`: è spostato intero nel timestamp di elaborazione `TRAN-PROC-TS` del record delle transazioni (riga 438), che è anche la chiave dell'indice alternativo di `TRANSACT`. La sua forma interna è data dalla `01 FILLER REDEFINES DB2-FORMAT-TS` (righe 160-174), composta campo per campo in `Z-GET-DB2-FORMAT-TIMESTAMP` (righe 692-703): `AAAA-MM-GG-hh.mm.ss.cc0000` (anno, `-`, mese, `-`, giorno, `-`, ora, `.`, minuti, `.`, secondi, `.`, centesimi, `0000`). Quella `FILLER` non ha un contratto proprio, perché è una ridefinizione anonima che nessuna istruzione trasferisce: è un limite dichiarato.
+
+## Ingressi scritti a mano e come sono verificati
+
+| Ingresso | Verifica contro il sorgente |
+| --- | --- |
+| `censimento.tsv`: radici e righe | radici 01 dei copybook uguali a quelle di cb2xml; 01 delle `FD` uguali all'estrazione dal programma; riga dell'01 letta nel sorgente |
+| `censimento.tsv`: intervalli dei frammenti, tipo | confini e sezione ricavati dal sorgente completo; numero di voci di cb2xml uguale a quello del sorgente fino al confine |
+| `censimento.tsv`: presenza delle strutture di lavoro | ogni `READ`/`WRITE`/`REWRITE` e ogni trasferimento di struttura intera verso un record scritto deve avere relazione e struttura censita |
+| `censimento.tsv`: classificazione | **giudizio dichiarato**, con motivo; vincolato solo in parte: `non-tracciato` se e solo se cb2xml non trova dati, record o riga di report se letta o scritta in un file |
+| `relazioni.tsv` | righe e nomi letti nel sorgente; lunghezze uguali a cb2xml; byte trasferiti dalla regola dell'`FD` o dalla `MOVE` della lunghezza variabile |
+| `assegnazioni.tsv` | righe della DD, del DSN e della DCB lette nel JCL; ogni `SELECT` presente una volta |
+| `file.tsv` | ogni `DEFINE CLUSTER` presente; il contratto deve essere quello con cui i programmi assegnati al dataset leggono o scrivono il record (10 dataset su 15); per i 5 senza evidenza nei programmi batch (`AWS.CUSTDATA.CLUSTER`; `USRSEC` KSDS, ESDS e RRDS, usati solo online; `TRXFL`, che CBSTM03B legge in un'area di 1000 byte) restano solo il controllo di lunghezza con `RECORDSIZE` e la chiave attesa |
+| `discordanze.md` | ogni differenza rilevata dal confronto automatico delle fonti deve esserci, e nessuna che non lo sia |
+| attesi di `analysis/data-contract/expected/` | **scritti a mano** dal copybook; contenuto minimo fissato dai criteri di accettazione |
 
 <!-- Da qui in poi il testo e' generato da analysis/data-contract (contratti.py): non modificarlo a mano. -->
 
@@ -153,6 +175,7 @@ L'unico file a lunghezza variabile dei programmi batch è `VBRCFILE` di `CBACT01
 | CBTRN02C.cbl | FD:DALYREJS-FILE | FD-REJS-RECORD | 82 | 82-84 | 430 | record-di-file | `CBTRN02C.FD-REJS-RECORD` |
 | CBTRN02C.cbl | FD:ACCOUNT-FILE | FD-ACCTFILE-REC | 87 | 87-89 | 300 | record-di-file | `CBTRN02C.FD-ACCTFILE-REC` |
 | CBTRN02C.cbl | FD:TCATBAL-FILE | FD-TRAN-CAT-BAL-RECORD | 92 | 92-97 | 50 | record-di-file | `CBTRN02C.FD-TRAN-CAT-BAL-RECORD` |
+| CBTRN02C.cbl | WORKING-STORAGE | DB2-FORMAT-TS | 159 | 159-159 | 26 | record-di-file | `CBTRN02C.DB2-FORMAT-TS` |
 | CBTRN02C.cbl | WORKING-STORAGE | REJECT-RECORD | 176 | 176-178 | 430 | record-di-file | `CBTRN02C.REJECT-RECORD` |
 | CBTRN02C.cbl | WORKING-STORAGE | WS-VALIDATION-TRAILER | 180 | 180-182 | 80 | record-di-file | `CBTRN02C.WS-VALIDATION-TRAILER` |
 | CBTRN03C.cbl | FD:TRANSACT-FILE | FD-TRANFILE-REC | 62 | 62-65 | 350 | record-di-file | `CBTRN03C.FD-TRANFILE-REC` |
@@ -260,6 +283,7 @@ Lunghezze scritte a mano in `relazioni.tsv` (colonne `a mano`) e lette da cb2xml
 | CBTRN02C.cbl | READ-INTO | 346 | CBTRN02C.FD-TRAN-RECORD | CVTRA06Y.DALYTRAN-RECORD | 350 / 350 | 350 / 350 | 350 | FD | - |
 | CBTRN02C.cbl | READ-INTO | 383 | CBTRN02C.FD-XREFFILE-REC | CVACT03Y.CARD-XREF-RECORD | 50 / 50 | 50 / 50 | 50 | FD | - |
 | CBTRN02C.cbl | READ-INTO | 395 | CBTRN02C.FD-ACCTFILE-REC | CVACT01Y.ACCOUNT-RECORD | 300 / 300 | 300 / 300 | 300 | FD | - |
+| CBTRN02C.cbl | MOVE | 438 | CBTRN02C.DB2-FORMAT-TS | CVTRA05Y.TRAN-RECORD:TRAN-PROC-TS | 26 / 26 | 26 / 26 | 26 | destinazione | timestamp di elaborazione nel record delle transazioni, scritto alla riga 564 |
 | CBTRN02C.cbl | MOVE | 447 | CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD:REJECT-TRAN-DATA | 350 / 350 | 350 / 350 | 350 | destinazione | prima parte del record degli scarti |
 | CBTRN02C.cbl | MOVE | 448 | CBTRN02C.WS-VALIDATION-TRAILER | CBTRN02C.REJECT-RECORD:VALIDATION-TRAILER | 80 / 80 | 80 / 80 | 80 | destinazione | seconda parte del record degli scarti |
 | CBTRN02C.cbl | WRITE-FROM | 451 | CBTRN02C.REJECT-RECORD | CBTRN02C.FD-REJS-RECORD | 430 / 430 | 430 / 430 | 430 | FD | - |
@@ -282,3 +306,114 @@ Lunghezze scritte a mano in `relazioni.tsv` (colonne `a mano`) e lette da cb2xml
 | CBTRN03C.cbl | READ-INTO | 485 | CBTRN03C.FD-CARDXREF-REC | CVACT03Y.CARD-XREF-RECORD | 50 / 50 | 50 / 50 | 50 | FD | - |
 | CBTRN03C.cbl | READ-INTO | 495 | CBTRN03C.FD-TRANTYPE-REC | CVTRA03Y.TRAN-TYPE-RECORD | 60 / 60 | 60 / 60 | 60 | FD | - |
 | CBTRN03C.cbl | READ-INTO | 505 | CBTRN03C.FD-TRAN-CAT-RECORD | CVTRA04Y.TRAN-CAT-RECORD | 60 / 60 | 60 / 60 | 60 | FD | - |
+
+### Trasferimenti di strutture intere verso i record scritti (ricavati dal sorgente)
+
+Ogni `MOVE` di una voce di livello 01 o di un gruppo verso un record che finisce in un file (record di una `WRITE`/`REWRITE` o struttura di una `WRITE`/`REWRITE ... FROM`) o verso una sua parte. Il controllo pretende per ciascuno una relazione in `relazioni.tsv` e la struttura sorgente nel censimento.
+
+| programma | riga | struttura | destinazione | record |
+| --- | --- | --- | --- | --- |
+| CBACT01C.cbl | 289 | VBRC-REC1 | VBR-REC (con posizione) | VBR-REC |
+| CBACT01C.cbl | 304 | VBRC-REC2 | VBR-REC (con posizione) | VBR-REC |
+| CBTRN02C.cbl | 438 | DB2-FORMAT-TS | TRAN-PROC-TS | TRAN-RECORD |
+| CBTRN02C.cbl | 447 | DALYTRAN-RECORD | REJECT-TRAN-DATA | REJECT-RECORD |
+| CBTRN02C.cbl | 448 | WS-VALIDATION-TRAILER | VALIDATION-TRAILER | REJECT-RECORD |
+| CBTRN03C.cbl | 295 | REPORT-PAGE-TOTALS | FD-REPTFILE-REC | FD-REPTFILE-REC |
+| CBTRN03C.cbl | 300 | TRANSACTION-HEADER-2 | FD-REPTFILE-REC | FD-REPTFILE-REC |
+| CBTRN03C.cbl | 308 | REPORT-ACCOUNT-TOTALS | FD-REPTFILE-REC | FD-REPTFILE-REC |
+| CBTRN03C.cbl | 312 | TRANSACTION-HEADER-2 | FD-REPTFILE-REC | FD-REPTFILE-REC |
+| CBTRN03C.cbl | 320 | REPORT-GRAND-TOTALS | FD-REPTFILE-REC | FD-REPTFILE-REC |
+| CBTRN03C.cbl | 325 | REPORT-NAME-HEADER | FD-REPTFILE-REC | FD-REPTFILE-REC |
+| CBTRN03C.cbl | 333 | TRANSACTION-HEADER-1 | FD-REPTFILE-REC | FD-REPTFILE-REC |
+| CBTRN03C.cbl | 337 | TRANSACTION-HEADER-2 | FD-REPTFILE-REC | FD-REPTFILE-REC |
+| CBTRN03C.cbl | 371 | TRANSACTION-DETAIL-REPORT | FD-REPTFILE-REC | FD-REPTFILE-REC |
+
+### Posizione nel record dei campi delle strutture trasferite
+
+Da `composizioni.tsv`: offset (base 0) del campo nel record di destinazione = offset della parte di destinazione + offset del campo nella struttura, entrambi da cb2xml.
+
+| struttura | record | parte del record | campo | indice | offset nel record | byte |
+| --- | --- | --- | --- | --- | --- | --- |
+| CBACT01C.VBRC-REC1 | CBACT01C.VBR-REC | - | VB1-ACCT-ID | - | 0 | 11 |
+| CBACT01C.VBRC-REC1 | CBACT01C.VBR-REC | - | VB1-ACCT-ACTIVE-STATUS | - | 11 | 1 |
+| CBACT01C.VBRC-REC2 | CBACT01C.VBR-REC | - | VB2-ACCT-ID | - | 0 | 11 |
+| CBACT01C.VBRC-REC2 | CBACT01C.VBR-REC | - | VB2-ACCT-CURR-BAL | - | 11 | 12 |
+| CBACT01C.VBRC-REC2 | CBACT01C.VBR-REC | - | VB2-ACCT-CREDIT-LIMIT | - | 23 | 12 |
+| CBACT01C.VBRC-REC2 | CBACT01C.VBR-REC | - | VB2-ACCT-REISSUE-YYYY | - | 35 | 4 |
+| CBTRN02C.DB2-FORMAT-TS | CVTRA05Y.TRAN-RECORD | TRAN-PROC-TS | DB2-FORMAT-TS | - | 304 | 26 |
+| CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-ID | - | 0 | 16 |
+| CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-TYPE-CD | - | 16 | 2 |
+| CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-CAT-CD | - | 18 | 4 |
+| CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-SOURCE | - | 22 | 10 |
+| CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-DESC | - | 32 | 100 |
+| CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-AMT | - | 132 | 11 |
+| CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-MERCHANT-ID | - | 143 | 9 |
+| CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-MERCHANT-NAME | - | 152 | 50 |
+| CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-MERCHANT-CITY | - | 202 | 50 |
+| CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-MERCHANT-ZIP | - | 252 | 10 |
+| CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-CARD-NUM | - | 262 | 16 |
+| CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-ORIG-TS | - | 278 | 26 |
+| CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | DALYTRAN-PROC-TS | - | 304 | 26 |
+| CVTRA06Y.DALYTRAN-RECORD | CBTRN02C.REJECT-RECORD | REJECT-TRAN-DATA | FILLER | - | 330 | 20 |
+| CBTRN02C.WS-VALIDATION-TRAILER | CBTRN02C.REJECT-RECORD | VALIDATION-TRAILER | WS-VALIDATION-FAIL-REASON | - | 350 | 4 |
+| CBTRN02C.WS-VALIDATION-TRAILER | CBTRN02C.REJECT-RECORD | VALIDATION-TRAILER | WS-VALIDATION-FAIL-REASON-DESC | - | 354 | 76 |
+
+### Scritture nei record non coperte dai trasferimenti di strutture
+
+Istruzioni che scrivono dentro un record che finisce in un file senza trasferire una struttura intera: composizione campo per campo, letterali, riferimenti con posizione, `STRING`, `INITIALIZE`, aritmetica. Non sono ricondotte a relazioni: l'elenco completo (240 punti) e' in `analysis/data-contract/out/fonti/non-coperti.tsv`.
+
+| programma | record | tipo | quante | righe |
+| --- | --- | --- | --- | --- |
+| CBACT01C.cbl | ARR-ARRAY-REC | INITIALIZE | 1 | 169 |
+| CBACT01C.cbl | ARR-ARRAY-REC | MOVE di un campo (composizione campo per campo) | 3 | 254, 255, 257 |
+| CBACT01C.cbl | ARR-ARRAY-REC | MOVE di un letterale o di un'espressione | 4 | 256, 258, 259, 260 |
+| CBACT01C.cbl | OUT-ACCT-REC | MOVE di un campo (composizione campo per campo) | 10 | 216, 217, 218, 219, 220, 221, 222, 233, 235, 239 |
+| CBACT01C.cbl | OUT-ACCT-REC | MOVE di un letterale o di un'espressione | 1 | 237 |
+| CBACT04C.cbl | ACCOUNT-RECORD | MOVE di un letterale o di un'espressione | 2 | 353, 354 |
+| CBACT04C.cbl | ACCOUNT-RECORD | aritmetica (ADD) | 1 | 352 |
+| CBACT04C.cbl | ACCOUNT-RECORD | aritmetica (COMPUTE) | 1 | 464 |
+| CBACT04C.cbl | FD-ACCTFILE-REC | MOVE di un campo (composizione campo per campo) | 1 | 202 |
+| CBACT04C.cbl | FD-TRANFILE-REC | aritmetica (COMPUTE) | 1 | 464 |
+| CBACT04C.cbl | TRAN-RECORD | aritmetica (COMPUTE) | 14 | 464, 464, 464, 464, 464, 464, 464, 464, 464, 464, 464, 464, 464, 464 |
+| CBEXPORT.cbl | EXPORT-RECORD | INITIALIZE | 5 | 271, 340, 404, 459, 524 |
+| CBEXPORT.cbl | EXPORT-RECORD | MOVE di un campo (composizione campo per campo) | 62 | 275, 277, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 344, 346, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 408, 410, 415, 416, 417, 463, 465, 470, 471, 472, 473, 474, 475, 476, 477, 478, 479, 480, 481, 482, 528, 530, 535, 536, 537, 538, 539, 540 |
+| CBEXPORT.cbl | EXPORT-RECORD | MOVE di un letterale o di un'espressione | 15 | 274, 278, 279, 343, 347, 348, 407, 411, 412, 462, 466, 467, 527, 531, 532 |
+| CBIMPORT.cbl | ACCOUNT-RECORD | INITIALIZE | 1 | 325 |
+| CBIMPORT.cbl | ACCOUNT-RECORD | MOVE di un campo (composizione campo per campo) | 12 | 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339 |
+| CBIMPORT.cbl | CARD-RECORD | INITIALIZE | 1 | 404 |
+| CBIMPORT.cbl | CARD-RECORD | MOVE di un campo (composizione campo per campo) | 6 | 407, 408, 409, 410, 411, 412 |
+| CBIMPORT.cbl | CARD-XREF-RECORD | INITIALIZE | 1 | 354 |
+| CBIMPORT.cbl | CARD-XREF-RECORD | MOVE di un campo (composizione campo per campo) | 3 | 357, 358, 359 |
+| CBIMPORT.cbl | CUSTOMER-RECORD | INITIALIZE | 1 | 290 |
+| CBIMPORT.cbl | CUSTOMER-RECORD | MOVE con riferimento a posizione nella sorgente | 5 | 297, 298, 299, 303, 304 |
+| CBIMPORT.cbl | CUSTOMER-RECORD | MOVE di un campo (composizione campo per campo) | 13 | 293, 294, 295, 296, 300, 301, 302, 305, 306, 307, 308, 309, 310 |
+| CBIMPORT.cbl | TRAN-RECORD | INITIALIZE | 1 | 374 |
+| CBIMPORT.cbl | TRAN-RECORD | MOVE di un campo (composizione campo per campo) | 13 | 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389 |
+| CBIMPORT.cbl | WS-ERROR-RECORD | MOVE di un campo (composizione campo per campo) | 2 | 430, 431 |
+| CBIMPORT.cbl | WS-ERROR-RECORD | MOVE di un letterale o di un'espressione | 2 | 429, 432 |
+| CBSTM03A.CBL | FD-HTMLFILE-REC | MOVE di un letterale o di un'espressione | 1 | 561 |
+| CBSTM03A.CBL | FD-HTMLFILE-REC | STRING | 1 | 562 |
+| CBSTM03A.CBL | HTML-ADDR-LN | MOVE di un letterale o di un'espressione | 3 | 569, 577, 585 |
+| CBSTM03A.CBL | HTML-ADDR-LN | STRING | 3 | 570, 578, 586 |
+| CBSTM03A.CBL | HTML-BSIC-LN | MOVE di un letterale o di un'espressione | 3 | 613, 620, 627 |
+| CBSTM03A.CBL | HTML-BSIC-LN | STRING | 3 | 614, 621, 628 |
+| CBSTM03A.CBL | HTML-L11 | MOVE di un campo (composizione campo per campo) | 1 | 529 |
+| CBSTM03A.CBL | HTML-TRAN-LN | MOVE di un letterale o di un'espressione | 3 | 686, 698, 710 |
+| CBSTM03A.CBL | HTML-TRAN-LN | STRING | 3 | 687, 699, 711 |
+| CBSTM03A.CBL | ST-LINE1 | STRING | 1 | 462 |
+| CBSTM03A.CBL | ST-LINE14 | MOVE di un campo (composizione campo per campo) | 3 | 676, 677, 678 |
+| CBSTM03A.CBL | ST-LINE14A | MOVE di un campo (composizione campo per campo) | 1 | 434 |
+| CBSTM03A.CBL | ST-LINE2 | MOVE di un campo (composizione campo per campo) | 1 | 470 |
+| CBSTM03A.CBL | ST-LINE3 | MOVE di un campo (composizione campo per campo) | 1 | 471 |
+| CBSTM03A.CBL | ST-LINE4 | STRING | 1 | 472 |
+| CBSTM03A.CBL | ST-LINE7 | MOVE di un campo (composizione campo per campo) | 1 | 483 |
+| CBSTM03A.CBL | ST-LINE8 | MOVE di un campo (composizione campo per campo) | 1 | 484 |
+| CBSTM03A.CBL | ST-LINE9 | MOVE di un campo (composizione campo per campo) | 1 | 485 |
+| CBTRN02C.cbl | ACCOUNT-RECORD | aritmetica (ADD) | 3 | 547, 549, 551 |
+| CBTRN02C.cbl | FD-ACCTFILE-REC | MOVE di un campo (composizione campo per campo) | 1 | 394 |
+| CBTRN02C.cbl | FD-TRAN-CAT-BAL-RECORD | MOVE di un campo (composizione campo per campo) | 3 | 469, 470, 471 |
+| CBTRN02C.cbl | TRAN-CAT-BAL-RECORD | INITIALIZE | 1 | 504 |
+| CBTRN02C.cbl | TRAN-CAT-BAL-RECORD | MOVE di un campo (composizione campo per campo) | 3 | 505, 506, 507 |
+| CBTRN02C.cbl | TRAN-CAT-BAL-RECORD | aritmetica (ADD) | 2 | 508, 527 |
+| CBTRN02C.cbl | TRAN-RECORD | MOVE di un campo (composizione campo per campo) | 12 | 425, 426, 427, 428, 429, 430, 431, 432, 433, 434, 435, 436 |
+| CBTRN03C.cbl | FD-REPTFILE-REC | MOVE di un campo (composizione campo per campo) | 1 | 329 |

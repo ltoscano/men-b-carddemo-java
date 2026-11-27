@@ -12,7 +12,7 @@
 . "$ANALYSIS_ROOT/data-contract/lib.sh"
 require_legacy
 
-GENERATI="contratti contratti.tsv contratti.md chiavi.tsv chiavi.md censimento.md"
+GENERATI="contratti contratti.tsv contratti.md chiavi.tsv chiavi.md composizioni.tsv censimento.md"
 tmp="$(mktmp)"
 trap 'rm -rf "$tmp"' EXIT
 
@@ -54,9 +54,11 @@ rinormalizza "$DC_DIR/out" "$tmp/rn"
 confronta "$tmp/rn/out" "$tmp/rn/doc" "$DC_DIR/out" "$DC_DOCS" || { head -20 "$tmp/diff.txt" >&2; fail "RINORMALIZZAZIONE: derivati versionati diversi da quelli rigenerati dall'output grezzo versionato"; }
 log "   ok: tracciati, radici, discordanze rilevate, contratti e viste coincidono con quelli rigenerati dal grezzo"
 
-verifica() {  # verifica OUT DOCS GEN EXP
-  glue_run --mount "$1:/v/out:ro" --mount "$2:/v/docs:ro" --mount "$3:/v/gen:ro" --mount "$4:/v/exp:ro" -- \
-    /analysis/data-contract/glue/verifica.py /v/out /v/docs /v/gen /v/exp /legacy /analysis/manifest/sources.tsv
+verifica() {  # verifica OUT DOCS GEN EXP (il legacy dal volume sensibile alle maiuscole, in sola lettura)
+  ensure_legacy_volume
+  glue_run --mount "$1:/v/out:ro" --mount "$2:/v/docs:ro" --mount "$3:/v/gen:ro" --mount "$4:/v/exp:ro" \
+    --mount "$LEGACY_VOL:$DC_LEGACY:ro" -- \
+    /analysis/data-contract/glue/verifica.py /v/out /v/docs /v/gen /v/exp "$DC_LEGACY" /analysis/manifest/sources.tsv
 }
 
 log "3. verifica dell'output rigenerato dal legacy"
@@ -96,6 +98,25 @@ negativa_rn() {
   [ "$rc" -eq 1 ] || fail "PROVA NEGATIVA FALLITA ($1): derivati rigenerati dal grezzo alterato uguali ai versionati (uscita $rc)"
   log "   ok: $1 -> RINORMALIZZAZIONE dal grezzo alterato diversa dai derivati versionati (uscita $rc)"
 }
+# negativa_gen TIPO "TESTO ATTESO": si altera un file scritto a mano, si RIGENERANO dal legacy (cb2xml compreso) tutti i
+# derivati coerenti con l'alterazione, e la verifica deve comunque fallire (uscita 1) per il motivo atteso
+negativa_gen() {
+  local m rc=0; m="$(mondo "$1")" || fail "alterazione $1 non applicata"
+  ( DC_DOCS_IN="$m/docs"; genera "$m/out" "$m/docs" ) > "$tmp/gen-neg.txt" 2>&1 || { cat "$tmp/gen-neg.txt" >&2; fail "rigenerazione dopo l'alterazione $1 fallita"; }
+  verifica "$m/out" "$m/docs" "$m/docs" "$m/exp" > "$tmp/neg.txt" 2>&1 || rc=$?
+  [ "$rc" -eq 1 ] || { cat "$tmp/neg.txt" >&2; fail "PROVA NEGATIVA FALLITA ($1): con i derivati rigenerati la verifica e' uscita con $rc invece di 1"; }
+  grep -qF -- "$2" "$tmp/neg.txt" || { cat "$tmp/neg.txt" >&2; fail "prova negativa ($1): la verifica e' fallita ma non per il motivo atteso ('$2')"; }
+  log "   ok: $1 -> derivati rigenerati dal legacy con l'alterazione; verifica uscita con $rc, $(grep -c '^ERRORE' "$tmp/neg.txt") errori, tra cui: $2"
+}
+
+# rilievi del giro 1 di validazione: dichiarazioni scritte a mano alterate e derivati rigenerati in modo coerente
+negativa_gen frammento-accorciato "ERRORE [censimento] app/cbl/CBIMPORT.cbl WS-ERROR-RECORD: intervallo dichiarato 152-159, nel sorgente la struttura va da 152 a 160"
+negativa_gen composizione-eliminata "ERRORE [relazioni] app/cbl/CBTRN02C.cbl:448: MOVE WS-VALIDATION-TRAILER TO VALIDATION-TRAILER (struttura intera verso il record REJECT-RECORD) non coperta da una relazione"
+negativa_gen timestamp-eliminato "ERRORE [relazioni] app/cbl/CBTRN02C.cbl:438: MOVE DB2-FORMAT-TS TO TRAN-PROC-TS (struttura intera verso il record TRAN-RECORD) non coperta da una relazione"
+negativa_gen sezione-errata "ERRORE [censimento] app/cbl/CBACT01C.cbl VBRC-REC1: tipo LINKAGE, ma la riga 123 e' nella sezione WORKING-STORAGE"
+negativa_gen file-contratto-scambiato "ERRORE [assegnazioni] file.tsv: AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS ha contratto CVTRA02Y.DIS-GROUP-RECORD, ma i programmi lo leggono o scrivono con ['CVTRA01Y.TRAN-CAT-BAL-RECORD']"
+negativa voce-tracciato-tolta "ERRORE [tracciati] app/cpy/CVACT01Y.cpy ACCOUNT-RECORD: cb2xml ha 13 voci, il sorgente ne ha 14 fino al confine"
+negativa composizione-spostata "ERRORE [composizioni] CBTRN02C.WS-VALIDATION-TRAILER -> CBTRN02C.REJECT-RECORD: WS-VALIDATION-FAIL-REASON atteso a offset 350 per 4 byte, generato a 351 per 4"
 
 # completezza (criterio 2)
 negativa contratto-cancellato "ERRORE [contratti] contratto mancante: CVTRA05Y.TRAN-RECORD"

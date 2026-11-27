@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="CBTRN02C.DB2-FORMAT-TS.cbl" dialect="Mainframe" cb2xml-format="2017">
+    <item level="01" name="DB2-FORMAT-TS" picture="X(26)" position="1" storage-length="26" display-length="26" display-position="1"/>
+</copybook>

@@ -205,6 +205,39 @@ def main(tipo, m):
         tsv_modifica(cens, lambda d: d["sorgente"] == "app/cpy/CUSTREC.cpy", f)
         os.remove(os.path.join(con, "CUSTREC.CUSTOMER-RECORD.tsv"))
         tsv_modifica(os.path.join(docs, "contratti.tsv"), lambda d: d["contratto"] == "CUSTREC.CUSTOMER-RECORD", lambda d: None)
+    elif tipo == "frammento-accorciato":
+        def f(d):
+            d["frammento"] = "152-159"
+            return d
+        tsv_modifica(cens, lambda d: d["radice"] == "WS-ERROR-RECORD", f)
+
+        def g(d):
+            d["lunghezza_da"] = "87"
+            return d
+        tsv_modifica(os.path.join(docs, "relazioni.tsv"), lambda d: d["da"] == "CBIMPORT.WS-ERROR-RECORD", g)
+    elif tipo in ("composizione-eliminata", "timestamp-eliminato"):
+        rad = "WS-VALIDATION-TRAILER" if tipo == "composizione-eliminata" else "DB2-FORMAT-TS"
+        tsv_modifica(cens, lambda d: d["radice"] == rad, lambda d: None)
+        tsv_modifica(os.path.join(docs, "relazioni.tsv"), lambda d: d["da"] == "CBTRN02C." + rad, lambda d: None)
+    elif tipo == "sezione-errata":
+        def f(d):
+            d["tipo"] = "LINKAGE"
+            return d
+        tsv_modifica(cens, lambda d: d["radice"] == "VBRC-REC1", f)
+    elif tipo == "file-contratto-scambiato":
+        scambio = {"CVTRA01Y.TRAN-CAT-BAL-RECORD": "CVTRA02Y.DIS-GROUP-RECORD", "CVTRA02Y.DIS-GROUP-RECORD": "CVTRA01Y.TRAN-CAT-BAL-RECORD"}
+
+        def f(d):
+            d["contratto"] = scambio[d["contratto"]]
+            return d
+        tsv_modifica(os.path.join(docs, "file.tsv"), lambda d: d["contratto"] in scambio, f)
+    elif tipo == "voce-tracciato-tolta":
+        tsv_modifica(os.path.join(out, "tracciati.tsv"), lambda d: d["id"] == "CVACT01Y" and d["nome"] == "FILLER", lambda d: None)
+    elif tipo == "composizione-spostata":
+        def f(d):
+            d["offset_nel_record"] = "351"
+            return d
+        tsv_modifica(os.path.join(docs, "composizioni.tsv"), lambda d: d["campo"] == "WS-VALIDATION-FAIL-REASON", f)
     elif tipo == "xml-alterato":
         sostituisci(os.path.join(out, "cb2xml", "CVTRA02Y.xml"), '"DIS-INT-RATE"', '"DIS-INT-RATE-X"')
     elif tipo == "xml-cancellato":
