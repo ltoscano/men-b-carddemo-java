@@ -1,0 +1,19 @@
+# Casi di prova di COBDATFT, eseguiti dal chiamante DATFTPRB (oracle/tests/DATFTPRB.cbl).
+# Colonne separate da TAB: caso, PARM (byte 1 tipo d'ingresso, byte 2 tipo d'uscita, poi 0-20 byte di
+# data d'ingresso, spazi interni ammessi; il resto dell'area vale X'A5'), combinazione della tabella
+# cobdatft-casi.tsv.
+# Atteso di ogni caso, scritto a mano leggendo l'assembler: expected/<caso>.txt.
+caso	parm	combinazione
+D1A	1120250317	C1
+D1B	1X20251399	C1
+D1C	11	C1
+D1E	112025-03-17	C1
+D1F	11ABCD-INVALID INPUX	C1
+D2A	222025-03-17	C4
+D2B	222024-02-30	C4
+D2C	2XABCD/EF.GH	C4
+D2D	222025	C4
+N2	1220250317	C3
+N3	212025-03-17	C5
+N4	3220250317	C6
+N5	11ABCD-INVALID INPUT	C2

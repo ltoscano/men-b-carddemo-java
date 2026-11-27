@@ -1,0 +1,9 @@
+== codice di uscita
+0
+== stdout
+PRIMA 31 3230323530333137a5a5a5a5a5a5a5a5a5a5a5a5 31 a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5 a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5
+RC  000000000
+DOPO  31 3230323530333137a5a5a5a5a5a5a5a5a5a5a5a5 31 323032352d30332d3137a5a5a5a5a5a5a5a5a5a5 a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5
+== stderr
+Warning: program compiled against libxml 212 using older 209
+== file nella cartella di lavoro
