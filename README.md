@@ -20,12 +20,12 @@ Questo repository è insieme il prodotto della migrazione e il materiale di un p
 
 ## Come funziona il lavoro
 
-`Issue ready → Selettore → Esecutore → Validatore adversarial → Gate umano (merge)`
+`Issue ready → Selettore → Esecutore → Validatore adversarial → Approvatore (merge)`
 
 - **Selettore / pianificatore:** Claude Fable — scrive le issue e avvia il lavoro, non implementa.
 - **Esecutore:** Claude Opus o Sonnet — una issue, un worktree, una PR.
 - **Validatore adversarial:** Codex CLI, a contesto pulito — cerca di falsificare la PR.
-- **Gate umano:** l'unico che decide il merge.
+- **Approvatore:** Claude Fable, per delega dell'autore; ogni approvazione è scritta in [`docs/registro-approvazioni.md`](docs/registro-approvazioni.md). L'autore riceve le escalation e può annullare qualsiasi decisione.
 
 ## Clonare
 
