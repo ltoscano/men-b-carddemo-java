@@ -336,3 +336,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T19:56:52Z,pr-49,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: **BOCCIATA — restano falsi verdi nel perimetro; incluso un rapporto dell’oracle infedele ai file realmente prodotti.**
 2026-11-27T19:57:37Z,pr-49,decisione,fable,orologio,validazione 1: cinque rilievi accolti (tre bloccanti)
 2026-11-27T19:57:37Z,issue-35,esecutore-inizio,opus,orologio,giro di correzione unico
+2026-11-27T19:59:52Z,pr-50,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0; verdetto: **BOCCIATA**
+2026-11-27T20:00:32Z,pr-50,decisione,fable,orologio,validazione 1: cinque rilievi accolti (quattro bloccanti)
+2026-11-27T20:00:32Z,issue-22,esecutore-inizio,opus,orologio,giro di correzione unico
