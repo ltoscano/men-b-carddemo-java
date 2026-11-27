@@ -18,6 +18,8 @@ Tre impegni verso il lettore:
 
 ### 1.1 Il lavoro in parole semplici
 
+<!-- Da fare in revisione finale (decisione dell'autore, 27 nov 2026): riscrivere questa sezione, uniformandone il registro al resto del paper. -->
+
 Questa sezione è per chi vuole capire l'insieme prima dei dettagli. Tutto ciò che dice è ripreso, con comandi e misure, nelle sezioni successive.
 
 **L'idea di fondo.** Tradurre un programma vecchio in uno nuovo è facile da fare male: "compila e sembra funzionare" non prova che faccia le stesse cose dell'originale. Per questo, prima di tradurre anche una sola riga, servono quattro cose: sapere esattamente com'è fatto il sistema vecchio; avere un modo per far girare i programmi originali e vedere che cosa producono; avere pronto il posto dove andrà il codice nuovo; avere controlli che si accorgano quando si sbaglia. La prima parte del lavoro, la più lunga, è stata costruire queste quattro cose. È la parte che di solito si salta.
