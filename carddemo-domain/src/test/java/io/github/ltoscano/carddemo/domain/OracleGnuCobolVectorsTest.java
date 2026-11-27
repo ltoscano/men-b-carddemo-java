@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 import java.io.IOException;
@@ -19,6 +18,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 /**
  * The Java codec against every test vector of the reference glue (#23), read from the repository:
@@ -26,13 +26,15 @@ import org.junit.jupiter.api.TestFactory;
  *
  * <p>Mandatory when the system property {@value #RUN_PROPERTY} is present ({@code ./verify.sh}
  * passes it to Maven and mounts the whole repository): a missing file is then a failure. Without
- * the property (image build, which copies only POMs, rules and modules) the test is skipped and
- * reported as skipped; {@code verify.sh} checks in the report of its own run that it was executed
+ * the property (image build, which copies only POMs, rules and modules) both factories are
+ * disabled and reported as skipped; {@code verify.sh} checks in the report of its own run that it was executed
  * with the expected number of cases and none skipped.
  */
 class OracleGnuCobolVectorsTest {
 
     static final String RUN_PROPERTY = "menb.verify.run";
+    static final String SKIP_REASON =
+            "proprieta' menb.verify.run assente (build delle immagini): test dei vettori saltato";
     static final int EXPECTED_ROWS = 375;
     static final int EXPECTED_DECODE = 336;
     static final int EXPECTED_ENCODE = 39;
@@ -51,15 +53,9 @@ class OracleGnuCobolVectorsTest {
         return root.resolve(Path.of("analysis", "data-codec", "vettori", name));
     }
 
-    private static void requireRun() {
-        String run = System.getProperty(RUN_PROPERTY);
-        assumeTrue(run != null && !run.isBlank(),
-                "proprieta' " + RUN_PROPERTY + " assente (build delle immagini): test dei vettori saltato");
-    }
-
     @TestFactory
+    @EnabledIfSystemProperty(named = RUN_PROPERTY, matches = ".*\\S.*", disabledReason = SKIP_REASON)
     Stream<DynamicTest> oracleGnuCobolVectors() throws IOException {
-        requireRun();
         List<VectorFile.Row> rows = VectorFile.read(vectors("oracle-gnucobol.tsv"));
         long decode = rows.stream().filter(r -> "decodifica".equals(r.get("operazione"))).count();
         long encode = rows.stream().filter(r -> "codifica".equals(r.get("operazione"))).count();
@@ -74,8 +70,8 @@ class OracleGnuCobolVectorsTest {
     }
 
     @TestFactory
+    @EnabledIfSystemProperty(named = RUN_PROPERTY, matches = ".*\\S.*", disabledReason = SKIP_REASON)
     Stream<DynamicTest> beyondPictureObservations() throws IOException {
-        requireRun();
         List<VectorFile.Row> rows = VectorFile.read(vectors("oracle-oltre-picture.tsv"));
         assertEquals(EXPECTED_BEYOND_PICTURE, rows.size(), "osservazioni oltre la PICTURE");
         Set<String> inMainFile = new HashSet<>();
