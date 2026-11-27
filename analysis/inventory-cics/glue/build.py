@@ -12,7 +12,7 @@ from collections import Counter, defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import base_graph, read_lines, sources, stem
-from resolve import MOTIVI, Program, Universe, literal_content
+from resolve import MOTIVI, READ_ONLY, Program, Universe, literal_content
 
 CATEGORIA = {}
 for _c in ("XCTL", "LINK", "START", "RETURN"):
@@ -297,12 +297,24 @@ def report(g, base, kinds, copies, rules_path, proof_path, diag_path):
       "e' definito una sola volta (livelli 01-49 e 77); sta in `WORKING-STORAGE` o `LOCAL-STORAGE`; ne' lui ne' un suo gruppo "
       "hanno `OCCURS`; ha `VALUE` con un letterale alfanumerico; nessuna istruzione lo modifica. Nome = contenuto del letterale "
       "senza gli spazi finali; l'occorrenza cita file e riga del letterale della `VALUE`.")
-    w("- **modifica**: un'occorrenza, nella `PROCEDURE DIVISION` espansa, di un nome collegato (il dato, i suoi gruppi, i suoi "
-      "subordinati, chi ridefinisce o e' ridefinito da uno di questi con i suoi subordinati, i livelli 88 e 66 relativi) fuori "
-      "da questi contesti di sola lettura: argomento intero di `PROGRAM`, `TRANSID`, `MAP`, `MAPSET`, `FILE`, `DATASET`, "
-      "`QUEUE`, `QNAME` in un `EXEC CICS`; mittente di una `MOVE` (prima di `TO`); dopo `IF`, `EVALUATE`, `WHEN`, `UNTIL`, "
-      "`DISPLAY` fino al verbo successivo. Tutto il resto conta come modifica (`INITIALIZE`, `SET`, `CALL ... USING`, "
-      "`STRING`, `COMPUTE`, ogni altra opzione di `EXEC CICS`, ogni `EXEC SQL` o `EXEC DLI`, ...): sovrastima voluta.")
+    w("- **nomi collegati**: tutti i dati la cui memoria puo' sovrapporsi a quella del dato. Si parte dal dato, dai suoi gruppi "
+      "e dai suoi subordinati; per ogni `REDEFINES` che tocca un dato gia' raggiunto (come chi ridefinisce o come ridefinito) "
+      "si aggiungono entrambi i dati con i loro gruppi e subordinati, e si ripete finche' non si aggiunge piu' nulla (chiusura "
+      "transitiva: catene di alias di qualunque lunghezza, a ogni livello); poi i livelli 88 di ogni dato raggiunto e i 66 dei "
+      "record raggiunti.")
+    w("- **modifica**: un'occorrenza, nella `PROCEDURE DIVISION` espansa, di un nome collegato fuori da questi contesti di sola "
+      "lettura: argomento intero di una coppia comando/opzione dell'elenco sotto; mittente di una `MOVE` (prima di `TO`); dopo "
+      "`IF`, `EVALUATE`, `WHEN`, `UNTIL`, `DISPLAY` fino al verbo successivo. Tutto il resto conta come modifica (`INITIALIZE`, "
+      "`SET`, `CALL ... USING`, `STRING`, `COMPUTE`, ogni altra coppia comando/opzione di `EXEC CICS`, per esempio "
+      "`ASSIGN PROGRAM`, `INQUIRE PROGRAM`, `INTO`, `SET`, `RIDFLD`, `LENGTH`, `RESP`, `COMMAREA`, `ABSTIME`, ogni `EXEC SQL` "
+      "o `EXEC DLI`, ...).")
+    w("- **coppie comando/opzione di sola lettura** (argomento di tipo `name` o `filename` nella sintassi IBM, cioe' il nome "
+      "della risorsa che CICS deve usare; un argomento `data-area` e' invece un campo in cui CICS puo' scrivere, per esempio "
+      "`ASSIGN PROGRAM`). Fonte: IBM CICS TS 6.x, pagina \"EXEC CICS command argument values\" e pagine di sintassi "
+      "`https://www.ibm.com/docs/en/cics-ts/6.x?topic=summary-<comando>` (xctl, link, start, return, send-map, receive-map, "
+      "read, write, rewrite, delete, startbr, readnext, readprev, endbr, writeq-td, writeq-ts, readq-td, deleteq-ts). "
+      "`DATASET` e' il nome storico di `FILE` negli stessi comandi: le pagine 6.x lette non lo citano, ed e' ammesso per "
+      "questa equivalenza (limite dichiarato). Elenco: " + ", ".join(f"`{c} {o}`" for c, o in sorted(READ_ONLY)) + ".")
     w("- **non risolto**: ogni altro caso; il motivo e' il primo che vale nell'ordine: " + ", ".join(f"`{m}`" for m in MOTIVI) + ". "
       "Una mappa e' risolta solo se lo sono la mappa e il suo mapset; una coda solo se `TD` o `TS` e' scritto nel comando.\n")
     w("## Limiti\n")
@@ -310,8 +322,16 @@ def report(g, base, kinds, copies, rules_path, proof_path, diag_path):
     w("- I bersagli in variabile (tabelle di menu, campi della COMMAREA, dati valorizzati con `MOVE`), l'arco online -> batch "
       "di `CORPT00C` e le voci di menu verso i moduli opzionali sono nella issue #46.")
     w("- Nessun collegamento fra file CICS (`cics-file:`) e dataset dei JCL, ne' fra mapset e sorgenti BMS.")
-    w("- La regola di modifica e' una sovrastima: un dato letto in un contesto non elencato (per esempio in una `STRING`) "
-      "risulta modificato e resta non risolto. Non produce mai una costante falsa, puo' produrre un non risolto in piu'.")
+    w("- Che cosa garantisce la regola: un dato classificato costante non compare, nella `PROCEDURE DIVISION` del programma "
+      "espanso con i suoi copybook, in nessuna posizione diversa dai contesti di sola lettura elencati, ne' con il suo nome "
+      "ne' con quello di un dato che puo' sovrapporsi in memoria (gruppi, subordinati, chiusura delle `REDEFINES`, 88, 66). "
+      "Che cosa non garantisce: modifiche che non passano per un nome del programma (puntatori e `ADDRESS OF` ricevuti da "
+      "fuori, memoria condivisa con altri programmi o `EXTERNAL`, scritture di un programma chiamato oltre l'area che gli e' "
+      "stata passata), il contenuto dei copybook di sistema assenti (ipotesi `DFH*`/`MQ*`), le righe di continuazione, e la "
+      "correttezza dell'elenco delle coppie di sola lettura rispetto a CICS. Un dato letto in un contesto non elencato (per "
+      "esempio una `STRING`) risulta modificato: la regola puo' dare un non risolto in piu'. La versione precedente della "
+      "regola seguiva le `REDEFINES` per un solo passaggio e deduceva la sola lettura dal nome dell'opzione: due casi di "
+      "costante falsa trovati dal Validatore (PR #50), corretti e coperti da `fixtures/legacy/app/cbl/FIXRDEF.cbl`.")
     w("- Le righe di continuazione (`-` in colonna 7) non sono gestite dalla colla di risoluzione; nel legacy compaiono solo in "
       "`CBSTM03A`, che non ha blocchi `EXEC CICS`. Il preprocessore di ProLeap le unisce alla riga precedente: un blocco dopo "
       "una continuazione avrebbe la riga sbagliata, e il confronto con il conteggio indipendente lo segnalerebbe.")

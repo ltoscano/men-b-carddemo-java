@@ -7,10 +7,12 @@ Regola (scritta anche in inventario-cics.md, sezione "Letterale, costante, varia
   risolta che possa definirlo; il nome e' definito una sola volta (livelli 01-49 e 77); sta in WORKING-STORAGE o
   LOCAL-STORAGE; ne' lui ne' un suo gruppo hanno OCCURS; ha una clausola VALUE con un letterale alfanumerico; nessuna
   istruzione lo modifica. Nome = contenuto del letterale della VALUE senza gli spazi finali.
-* "modifica": ogni occorrenza, nella PROCEDURE DIVISION espansa, di un nome "collegato" (il dato, i suoi gruppi, i suoi
-  subordinati, i dati che ridefiniscono o sono ridefiniti da uno di questi e i loro subordinati, i livelli 88 e 66 relativi)
-  che NON sta in uno di questi contesti di sola lettura:
-    - argomento intero di un'opzione PROGRAM, TRANSID, MAP, MAPSET, FILE, DATASET, QUEUE, QNAME di un blocco EXEC CICS;
+* "modifica": ogni occorrenza, nella PROCEDURE DIVISION espansa, di un nome "collegato" che NON sta in uno di questi
+  contesti di sola lettura. Collegati: tutti i dati la cui memoria puo' sovrapporsi a quella del dato, cioe' la chiusura
+  transitiva che parte dal dato, dai suoi gruppi e dai suoi subordinati e aggiunge, per ogni REDEFINES che tocca un dato
+  gia' raggiunto (come chi ridefinisce o come ridefinito), entrambi i dati con i loro gruppi e subordinati, finche' non si
+  aggiunge piu' nulla; piu' i livelli 88 di ogni dato raggiunto e i 66 dei record raggiunti. Contesti di sola lettura:
+    - argomento intero di una coppia comando/opzione dell'elenco READ_ONLY (argomenti che CICS legge e non scrive);
     - mittente di una MOVE (prima della parola TO);
     - dopo IF, EVALUATE, WHEN, UNTIL, DISPLAY, fino al verbo successivo.
   Tutto il resto conta come modifica (INITIALIZE, SET, CALL ... USING, READ ... INTO, STRING, COMPUTE, ogni altra
@@ -21,7 +23,21 @@ import re
 MOTIVI = ["in-copybook", "espressione", "valore-vuoto", "copy-non-risolta", "non-definito", "definito-piu-volte",
           "fuori-working-storage", "occurs", "senza-value-letterale", "modificato", "mapset-assente",
           "mapset-non-risolto", "tipo-coda-assente"]
-TARGET_OPTS = {"PROGRAM", "TRANSID", "MAP", "MAPSET", "FILE", "DATASET", "QUEUE", "QNAME"}
+# Coppie comando/opzione il cui argomento CICS legge soltanto (tipo "name" o "filename" nella sintassi IBM: e' il nome della
+# risorsa da usare; "data-area" e' invece un campo in cui CICS puo' scrivere). Fonte: IBM CICS TS 6.x, pagine di sintassi
+# https://www.ibm.com/docs/en/cics-ts/6.x?topic=summary-<comando> (xctl, link, start, return, send-map, receive-map, read,
+# write, rewrite, delete, startbr, readnext, readprev, endbr, writeq-td, writeq-ts, readq-td, deleteq-ts) e la pagina
+# "EXEC CICS command argument values". DATASET e' il nome storico di FILE negli stessi comandi: le pagine 6.x lette non lo
+# citano (limite dichiarato in inventario-cics.md). Ogni coppia non elencata (ASSIGN PROGRAM, INQUIRE PROGRAM, INTO, SET,
+# RIDFLD, LENGTH, RESP, COMMAREA, ABSTIME, ...) e' una possibile modifica.
+FILE_CMDS = ("READ", "WRITE", "REWRITE", "DELETE", "STARTBR", "READNEXT", "READPREV", "ENDBR")
+READ_ONLY = ({("XCTL", "PROGRAM"), ("LINK", "PROGRAM"), ("START", "TRANSID"), ("RETURN", "TRANSID"),
+              ("SEND MAP", "MAP"), ("SEND MAP", "MAPSET"), ("RECEIVE MAP", "MAP"), ("RECEIVE MAP", "MAPSET"),
+              ("WRITEQ TD", "QUEUE"), ("WRITEQ TS", "QUEUE"), ("READQ TD", "QUEUE"), ("DELETEQ TS", "QUEUE")}
+             | {(c, o) for c in FILE_CMDS for o in ("FILE", "DATASET")})
+QUALIFIER = {"SEND": {"MAP", "TEXT", "CONTROL", "PAGE"}, "RECEIVE": {"MAP"}, "WRITEQ": {"TD", "TS"}, "READQ": {"TD", "TS"},
+             "DELETEQ": {"TD", "TS"}, "HANDLE": {"ABEND", "AID", "CONDITION"}, "IGNORE": {"CONDITION"},
+             "SYNCPOINT": {"ROLLBACK"}, "INQUIRE": {"PROGRAM", "TRANSACTION", "FILE", "TERMINAL", "TASK"}}
 READ_VERBS = {"IF", "EVALUATE", "WHEN", "UNTIL", "DISPLAY"}
 VERBS = {"ACCEPT", "ADD", "ALTER", "CALL", "CANCEL", "CLOSE", "COMPUTE", "CONTINUE", "DELETE", "DISPLAY", "DIVIDE",
          "ENTRY", "EVALUATE", "EXIT", "GO", "GOBACK", "IF", "INITIALIZE", "INSPECT", "MERGE", "MOVE", "MULTIPLY", "OPEN",
@@ -269,22 +285,26 @@ class Program:
         return out
 
     def related(self, it):
-        anc = self.ancestors(it)
-        core = set(anc) | set(self.subtree(it))
-        rel = set(core)
-        for a in anc:
-            rel.update(c for c in a.children if c.level == 88)
-        names_core = {x.name for x in core if x.name}
+        """Nomi dei dati che possono sovrapporsi in memoria al dato (chiusura transitiva attraverso le REDEFINES)."""
+        pairs = []
         for y in self.items:
-            if y.redefines and y.redefines in names_core:
-                rel.update(self.subtree(y))
-        for x in list(core):
-            if x.redefines:
-                for z in self.items:
-                    if z.name == x.redefines:
-                        rel.update(self.subtree(z))
-        root = anc[-1]
-        rel.update(y for y in self.items if y.level == 66 and y.parent is root)
+            if y.redefines:
+                pairs.extend((y, z) for z in self.items if z.name == y.redefines and z is not y)
+        region = set(self.ancestors(it)) | set(self.subtree(it))
+        grown = True
+        while grown:
+            grown = False
+            for y, z in pairs:
+                if y in region or z in region:
+                    add = set(self.ancestors(y)) | set(self.subtree(y)) | set(self.ancestors(z)) | set(self.subtree(z))
+                    if not add <= region:
+                        region |= add
+                        grown = True
+        rel = set(region)
+        for a in region:
+            rel.update(c for c in a.children if c.level == 88)
+        roots = {x for x in region if x.parent is None}
+        rel.update(y for y in self.items if y.level == 66 and y.parent in roots)
         return {x.name for x in rel if x.name and x.name != "FILLER"}
 
     def modifications(self, names):
@@ -324,6 +344,10 @@ class Program:
 
     @staticmethod
     def _cics_mods(block, names):
+        words = [t.upper() for t, _, _ in block]
+        cmd = words[0] if words else ""
+        if len(words) > 1 and words[1] in QUALIFIER.get(cmd, ()):
+            cmd = cmd + " " + words[1]
         mods, k = [], 0
         while k < len(block):
             t, f, ln = block[k]
@@ -346,7 +370,7 @@ class Program:
                     else:
                         arg.append(block[j])
                     j += 1
-                whole = len(arg) == 1 and opt in TARGET_OPTS
+                whole = len(arg) == 1 and (cmd, opt) in READ_ONLY
                 if not whole:
                     mods.extend((af, al) for at, af, al in arg if at.upper() in names)
                 k = j + 1

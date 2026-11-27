@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Verifica di graph-cics.json contro fonti INDIPENDENTI dalla colla che l'ha prodotto.
 
-Uso: verify.py GRAPH BASE AWK.tsv ATTESI SCHEMA MODO [INVENTARIO.md]
+Uso: verify.py GRAPH BASE AWK.tsv ATTESI SCHEMA MODO INVENTARIO.md BLOCCHI.tsv CARTELLA-STRUMENTO
   GRAPH     graph-cics.json da verificare          BASE    graph.json di #2 (o quello dei file di prova)
   AWK.tsv   elenco dei blocchi di crosscheck.sh     ATTESI  cartella degli attesi scritti a mano
   SCHEMA    graph-cics.schema.json (copertura degli attributi)
   MODO      legacy | fixture (quali attesi sono obbligatori)
+  BLOCCHI.tsv          l'estrazione (out/blocchi.tsv) da cui la colla ha costruito il grafo
+  CARTELLA-STRUMENTO   le risposte grezze di CicsLister (files.txt, resp/, regole.txt, proof/) e diagnostica.tsv
+Ogni passaggio intermedio si confronta con quello che lo precede e con quello che lo segue: risposte grezze, estrazione,
+occorrenze, archi e riepilogo, oltre agli estremi (sorgente, conteggio awk).
 Il sorgente si legge da CICS_LEGACY (default /legacy), il manifesto da CICS_MANIFEST.
 
 Non importa nulla dalla colla (extract.py, resolve.py, build.py): blocchi, comando, opzioni, categoria, modalita',
@@ -16,7 +20,8 @@ implementazione scritta a parte delle stesse regole dichiarate. Fonti di confron
   - il grafo di base per i nodi program/transaction/external e gli archi COPY;
   - gli attesi scritti a mano per tutti i blocchi di quattro programmi e dei file di prova.
 Ogni insieme si confronta come multinsieme nelle due direzioni (liste e Counter, mai dizionari che si sovrascrivono).
-Stampa 'VERIFICA: ...' per ogni difetto ed esce con 1 se ce n'e' almeno uno."""
+Risposta: una riga 'VERIFICA: ...' per ogni difetto e, come ultima riga, 'VERIFICA FALLITA: N difetti' (uscita 1, N righe
+VERIFICA) oppure 'verifica superata: ...' (uscita 0, nessuna riga VERIFICA). check.sh rifiuta ogni altra risposta."""
 import json
 import os
 import re
@@ -25,14 +30,20 @@ from collections import Counter, defaultdict
 
 LEGACY = os.environ.get("CICS_LEGACY", "/legacy")
 MANIFEST = os.environ.get("CICS_MANIFEST", "/analysis/manifest/sources.tsv")
-GRAPH, BASE, AWK, EXP, SCHEMA, MODE = sys.argv[1:7]
-MD = sys.argv[7] if len(sys.argv) > 7 else None
+if len(sys.argv) != 10:
+    raise SystemExit("uso: verify.py GRAPH BASE AWK ATTESI SCHEMA MODO INVENTARIO.md BLOCCHI.tsv CARTELLA-STRUMENTO")
+GRAPH, BASE, AWK, EXP, SCHEMA, MODE, MD, BLOCKS, TOOL = sys.argv[1:10]
 errors = []
 
 
 def err(msg):
     errors.append(msg)
     print("VERIFICA: " + msg)
+
+
+def finish():
+    print(f"VERIFICA FALLITA: {len(errors)} difetti")
+    sys.exit(1)
 
 
 # ---------------------------------------------------------------------- regole dichiarate (riscritte qui)
@@ -52,7 +63,15 @@ ROLE_OF = {"trasferimento": {"PROGRAM": "PROGRAM", "TRANSID": "TRANSID"}, "mappe
 MODE_OF = {"READ": "lettura", "WRITE": "scrittura", "REWRITE": "riscrittura", "DELETE": "cancellazione",
            "STARTBR": "scorrimento-inizio", "READNEXT": "scorrimento-avanti", "READPREV": "scorrimento-indietro",
            "ENDBR": "scorrimento-fine", "RESETBR": "scorrimento-riposizionamento", "UNLOCK": "rilascio"}
-WHOLE_ARG_OPTS = {"PROGRAM", "TRANSID", "MAP", "MAPSET", "FILE", "DATASET", "QUEUE", "QNAME"}
+# Sola lettura per coppia comando/opzione (argomenti "name"/"filename" della sintassi IBM CICS TS 6.x,
+# https://www.ibm.com/docs/en/cics-ts/6.x?topic=summary-<comando>; DATASET come nome storico di FILE, senza citazione 6.x).
+INPUT_ONLY = set()
+for _c, _opts in (("XCTL", "PROGRAM"), ("LINK", "PROGRAM"), ("START", "TRANSID"), ("RETURN", "TRANSID"),
+                  ("SEND MAP", "MAP MAPSET"), ("RECEIVE MAP", "MAP MAPSET"), ("WRITEQ TD", "QUEUE"), ("WRITEQ TS", "QUEUE"),
+                  ("READQ TD", "QUEUE"), ("DELETEQ TS", "QUEUE")) + tuple((c, "FILE DATASET") for c in
+                  "READ WRITE REWRITE DELETE STARTBR READNEXT READPREV ENDBR".split()):
+    for _o in _opts.split():
+        INPUT_ONLY.add((_c, _o))
 READ_CONTEXT = {"IF", "EVALUATE", "WHEN", "UNTIL", "DISPLAY"}
 BOUNDARY = set("ACCEPT ADD ALTER CALL CANCEL CLOSE COMPUTE CONTINUE DELETE DISPLAY DIVIDE ENTRY EVALUATE EXIT GO GOBACK IF "
                "INITIALIZE INSPECT MERGE MOVE MULTIPLY OPEN PERFORM READ RELEASE RETURN REWRITE SEARCH SET SORT START STOP "
@@ -131,12 +150,13 @@ def cut_inline(code):
 
 # ---------------------------------------------------------------------- 0. attesi obbligatori, copertura dello schema
 REQ = {"legacy": ["blocchi_COSGN00C", "blocchi_COACTUPC", "blocchi_COCRDLIC", "blocchi_COPAUS1C", "totali"],
-       "fixture": ["blocchi_FIXCICS", "blocchi_FIXCPY", "blocchi_FIXCOPY2", "blocchi_FIXTGT", "conteggi"]}[MODE]
+       "fixture": ["blocchi_FIXCICS", "blocchi_FIXCPY", "blocchi_FIXCOPY2", "blocchi_FIXTGT", "blocchi_FIXRDEF",
+                   "conteggi", "conteggi_FIXRDEF"]}[MODE]
 for r in REQ:
     if not os.path.isfile(os.path.join(EXP, r + ".tsv")):
         err(f"manca il file degli attesi a mano {r}.tsv")
 if errors:
-    sys.exit(1)
+    finish()
 sch_attrs = {"radice": set(schema["properties"])}
 for d in ("nodo", "opzione", "bersaglio", "occorrenza", "arco"):
     sch_attrs[d] = set(schema["$defs"][d]["properties"])
@@ -188,7 +208,7 @@ for nd in nodes:
 
 # ---------------------------------------------------------------------- 3. blocchi: grafo contro conteggio indipendente
 got = Counter((o["file"], o["riga"], o["colonna"], o["riga_fine"], o["comando"]) for o in occs)
-want = Counter(awk_rows)
+want = awk_counter = Counter(awk_rows)
 for k in sorted(set(want) | set(got)):
     if got[k] != want[k]:
         err(f"blocco {k[0]}:{k[1]} col {k[2]} (fine {k[3]}, {k[4]}): nel grafo {got[k]}, nel conteggio indipendente {want[k]}")
@@ -333,7 +353,10 @@ def expanded(path, subs=(), chain=()):
             joined += code[j][1] + "\n"
         m = re.search(r"(?i)(?<![A-Za-z0-9-])COPY\s+(?:'[^']*'|\"[^\"]*\"|[A-Za-z0-9-]+).*?\.(?=\s)", joined, re.S)
         if not m or m.start() >= len(code[idx][1]) + 1:
-            raise SystemExit(f"VERIFICA: {path}:{n}: COPY del grafo di base non trovata nel sorgente")
+            err(f"{path}:{n}: COPY del grafo di base non trovata nel sorgente")
+            out.append((path, n, t))
+            idx += 1
+            continue
         end_j = max(j for off, j in spans if off <= m.end() - 1)
         end_off = next(off for off, j in spans if j == end_j)
         if t[:m.start()].strip():
@@ -343,7 +366,7 @@ def expanded(path, subs=(), chain=()):
             if f is None:
                 missing.add(target.split(":", 1)[1].upper())
             elif f in chain:
-                raise SystemExit(f"VERIFICA: COPY ricorsiva {chain}")
+                err(f"COPY ricorsiva {chain + (f,)}")
             else:
                 sub_out, sub_missing = expanded(f, s, chain + (f,))
                 out.extend(sub_out)
@@ -436,21 +459,43 @@ class Prog:
         return [x for x in self.entries if e in self.chain(x)]
 
     def linked_names(self, e):
-        up = self.chain(e)
-        core = up + self.below(e)
-        ids = {id(x) for x in core}
-        group = list(core) + [c for a in up for c in self.entries if c["level"] == 88 and c["parent"] is a]
-        core_names = {x["name"] for x in core if x["name"]}
-        for y in self.entries:
-            if y["redef"] and y["redef"] in core_names:
-                group += self.below(y)
-        for x in core:
-            if x["redef"]:
-                for z in self.entries:
-                    if z["name"] == x["redef"]:
-                        group += self.below(z)
-        group += [y for y in self.entries if y["level"] == 66 and y["parent"] is up[-1]]
-        del ids
+        """Nomi la cui memoria puo' sovrapporsi a quella di e. Implementazione diversa dalla colla: le REDEFINES formano
+        componenti (unione-ricerca sugli indici delle voci); una lista di lavoro espande la regione con gruppi e subordinati
+        di ogni membro della componente di una voce gia' raggiunta, fino al punto fisso."""
+        E = self.entries
+        idx = {id(x): k for k, x in enumerate(E)}
+        parent = list(range(len(E)))
+
+        def find(k):
+            while parent[k] != k:
+                parent[k] = parent[parent[k]]
+                k = parent[k]
+            return k
+        for k, y in enumerate(E):
+            if y["redef"]:
+                for j, z in enumerate(E):
+                    if j != k and z["name"] == y["redef"]:
+                        parent[find(k)] = find(j)
+        members = defaultdict(list)
+        for k in range(len(E)):
+            members[find(k)].append(k)
+        seen = set()
+        todo = [idx[id(x)] for x in self.chain(e) + self.below(e)]
+        while todo:
+            k = todo.pop()
+            if k in seen:
+                continue
+            seen.add(k)
+            if len(members[find(k)]) == 1:      # nessuna REDEFINES la tocca: non si espande
+                continue
+            for j in members[find(k)]:
+                for x in self.chain(E[j]) + self.below(E[j]):
+                    if idx[id(x)] not in seen:
+                        todo.append(idx[id(x)])
+        group = [E[k] for k in seen]
+        group += [c for c in E if c["level"] == 88 and c["parent"] is not None and idx[id(c["parent"])] in seen]
+        roots = {id(E[k]) for k in seen if E[k]["parent"] is None}
+        group += [y for y in E if y["level"] == 66 and y["parent"] is not None and id(y["parent"]) in roots]
         return {x["name"] for x in group if x["name"] and x["name"] != "FILLER"}
 
     def changes(self, names):
@@ -475,8 +520,11 @@ class Prog:
                 continue
             if i in block_of:
                 a, b = block_of[i]
+                cmd = U[a + 2] if a + 2 <= b else ""
+                if a + 3 <= b and U[a + 3] in QUALIFIERS.get(cmd, "").split():
+                    cmd += " " + U[a + 3]
                 if a + 1 <= b and U[a + 1] == "CICS" and U[i - 1] == "(" and i + 1 < len(U) and U[i + 1] == ")" \
-                        and U[i - 2] in WHOLE_ARG_OPTS and not U[i].startswith(":"):
+                        and (cmd, U[i - 2]) in INPUT_ONLY and not U[i].startswith(":"):
                     continue
                 out.add((T[i][1], T[i][2]))
                 continue
@@ -719,6 +767,138 @@ for a, rl in target_roles.items():
     if a not in base_ids and a not in new:
         err(f"bersaglio {a} richiesto dal sorgente ma nodo assente")
 
+# ---------------------------------------------------------------------- 7b. catena: risposte grezze -> estrazione -> occorrenze
+# Ogni passaggio intermedio si confronta con quello che lo precede e con quello che lo segue: un difetto dell'estrattore
+# assorbito dal costruttore (duplicato tolto, blocco perso e reintegrato) deve emergere qui.
+EXT_HDR = "file\triga\triga_fine\tcolonna\tcomando\topzioni"
+
+
+def load_extraction(path):
+    rows = []
+    try:
+        data = open(path, encoding="utf-8").read()
+    except OSError as e:
+        err(f"blocchi.tsv illeggibile: {e}")
+        return rows
+    if not data.endswith("\n"):
+        err("blocchi.tsv troncato (manca il fine riga finale)")
+    lines = data.split("\n")
+    if lines[0] != EXT_HDR:
+        err(f"blocchi.tsv: intestazione {lines[0][:60]!r} diversa da quella attesa")
+    for l in lines[1:]:
+        if not l:
+            continue
+        f = l.split("\t")
+        opts = None
+        if len(f) == 6 and all(x.isdigit() for x in f[1:4]):
+            try:
+                opts = json.loads(f[5])
+            except ValueError:
+                opts = None
+        if not isinstance(opts, list) or not all(isinstance(o, list) and len(o) == 2 and isinstance(o[0], str)
+                                                 and (o[1] is None or isinstance(o[1], str)) for o in opts):
+            err(f"blocchi.tsv: riga non riconoscibile {l[:80]!r}")
+            continue
+        rows.append((f[0], int(f[1]), int(f[2]), int(f[3]), f[4], tuple((a, b) for a, b in opts)))
+    return rows
+
+
+def command_of(opts):
+    cmd = opts[0][0]
+    if len(opts) > 1 and opts[1][0] in QUALIFIERS.get(cmd, "").split():
+        cmd += " " + opts[1][0]
+    return cmd, tuple(opts[1:])
+
+
+extraction = Counter(load_extraction(BLOCKS))
+from_occs = Counter((o["file"], o["riga"], o["riga_fine"], o["colonna"], o["comando"],
+                     tuple((x.get("nome"), x.get("argomento")) for x in o["opzioni"])) for o in occs)
+for k in sorted(set(extraction) | set(from_occs)):
+    if extraction[k] != from_occs[k]:
+        err(f"estrazione e occorrenze divergono su {k[0]}:{k[1]} col {k[3]} ({k[4]}): record in blocchi.tsv {extraction[k]}, "
+            f"occorrenze nel grafo {from_occs[k]}")
+ext_awk = Counter()
+for k, n in extraction.items():
+    ext_awk[(k[0], k[1], k[3], k[2], k[4])] += n
+for k in sorted(set(ext_awk) | set(awk_counter)):
+    if ext_awk[k] != awk_counter[k]:
+        err(f"estrazione e conteggio indipendente divergono su {k[0]}:{k[1]} col {k[2]} ({k[4]}): in blocchi.tsv {ext_awk[k]}, "
+            f"nel conteggio awk {awk_counter[k]}")
+for k in sorted(extraction):
+    if k[0] not in KIND:
+        err(f"estrazione: {k[0]} non e' un programma o copybook del manifesto")
+        continue
+    text, why = block_text({"file": k[0], "riga": k[1], "riga_fine": k[2], "colonna": k[3]})
+    opts = options_of(text) if text is not None else None
+    if not opts or opts[0][1] is not None:
+        err(f"estrazione: {k[0]}:{k[1]}: il sorgente non contiene il blocco ({why or 'testo non riconoscibile'})")
+        continue
+    if command_of(opts) != (k[4], k[5]):
+        err(f"estrazione: {k[0]}:{k[1]}: comando e opzioni {k[4]} {list(k[5])} diversi dal sorgente {list(command_of(opts)[1])}")
+
+
+def unescape(t):
+    out, i = [], 0
+    while i < len(t):
+        if t[i] == "\\" and i + 1 < len(t) and t[i + 1] in "\\nrt":
+            out.append({"\\": "\\", "n": "\n", "r": "\r", "t": "\t"}[t[i + 1]])
+            i += 2
+        else:
+            out.append(t[i])
+            i += 1
+    return "".join(out)
+
+
+def read_raw(path):
+    """Righe e chiusura di una risposta di CicsLister; None se la risposta non e' completa e ben formata."""
+    try:
+        data = open(path, encoding="utf-8").read()
+    except OSError:
+        return None
+    if not data.endswith("\n"):
+        return None
+    lines = data[:-1].split("\n")
+    if lines[0] != "riga\triga_fine\tcolonna\ttesto" or not re.fullmatch(r"#fine(\t\d+){5}", lines[-1]):
+        return None
+    tail = [int(x) for x in lines[-1].split("\t")[1:]]
+    rows = [l.split("\t") for l in lines[1:-1]]
+    if tail[0] != len(rows) or any(len(r) != 4 or not all(x.isdigit() for x in r[:3]) for r in rows):
+        return None
+    return rows, tail
+
+
+listed = [l for l in open(os.path.join(TOOL, "files.txt"), encoding="utf-8").read().split("\n") if l] \
+    if os.path.isfile(os.path.join(TOOL, "files.txt")) else []
+if Counter(listed) != Counter(p for p, _ in man):
+    err(f"elenco dei file dati allo strumento diverso dal manifesto ({len(listed)} contro {len(man)})")
+raw, diag_want = Counter(), []
+for p in listed:
+    got_raw = read_raw(os.path.join(TOOL, "resp", p.replace("/", "_") + ".tsv"))
+    if got_raw is None:
+        err(f"risposta di CicsLister per {p} mancante, incompleta o malformata")
+        continue
+    rows, (n, errs, first, resumes, incomplete) = got_raw
+    for r in rows:
+        text = "\n".join(cut_inline(x) for x in unescape(r[3]).split("\n"))
+        opts = options_of(text)
+        if not opts or opts[0][1] is not None:
+            err(f"risposta di CicsLister per {p}:{r[0]}: testo non riconoscibile")
+            continue
+        cmd, rest = command_of(opts)
+        raw[(p, int(r[0]), int(r[1]), int(r[2]), cmd, rest)] += 1
+    if errs:
+        diag_want.append([p, str(errs), str(first), str(resumes), str(sum(1 for r in rows if int(r[0]) > first))])
+for k in sorted(set(raw) | set(extraction)):
+    if raw[k] != extraction[k]:
+        err(f"risposta dello strumento ed estrazione divergono su {k[0]}:{k[1]} col {k[3]} ({k[4]}): nella risposta {raw[k]}, "
+            f"in blocchi.tsv {extraction[k]}")
+diag_path = os.path.join(TOOL, "diagnostica.tsv")
+diag_lines = open(diag_path, encoding="utf-8").read().split("\n") if os.path.isfile(diag_path) else []
+diag_have = [l.split("\t") for l in diag_lines[1:] if l]
+if not diag_lines or diag_lines[0] != "file\terrori\tprima_riga_errore\triprese\tblocchi_dopo_il_primo_errore" \
+        or diag_lines[-1] != "" or diag_have != diag_want:
+    err(f"diagnostica.tsv diversa dalla chiusura delle risposte dello strumento: {diag_have[:2]} / {diag_want[:2]}")
+
 # ---------------------------------------------------------------------- 8. attesi scritti a mano
 arcs_by_occ = defaultdict(list)
 for a in arcs:
@@ -775,14 +955,17 @@ if MODE == "legacy":
         if tot.get(k) != counted.get(k):
             err(f"totali: {k} scritto a mano {tot.get(k)}, conteggio indipendente {counted.get(k)}")
 else:
-    exp_counts = {}
-    for l in open(os.path.join(EXP, "conteggi.tsv"), encoding="utf-8").read().split("\n")[1:]:
-        if l:
-            k, v = l.split("\t")
-            exp_counts[k] = int(v)
+    exp_counts, src_of = {}, {}
+    for fn in sorted(x for x in os.listdir(EXP) if re.fullmatch(r"conteggi(_[A-Z0-9]+)?\.tsv", x)):
+        for l in open(os.path.join(EXP, fn), encoding="utf-8").read().split("\n")[1:]:
+            if l:
+                k, v = l.split("\t")
+                if k in exp_counts:
+                    err(f"{fn}: {k} gia' presente in {src_of[k]}")
+                exp_counts[k], src_of[k] = int(v), fn
     for p, _ in man:
         if exp_counts.get(p) != per_file_a[p]:
-            err(f"conteggi.tsv: {p} scritto a mano {exp_counts.get(p)}, conteggio indipendente {per_file_a[p]}")
+            err(f"{src_of.get(p, 'conteggi*.tsv')}: {p} scritto a mano {exp_counts.get(p)}, conteggio indipendente {per_file_a[p]}")
 
 # ---------------------------------------------------------------------- 9. affermazioni di inventario-cics.md
 if MD:
@@ -791,6 +974,34 @@ if MD:
     line = f"- blocchi `EXEC CICS`: **{len(awk_rows)}** in **{len(files_with)}** file"
     if line not in md:
         err(f"inventario-cics.md: manca o e' diversa la riga dei totali ({line!r})")
+    # strumento: regole, prova sul file di prova, file con errori di sintassi (dalle risposte grezze, non dalla colla)
+    rules_path = os.path.join(TOOL, "regole.txt")
+    rules = [l.split("\t") for l in open(rules_path, encoding="utf-8").read().split("\n") if l] if os.path.isfile(rules_path) else []
+    md_rules = re.findall(r"^\| (regola|token) \| `([A-Za-z_]+)` \| (\w+) \|$", md, re.M)
+    if not rules or [tuple(r if len(r) == 3 else r + ["presente"]) for r in rules] != md_rules:
+        err(f"inventario-cics.md: tabella delle regole di ProLeap diversa da regole.txt ({md_rules[:2]} / {rules[:2]})")
+    proof = read_raw(os.path.join(TOOL, "proof", "app_cbl_FIXCICS.cbl.tsv"))
+    if proof is None:
+        err("risposta di CicsLister sul file di prova mancante o malformata")
+    else:
+        prow = proof[0]
+        r68 = [r for r in prow if r[0] == "68"]
+        claims = [f"restituisce {len(prow)} blocchi",
+                  f"la riga 68 ha {len(r68)} blocchi (colonne {', '.join(r[2] for r in r68)})",
+                  f"{sum(1 for r in prow if r[0] != r[1])} blocchi occupano piu' righe"]
+        for line_no, what in (("53", "blocco commentato"), ("54", "`*>` seguito da un blocco"), ("55", "blocco dentro un letterale")):
+            claims.append(f"la riga {line_no} ({what}{', `*` in colonna 7' if line_no == '53' else ''}) "
+                          f"{'non compare' if not any(r[0] == line_no for r in prow) else 'COMPARE'}")
+        flat = " ".join(md.split())
+        for c in claims:
+            if " ".join(c.split()) not in flat:
+                err(f"inventario-cics.md: affermazione sulla prova di ProLeap assente o diversa: {c!r}")
+    md_diag = [list(t) for t in re.findall(r"^\| (app/\S+) \| (\d+) \| (\d+) \| (\d+) \| (\d+) \|$", md, re.M)]
+    if md_diag != diag_want:
+        err(f"inventario-cics.md: tabella degli errori di sintassi di ProLeap diversa dalle risposte ({md_diag[:2]} / {diag_want[:2]})")
+    lost = f"Totale dei blocchi che senza la ripresa sarebbero stati persi: {sum(int(d[4]) for d in diag_want)}."
+    if lost not in md:
+        err(f"inventario-cics.md: manca o e' diversa la riga {lost!r}")
     # bersagli non risolti: ricalcolati qui, non letti dal grafo
     unres = Counter((p, r, cmd, t["ruolo"], t["operando"], t["motivo"]) for p, r, c, cmd, cat, ex, mine in recomputed
                     for t in mine if t["risoluzione"] == "non_risolto")
@@ -860,7 +1071,6 @@ if MD:
         err(f"inventario-cics.md: sezione del programma {p} senza blocchi")
 
 if errors:
-    print(f"VERIFICA FALLITA: {len(errors)} difetti")
-    sys.exit(1)
+    finish()
 print(f"verifica superata: {len(occs)} occorrenze, {len(arcs)} archi, {len(nodes)} nodi nuovi; "
       f"{len(awk_rows)} blocchi nel conteggio indipendente")

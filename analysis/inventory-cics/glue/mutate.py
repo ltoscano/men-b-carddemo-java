@@ -19,6 +19,12 @@ if kind.startswith("blocchi-"):
         f = r.split("\t")
         f[1], f[2] = "220", "220"
         body.append("\t".join(f))
+    elif kind == "blocchi-doppio":                 # l'estrattore duplica un blocco (COTRN02C:156, il controesempio del Validatore)
+        body.append(next(r for r in body if r.startswith("app/cbl/COTRN02C.cbl\t156\t")))
+    elif kind == "blocchi-opzione":                # un'opzione alterata nell'estrazione (COSGN00C:211, INTO)
+        i = next(k for k, r in enumerate(body) if r.startswith("app/cbl/COSGN00C.cbl\t211\t"))
+        assert '"SEC-USER-DATA"' in body[i]
+        body[i] = body[i].replace('"SEC-USER-DATA"', '"SEC-USER-DATX"')
     elif kind == "blocchi-commento":               # un blocco su una riga di commento (FIXCICS.cbl:53, file di prova)
         body.append("app/cbl/FIXCICS.cbl\t53\t53\t17\tXCTL\t[[\"PROGRAM\", \"'COMMENTO'\"]]")
     else:
@@ -177,6 +183,14 @@ elif kind == "da-sbagliato":                 # occorrenza e archi attribuiti a u
     o["da"] = "program:COMEN01C"
     for a in arcs_of(o):
         a["da"] = "program:COMEN01C"
+elif kind in ("redefines-catena-costante", "assign-costante"):   # (file di prova) costante falsa, arco coerente
+    o = occ("FIXRDEF.cbl", 49 if kind == "redefines-catena-costante" else 54)
+    t = tgt(o, "PROGRAM")
+    for k in ("motivo", "modifica"):
+        t.pop(k)
+    riga = 6 if kind == "redefines-catena-costante" else 33
+    t.update({"risoluzione": "costante", "nome": "FIXTGT", "valore": "'FIXTGT'", "file_valore": "app/cbl/FIXRDEF.cbl", "riga_valore": riga})
+    A.append({"id": o["id"] + "#PROGRAM", "occorrenza": o["id"], "da": o["da"], "a": "program:FIXTGT", "ruolo": "PROGRAM", "comando": o["comando"]})
 elif kind == "categoria-mappa-file":         # bersaglio di tipo sbagliato fra i nodi nuovi: mapset -> file
     o = occ("COSGN00C.cbl", 110)
     for a in arcs_of(o):
