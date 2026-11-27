@@ -254,3 +254,14 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T16:43:20Z,issue-26,esecutore-consuntivo,sonnet,orologio,correzione mirata: durata 913 s; 23 chiamate a strumenti; contatore token 241964
 2026-11-27T16:50:15Z,pr-40,verifica-fine,fable,orologio,verifica dell'Approvatore conclusa
 2026-11-27T16:50:45Z,pr-40,merge,fable,orologio,PR #40 mergiata dopo due validazioni e verifica dell'Approvatore; chiude #26
+2026-11-27T16:52:13Z,issue-23,specifica-scritta,fable,orologio,bozza riallineata a #3
+2026-11-27T16:52:13Z,issue-27,specifica-scritta,fable,orologio,bozza riallineata a #26
+2026-11-27T16:52:14Z,issue-23,codex-inizio,codex,orologio,contestazione della specifica; sola lettura
+2026-11-27T16:52:14Z,issue-27,codex-inizio,codex,orologio,contestazione della specifica; sola lettura
+2026-11-27T16:52:14Z,processo,risposta-consegnata,fable,orologio,PR #40 mergiata; specifiche #23 e #27 in contestazione
+2026-11-27T16:55:15Z,issue-27,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-27T16:56:25Z,issue-23,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-27T16:58:33Z,issue-23,ready,fable,orologio,specifica pubblicata; issue divisa; sentinelle in 43
+2026-11-27T16:58:33Z,issue-27,ready,fable,orologio,specifica pubblicata
+2026-11-27T16:58:33Z,issue-23,esecutore-inizio,opus,orologio,affidata
+2026-11-27T16:58:33Z,issue-27,esecutore-inizio,sonnet,orologio,affidata
