@@ -478,3 +478,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T02:56:45Z,pr-58,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0
 2026-11-28T02:57:28Z,pr-58,rinvio-esecutore,fable,orologio,5 accolti; 1 respinto
 2026-11-28T02:57:28Z,pr-58,correzione-inizio,opus,orologio,giro unico
+2026-11-28T03:34:22Z,issue-59,esecutore-fine,opus,orologio,PR #61 aperta; SHA eed2cd4; criteri 1-5 dichiarati; CI in attesa; 327509 token; 125 chiamate
