@@ -41,6 +41,7 @@ CODICI = OrderedDict([
     ("I06", "corrispondenza ASCII/EBCDIC non simmetrica, stessa codifica o contratto diverso"),
     ("I07", "provenienza carica/consuma non riscontrata nel JCL citato"),
     ("I08", "provenienza 'nessuno' smentita: un JCL del repository nomina il file"),
+    ("I10", "coppie ASCII/EBCDIC dichiarate diverse da quelle dovute (stesso contratto in codifiche diverse)"),
     ("I09", "chiave di abbinamento diversa dalla chiave primaria dichiarata, o scelta dove una chiave esiste"),
     ("F01", "dimensione diversa da fisica.tsv"),
     ("F02", "impronta diversa da fisica.tsv"),
@@ -67,6 +68,7 @@ CODICI = OrderedDict([
     ("D09", "attesi malformati"),
     ("R01", "la ricodifica conservativa di un campo non ridà i suoi byte"),
     ("R02", "i campi non ricompongono il record (buchi, sovrapposizioni, byte diversi)"),
+    ("R04", "record della fixture diversi, per numero, ordine, byte, terminatori o riempimento, dai byte del file letti per altra via"),
     ("R03", "i byte ricomposti non coincidono con i byte della riga del file (ASCII)"),
     ("K01", "chiave di abbinamento duplicata"),
     ("A01", "riga corta o lunga assente dall'elenco delle anomalie"),
@@ -80,6 +82,7 @@ CODICI = OrderedDict([
     ("X01", "fixture rigenerata diversa da quella versionata"),
     ("X02", "totali di controllo diversi da quelli versionati"),
     ("X03", "elenchi (anomalie, differenze, chiavi, conteggi) diversi da quelli versionati"),
+    ("X04", "tabella del documento generato malformata"),
     ("T01", "tracciato del contratto non utilizzabile"),
 ])
 
@@ -87,10 +90,13 @@ CODICI = OrderedDict([
 class Esito:
     def __init__(self):
         self.errori = []
+        self.siti = []   # (file, riga) della chiamata, parallelo a errori: per il censimento delle guardie
 
     def errore(self, codice, testo):
         assert codice in CODICI, codice
+        f = sys._getframe(1)
         self.errori.append((codice, testo))
+        self.siti.append((os.path.basename(f.f_code.co_filename), f.f_lineno, codice))
 
     def codici(self):
         return {c for c, _ in self.errori}
@@ -153,7 +159,7 @@ class Ingressi:
         c = copy.copy(self)
         for k in ("inventario", "fisica", "viste", "manifesto"):
             setattr(c, k, list(getattr(self, k)))
-        for k in ("attesi", "dati", "profilo_forzato"):
+        for k in ("attesi", "dati", "profilo_forzato", "testi"):
             setattr(c, k, dict(getattr(self, k)))
         c.contratti = {k: copy.deepcopy(v) for k, v in self.contratti.items()}
         return c
@@ -222,6 +228,11 @@ def riempi(riga, lunghezza):
     if len(riga) >= lunghezza:
         return bytes(riga[:lunghezza]), lunghezza
     return bytes(riga) + bytes([SPAZIO_ASCII]) * (lunghezza - len(riga)), len(riga)
+
+
+def record_ebcdic(dati, L):
+    """Record di un file a lunghezza fissa: (numero da 1, byte). Un'eventuale coda incompleta non e' un record (F03)."""
+    return [(i // L + 1, dati[i:i + L]) for i in range(0, len(dati) - len(dati) % L, L)]
 
 
 RIEMPI = riempi           # sostituibile solo dalle prove negative
@@ -340,7 +351,7 @@ def decodifica_file(ing, voce, es):
             buf, presi = RIEMPI(riga, L)
             grezzi.append((n, buf, presi, term, riga))
     else:
-        grezzi = [(i // L + 1, dati[i:i + L], L, "-", dati[i:i + L]) for i in range(0, len(dati) - len(dati) % L, L)]
+        grezzi = [(n, r, L, "-", r) for n, r in record_ebcdic(dati, L)]
     viste = viste_export(ing, es) if voce["contratto"] == EXPORT else None
     comuni = campi_comuni(ing, es) if viste is not None else None
     base = None if viste is not None else campi_vista(ing, voce["contratto"], "base", es)

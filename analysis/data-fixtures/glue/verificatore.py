@@ -5,6 +5,7 @@ import re
 from collections import Counter
 from decimal import Decimal
 
+import documento
 import fixture as fx
 from fixture import base_nome, tabella, testo_valore
 
@@ -37,8 +38,11 @@ def verifica_inventario(ing, voci, es):
     jcl = [p for p, t in ing.manifesto if t in ("jcl", "proc")]
     for v in voci:
         p = v["file"]
-        if v["codifica"] != fx._codifica_cartella(p) or v["provenienza"] not in fx.PROVENIENZE:
-            es.errore("I03", f"{p}: codifica {v['codifica']} o provenienza {v['provenienza']} non ammesse")
+        if v["codifica"] != fx._codifica_cartella(p):
+            es.errore("I03", f"{p}: codifica {v['codifica']} diversa da quella della cartella")
+            continue
+        if v["provenienza"] not in fx.PROVENIENZE:
+            es.errore("I03", f"{p}: provenienza {v['provenienza']} non ammessa")
             continue
         c = contr.get(v["contratto"])
         if c is None or c["lunghezza"] != v["lunghezza"]:
@@ -77,6 +81,24 @@ def verifica_inventario(ing, voci, es):
             if v["riga"] != "-" or chi:
                 es.errore("I08", f"{p}: dichiarato senza caricatore, ma lo nominano {chi or v['riga']}")
         verifica_chiave(ing, v, es)
+    verifica_coppie_dovute(voci, es)
+
+
+def verifica_coppie_dovute(voci, es):
+    """Insieme esatto delle coppie ASCII/EBCDIC: dovute sono tutte quelle con lo stesso contratto in codifiche diverse
+    (il contratto e' verificato dalla decodifica contro gli attesi a mano); dichiarate quelle dei corrispondenti."""
+    dovute = {(a["file"], e["file"]) for a in voci for e in voci
+              if a.get("codifica") == "ASCII" and e.get("codifica") == "EBCDIC" and a["contratto"] == e["contratto"]}
+    dichiarate = set()
+    for v in voci:
+        if v.get("corrispondente", "-") == "-":
+            continue
+        for q in v["corrispondente"].split(","):
+            dichiarate.add((v["file"], q) if v.get("codifica") == "ASCII" else (q, v["file"]))
+    for a, e in sorted(dovute - dichiarate):
+        es.errore("I10", f"coppia dovuta {a} / {e} (stesso contratto) non dichiarata nell'inventario")
+    for a, e in sorted(dichiarate - dovute):
+        es.errore("I10", f"coppia dichiarata {a} / {e} non dovuta (contratti o codifiche diversi)")
 
 
 def verifica_chiave(ing, v, es):
@@ -438,17 +460,56 @@ def verifica_versionati(uscite, cartella, es):
             vecchio = None
         if vecchio == testo:
             continue
-        cod = "X02" if n == "totali.tsv" else ("X01" if n.endswith(".tsv") and not (
-            n.endswith(".anomalie.tsv") or n.startswith("confronto-") or n in ("chiavi.tsv", "conteggi.tsv"))
-            else "X03")
-        es.errore(cod, f"out/{n}: rigenerato diverso dal versionato{' (assente)' if vecchio is None else ''}")
+        motivo = f"out/{n}: rigenerato diverso dal versionato{' (assente)' if vecchio is None else ''}"
+        if n == "totali.tsv":
+            es.errore("X02", motivo)
+        elif n.endswith(".anomalie.tsv") or n.startswith("confronto-") or n in ("chiavi.tsv", "conteggi.tsv"):
+            es.errore("X03", motivo)
+        else:
+            es.errore("X01", motivo)
     for n in sorted(nomi - set(uscite) - {"fixture.md"}):
         es.errore("X03", f"out/{n}: file versionato non piu' prodotto")
+
+
+def verifica_byte_file(ing, voci, dec, es):
+    """Andata e ritorno indipendente dalla lettura della colla: i byte del file (ing.dati, letti dal volume) sono
+    divisi qui in record per altra via; i record della fixture devono essere gli stessi, nello stesso numero e ordine,
+    con i campi che ricompongono quei byte, il terminatore di ogni riga e il riempimento solo oltre la fine della riga."""
+    for v in voci:
+        p = v["file"]
+        if p not in dec or p not in ing.dati:
+            continue
+        d, L, chi = ing.dati[p], int(v["lunghezza"]), base_nome(p)
+        attesi = []
+        if v["codifica"] == "EBCDIC":
+            for k in range(len(d) // L):
+                attesi.append((d[k * L:(k + 1) * L], "-"))
+        else:
+            pezzi = d.split(b"\n")
+            coda = pezzi.pop()
+            for x in pezzi:
+                attesi.append((x[:-1], "CRLF") if x[-1:] == b"\r" else (x, "LF"))
+            if coda:
+                attesi.append((coda, "nessuno"))
+        rec = dec[p].record
+        if len(rec) != len(attesi):
+            es.errore("R04", f"{chi}: {len(rec)} record nella fixture, {len(attesi)} nei byte del file")
+        for i, (r, (riga, term)) in enumerate(zip(rec, attesi), 1):
+            presi = min(len(riga), L)
+            atteso = riga[:L] + b" " * (L - presi)
+            campi = sorted(r["campi"], key=lambda c: c.offset)
+            ricomposto = b"".join(c.originali for c in campi)
+            origini = all((c.origine == "file") == (c.offset + c.lunghezza <= presi) and
+                          (c.origine == "riempimento") == (c.offset >= presi) for c in campi)
+            if r["n"] != i or r["term"] != term or r["presi"] != presi or ricomposto != atteso or not origini:
+                es.errore("R04", f"{chi}#{i}: record della fixture (n {r['n']}, terminatore {r['term']}, byte del file "
+                                 f"{r['presi']}) diverso dai byte del file (terminatore {term}, {presi} byte)")
 
 
 def verifica(ing, versionati=None):
     es = fx.Esito()
     voci, dec, confronti, att, uscite = fx.genera(ing, es)
+    verifica_byte_file(ing, voci, dec, es)
     verifica_inventario(ing, voci, es)
     verifica_fisica(ing, voci, es)
     verifica_viste(ing, es)
@@ -458,4 +519,7 @@ def verifica(ing, versionati=None):
     verifica_confronti(ing, dec, confronti, es)
     if versionati is not None:
         verifica_versionati(uscite, versionati, es)
-    return es, voci, dec, confronti, att, uscite
+    doc = documento.documento(ing, voci, dec, confronti, att, uscite)
+    for problema in documento.tabelle_malformate(doc):
+        es.errore("X04", problema)
+    return es, voci, dec, confronti, att, uscite, doc

@@ -42,15 +42,17 @@ File identici byte per byte (stessa impronta SHA-256): `AWS.M2.CARDDEMO.ACCDATA.
 | `trantype.txt` | terminatore-minoritario | 1 | 7 |
 | `AWS.M2.CARDDEMO.DALYTRAN.PS.INIT` | campo-non-valido | 3 | 1 |
 
+File senza anomalie: `acctdata.txt`, `carddata.txt`, `custdata.txt`, `dailytran.txt`, `discgrp.txt`, `trancatg.txt`, `AWS.M2.CARDDEMO.ACCDATA.PS`, `AWS.M2.CARDDEMO.ACCTDATA.PS`, `AWS.M2.CARDDEMO.CARDDATA.PS`, `AWS.M2.CARDDEMO.CARDXREF.PS`, `AWS.M2.CARDDEMO.CUSTDATA.PS`, `AWS.M2.CARDDEMO.DALYTRAN.PS`, `AWS.M2.CARDDEMO.DISCGRP.PS`, `AWS.M2.CARDDEMO.EXPORT.DATA.PS`, `AWS.M2.CARDDEMO.TCATBALF.PS`, `AWS.M2.CARDDEMO.TRANCATG.PS`, `AWS.M2.CARDDEMO.TRANTYPE.PS`, `AWS.M2.CARDDEMO.USRSEC.PS`.
+
 ## Differenze fra ASCII ed EBCDIC
 
 I record si abbinano per la chiave dell'inventario; nessuna differenza e' attesa a priori.
 
-| ASCII | EBCDIC | Tipo | Campo | Chiave | ASCII | EBCDIC |
-| --- | --- | --- | --- | --- | --- | --- |
-| `acctdata.txt` | `AWS.M2.CARDDEMO.ACCDATA.PS` | valore-diverso | ACCT-ADDR-ZIP | `49` | `record 49: valido "A" "0"*9 [41 30*9]` | `record 49: valido "ZEROAPR   " [E9 C5 D9 D6 C1 D7 D9 40 40 40]` |
-| `acctdata.txt` | `AWS.M2.CARDDEMO.ACCTDATA.PS` | valore-diverso | ACCT-ADDR-ZIP | `49` | `record 49: valido "A" "0"*9 [41 30*9]` | `record 49: valido "ZEROAPR   " [E9 C5 D9 D6 C1 D7 D9 40 40 40]` |
-| `discgrp.txt` | `AWS.M2.CARDDEMO.DISCGRP.PS` | valore-diverso | DIS-INT-RATE | `"DEFAULT   "|"07"|1` | `record 34: valido 0.00 [30*5 7B]` | `record 34: valido 15.00 [F0 F0 F1 F5 F0 C0]` |
+| ASCII | EBCDIC | Tipo | Campo | Chiave | ASCII | EBCDIC | Spiegazione |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `acctdata.txt` | `AWS.M2.CARDDEMO.ACCDATA.PS` | valore-diverso | ACCT-ADDR-ZIP | `49` | `record 49: valido "A" "0"*9 [41 30*9]` | `record 49: valido "ZEROAPR   " [E9 C5 D9 D6 C1 D7 D9 40 40 40]` | non spiegata dal repository: i due file di esempio non concordano |
+| `acctdata.txt` | `AWS.M2.CARDDEMO.ACCTDATA.PS` | valore-diverso | ACCT-ADDR-ZIP | `49` | `record 49: valido "A" "0"*9 [41 30*9]` | `record 49: valido "ZEROAPR   " [E9 C5 D9 D6 C1 D7 D9 40 40 40]` | non spiegata dal repository: i due file di esempio non concordano |
+| `discgrp.txt` | `AWS.M2.CARDDEMO.DISCGRP.PS` | valore-diverso | DIS-INT-RATE | `"DEFAULT   "\|"07"\|1` | `record 34: valido 0.00 [30*5 7B]` | `record 34: valido 15.00 [F0 F0 F1 F5 F0 C0]` | non spiegata dal repository: i due file di esempio non concordano |
 
 Riepilogo per coppia (le differenze `riempimento-uguale` sono i campi delle righe ASCII corte riempiti con spazi, uguali all'EBCDIC; sono elencate nelle fixture `out/confronto-*.tsv`):
 
@@ -65,11 +67,29 @@ Riepilogo per coppia (le differenze `riempimento-uguale` sono i campi delle righ
 - `trancatg.txt` / `AWS.M2.CARDDEMO.TRANCATG.PS`: nessuna differenza
 - `trantype.txt` / `AWS.M2.CARDDEMO.TRANTYPE.PS`: nessuna differenza
 
+## Osservazioni sui dati
+
+Ricavate dai byte a ogni rigenerazione; stati e valori dei campi restano quelli delle fixture. Offset assoluti nel file, da 0, estremi compresi.
+
+### Byte nulli (0x00) nei campi DISPLAY
+
+| File | Record | Offset assoluti | Campi | Byte non nulli del record (se i nulli sono la maggioranza) |
+| --- | ---: | --- | --- | --- |
+| `AWS.M2.CARDDEMO.DALYTRAN.PS.INIT` | 1 | 0-341 | TRAN-ID, TRAN-TYPE-CD, TRAN-CAT-CD, TRAN-SOURCE, TRAN-DESC, TRAN-AMT, TRAN-MERCHANT-ID, TRAN-MERCHANT-NAME, TRAN-MERCHANT-CITY, TRAN-MERCHANT-ZIP, TRAN-CARD-NUM, TRAN-ORIG-TS, TRAN-PROC-TS, FILLER | 342-349: F0*5 F1 F0 F0 |
+| `AWS.M2.CARDDEMO.EXPORT.DATA.PS` | 51 | 25128-25147 | EXP-ACCT-ADDR-ZIP, EXP-ACCT-GROUP-ID | - |
+| `AWS.M2.CARDDEMO.EXPORT.DATA.PS` | 100 | 49628-49647 | EXP-ACCT-ADDR-ZIP, EXP-ACCT-GROUP-ID | - |
+
+Nei campi alfanumerici i byte nulli sono caratteri U+0000 (validi); nei numerici rendono il campo non valido (anomalie).
+
+### Numeri di sequenza dell'export
+
+- `AWS.M2.CARDDEMO.EXPORT.DATA.PS`: record 450 -> 451: 450 -> 460. `CBEXPORT.cbl` (righe 529-530) aggiunge 1 a ogni record scritto: il salto non e' spiegato dal repository.
+
 ## Decisioni di decodifica
 
 - **Riempimento delle righe ASCII corte**: spazi (0x20) a destra fino alla lunghezza del record. Nessun JCL del repository carica i file `.txt` (provenienza `nessuno` verificata), quindi il JCL non determina la regola: e' una scelta dichiarata, applicata in un passo separato (`RIEMPI`). Le fixture distinguono i byte del file da quelli aggiunti (colonne 3 e 4, e l'origine `riempimento` del campo).
 - **Terminatori**: si legge ogni riga fino a LF; un CR subito prima di LF e' parte del terminatore (CRLF). I terminatori di ogni riga sono nelle fixture (colonna 2) e nella tabella sopra.
-- **EXPORT.DATA.PS**: la vista attiva si sceglie dal tipo di record come `CBIMPORT.cbl` (righe 272-284, `analysis/data-fixtures/viste-export.tsv`); si decodificano i campi comuni e quelli della sola vista attiva. Un tipo non previsto avrebbe solo i campi comuni e un'anomalia. L'area `EXPORT-TIMESTAMP-R` ridefinisce un campo comune, decodificato intero.
+- **EXPORT.DATA.PS**: la vista attiva si sceglie dal tipo di record come `CBIMPORT.cbl` (righe 272-285, `analysis/data-fixtures/viste-export.tsv`); si decodificano i campi comuni e quelli della sola vista attiva. Un tipo non previsto avrebbe solo i campi comuni e un'anomalia. L'area `EXPORT-TIMESTAMP-R` ridefinisce un campo comune, decodificato intero.
 - **DALYTRAN.PS.INIT**: decodificato con il contratto del KSDS in cui `TRANFILE.jcl` lo carica (`CVTRA05Y.TRAN-RECORD`); i byte a zero binario restano tali e i campi numerici risultano non validi.
 - **Chiavi**: la chiave di abbinamento e' la KEYS del JCL; per il giornaliero (sequenziale) `DALYTRAN-ID` e' una scelta; per l'export la KEYS(4 28) si usa com'e', in byte, anche se taglia due campi.
 

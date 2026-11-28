@@ -3,13 +3,16 @@
 #  0. run.sh, check.sh e deps esistono e sono eseguibili; inventario, fisica, viste, attesi, out/ e documento esistono
 #  1. verifica completa con confronto con le uscite versionate (glue/verifica.py --confronta): inventario [I], struttura
 #     fisica [F], viste dell'export [V], attesi a mano [D], ricodifica [R], chiavi [K], elenchi ricalcolati in modo
-#     indipendente [A][P], uscite versionate [X]; poi out/ e documento rigenerati devono coincidere con i versionati
+#     indipendente [A][P], andata e ritorno contro i byte del file letti per altra via [R04], coppie dovute [I10],
+#     tabelle del documento [X04], uscite versionate [X]; poi out/ e documento rigenerati devono coincidere con i versionati
 #  2. conteggi per file: record dalla dimensione (EBCDIC), righe fisiche (ASCII), record decodificati, record attesi
-#  3. prove negative su copie private (glue/negativi.py): ognuna con nome e diagnosi; inventario: ogni asserzione
-#     (codice di fixture.CODICI) ha almeno una prova superata che la pretende
+#  3. prove negative su copie private (glue/negativi.py): ognuna con nome e diagnosi; inventario: ogni guardia (ogni
+#     chiamata es.errore censita nel sorgente di fixture.py e verificatore.py) e' scattata in almeno una prova superata
+#     che pretende il suo codice; alcune prove girano senza il confronto con i versionati (alterazione + rigenerazione)
 #  4. prove negative sulla generazione: documento alterato rilevato; confronto con file assente = errore operativo;
-#     verifica fallita con un residuo buono di una corsa precedente: errore, e il residuo e' rimosso
-# Esiti di diff: 0 uguali, 1 diversi, ogni altro valore errore operativo.
+#     dfx_genera con un residuo buono nella sua destinazione e una verifica che fallisce: errore, residuo rimosso
+#  5. prove negative sugli esiti: tail che fallisce dopo aver stampato il testo giusto; grep che esce con 2
+# Esiti: diff e grep 0 / 1 / altro (errore operativo, mai scambiato per differenza o assenza).
 . "$ANALYSIS_ROOT/lib/common.sh"
 . "$ANALYSIS_ROOT/tools/lib.sh"
 . "$ANALYSIS_ROOT/data-fixtures/lib.sh"
@@ -38,7 +41,7 @@ for coppia in "$tmp/gen/out:$DFX_DIR/out" "$tmp/gen/fixture.md:$DFX_DOC"; do
     *) cat "$tmp/diff.txt" >&2; fail "confronto non eseguito (diff uscito con $rc)" ;;
   esac
 done
-esito="$(tail -n 1 "$tmp/gen/verifica.txt")" || fail "esito della verifica illeggibile"
+esito="$(dfx_esito "$tmp/gen/verifica.txt")" || fail "esito della verifica illeggibile"
 log "   ok: $esito; out/ e documento identici ai versionati"
 
 log "2. conteggi per file"
@@ -49,15 +52,24 @@ incoerenti="$(awk -F'\t' 'NR > 1 && (($2 != "-" && $2 != $4) || ($3 != "-" && $3
 [ -z "$incoerenti" ] || fail "conteggi incoerenti: $incoerenti"
 log "   ok: per ogni file i record decodificati coincidono con quelli dalla dimensione o con le righe fisiche"
 
+# presenza MODELLO FILE: 0 se una riga corrisponde, 1 se nessuna, 2 se grep non ha potuto leggere (mai preso per assenza)
+presenza() { local rc=0; grep -q -- "$1" "$2" || rc=$?; case "$rc" in 0|1) return "$rc" ;; *) return 2 ;; esac; }
+
 log "3. prove negative su copie private"
 rc=0; dfx_negativi "$tmp/neg.txt" || rc=$?
 if [ "$rc" -ne 0 ]; then
-  grep -A8 "^PROVA NEGATIVA FALLITA\|^ERRORE operativo\|^INVENTARIO" "$tmp/neg.txt" >&2 || tail -40 "$tmp/neg.txt" >&2
+  rg=0; grep -A8 "^PROVA NEGATIVA FALLITA\|^ERRORE operativo\|^INVENTARIO" "$tmp/neg.txt" >&2 || rg=$?
+  case "$rg" in 0) ;; 1) tail -40 "$tmp/neg.txt" >&2 || true ;; *) log "   uscita delle prove negative illeggibile (grep $rg)" ;; esac
   fail "prove negative non superate (uscita $rc)"
 fi
 ultima="$(tail -n 1 "$tmp/neg.txt")" || fail "esito delle prove negative illeggibile"
-case "$ultima" in "prove negative: "*" superate, ogni codice coperto") ;; *) cat "$tmp/neg.txt" >&2; fail "prove negative senza esito riconoscibile" ;; esac
-if grep -q "^PROVA NEGATIVA FALLITA" "$tmp/neg.txt"; then fail "una prova negativa e' fallita ma l'uscita e' 0"; fi
+case "$ultima" in "prove negative: "*" superate, ogni sito coperto") ;; *) cat "$tmp/neg.txt" >&2; fail "prove negative senza esito riconoscibile" ;; esac
+rc=0; presenza "^PROVA NEGATIVA FALLITA" "$tmp/neg.txt" || rc=$?
+case "$rc" in
+  1) ;;
+  0) fail "una prova negativa e' fallita ma l'uscita e' 0" ;;
+  *) fail "uscita delle prove negative illeggibile (grep $rc)" ;;
+esac
 sed 's/^/   /' "$tmp/neg.txt" >&2 || fail "uscita delle prove negative illeggibile"
 
 log "4. prove negative sulla generazione"
@@ -73,17 +85,29 @@ log "   ok: documento-alterato -> il confronto trova la differenza (diff uscito 
 rc=0; confronta "$tmp/gen/fixture.md" "$tmp/inesistente.md" "$tmp/diff-inesistente.txt" || rc=$?
 [ "$rc" -ne 0 ] && [ "$rc" -ne 1 ] || fail "PROVA NEGATIVA FALLITA (confronto-file-assente): diff uscito con $rc"
 log "   ok: confronto-file-assente -> diff uscito con $rc, errore operativo e non differenza"
-# residuo: uscite buone di una corsa precedente e una verifica che fallisce (out/ versionata alterata in una copia)
+# residuo: uscite buone di una corsa precedente NELLA DESTINAZIONE di dfx_genera, e una verifica che fallisce (un atteso
+# a mano alterato in una copia privata dell'analisi): dfx_genera deve fallire e il residuo non deve restare
 mkdir -p "$tmp/rotta" && cp -R "$DFX_DIR/." "$tmp/rotta/" || fail "copia dell'analisi non preparata"
+f="$tmp/rotta/attesi/AWS.M2.CARDDEMO.DALYTRAN.PS.tsv"
+rc=0; presenza "	-919.00	" "$f" || rc=$?
+[ "$rc" -eq 0 ] || fail "valore da alterare assente in $f (grep $rc)"
+sed 's/	-919\.00	/	-919.01	/' "$f" > "$f.nuovo" && mv "$f.nuovo" "$f" || fail "alterazione dell'atteso fallita"
+rc=0; presenza "	-919.01	" "$f" || rc=$?
+[ "$rc" -eq 0 ] || fail "alterazione dell'atteso non applicata (grep $rc)"
 mkdir -p "$tmp/res" && cp -R "$tmp/gen/out" "$tmp/gen/fixture.md" "$tmp/gen/verifica.txt" "$tmp/res/" || fail "residuo non preparato"
-printf 'riga aggiunta\n' >> "$tmp/rotta/out/totali.tsv" || fail "alterazione dei totali fallita"
-rel="${tmp#"$ANALYSIS_ROOT"/}/rotta"
-rc=0; ( ensure_legacy_volume
-        glue_run --rw "$tmp/res" --mount "$LEGACY_VOL:$DFX_LEGACY:ro" --mount "$DFX_DC:/dc:ro" -- \
-          /analysis/data-fixtures/glue/verifica.py "$DFX_LEGACY" /dc /analysis/manifest/sources.tsv /analysis/data-fixtures \
-          /work/nuova --confronta "/analysis/$rel/out" ) > "$tmp/res.log" 2>&1 || rc=$?
-[ "$rc" -eq 1 ] || { cat "$tmp/res.log" >&2; fail "PROVA NEGATIVA FALLITA (residuo): verifica uscita con $rc invece di 1"; }
-grep -q "^ERRORE \[X02\] out/totali.tsv" "$tmp/res.log" || { cat "$tmp/res.log" >&2; fail "prova residuo: fallita ma non per i totali alterati"; }
-[ ! -e "$tmp/res/nuova/out" ] || fail "PROVA NEGATIVA FALLITA (residuo): uscite scritte nonostante la verifica fallita"
-log "   ok: residuo -> verifica fallita sui totali alterati (X02), nessuna nuova uscita scritta"
+[ -d "$tmp/res/out" ] && [ -s "$tmp/res/fixture.md" ] || fail "residuo non preparato nella destinazione"
+rc=0; ( dfx_genera "$tmp/res" --confronta "$tmp/rotta" ) > "$tmp/res.log" 2>&1 || rc=$?
+[ "$rc" -eq 1 ] || { cat "$tmp/res.log" >&2; fail "PROVA NEGATIVA FALLITA (residuo): dfx_genera uscita con $rc invece di 1"; }
+rc=0; presenza "^ERRORE \[D02\] AWS.M2.CARDDEMO.DALYTRAN.PS#2 DALYTRAN-AMT" "$tmp/res.log" || rc=$?
+[ "$rc" -eq 0 ] || { cat "$tmp/res.log" >&2; fail "prova residuo: fallita ma non per l'atteso alterato (grep $rc)"; }
+[ ! -e "$tmp/res/out" ] && [ ! -e "$tmp/res/fixture.md" ] || fail "PROVA NEGATIVA FALLITA (residuo): le uscite della corsa precedente sono rimaste"
+log "   ok: residuo -> dfx_genera fallita (uscita 1) su [D02] con il residuo nella sua destinazione, residuo rimosso"
+
+log "5. prove negative sugli esiti degli script"
+rc=0; ( tail() { command tail "$@"; return 7; }; dfx_esito "$tmp/gen/verifica.txt" ) > /dev/null 2>&1 || rc=$?
+[ "$rc" -eq 2 ] || fail "PROVA NEGATIVA FALLITA (tail-fallito): dfx_esito uscita con $rc invece di 2"
+log "   ok: tail-fallito -> tail che stampa il testo giusto ma esce con 7: dfx_esito esce con 2 (errore operativo)"
+rc=0; ( grep() { return 2; }; presenza "^PROVA NEGATIVA FALLITA" "$tmp/neg.txt" ) || rc=$?
+[ "$rc" -eq 2 ] || fail "PROVA NEGATIVA FALLITA (grep-fallito): presenza uscita con $rc invece di 2"
+log "   ok: grep-fallito -> grep uscito con 2: presenza esce con 2, non scambiato per assenza"
 log "data-fixtures: tutti i controlli superati"

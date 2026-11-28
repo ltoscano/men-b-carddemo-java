@@ -31,7 +31,7 @@ def main(argv):
     legacy, dc, man, cartella, out = argv[:5]
     versionati = argv[6] if len(argv) == 7 else None
     ing = fx.Ingressi(legacy, dc, man, cartella)
-    es, voci, dec, confronti, att, uscite = verificatore.verifica(ing, versionati)
+    es, voci, dec, confronti, att, uscite, doc = verificatore.verifica(ing, versionati)
     for c, t in es.errori:
         print(f"ERRORE [{c}] {t}")
     if es.errori:
@@ -42,7 +42,7 @@ def main(argv):
         with open(os.path.join(out, "out", n), "w", encoding="utf-8") as f:
             f.write(testo)
     with open(os.path.join(out, "fixture.md"), "w", encoding="utf-8") as f:
-        f.write(documento.documento(ing, voci, dec, confronti, att, uscite))
+        f.write(doc)
     print(uscite["conteggi.tsv"], end="")
     n_rec = sum(len(fd.record) for fd in dec.values())
     n_att = sum(len(a) for a in att.values() if a)

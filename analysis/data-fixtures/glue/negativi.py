@@ -10,12 +10,14 @@ operativo o per il limite di tempo (900 s).
 """
 import contextlib
 import os
+import re
 import shutil
 import signal
 import sys
 import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import documento  # noqa: E402
 import fixture as fx  # noqa: E402
 import verificatore  # noqa: E402
 
@@ -378,6 +380,141 @@ def p_differenza_attesa_tolta(ing):
     togli_record_attesi(ing, "discgrp.txt.tsv", 34)
 
 
+def senza_versionati(gestore=None):
+    """La prova si esegue senza il confronto con le uscite versionate: simula la rigenerazione dopo l'alterazione,
+    cosi' fallisce solo grazie a un controllo indipendente dalle fixture versionate."""
+    return ("senza-versionati", gestore)
+
+
+def p_coppia_omessa(ing):          # omissione bilaterale: entrambe le corrispondenze di tcatbal tolte
+    cambia_inv(ing, A + "tcatbal.txt", "corrispondente", "-")
+    cambia_inv(ing, E + "TCATBALF.PS", "corrispondente", "-")
+    return senza_versionati()
+
+
+def p_alias_omesso(ing):           # omissione bilaterale dell'alias dei conti
+    cambia_inv(ing, A + "acctdata.txt", "corrispondente", E + "ACCTDATA.PS")
+    cambia_inv(ing, E + "ACCDATA.PS", "corrispondente", "-")
+    return senza_versionati()
+
+
+def p_coppia_inventata(ing):       # coppia dichiarata in entrambi i versi fra contratti diversi
+    cambia_inv(ing, A + "trantype.txt", "corrispondente", E + "TRANTYPE.PS," + E + "USRSEC.PS")
+    cambia_inv(ing, E + "USRSEC.PS", "corrispondente", A + "trantype.txt")
+    return senza_versionati()
+
+
+def p_codifica_cartella(ing):
+    cambia_inv(ing, E + "USRSEC.PS", "codifica", "ASCII")
+
+
+def p_provenienza_ignota(ing):
+    cambia_inv(ing, E + "USRSEC.PS", "provenienza", "copiato")
+
+
+def p_lettura_ascii(ing):          # la colla legge un byte diverso dal file (descrizione), poi si rigenera
+    originale = fx.fisica_ascii
+
+    def f(dati):
+        righe = originale(dati)
+        if righe and righe[0][0].startswith(b"0000000000") and len(righe) > 9:
+            r, t = righe[9]
+            righe[9] = (r[:40] + (b"Q" if r[40:41] != b"Q" else b"R") + r[41:], t)
+        return righe
+    return senza_versionati(sostituisci(fx, "fisica_ascii", f))
+
+
+def p_lettura_ebcdic(ing):         # byte assoluto 88072 dell'export (record 177) letto D7 -> C2, poi si rigenera
+    originale = fx.record_ebcdic
+
+    def f(dati, L):
+        rec = originale(dati, L)
+        if L == 500 and len(rec) == 500:
+            n, b = rec[176]
+            rec[176] = (n, b[:72] + bytes([0xC2]) + b[73:])
+        return rec
+    return senza_versionati(sostituisci(fx, "record_ebcdic", f))
+
+
+def p_lettura_record_perso(ing):
+    originale = fx.record_ebcdic
+
+    def f(dati, L):
+        rec = originale(dati, L)
+        return rec[:-1] if L == 150 else rec
+    return senza_versionati(sostituisci(fx, "record_ebcdic", f))
+
+
+def p_lettura_ordine(ing):         # due righe ASCII scambiate dalla colla
+    originale = fx.fisica_ascii
+
+    def f(dati):
+        righe = originale(dati)
+        if len(righe) == 300:
+            righe[4], righe[5] = righe[5], righe[4]
+        return righe
+    return senza_versionati(sostituisci(fx, "fisica_ascii", f))
+
+
+def p_lettura_terminatore(ing):
+    originale = fx.fisica_ascii
+
+    def f(dati):
+        righe = originale(dati)
+        return [(r, "LF") for r, _ in righe] if len(righe) == 7 else righe
+    return senza_versionati(sostituisci(fx, "fisica_ascii", f))
+
+
+def p_tabella_non_protetta(ing):
+    return sostituisci(documento, "cella", lambda x: str(x))
+
+
+def p_contratto_inesistente(ing):
+    cambia_inv(ing, E + "USRSEC.PS", "contratto", "NESSUNO.RECORD")
+
+
+def p_copertura_corta(ing):
+    originale = fx.campi_vista
+
+    def f(ing_, contratto, vista, es):
+        c = originale(ing_, contratto, vista, es)
+        return c[:-1] if contratto == "CVACT02Y.CARD-RECORD" else c
+    return sostituisci(fx, "campi_vista", f)
+
+
+def p_chiave_incalcolabile(ing):
+    cambia_inv(ing, E + "USRSEC.PS", "chiave", "SEC-USR-NESSUNO")
+
+
+def p_lunghezza_illeggibile(ing):
+    cambia_inv(ing, E + "USRSEC.PS", "lunghezza", "ottanta")
+
+
+def p_fonte_chiave(ing):
+    cambia_inv(ing, E + "USRSEC.PS", "fonte_chiave", "app/jcl/DUSRSECJ.jcl:65")
+
+
+def p_chiave_non_contigua(ing):
+    cambia_inv(ing, E + "USRSEC.PS", "chiave", "SEC-USR-ID+SEC-USR-LNAME")
+
+
+def p_fisica_illeggibile(ing):
+    cambia_fis(ing, E + "USRSEC.PS", "dimensione", "ottocento")
+
+
+def p_paragrafo_assente(ing):      # copia privata del testo di CBIMPORT con l'intestazione del paragrafo rinominata
+    righe = list(ing.testo("app/cbl/CBIMPORT.cbl"))
+    i = [k for k, l in enumerate(righe) if re.match(r"^\s{7,8}2300-PROCESS-CUSTOMER-RECORD\.", l)]
+    if len(i) != 1:
+        raise KeyError("intestazione 2300-PROCESS-CUSTOMER-RECORD")
+    righe[i[0]] = righe[i[0]].replace("2300-PROCESS-CUSTOMER-RECORD", "2300-ALTRO-NOME")
+    ing.testi["app/cbl/CBIMPORT.cbl"] = righe
+
+
+def p_anomalo_tolto(ing):          # tcatbal: l'unico record anomalo (terminatore) e' il 50
+    togli_record_attesi(ing, "tcatbal.txt.tsv", 50)
+
+
 PROVE = [
     ("byte-alterato-fixture", "X01", p_byte_alterato), ("byte-alterato-totale", "X02", p_byte_alterato),
     ("byte-alterato-impronta", "F02", p_byte_alterato),
@@ -416,7 +553,34 @@ PROVE = [
                                                          p_record_atteso_inesistente),
     ("ultimo-tolto", "D07", p_ultimo_tolto), ("negativo-tolto", "D07", p_negativo_tolto),
     ("tipo-export-tolto", "D07", p_tipo_export_tolto), ("differenza-attesa-tolta", "D07", p_differenza_attesa_tolta),
+    ("coppia-omessa-bilaterale", "I10", p_coppia_omessa), ("alias-conti-omesso", "I10", p_alias_omesso),
+    ("coppia-inventata", "I10", p_coppia_inventata), ("codifica-cartella", "I03", p_codifica_cartella),
+    ("provenienza-ignota", "I03", p_provenienza_ignota),
+    ("lettura-ascii-alterata", "R04", p_lettura_ascii), ("lettura-ebcdic-alterata", "R04", p_lettura_ebcdic),
+    ("lettura-record-perso", "R04", p_lettura_record_perso), ("lettura-ordine-scambiato", "R04", p_lettura_ordine),
+    ("lettura-terminatore-alterato", "R04", p_lettura_terminatore),
+    ("tabella-non-protetta", "X04", p_tabella_non_protetta),
+    ("anomalie-diverse-dal-versionato", "X03", p_riga_corta_silenziosa),
+    ("contratto-inesistente", "T01", p_contratto_inesistente), ("copertura-corta", "R02", p_copertura_corta),
+    ("ricodifica-alterata-record", "R02", p_ricodifica), ("chiave-incalcolabile", "T01", p_chiave_incalcolabile),
+    ("lunghezza-illeggibile", "I03", p_lunghezza_illeggibile), ("fonte-chiave-sbagliata", "I09", p_fonte_chiave),
+    ("chiave-non-contigua", "I09", p_chiave_non_contigua), ("fisica-illeggibile", "F09", p_fisica_illeggibile),
+    ("paragrafo-assente", "V02", p_paragrafo_assente), ("anomalo-tolto", "D07", p_anomalo_tolto),
 ]
+
+_SITO = re.compile(r"\.errore\(\s*\"([A-Z][0-9]{2})\"")
+
+
+def censimento():
+    """Ogni chiamata es.errore("Xnn", ...) nei moduli della verifica e' una guardia: (file, riga, codice)."""
+    out = set()
+    qui = os.path.dirname(os.path.abspath(__file__))
+    for nome in ("fixture.py", "verificatore.py"):
+        with open(os.path.join(qui, nome), encoding="utf-8") as f:
+            for i, l in enumerate(f, 1):
+                for m in _SITO.finditer(l):
+                    out.add((nome, i, m.group(1)))
+    return out
 
 
 def scaduto(*_):
@@ -439,7 +603,7 @@ def main(argv):
             print(f"ERRORE [{c}] {t}")
         print("ERRORE operativo: la verifica sugli ingressi non alterati fallisce: prove negative non significative")
         return 2
-    superate, fallite, coperti = 0, 0, set()
+    superate, fallite, coperti, siti = 0, 0, set(), set()
     for nome, codice, prepara in PROVE:
         copia = ing.copia()
         try:
@@ -458,6 +622,8 @@ def main(argv):
                 with open(os.path.join(vers, "residuo.tsv"), "w") as f:
                     f.write("x\n")
                 gestore = None
+            if isinstance(gestore, tuple) and gestore[0] == "senza-versionati":
+                vers, gestore = None, gestore[1]
             with (gestore or contextlib.nullcontext()):
                 es = verificatore.verifica(copia, vers)[0]
         finally:
@@ -467,6 +633,7 @@ def main(argv):
         if trovati:
             superate += 1
             coperti.add(codice)
+            siti |= {(f, r, c) for f, r, c in es.siti if c == codice}
             altri = sorted(es.codici() - {codice})
             print(f"ok: {nome} -> [{codice}] {trovati[0][:150]}" + (f" (anche {', '.join(altri)})" if altri else ""))
         else:
@@ -477,11 +644,20 @@ def main(argv):
     scoperti = [c for c in fx.CODICI if c not in coperti]
     for c in scoperti:
         print(f"INVENTARIO: il codice [{c}] ({fx.CODICI[c]}) non ha alcuna prova negativa superata")
-    if fallite or scoperti:
-        print(f"prove negative: {superate} superate, {fallite} fallite, {len(scoperti)} codici scoperti")
+    cens = censimento()
+    siti_scoperti = sorted(cens - siti)
+    for f, r, c in siti_scoperti:
+        print(f"INVENTARIO: la guardia {f}:{r} [{c}] non e' mai scattata in una prova superata che pretende [{c}]")
+    fuori = sorted(siti - cens)
+    for f, r, c in fuori:
+        print(f"INVENTARIO: errore [{c}] da {f}:{r}, riga non censita (censimento incompleto)")
+    if fallite or scoperti or siti_scoperti or fuori:
+        print(f"prove negative: {superate} superate, {fallite} fallite, {len(scoperti)} codici e "
+              f"{len(siti_scoperti) + len(fuori)} guardie scoperti")
         return 1
-    print(f"inventario: {len(fx.CODICI)} codici, ognuno con almeno una prova superata")
-    print(f"prove negative: {superate} superate, ogni codice coperto")
+    print(f"inventario: {len(fx.CODICI)} codici e {len(cens)} guardie (chiamate es.errore censite nel sorgente), "
+          f"ognuna scattata in almeno una prova superata che pretende il suo codice")
+    print(f"prove negative: {superate} superate, ogni sito coperto")
     return 0
 
 

@@ -6,6 +6,47 @@ import fixture as fx
 from fixture import base_nome
 
 
+def cella(x):
+    """Contenuto di una cella di tabella Markdown (GFM): '|' e a-capo protetti."""
+    return str(x).replace("\\", "\\\\").replace("|", "\\|").replace("\n", " ")
+
+
+def riga(*celle):
+    return "| " + " | ".join(cella(c) for c in celle) + " |"
+
+
+def codice(x):
+    return f"`{x}`"
+
+
+def _separatori(l):
+    """Separatori di cella di una riga di tabella: '|' non preceduti da un numero dispari di barre inverse."""
+    n, i, barre = 0, 0, 0
+    for ch in l:
+        if ch == "\\":
+            barre += 1
+            continue
+        if ch == "|" and barre % 2 == 0:
+            n += 1
+        barre = 0
+    return n
+
+
+def tabelle_malformate(testo):
+    """Ogni riga di una tabella deve avere tanti separatori quanti l'intestazione."""
+    out, attese = [], None
+    for i, l in enumerate(testo.split("\n"), 1):
+        if not l.startswith("|"):
+            attese = None
+            continue
+        n = _separatori(l)
+        if attese is None:
+            attese = n
+        elif n != attese:
+            out.append(f"fixture.md:{i}: {n - 1} celle invece di {attese - 1}: {l[:80]}")
+    return out
+
+
 def gamme(numeri):
     """[1, 2, 3, 7] -> '1-3, 7'."""
     n = sorted({int(x) for x in numeri if x != "-"})
@@ -38,8 +79,8 @@ def documento(ing, voci, dec, confronti, att, uscite):
         else:
             term = lun = "-"
         prov = v["provenienza"] + (f" (`{v['riga']}`)" if v["riga"] != "-" else "")
-        o.append(f"| `{base_nome(p)}` | `{v['contratto']}` | {v['lunghezza']} | {len(ing.dati[p])} | "
-                 f"{len(fd.record)} | {term} | {lun} | {prov} | {len(fd.anomalie)} |")
+        o.append(riga(codice(base_nome(p)), codice(v["contratto"]), v["lunghezza"], len(ing.dati[p]),
+                      len(fd.record), term, lun, prov, len(fd.anomalie)))
     imp = Counter(hashlib.sha256(ing.dati[p]).hexdigest() for p in dec)
     uguali = [[base_nome(p) for p in dec if hashlib.sha256(ing.dati[p]).hexdigest() == h] for h, n in imp.items()
               if n > 1]
@@ -52,12 +93,13 @@ def documento(ing, voci, dec, confronti, att, uscite):
         for t, r, c, _ in fd.anomalie:
             per.setdefault(t, []).append(r)
         for t, rr in sorted(per.items()):
-            o.append(f"| `{base_nome(p)}` | {t} | {len(rr)} | {gamme(rr)} |")
-    if not any(fd.anomalie for fd in dec.values()):
-        o.append("| - | nessuna | 0 | - |")
+            o.append(riga(codice(base_nome(p)), t, len(rr), gamme(rr)))
+    senza = [base_nome(p) for p, fd in dec.items() if not fd.anomalie]
+    o += ["", "File senza anomalie: " + (", ".join(codice(x) for x in senza) if senza else "nessuno") + "."]
     o += ["", "## Differenze fra ASCII ed EBCDIC", "",
           "I record si abbinano per la chiave dell'inventario; nessuna differenza e' attesa a priori.", "",
-          "| ASCII | EBCDIC | Tipo | Campo | Chiave | ASCII | EBCDIC |", "| --- | --- | --- | --- | --- | --- | --- |"]
+          "| ASCII | EBCDIC | Tipo | Campo | Chiave | ASCII | EBCDIC | Spiegazione |",
+          "| --- | --- | --- | --- | --- | --- | --- | --- |"]
     riass = []
     for (a, e), diff in confronti.items():
         conta = Counter(d[0] for d in diff)
@@ -66,9 +108,13 @@ def documento(ing, voci, dec, confronti, att, uscite):
         for d in diff:
             if d[0].startswith("riempimento-uguale"):
                 continue
-            o.append(f"| `{base_nome(a)}` | `{base_nome(e)}` | {d[0]} | {d[2]} | `{d[1]}` | `{d[3]}` | `{d[4]}` |")
+            spieg = ("riempimento dichiarato della riga ASCII corta" if d[0].startswith("riempimento")
+                     else "non spiegata dal repository: i due file di esempio non concordano")
+            o.append(riga(codice(base_nome(a)), codice(base_nome(e)), d[0], d[2], codice(d[1]), codice(d[3]),
+                          codice(d[4]), spieg))
     o += ["", "Riepilogo per coppia (le differenze `riempimento-uguale` sono i campi delle righe ASCII corte riempiti "
           "con spazi, uguali all'EBCDIC; sono elencate nelle fixture `out/confronto-*.tsv`):", ""] + riass
+    o += osservazioni(ing, dec)
     o += ["", "## Decisioni di decodifica", "",
           "- **Riempimento delle righe ASCII corte**: spazi (0x20) a destra fino alla lunghezza del record. Nessun JCL "
           "del repository carica i file `.txt` (provenienza `nessuno` verificata), quindi il JCL non determina la "
@@ -76,7 +122,7 @@ def documento(ing, voci, dec, confronti, att, uscite):
           "del file da quelli aggiunti (colonne 3 e 4, e l'origine `riempimento` del campo).",
           "- **Terminatori**: si legge ogni riga fino a LF; un CR subito prima di LF e' parte del terminatore (CRLF). "
           "I terminatori di ogni riga sono nelle fixture (colonna 2) e nella tabella sopra.",
-          "- **EXPORT.DATA.PS**: la vista attiva si sceglie dal tipo di record come `CBIMPORT.cbl` (righe 272-284, "
+          "- **EXPORT.DATA.PS**: la vista attiva si sceglie dal tipo di record come `CBIMPORT.cbl` (righe 272-285, "
           "`analysis/data-fixtures/viste-export.tsv`); si decodificano i campi comuni e quelli della sola vista "
           "attiva. Un tipo non previsto avrebbe solo i campi comuni e un'anomalia. L'area `EXPORT-TIMESTAMP-R` "
           "ridefinisce un campo comune, decodificato intero.",
@@ -87,12 +133,12 @@ def documento(ing, voci, dec, confronti, att, uscite):
           "## Chiavi", "", "| File | Chiave | Definizione | Record | Distinti | Unica |", "| --- | --- | --- | ---: | ---: | --- |"]
     for r in uscite["chiavi.tsv"].splitlines()[1:]:
         c = r.split("\t")
-        o.append(f"| `{base_nome(c[0])}` | {c[1]} | `{c[2]}` | {c[4]} | {c[5]} | {c[6]} |")
+        o.append(riga(codice(base_nome(c[0])), c[1], codice(c[2]), c[4], c[5], c[6]))
     o += ["", "## Conteggi", "", "| File | Record dalla dimensione | Righe fisiche | Decodificati | Negli attesi |",
           "| --- | ---: | ---: | ---: | ---: |"]
     for r in uscite["conteggi.tsv"].splitlines()[1:]:
         c = r.split("\t")
-        o.append(f"| `{base_nome(c[0])}` | {c[1]} | {c[2]} | {c[3]} | {c[4]} |")
+        o.append(riga(codice(base_nome(c[0])), c[1], c[2], c[3], c[4]))
     o += ["", "## Limiti", "",
           "- Il riempimento delle righe ASCII corte e' una scelta, non un fatto del sorgente.",
           "- Le fixture descrivono i byte dei file del repository; il comportamento dei programmi su questi dati "
@@ -101,3 +147,70 @@ def documento(ing, voci, dec, confronti, att, uscite):
           "dell'export, i record con differenze ASCII/EBCDIC); gli altri record sono coperti dai controlli d'insieme "
           "(totali, chiavi, ricodifica) e dal confronto con le fixture versionate.", ""]
     return "\n".join(o)
+
+
+def _corse(b, uguale):
+    """Intervalli [a, b] (offset nel record) dei byte per cui uguale(byte) e' vero."""
+    out, i = [], 0
+    while i < len(b):
+        if uguale(b[i]):
+            j = i
+            while j + 1 < len(b) and uguale(b[j + 1]):
+                j += 1
+            out.append((i, j))
+            i = j + 1
+        else:
+            i += 1
+    return out
+
+
+def osservazioni(ing, dec):
+    """Osservazioni sui byte, ricavate dai dati: nessun valore cambia, si riportano record e offset."""
+    o = ["", "## Osservazioni sui dati", "",
+         "Ricavate dai byte a ogni rigenerazione; stati e valori dei campi restano quelli delle fixture. Offset assoluti "
+         "nel file, da 0, estremi compresi.", "", "### Byte nulli (0x00) nei campi DISPLAY", "",
+         "| File | Record | Offset assoluti | Campi | Byte non nulli del record (se i nulli sono la maggioranza) |",
+         "| --- | ---: | --- | --- | --- |"]
+    trovati = False
+    for p, fd in dec.items():
+        inizio = 0
+        for r in fd.record:
+            b = r["riga"]
+            if fd.voce["codifica"] == "EBCDIC":
+                inizio = (r["n"] - 1) * len(b)
+            # solo nei campi DISPLAY (alfanumerici e zonati): nei binari e nei packed 0x00 e' una cifra normale
+            display = bytearray(b)
+            for c in r["campi"]:
+                if c.categoria in ("comp", "comp-3"):
+                    display[c.offset:c.offset + c.lunghezza] = b"\x01" * c.lunghezza
+            nulli = _corse(bytes(display), lambda x: x == 0)
+            if nulli:
+                trovati = True
+                campi = [c.nome for c in r["campi"] if any(c.offset <= y and x < c.offset + c.lunghezza
+                                                           for x, y in nulli)]
+                nn = "-"
+                if sum(y - x + 1 for x, y in nulli) * 2 > len(b):
+                    nn = "; ".join(f"{inizio + x}-{inizio + y}: {fx.a_esa(b[x:y + 1])}"
+                                   for x, y in _corse(b, lambda x: x != 0)) or "nessuno"
+                o.append(riga(codice(base_nome(p)), r["n"], ", ".join(f"{inizio + x}-{inizio + y}" for x, y in nulli),
+                              ", ".join(campi), nn))
+            if fd.voce["codifica"] == "ASCII":
+                inizio += len(b) + {"CRLF": 2, "LF": 1}.get(r["term"], 0)
+    if not trovati:
+        o.append(riga("-", "-", "nessuno", "-", "-"))
+    o += ["", "Nei campi alfanumerici i byte nulli sono caratteri U+0000 (validi); nei numerici rendono il campo non "
+          "valido (anomalie).", "", "### Numeri di sequenza dell'export", ""]
+    for p, fd in dec.items():
+        if fd.voce["contratto"] != fx.EXPORT:
+            continue
+        prec, salti = None, []
+        for r in fd.record:
+            c = next((c for c in r["campi"] if c.nome == "EXPORT-SEQUENCE-NUM"), None)
+            v = int(c.valore) if c is not None and c.stato == "valido" else None
+            if prec is not None and v is not None and v != prec[1] + 1:
+                salti.append(f"record {prec[0]} -> {r['n']}: {prec[1]} -> {v}")
+            prec = (r["n"], v) if v is not None else None
+        o.append(f"- {codice(base_nome(p))}: " + ("; ".join(salti) if salti else "nessun salto") +
+                 ". `CBEXPORT.cbl` (righe 529-530) aggiunge 1 a ogni record scritto: il salto non e' spiegato dal "
+                 "repository.")
+    return o
