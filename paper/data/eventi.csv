@@ -514,3 +514,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T06:27:27Z,pr-66,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0
 2026-11-28T06:28:24Z,pr-66,rinvio-esecutore,fable,orologio,5 accolti; specifica aggiornata (riesecuzione)
 2026-11-28T06:28:24Z,pr-66,correzione-inizio,opus,orologio,giro unico
+2026-11-28T07:19:34Z,pr-66,correzione-fine,opus,orologio,SHA 8a52d3f; 5 rilievi dichiarati corretti con la specifica aggiornata
