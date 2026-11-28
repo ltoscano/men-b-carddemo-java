@@ -448,3 +448,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T00:26:15Z,pr-57,correzione-inizio,opus,orologio,giro unico
 2026-11-28T00:28:02Z,issue-53,codex-inizio,codex,orologio,contestazione della specifica
 2026-11-28T00:31:13Z,issue-53,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-28T00:36:16Z,pr-52,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0
+2026-11-28T00:37:05Z,pr-52,rinvio-esecutore,fable,orologio,dopo validazione 2: rilievi nuovi 1 e 2
+2026-11-28T00:37:05Z,pr-52,correzione-inizio,opus,orologio,correzione mirata
