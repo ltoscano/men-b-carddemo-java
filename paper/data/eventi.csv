@@ -536,3 +536,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T08:17:39Z,stato,risposta-consegnata,fable,orologio,conferma del riassunto con tre precisazioni
 2026-11-28T08:18:59Z,issue-11,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
 2026-11-28T08:20:25Z,stato,richiesta-autore,autore,orologio,obiezione: il metodo non scala a migliaia di moduli
+2026-11-28T08:21:19Z,stato,risposta-consegnata,fable,orologio,risposta all'obiezione sulla scala; con i numeri misurati; #11 contestata e rinviata
