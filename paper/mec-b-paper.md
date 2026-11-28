@@ -631,6 +631,77 @@ Il pianificatore ha corretto la specifica con `VARCHAR(10)` e un vincolo di lung
 
 Che cosa se ne ricava. La corrispondenza tra un tipo del sistema vecchio e un tipo del nuovo non si stabilisce per somiglianza di nome: si stabilisce elencando le operazioni che i programmi fanno su quel dato (lettura, confronto, confronto attraverso funzioni, ordinamento, scrittura di valori troppo lunghi o troppo corti) e provandole una per una sul database vero. Il pianificatore non l'ha fatto, due volte. E la stessa regola, "se la realtà smentisce la specifica, fermati", è stata disattesa e poi applicata dallo stesso Esecutore a distanza di un'ora: la differenza l'ha fatta il prompt del secondo giro, che la ripeteva con il caso concreto ("non risolvere con un divieto in documentazione").
 
+**Passo 29 — L'output di riferimento del pilota: l'atteso scritto prima smentisce l'oracle.** L'issue #55 chiedeva di eseguire `CBACT01C` nell'oracle e di fissare ciò che produce come valore atteso del futuro test di parità. La specifica imponeva un ordine: prima i valori attesi scritti a mano dal sorgente, committati; poi l'esecuzione; e se l'oracle li smentisce, fermarsi senza correggerli.
+
+È successo alla prima esecuzione. L'Esecutore aveva scritto a mano i tre file di uscita per 15 conti. Su 3.990 byte determinati ne coincidevano 3.960. I trenta diversi erano due byte per ogni record del secondo file: campi che il programma azzera con l'istruzione `INITIALIZE`. Le regole del linguaggio IBM dicono che lo zero va scritto con il segno positivo; GnuCOBOL lo scrive senza segno, e solo per quell'istruzione (con una normale assegnazione scrive il segno giusto). L'Esecutore si è fermato, con le citazioni del manuale.
+
+Qui il valore è determinato dal programma e dalle regole del linguaggio: è il riferimento a sbagliare. È il secondo errore dell'oracle sui segni dopo quello del passo 15, e quella volta bastò un'opzione di compilazione. Questa volta la decisione (voce 106) è stata: il file prodotto dall'oracle si conserva com'è; il riferimento di parità è quel file con le correzioni elencate in una tabella versionata (posizione, byte dell'oracle, byte giusto, regola IBM); ogni correzione vale solo se l'oracle scrive esattamente il byte dichiarato; il verificatore indipendente ricava il byte dalla regola, non dalla tabella. Prendere il byte dell'oracle come riferimento avrebbe promosso un errore noto a valore atteso, e un Java corretto non lo avrebbe mai soddisfatto.
+
+Il riferimento del pilota ha quindi tre strati, tutti dichiarati:
+
+| Strato | Che cosa contiene | Dove è scritto |
+| --- | --- | --- |
+| 1 | ciò che l'oracle scrive | i file fisici, versionati come osservazione |
+| 2 | meno i byte che il programma non determina (2 per record, passo 26) | `esclusioni.tsv` |
+| 3 | con corretti i byte in cui l'oracle sbaglia (2 per record) | `correzioni.tsv` |
+
+**Tabella 18 — Storia della PR #64** (durate dal registro degli eventi)
+
+| Fase | Chi | Esito |
+| --- | --- | --- |
+| Implementazione, con un fermo | Esecutore (Opus), due fasi | `needs-spec-update` alla prima esecuzione; specifica aggiornata; PR aperta |
+| Validazione 1 | Codex, 42 min 12 s | bocciata: 1 bloccante, 3 importanti; 1 rilievo respinto |
+| Correzione | Esecutore, 57 min | quattro rilievi corretti, riferimenti invariati |
+| Validazione 2 (ristretta) | Codex, 42 min 5 s | approvata, nessun rilievo nuovo |
+| Merge | Approvatore | 08:04, 3 ore e 57 minuti dopo l'affidamento |
+
+Due cose della prima validazione meritano di restare.
+
+*La conferma più forte vista fin qui.* Il Validatore ha ricostruito da zero, dal sorgente COBOL e senza usare nulla della PR, i tre file di uscita per tutti i 100 conti dei due scenari: zero differenze su 26.600 byte determinati. Ha verificato sul manuale IBM le due decisioni delicate (i byte esclusi e quelli corretti), che l'Approvatore aveva preso senza poterle controllare da sé.
+
+*Un riferimento va verificato dopo l'ultima trasformazione.* Il rilievo bloccante: due dei quattro file pubblicati come riferimento erano controllati com'erano *prima* dell'ultimo passaggio che li produce. Alterando quel passaggio, il passo pubblicava un riferimento sbagliato (un saldo da 166,00 a oltre nove miliardi) e usciva con successo. La regola che ne esce è semplice da dire e facile da violare: **si verifica ciò che si pubblica, non ciò da cui lo si è ricavato.**
+
+Un terzo fatto, minore ma istruttivo: l'Esecutore aveva dichiarato "non provocabile" un errore di lettura dopo sei tentativi falliti, e l'aveva scritto in tre punti della documentazione. Il Validatore l'ha provocato cambiando un byte. Sei tentativi falliti dimostrano che quei sei non funzionano.
+
+**Passo 30 — I conti in PostgreSQL.** In parallelo all'output di riferimento si è chiusa la parte dei dati sul lato Java: la tabella (PR #61, passo 28) e il caricamento (PR #66).
+
+**Tabella 19 — Le due PR della Wave 1 per il pilota**
+
+| PR | Issue | Validazione 1 | Validazione 2 (ristretta) | Chiusura |
+| --- | --- | ---: | ---: | --- |
+| #61 | #59 tabella `account` | 26 min 39 s, bocciata (5 rilievi) | 13 min 8 s, bocciata (1 residuo non bloccante) | mergiata alle 05:02, 2 h 19 min dopo l'affidamento |
+| #66 | #60 caricamento dei conti | 27 min 45 s, bocciata (5 rilievi) | 20 min 27 s, bocciata (2 residui non bloccanti) | mergiata alle 07:40, 2 h 38 min dopo l'affidamento |
+
+*Il quarto controllo circolare.* Nel caricatore, il test che confrontava il tracciato Java con quello COBOL ricavava l'atteso passando da un modello condiviso con il codice da verificare. Scambiando due posizioni nello stesso modo in entrambi, tutto restava verde e un conto veniva caricato con data di apertura e di scadenza invertite. Lo schema si è presentato quattro volte in due giorni (passi 25, 27, 29, 30), ogni volta in una forma diversa e ogni volta in lavori di Esecutori avvertiti del precedente. Scriverlo nel prompt non è bastato a prevenirlo; è bastato a farlo riconoscere e correggere in un giro.
+
+*Il database arrotonda senza dirlo.* PostgreSQL accetta un importo con tre decimali in una colonna che ne ha due, e lo arrotonda. Un millesimo aggiunto a ogni importo non era visto da alcun test, perché la rilettura trovava il valore già "giusto". Il controllo va fatto prima che il valore arrivi al database.
+
+*Una regola fedele e scomoda, corretta.* La specifica diceva: su una tabella non vuota il caricatore si ferma. Realizzata alla lettera, faceva fallire il secondo avvio dell'applicazione. La regola è stata cambiata (voce 111): se la tabella contiene già esattamente i conti del file il caricatore termina senza scrivere, altrimenti errore. Vale finché nessun programma modifica i conti: il limite è registrato con il suo innesco.
+
+*Un falso allarme in CI.* Sulla PR #61, che non tocca l'oracle, un controllo dell'oracle è fallito: quello sulla durata della routine `MVSWAIT`, rifatto la notte prima (passo 25). Ha misurato 610 millisecondi su una routine sana, con soglia a 500. Il job è stato rilanciato una volta ed è passato; è stata aperta una issue per rifare il controllo senza dipendere dall'orologio. Va detto senza attenuarlo: un controllo che fallisce a caso costa quanto uno che non controlla, perché abitua a rilanciare.
+
+**Passo 31 — Le specifiche del test e della traduzione: tre decisioni del pianificatore rovesciate.** Con i dati e il riferimento in arrivo, il pianificatore ha scritto e fatto contestare le ultime due specifiche del percorso: il test di parità, da scrivere prima della traduzione (#65), e la traduzione (#67).
+
+**Tabella 20 — Contestazione delle specifiche della Wave 1 e della Wave 2 per il pilota**
+
+| Specifica | Durata | Rilievi (bloccanti) |
+| --- | ---: | ---: |
+| tabella e caricamento dei conti (#59, #60) | 5 min 43 s | 12 (3) |
+| test di parità (#65) | 6 min 9 s | 11 (4) |
+| traduzione di `CBACT01C` (#67) | 3 min 46 s | 9 (1) |
+
+Trentadue rilievi in meno di sedici minuti, tutti accolti. Tre di essi hanno rovesciato decisioni che il pianificatore aveva preso e motivato:
+
+- *"Ciò che la tabella perde si maschera nel confronto"* (passo 28): no, una maschera nasconderebbe errori veri.
+- *"Il comando avvia il job con `job=READACCT`"*: in Spring Boot quel parametro non seleziona il job; ne sarebbe partito un altro, senza errore.
+- *"Sul conto con un campo non determinato il Java si ferma"*: nel sorgente è saltata una sola istruzione, e il programma prosegue; fermarsi cambierebbe effetti che l'originale determina. L'analogia con le routine dell'oracle, che si fermano sui casi non determinati, era sbagliata: quelle non possono restituire un valore, un programma tradotto deve fare tutto ciò che fa l'originale.
+
+Da quest'ultima è nata una regola unica (voce 112): dove l'originale scrive byte che nessuna sua istruzione determina, il Java scrive un byte convenzionale e lo dichiara come convenzione del progetto, non come comportamento dell'originale.
+
+Il test di parità ha poi un problema proprio, che la contestazione ha reso esplicito: come si prova un test che non può ancora passare? La risposta adottata: la parte che confronta è separata dall'avvio del programma e si prova subito, dandole uscite fedeli costruite dai file dell'oracle e le stesse alterate in una ventina di modi, tra cui il byte sbagliato dell'oracle (un Java che lo copiasse deve essere respinto). Il "fallimento atteso" si riconosce da un solo motivo, il messaggio con cui Spring Boot rifiuta un nome di job inesistente, e lascia una ricevuta che la verifica pretende.
+
+Per chi replica, due osservazioni su questo passo. La prima: a questo punto del lavoro il pianificatore sbaglia più spesso sulle decisioni che sui fatti, e gli errori hanno tutti la stessa forma, cioè un'analogia con una decisione precedente applicata a un caso che le somiglia soltanto. La seconda: la contestazione di una specifica è il passaggio con il miglior rapporto tra costo e resa di tutto il metodo. Nelle cinque contestazioni di questa notte (tabelle 15 e 20) c'è stato ogni volta almeno un rilievo bloccante, per un costo complessivo di venticinque minuti di Validatore.
+
 *(passi successivi: da compilare)*
 
 **Come si misurano i tempi.** Su richiesta dell'autore, da questo punto ogni passaggio è cronometrato nel momento in cui avviene. Un piccolo script, `paper/data/tlog.sh`, aggiunge una riga con l'ora corrente al registro `paper/data/eventi.csv`; il registro non si modifica mai, si aggiunge soltanto. Per i passi precedenti i tempi sono stati ricostruiti da fonti verificabili (date dei commit, date di creazione su GitHub, date dei file) e ogni riga dichiara la propria fonte.
@@ -654,7 +725,7 @@ Dal clone di CardDemo (08:49:22) al momento in cui i primi due Esecutori hanno c
 
 ### 5.1 Wave 0A — mappa e oracle
 
-Stato al 28 novembre 2026, ore 04:30 UTC: in corso. Il racconto, nell'ordine in cui è avvenuto, è nei passi 7-28 della sezione 5.0; qui c'è che cosa esiste, con il comando per ottenerlo. Elenco completo in `docs/strumenti-creati.md`.
+Stato al 28 novembre 2026, ore 08:10 UTC: completa per il pilota batch, il resto rinviato (sezione 2.2). Il racconto, nell'ordine in cui è avvenuto, è nei passi 7-29 della sezione 5.0; qui c'è che cosa esiste, con il comando per ottenerlo. Elenco completo in `docs/strumenti-creati.md`.
 
 | Che cosa | Comando | Dove si legge il risultato | Passi |
 | --- | --- | --- | --- |
@@ -665,9 +736,10 @@ Stato al 28 novembre 2026, ore 04:30 UTC: in corso. Il racconto, nell'ordine in 
 | Regole di codifica dei campi | `./analysis/run.sh data-codec --check` | `docs/legacy-map/data-contract/codifica.md` | 20, 21 |
 | Oracle: 12 programmi batch eseguibili | `./oracle/run.sh --all --check` | `oracle/README.md` | 15, 17, 20 |
 | File dei conti nell'oracle, caricato e riletto per due vie | `./analysis/run.sh oracle-dati --check`, `./oracle/run.sh dati --check` | `docs/legacy-map/oracle-dati.md` | 27 |
+| Output di riferimento del pilota `CBACT01C` (tre scenari) | `./oracle/run.sh golden --check` | `docs/legacy-map/golden-readacct.md` | 26, 29 |
 | Dati di esempio decodificati (22 file, 1.813 record) e loro anomalie | `./analysis/run.sh data-fixtures --check` | `docs/legacy-map/fixture.md` | 25 |
 
-Dopo la revisione del piano (sezione 2.2) la wave non si chiude più tutta insieme. Per il pilota manca l'output di riferimento (*golden*) di `CBACT01C` (in corso). Il resto (output di riferimento degli altri programmi, grafo dei flussi batch, descrizione del comportamento dei programmi a schermo) è rinviato a subito prima del programma a cui serve.
+Dopo la revisione del piano (sezione 2.2) la wave non si chiude più tutta insieme. Per il pilota batch la parte dell'oracle è completa. Il resto (output di riferimento degli altri programmi, grafo dei flussi batch, descrizione del comportamento dei programmi a schermo) è rinviato a subito prima del programma a cui serve.
 
 *(da completare alla chiusura della wave: issue, tempi aggregati, cosa si trasferisce ad altri sistemi)*
 
@@ -685,12 +757,12 @@ Stato al 27 novembre 2026, ore 21:30 UTC: quasi conclusa. Passi 8-10, 14, 15, 17
 *(da completare alla chiusura della wave)*
 
 ### 5.3 Wave 1 — dati
-Dopo la revisione del piano (sezione 2.2) la wave comincia da una sola tabella, quella dei conti, che serve al pilota. Le altre tabelle si aggiungono prima dei programmi che le usano. Stato al 28 novembre 2026, ore 04:30 UTC: tabella in revisione (PR #61, passo 28), caricamento in attesa.
+Dopo la revisione del piano (sezione 2.2) la wave comincia da una sola tabella, quella dei conti, che serve al pilota. Le altre tabelle si aggiungono prima dei programmi che le usano. Stato al 28 novembre 2026, ore 08:10 UTC: tabella dei conti e suo caricamento su `main` (PR #61 e #66, passi 28 e 30). Comandi: `./verify.sh` per i test, `./smoke.sh` per l'applicazione avviata con i conti caricati.
 
 *(da compilare)*
 
 ### 5.4 Wave 2 — pilota: una fetta batch e una online
-Pilota batch: `CBACT01C`. Pilota online: il programma di accesso `COSGN00C`, dopo quello batch. Il percorso è nella sezione 2.2.
+Pilota batch: `CBACT01C`. Pilota online: il programma di accesso `COSGN00C`, dopo quello batch. Il percorso è nella sezione 2.2. Stato al 28 novembre 2026, ore 08:10 UTC: specifiche del test di parità e della traduzione contestate (passo 31); test di parità in corso; nessuna riga di `CBACT01C` ancora tradotta.
 
 *(da compilare)*
 
@@ -722,7 +794,7 @@ Pilota batch: `CBACT01C`. Pilota online: il programma di accesso `COSGN00C`, dop
 
 ## 7. Come replicarlo sul proprio sistema
 
-Questa sezione è un elenco di lavoro: si aggiorna a ogni passo chiuso e sarà la base della versione finale. Ha due parti. La 7.1 raccoglie le lezioni, ciascuna con il fatto da cui viene e la regola che ne è nata. La 7.2 descrive il processo così com'è oggi, cioè il risultato di quelle regole messe in fila. Stato: prime ore del secondo giorno, prima di qualsiasi traduzione.
+Questa sezione è un elenco di lavoro: si aggiorna a ogni passo chiuso e sarà la base della versione finale. Ha due parti. La 7.1 raccoglie le lezioni, ciascuna con il fatto da cui viene e la regola che ne è nata. La 7.2 descrive il processo così com'è oggi, cioè il risultato di quelle regole messe in fila. Stato: mattina del secondo giorno, prima di qualsiasi traduzione.
 
 ### 7.1 Lezioni raccolte fin qui
 
@@ -741,12 +813,16 @@ Ogni riga dice che cosa è successo, in quale passo della sezione 5.0 lo si legg
 | I dati di esempio possono non esercitare ciò che conta | Nessun importo negativo nei conti di esempio (26) | Accanto allo scenario con i dati di esempio, uno con sostituzioni mirate scritte a mano |
 | Un tipo del nuovo sistema non corrisponde a uno del vecchio per somiglianza di nome | Due tipi PostgreSQL sbagliati di fila per `PIC X(n)` (28) | Si elencano le operazioni che i programmi fanno sul dato e si provano una per una sul database vero, prima di scrivere la specifica |
 | La persistenza nuova non conserva tutto: va detto dove | Lo zero con segno negativo non sopravvive a una colonna numerica (28) | Il sistema nuovo accetta solo dati in forma canonica; ciò che non lo è non entra, e la parità si dichiara per gli ingressi canonici |
+| Il riferimento può sbagliare su un valore determinato | `INITIALIZE` in GnuCOBOL non scrive il segno dello zero (29) | Atteso scritto a mano prima di eseguire; se l'oracle lo smentisce ci si ferma; il riferimento porta il byte giusto attraverso una tabella versionata di correzioni condizionate |
+| Dove l'originale non determina un byte, il nuovo sistema non lo inventa e non si ferma | Decisione "il Java si ferma" rovesciata in contestazione (31) | Byte convenzionale dichiarato; tutto ciò che il sorgente determina, compresa la prosecuzione, si riproduce |
 | Un errore noto di uno strumento non diventa un valore atteso | Un conteggio sbagliato registrato come "atteso" per far passare il controllo (11) | Se un controllo non passa si decide per iscritto se cambia la richiesta; non si aggiusta l'atteso |
 
 **Sulle specifiche**
 
 | Lezione | Il fatto (passo) | Regola che ne è nata |
 | --- | --- | --- |
+| Un test si scrive prima, e si prova prima che possa passare | Test di parità specificato con comparatore separato, uscite simulate e fallimento atteso con ricevuta (31) | Il comparatore ha test propri; "non esiste ancora" si riconosce da un solo motivo dichiarato |
+| Le decisioni per analogia vanno contestate come i fatti | Tre decisioni del pianificatore rovesciate in contestazione (28, 31) | Ogni decisione delegata passa dalla contestazione prima di entrare in una issue |
 | Far criticare la specifica prima di eseguirla conviene | Da tre a sei minuti di critica contro venti o trenta di lavoro su una specifica irrealizzabile (7, 12, 20) | Un'issue diventa `ready` solo dopo la contestazione del Validatore, con ogni rilievo accolto o respinto per iscritto |
 | Una issue, un lavoro solo | Le issue con due lavori indipendenti sono quelle con più giri; la più grande è costata quasi cinque ore (12, 16, 19) | Le issue grandi si dividono prima di affidarle |
 | Una regola generale va ripetuta con il caso concreto | Lo stesso Esecutore prima aggira un contrasto con una nota, poi si ferma (28) | Nel prompt del giro di correzione la regola "fermati" è scritta con l'esempio di ciò che non va fatto |
@@ -761,9 +837,13 @@ Ogni riga dice che cosa è successo, in quale passo della sezione 5.0 lo si legg
 | Il lavoro consegnato era quasi sempre giusto; i controlli no | Contenuti riconfermati a mano dal Validatore, difetti nei controlli (15, 22) | L'Esecutore fa un autocontrollo su quattro famiglie di difetto prima della PR. Effetto misurato: cambia il tipo di rilievi, non il numero di bocciature |
 | Chi valida deve eseguire, non solo leggere | Un difetto solo sospettato in lettura è stato dimostrato eseguendo (10) | Il Validatore lavora in un clone usa e getta, con Docker, e riesegue da sé i criteri |
 | Chi valida è di un altro fornitore e non condivide il contesto | I rilievi riguardavano ciò che l'Esecutore dava per buono (9, 11, 15) | Validatore di fornitore diverso, che riceve solo specifica, diff e test |
-| Un controllo circolare sembra un controllo | Dati decodificati confrontati con una copia letta dallo stesso codice (25); rilettura fatta con un programma dello stesso percorso del caricamento (27) | Il controllo rilegge la fonte per una via indipendente da ciò che verifica |
+| Un controllo circolare sembra un controllo | Quattro volte in due giorni: dati confrontati con una copia letta dallo stesso codice (25); rilettura con un programma dello stesso percorso (27); riferimento confrontato con l'uscita del proprio estrattore (29); tracciato confrontato passando da un modello condiviso (30) | Il controllo rilegge la fonte per una via indipendente da ciò che verifica |
 | "Bocciata" non significa "sbagliata" | Tre PR mai approvate dal Validatore, con il contenuto confermato per intero (25) | La voce di registro riporta separatamente che cosa il Validatore ha confermato e che cosa ha contestato |
 | Nessun controllo prova che un test verifichi | Richiesta di difendersi da un test svuotato o riscritto, respinta (25) | Chi implementa non modifica i test; una suite altera il codice e pretende che i test se ne accorgano |
+| Si verifica ciò che si pubblica | Riferimenti controllati prima dell'ultima trasformazione (29) | Il verificatore legge i file che vengono pubblicati, tutti e per intero |
+| "Non si riesce" non è "non si può" | Errore dichiarato non provocabile dopo sei tentativi, provocato con un byte (29) | Un'impossibilità si scrive solo con la prova; altrimenti "non riuscito, tentativi fatti: …" |
+| Un controllo che fallisce a caso costa quanto uno che non controlla | Falso allarme in CI del controllo di durata (30) | Rilancio una volta sola, registrato; issue per togliere la dipendenza dall'orologio |
+| Il database normalizza in silenzio | PostgreSQL arrotonda i decimali in eccesso (30) | Scala e forma di ogni valore si controllano prima di consegnarlo al database |
 | Un Validatore avversariale non si ferma da solo | Rilievi nuovi a ogni giro; un terzo giro costa quanto il primo (14, 16) | Al massimo due validazioni per PR. Non si chiede a uno script di difendersi da uno strumento che restituisce dati falsi ma ben formati |
 | Dopo la seconda bocciatura serve una regola, non un altro giro | Tre PR ferme al terzo giro (16) | Residuo non bloccante: merge e issue. Falso verde: correzione mirata, verificata dall'Approvatore rieseguendo il controesempio |
 | I controesempi devono essere eseguibili | Due verifiche dell'Approvatore in sette minuti l'una, rieseguendo gli script del Validatore (19) | Il prompt di validazione chiede comando, file modificato ed esito osservato |

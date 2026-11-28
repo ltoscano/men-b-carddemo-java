@@ -525,3 +525,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T08:03:39Z,pr-64,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0
 2026-11-28T08:04:18Z,pr-64,merge,fable,orologio,squash; chiude #55
 2026-11-28T08:04:20Z,issue-65,esecutore-inizio,opus,orologio,affidata; ramo issue-65-test-parita-readacct
+2026-11-28T08:06:08Z,paper,fine,fable,orologio,passi 29-31; tabelle 18-20; lezioni
