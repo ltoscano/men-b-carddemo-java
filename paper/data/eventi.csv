@@ -492,3 +492,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T04:08:31Z,paper,fine,fable,orologio,passi 27-28; tabelle 16-17
 2026-11-28T04:08:45Z,paper,risposta-consegnata,fable,orologio,stato dopo il merge della PR #58
 2026-11-28T04:37:30Z,issue-55,needs-spec-update,opus,orologio,INITIALIZE: l'oracle scrive X'30' invece di X'7B'; specifica aggiornata (correzioni dell'oracle)
+2026-11-28T04:37:49Z,issue-55,esecutore-ripresa,opus,orologio,specifica aggiornata; prosegue fino alla PR
