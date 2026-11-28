@@ -503,3 +503,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T05:03:32Z,paper,risposta-consegnata,fable,orologio,PR #61 mergiata; #60 affidata
 2026-11-28T05:40:04Z,issue-55,esecutore-fine,opus,orologio,PR #64 aperta; SHA 5f21326; criteri locali dichiarati verdi; CI della PR in attesa
 2026-11-28T05:40:16Z,pr-64,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-28T05:41:57Z,wave2-test,codex-inizio,codex,orologio,contestazione della specifica
+2026-11-28T05:48:06Z,wave2-test,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
