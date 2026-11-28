@@ -26,10 +26,13 @@
 #   scala-sbagliata            binario valido con valore uguale e scala diversa
 #   passaggio-double           una conversione che passa per Math.pow (double), invisibile alle regole sul testo
 #   conversione-longvalue      BigInteger.valueOf(x.longValue()) nella codifica (conversione con perdita)
+#   restringimento-l2i         BigInteger.valueOf((int) x.longValueExact()): chiamata esatta, poi L2I
+#   conversione-sottoclasse    longValue() ereditato da una sottoclasse di BigInteger del modulo
 #   picture-p                  la PICTURE normalizzata togliendo le P (forma che la colla non ammette)
 #   picture-quattro-cifre      conteggi della PICTURE limitati a quattro cifre (la colla non ha limite)
 #   double-pacchetto-fratello  Math.pow in una classe di un altro pacchetto del modulo, chiamata dal codec
 #   vettore-ripetuto           il primo vettore verificato 375 volte: Maven verde, rapporto respinto
+#   vettore-altri-dati         ogni caso verifica i dati del primo vettore: Maven verde, rapporto respinto
 #   lettore-salta              il lettore salta le righe con colonne sbagliate, e la vista ne ha una
 #   lettore-salta-rapporto     il lettore salta le righe che iniziano con '!', e la vista ne ha una:
 #                              Maven verde, rapporto respinto (376 vettori nel file)
@@ -280,22 +283,30 @@ HOST_IDS=""
 MUTA_N=0
 # muta_java <comando> <argomenti...>: i percorsi sono gia' quelli del container (/w = repository,
 # /m = cartella di lavoro). Limite di tempo; container con nome proprio, rimosso anche se il limite scade.
-muta_java() {
-  local rc=0 name
+MUTA_RC=0
+# muta_run: come muta_java ma non termina lo script; lascia l'esito in MUTA_RC (0 solo se riuscito).
+muta_run() {
+  local name
+  MUTA_RC=0
   MUTA_N=$((MUTA_N + 1))
   name="menb-codec-muta-$$-${MUTA_N}"
   limited "${SHORT_TIMEOUT}" docker run --rm --name "${name}" --user "${HOST_IDS}" -e HOME=/tmp \
-    -v "${ROOT}:/w" -v "${WORK}:/m" -w /w "${MUTA_IMAGE}" java /m/Muta.java "$@" </dev/null || rc=$?
-  if [ "${rc}" -ne 0 ]; then
+    -v "${ROOT}:/w" -v "${WORK}:/m" -w /w "${MUTA_IMAGE}" java /m/Muta.java "$@" </dev/null || MUTA_RC=$?
+  if [ "${MUTA_RC}" -ne 0 ]; then
     limited "${SHORT_TIMEOUT}" docker rm -f "${name}" </dev/null >/dev/null 2>&1 || true
-    case "${rc}" in
+    case "${MUTA_RC}" in
       124) echo "ERRORE: programma di mutazione ($1) oltre il limite di ${SHORT_TIMEOUT}s" >&2 ;;
-      3) echo "ERRORE: programma di mutazione ($1): bersaglio assente, mutazione non applicabile" >&2 ;;
+      3) echo "ERRORE: programma di mutazione ($1): bersaglio assente o gia' presente, mutazione non applicabile" >&2 ;;
       4) echo "ERRORE: programma di mutazione ($1): il file non cambia, mutazione non applicata" >&2 ;;
-      *) echo "ERRORE: programma di mutazione ($1) fallito con codice ${rc}" >&2 ;;
+      *) echo "ERRORE: programma di mutazione ($1) fallito con codice ${MUTA_RC}" >&2 ;;
     esac
-    exit 1
   fi
+  return 0
+}
+
+muta_java() {
+  muta_run "$@"
+  [ "${MUTA_RC}" -eq 0 ] || exit 1
 }
 
 # muta <file-relativo> <cercato> <sostituto>: sostituisce la prima occorrenza letterale; fallisce se
@@ -307,14 +318,24 @@ muta() {
 }
 
 # crea <file-relativo> <testo>: file nuovo (con la sua cartella, se manca), rimosso al ripristino.
+# Il file (e la cartella) devono mancare prima: un file o una cartella che esistevano gia' non sono
+# mai registrati, quindi il ripristino non li tocca. Si registra solo cio' che questa chiamata ha
+# creato davvero, anche se il programma di mutazione fallisce dopo aver scritto il file.
 crea() {
-  local d="${ROOT}/${1%/*}"
-  if [ ! -d "${d}" ]; then
-    CREATED_DIRS+=("${d}")
-    limited "${SHORT_TIMEOUT}" mkdir "${d}" </dev/null || { echo "ERRORE: creazione di ${d} fallita" >&2; exit 1; }
+  local d="${ROOT}/${1%/*}" f="${ROOT}/$1"
+  if [ -e "${f}" ] || [ -L "${f}" ]; then
+    echo "ERRORE: ${f} esiste gia': non si crea e non si registra per la rimozione" >&2
+    exit 1
   fi
-  CREATED+=("${ROOT}/$1")
-  muta_java crea "/w/$1" "$2"
+  if [ ! -d "${d}" ]; then
+    limited "${SHORT_TIMEOUT}" mkdir "${d}" </dev/null || { echo "ERRORE: creazione di ${d} fallita" >&2; exit 1; }
+    CREATED_DIRS+=("${d}")
+  fi
+  muta_run crea "/w/$1" "$2"
+  if [ -e "${f}" ]; then
+    CREATED+=("${f}")
+  fi
+  [ "${MUTA_RC}" -eq 0 ] || exit 1
 }
 
 # ---- esecuzione di ./verify.sh --------------------------------------------------------------
@@ -526,6 +547,35 @@ caso_java conversione-longvalue "${CODEC}" \
   "BigInteger n = scaled.unscaledValue();" \
   "BigInteger n = BigInteger.valueOf(scaled.unscaledValue().longValue());" \
   "<<< FAILURE! -- in io.github.ltoscano.carddemo.domain.NoFloatingPointBytecodeTest" "con perdita java/math/BigInteger.longValue()J"
+caso_java restringimento-l2i "${CODEC}" \
+  "BigInteger n = scaled.unscaledValue();" \
+  "BigInteger n = BigInteger.valueOf((int) scaled.unscaledValue().longValueExact());" \
+  "<<< FAILURE! -- in io.github.ltoscano.carddemo.domain.NoFloatingPointBytecodeTest" \
+  "GnuCobolFieldCodec.unscaled(Lio/github/ltoscano/carddemo/domain/FieldPicture;Ljava/math/BigDecimal;)Ljava/math/BigInteger;: restringimento L2I"
+
+# longValue() ereditato da una sottoclasse di BigInteger del modulo: l'owner nel bytecode e' la sottoclasse
+if selezionato conversione-sottoclasse; then
+  crea "carddemo-domain/src/main/java/io/github/ltoscano/carddemo/precision/Wide.java" 'package io.github.ltoscano.carddemo.precision;
+
+/** Prova negativa di regressioni-codec.sh: sottoclasse di BigInteger, longValue() ereditato. */
+public final class Wide extends java.math.BigInteger {
+    private static final long serialVersionUID = 1L;
+
+    /** @param v cifre decimali */
+    public Wide(String v) {
+        super(v);
+    }
+}
+'
+  muta "${CODEC}" "BigInteger n = scaled.unscaledValue();" \
+    "BigInteger n = BigInteger.valueOf(new io.github.ltoscano.carddemo.precision.Wide(scaled.unscaledValue().toString()).longValue());"
+  run_verify conversione-sottoclasse
+  expect conversione-sottoclasse ko "<<< FAILURE! -- in io.github.ltoscano.carddemo.domain.NoFloatingPointBytecodeTest" \
+    "con perdita io/github/ltoscano/carddemo/precision/Wide.longValue()J" \
+    "ERRORE: mvn verify fallito" "== VERIFICA FALLITA"
+  ripristina
+fi
+
 caso_java picture-p "${PICTURE}" \
   "Matcher m = NUMERIC.matcher(picture);" \
   "Matcher m = NUMERIC.matcher(picture.replace(\"P\", \"\"));" \
@@ -570,8 +620,15 @@ caso_rapporto_java() { # caso file cercato sostituto messaggio...
   ripristina
 }
 caso_rapporto_java vettore-ripetuto "${VECTORS_TEST}" \
-  "return rows.stream().map(r -> dynamicTest(name(r), () -> {" \
-  "return java.util.Collections.nCopies(rows.size(), rows.get(0)).stream().map(r -> dynamicTest(name(r), () -> {" \
+  "return rows.stream().map(r -> dynamicTest(name(r), () -> check(r)));" \
+  "return java.util.Collections.nCopies(rows.size(), rows.get(0)).stream().map(r -> dynamicTest(name(r), () -> check(r)));" \
+  "testcase oracleGnuCobolVectors()[2]: vettore verificato [oracle-gnucobol.tsv:20:"
+# il mutante della validazione 2 nella forma che resta esprimibile: ogni caso, con il nome e
+# l'indice della sua riga, verifica i dati del primo vettore. Row non si costruisce piu' da testo e
+# colonne separati; il marcatore lo scrive check() per la riga che ha appena verificato.
+caso_rapporto_java vettore-altri-dati "${VECTORS_TEST}" \
+  "dynamicTest(name(r), () -> check(r))" \
+  "dynamicTest(name(r), () -> check(rows.get(0)))" \
   "testcase oracleGnuCobolVectors()[2]: vettore verificato [oracle-gnucobol.tsv:20:"
 
 # ---- mutazioni del file dei vettori (vista temporanea) --------------------------------------
@@ -593,7 +650,7 @@ fi
 # lettore che salta in silenzio le righe con le colonne sbagliate, e una tale riga nella vista: lo
 # vede il test diretto della grammatica (VectorFileTest)
 if selezionato lettore-salta; then
-  muta "${READER}" "if (fields.size() != header.length) {" "if (fields.size() != header.length) { continue; } if (false) {"
+  muta "${READER}" "if (fields == null) {" "if (fields == null) { continue; } if (false) {"
   muta_java aggiungi-riga "/w/analysis/data-codec/vettori/oracle-gnucobol.tsv" /m/vista-lettore-salta.tsv "riga incomprensibile"
   caso_vista lettore-salta "${WORK}/vista-lettore-salta.tsv" "<<< FAILURE! -- in io.github.ltoscano.carddemo.domain.VectorFileTest" \
     "righeSconosciuteRifiutateNonSaltate"

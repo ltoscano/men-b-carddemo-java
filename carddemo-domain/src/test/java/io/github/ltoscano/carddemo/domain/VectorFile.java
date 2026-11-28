@@ -11,9 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HexFormat;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,18 +24,46 @@ import java.util.regex.Pattern;
 final class VectorFile {
 
     /**
-     * One data line: file name, line number (from 1), raw text and the columns by header name.
-     * {@link #id()} identifies the vector: {@code <file>:<line>:<first 16 hex digits of the SHA-256
-     * of the raw line, UTF-8>}. {@code quality/RapportoSurefire.java} computes the same identifiers
-     * from the file and requires each of them, in order, in the report of the run.
+     * One data line: file name, line number (from 1) and raw text. There is a single
+     * representation: the columns are always derived from the raw text, the same text the
+     * identifier is computed on, and only {@link VectorFile#read} can build a row (private
+     * constructor). {@link #id()} identifies the vector: {@code <file>:<line>:<first 16 hex digits
+     * of the SHA-256 of the raw line, UTF-8>}. {@code quality/RapportoSurefire.java} computes the
+     * same identifiers from the file and requires each of them, in order, in the report of the run.
      */
-    record Row(String file, int line, String raw, Map<String, String> columns) {
+    static final class Row {
+        private final String file;
+        private final int line;
+        private final String raw;
+        private final List<String> header;
+
+        private Row(String file, int line, String raw, String[] header) {
+            this.file = file;
+            this.line = line;
+            this.raw = raw;
+            this.header = List.of(header);
+        }
+
+        String file() {
+            return file;
+        }
+
+        int line() {
+            return line;
+        }
+
+        String raw() {
+            return raw;
+        }
+
+        /** The value of a column, split from the raw text (nine columns out of ten: empty note). */
         String get(String column) {
-            String v = columns.get(column);
-            if (v == null) {
-                throw new IllegalStateException("riga " + line + ": colonna assente " + column);
+            int c = header.indexOf(column);
+            List<String> fields = splitFields(raw, header.size(), "nota".equals(header.get(header.size() - 1)));
+            if (c < 0 || fields == null) {
+                throw new IllegalStateException("riga " + line + ": colonna assente o riga malformata: " + column);
             }
-            return v;
+            return fields.get(c);
         }
 
         String id() {
@@ -75,6 +101,15 @@ final class VectorFile {
     private VectorFile() {
     }
 
+    /** The columns of a raw line ({@code leggi_tsv}), or null if their number is wrong. */
+    static List<String> splitFields(String raw, int columns, boolean optionalNote) {
+        List<String> fields = new ArrayList<>(Arrays.asList(raw.split("\t", -1)));
+        if (fields.size() == columns - 1 && optionalNote) {
+            fields.add("");
+        }
+        return fields.size() == columns ? fields : null;
+    }
+
     /** {@code leggi_tsv}: header, then rows; blank lines and lines starting with '#' are ignored. */
     static List<Row> read(Path path) throws IOException {
         if (!Files.isRegularFile(path)) {
@@ -92,19 +127,12 @@ final class VectorFile {
                 header = line.split("\t", -1);
                 continue;
             }
-            List<String> fields = new ArrayList<>(Arrays.asList(line.split("\t", -1)));
-            if (fields.size() == header.length - 1 && "nota".equals(header[header.length - 1])) {
-                fields.add("");
+            List<String> fields = splitFields(line, header.length, "nota".equals(header[header.length - 1]));
+            if (fields == null) {
+                throw new IOException(path + ": riga " + (i + 1) + ": " + line.split("\t", -1).length
+                        + " colonne invece di " + header.length);
             }
-            if (fields.size() != header.length) {
-                throw new IOException(path + ": riga " + (i + 1) + ": " + fields.size() + " colonne invece di "
-                        + header.length);
-            }
-            Map<String, String> columns = new LinkedHashMap<>();
-            for (int c = 0; c < header.length; c++) {
-                columns.put(header[c], fields.get(c));
-            }
-            rows.add(new Row(path.getFileName().toString(), i + 1, line, columns));
+            rows.add(new Row(path.getFileName().toString(), i + 1, line, header));
         }
         if (header == null) {
             throw new IOException(path + ": file vuoto");

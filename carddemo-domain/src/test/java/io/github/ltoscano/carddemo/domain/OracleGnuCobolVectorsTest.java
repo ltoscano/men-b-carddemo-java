@@ -68,16 +68,14 @@ class OracleGnuCobolVectorsTest {
         assertEquals(EXPECTED_ENCODE, encode, "vettori di codifica");
         assertEquals(EXPECTED_ENCODE_OK, encodeOk, "codifiche che riescono");
         assertEquals(EXPECTED_ENCODE_REJECTED, rejected, "codifiche rifiutate");
-        return rows.stream().map(r -> dynamicTest(name(r), () -> {
-            check(r);
-            verified(r);
-        }));
+        return rows.stream().map(r -> dynamicTest(name(r), () -> check(r)));
     }
 
     /**
-     * Written on standard output only after every check of the vector has passed; surefire keeps it
-     * in the report, inside the case, and {@code verify.sh} requires one per vector of the file, in
-     * file order ({@code quality/RapportoSurefire.java}).
+     * Written on standard output only after every check of the vector has passed, by the check
+     * itself and for the row it has just checked: the identifier follows the data that were
+     * verified. Surefire keeps it in the report, inside the case, and {@code verify.sh} requires one
+     * per vector of the file, in file order ({@code quality/RapportoSurefire.java}).
      */
     private static void verified(VectorFile.Row r) {
         System.out.println(VERIFIED + r.id());
@@ -96,20 +94,22 @@ class OracleGnuCobolVectorsTest {
             }
         }
         return rows.stream().map(r -> dynamicTest(r.id() + " comp " + r.get("variante") + " " + r.get("ingresso"),
-                () -> {
-                    byte[] input = VectorFile.hex(r.get("ingresso"));
-                    assertTrue(inMainFile.contains(r.get("variante") + "|" + Arrays.toString(input)),
-                            "caso assente tra i vettori oltre-picture di oracle-gnucobol.tsv");
-                    FieldPicture p = FieldPicture.of(FieldCategory.COMP, r.get("variante"));
-                    for (DecodedField d : decodedTwice(p, input)) {
-                        assertEquals(DecodeStatus.BEYOND_PICTURE, d.status(), "stato");
-                        assertEquals(Optional.empty(), d.number(), "nessun valore oltre la PICTURE");
-                        assertEquals(Optional.empty(), d.text(), "nessun testo");
-                        assertArrayEquals(input, d.originalBytes(), "byte originali");
-                        assertArrayEquals(input, GnuCobolFieldCodec.reencode(d), "ricodifica conservativa");
-                    }
-                    verified(r);
-                }));
+                () -> checkBeyond(r, inMainFile)));
+    }
+
+    private static void checkBeyond(VectorFile.Row r, Set<String> inMainFile) {
+        byte[] input = VectorFile.hex(r.get("ingresso"));
+        assertTrue(inMainFile.contains(r.get("variante") + "|" + Arrays.toString(input)),
+                "caso assente tra i vettori oltre-picture di oracle-gnucobol.tsv");
+        FieldPicture p = FieldPicture.of(FieldCategory.COMP, r.get("variante"));
+        for (DecodedField d : decodedTwice(p, input)) {
+            assertEquals(DecodeStatus.BEYOND_PICTURE, d.status(), "stato");
+            assertEquals(Optional.empty(), d.number(), "nessun valore oltre la PICTURE");
+            assertEquals(Optional.empty(), d.text(), "nessun testo");
+            assertArrayEquals(input, d.originalBytes(), "byte originali");
+            assertArrayEquals(input, GnuCobolFieldCodec.reencode(d), "ricodifica conservativa");
+        }
+        verified(r);
     }
 
     private static String name(VectorFile.Row r) {
@@ -167,6 +167,7 @@ class OracleGnuCobolVectorsTest {
             case "codifica" -> checkEncode(r, p, alpha);
             default -> fail("operazione sconosciuta: " + r.get("operazione"));
         }
+        verified(r);
     }
 
     private static void checkDecode(VectorFile.Row r, FieldPicture p, boolean alpha) {

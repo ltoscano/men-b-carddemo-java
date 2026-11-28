@@ -159,6 +159,13 @@ class GnuCobolFieldCodecTest {
         FieldPicture u20 = FieldPicture.of(FieldCategory.DISPLAY_UNSIGNED, "9(20)");
         assertArrayEquals(ascii("18446744073709551617"),
                 GnuCobolFieldCodec.encode(u20, new BigDecimal("18446744073709551617")), "9(20) oltre 2^64: nessuna perdita");
+        // counterexamples of the second validation: through longValue() of a subclass, or (int) after
+        // longValueExact(), both became 000000000000000000001; the glue writes these bytes
+        FieldPicture u21 = FieldPicture.of(FieldCategory.DISPLAY_UNSIGNED, "9(21)");
+        assertArrayEquals(ascii("018446744073709551617"),
+                GnuCobolFieldCodec.encode(u21, new BigDecimal("18446744073709551617")), "9(21) 2^64 + 1");
+        assertArrayEquals(ascii("000000000004294967297"),
+                GnuCobolFieldCodec.encode(u21, new BigDecimal("4294967297")), "9(21) 2^32 + 1");
 
         FieldPicture s27 = FieldPicture.of(FieldCategory.DISPLAY_SIGNED, "S9(1)V9(27)");
         BigDecimal tiny = new BigDecimal("-1E-27");
