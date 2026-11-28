@@ -1,0 +1,5 @@
+# Record per l'oracle (issue #53): contratti di #3, codec di #23, adattatore di #43, fixture di #5 (lette, non rigenerate).
+data-contract
+data-codec
+data-sentinelle
+data-fixtures
