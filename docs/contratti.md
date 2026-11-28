@@ -272,7 +272,7 @@ Fissato dall'issue #65 insieme al test di parità (`carddemo-parity`, `ReadacctP
 | `ARRYFILE` | record fissi di 110 byte, senza terminatori |
 | `VBRCFILE` | record variabili con descrittore di record di z/OS (RDW), senza descrittore di blocco: 2 byte di lunghezza del record **compreso il descrittore** (byte più significativo per primo) e 2 byte `00`. Per un conto: `00 10 00 00` + 12 byte, `00 2B 00 00` + 39 byte. Lunghezza ammessa 5-84 (`LRECL=84`). Decisione delegata di #65: formato del sistema di origine, non quello di GnuCOBOL (`00 0C 00 00`, `00 27 00 00`) |
 | Console | standard output: solo le righe dei `DISPLAY` dell'originale, una per `DISPLAY`, nell'ordine dell'originale, spazi finali conservati, ognuna terminata da LF (nessun CR); nessun banner, nessuna riga di log (log su standard error o su file). 2 + 15 × N righe |
-| Codice di uscita | 0 a fine regolare. Da #67: 99 alla fine anomala del programma (`9999-ABEND-PROGRAM`, ogni ramo d'errore di `docs/programmi/CBACT01C.md`), dopo le righe letterali del ramo e la cancellazione dei tre file di uscita; 1 per un errore di avvio dell'applicazione prima del job (database irraggiungibile all'avvio, parametri `OUTFILE`/`ARRYFILE`/`VBRCFILE` mancanti o vuoti) |
+| Codice di uscita | 0 a fine regolare. Da #67: 99 alla fine anomala del programma (`9999-ABEND-PROGRAM`, ogni ramo d'errore di `docs/programmi/CBACT01C.md`), dopo le righe letterali del ramo e la cancellazione dei tre file di uscita; 1 per un errore di avvio dell'applicazione prima del job (database irraggiungibile all'avvio, parametri `OUTFILE`/`ARRYFILE`/`VBRCFILE` mancanti o vuoti); 5 per un job fallito per un guasto che il programma non intercetta (un `Error` della JVM), mai 0 |
 
 ### Che cosa confronta il test
 

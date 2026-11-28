@@ -58,163 +58,282 @@ Tutte nel modulo `carddemo-batch`, pacchetto `io.github.ltoscano.carddemo.batch.
 
 ## `PROCEDURE DIVISION`, paragrafo per paragrafo
 
+Una riga per istruzione (rilievo 5 della validazione 1 della PR #70): un'istruzione scritta su più righe del sorgente ha l'intervallo delle sue righe; un `MOVE` con due riceventi ha una riga per ricevente. "Flusso" indica un'istruzione che decide soltanto quale istruzione viene dopo, senza effetti osservabili propri: nel Java è il flusso di controllo del metodo indicato. Le istruzioni `EXIT` di fine paragrafo (righe 198, 213, 240, 251, 261, 274, 285, 300, 315, 333, 350, 368, 386, 404, 426) non fanno nulla e corrispondono alla fine del metodo.
+
 ### Corpo principale (righe 140-160) → `Cbact01c.esegui()`
 
 | Riga | Istruzione | Java | Esito |
 | --- | --- | --- | --- |
-| 141 | `DISPLAY 'START OF EXECUTION OF PROGRAM CBACT01C'` | `display(START)` dopo `predel()` | tradotto, testo identico |
+| 141 | `DISPLAY 'START OF EXECUTION OF PROGRAM CBACT01C'` | `display(START)`, dopo `predel()` | tradotto, testo identico |
 | 142 | `PERFORM 0000-ACCTFILE-OPEN` | `p0000AcctfileOpen()` | tradotto |
 | 143 | `PERFORM 2000-OUTFILE-OPEN` | `p2000OutfileOpen()` | tradotto |
 | 144 | `PERFORM 3000-ARRFILE-OPEN` | `p3000ArrfileOpen()` | tradotto |
 | 145 | `PERFORM 4000-VBRFILE-OPEN` | `p4000VbrfileOpen()` | tradotto |
-| 147-154 | `PERFORM UNTIL END-OF-FILE = 'Y'` … `PERFORM 1000-ACCTFILE-GET-NEXT` | ciclo su `p1000AcctfileGetNext()`, che restituisce il conto letto o nessuno a fine file | tradotto |
-| 151 | `DISPLAY ACCOUNT-RECORD` (gruppo di 300 byte), **dopo** tutto il lavoro del conto fatto dentro 1000 | `display(Cvact01y.ricomponi(conto))` dopo il ritorno di `p1000AcctfileGetNext()` | tradotto: una riga con i 300 byte (sezione "Console") |
+| 147 | `PERFORM UNTIL END-OF-FILE = 'Y'` | ciclo `while (accountRecord.isPresent())` | flusso, tradotto |
+| 148 | `IF END-OF-FILE = 'N'` | (sempre vero dentro il ciclo) | flusso, tradotto |
+| 149 | `PERFORM 1000-ACCTFILE-GET-NEXT` | `p1000AcctfileGetNext()`, che restituisce il record letto o nessuno a fine file | tradotto |
+| 150 | `IF END-OF-FILE = 'N'` | `accountRecord.isPresent()` | flusso, tradotto |
+| 151 | `DISPLAY ACCOUNT-RECORD` (gruppo di 300 byte), **dopo** tutto il lavoro del conto fatto dentro 1000 | `display(accountRecord.get())` dopo il ritorno di `p1000AcctfileGetNext()` | tradotto: una riga con i 300 byte (sezione "Console") |
 | 156 | `PERFORM 9000-ACCTFILE-CLOSE` | `p9000AcctfileClose()` | tradotto |
 | 158 | `DISPLAY 'END OF EXECUTION OF PROGRAM CBACT01C'` | `display(END)` | tradotto, testo identico |
-| 160 | `GOBACK`: fine dell'unità di esecuzione; i tre file di uscita, mai chiusi dal programma, si chiudono implicitamente | `chiudiUscite()` dopo la riga `END OF EXECUTION…`: svuotamento e chiusura dei tre file | tradotto (sezione "Apertura, chiusura, fine") |
+| 160 | `GOBACK`: fine dell'unità di esecuzione; i tre file di uscita, mai chiusi dal programma, si chiudono implicitamente | `svuotaConsole()`, poi `chiudiUscite()`: svuotamento e chiusura dei tre file dopo la riga `END OF EXECUTION…` | tradotto (sezione "Apertura, chiusura, fine") |
 
 ### `1000-ACCTFILE-GET-NEXT` (righe 165-198) → `p1000AcctfileGetNext()`
 
 | Riga | Istruzione | Java | Esito |
 | --- | --- | --- | --- |
-| 166 | `READ ACCTFILE-FILE INTO ACCOUNT-RECORD` | `CursoreConti.prossimo()`: avanza il cursore della lettura ordinata e costruisce `RecordConto` dalla riga | tradotto |
-| 167 | `IF ACCTFILE-STATUS = '00'` | `prossimo()` restituisce un conto | tradotto come flusso |
+| 166 | `READ ACCTFILE-FILE INTO ACCOUNT-RECORD` | `acctfile.prossimo()` (avanza il cursore della lettura ordinata e costruisce `RecordConto`), poi `Cvact01y.ricomponi(conto)` (i 300 byte di `ACCOUNT-RECORD`) | tradotto |
+| 167 | `IF ACCTFILE-STATUS = '00'` | `prossimo()` restituisce un conto | flusso, tradotto |
 | 168 | `MOVE 0 TO APPL-RESULT` | — | flusso, nessun effetto osservabile |
 | 169 | `INITIALIZE ARR-ARRAY-REC` | `initializeArrArrayRec()`: record di 110 byte con `ARR-ACCT-ID` a zeri, ogni `ARR-ACCT-CURR-BAL` a zero con segno (`30`×11 `7B`, `encode` di `0.00` in `S9(10)V9(2)`), ogni `ARR-ACCT-CURR-CYC-DEBIT` a zero `COMP-3` (`00`×6 `0C`), `ARR-FILLER` a spazi | tradotto. Le occorrenze 4 e 5 e `ARR-FILLER` restano così (byte 69-110); i byte 80 e 99 valgono `7B` secondo le regole del linguaggio, non `30` come scrive l'oracle (#55, `correzioni.tsv`) |
-| 170 | `PERFORM 1100-DISPLAY-ACCT-RECORD` | `p1100DisplayAcctRecord(conto)` | tradotto |
+| 170 | `PERFORM 1100-DISPLAY-ACCT-RECORD` | `p1100DisplayAcctRecord(accountRecord)` | tradotto |
 | 171 | `PERFORM 1300-POPUL-ACCT-RECORD` | `p1300PopulAcctRecord(conto)` | tradotto |
-| 172 | `PERFORM 1350-WRITE-ACCT-RECORD` | `p1350WriteAcctRecord(record)` | tradotto |
-| 173 | `PERFORM 1400-POPUL-ARRAY-RECORD` | `p1400PopulArrayRecord(conto, record)` | tradotto |
-| 174 | `PERFORM 1450-WRITE-ARRY-RECORD` | `p1450WriteArryRecord(record)` | tradotto |
-| 175 | `INITIALIZE VBRC-REC1` | `p1500PopulVbrcRecord` crea `VBRC-REC1` nuovo; i suoi due campi sono poi valorizzati per intero (righe 277-279) | tradotto: nessun byte dell'inizializzazione arriva in uscita |
-| 176 | `PERFORM 1500-POPUL-VBRC-RECORD` | `p1500PopulVbrcRecord(conto)` | tradotto |
-| 177 | `PERFORM 1550-WRITE-VB1-RECORD` | `p1550WriteVb1Record(rec1)` | tradotto |
-| 178 | `PERFORM 1575-WRITE-VB2-RECORD` | `p1575WriteVb2Record(rec2)` | tradotto |
-| 180-181 | stato `10` → `APPL-RESULT` 16 → `END-OF-FILE = 'Y'` (righe 189-190) | `prossimo()` restituisce nessun conto: fine del ciclo | tradotto |
-| 183 | ogni altro stato → `APPL-RESULT` 12 | `prossimo()` solleva un'eccezione | tradotto |
-| 192 | `DISPLAY 'ERROR READING ACCOUNT FILE'` | `fineAnomala(FASE_LETTURA, …)` scrive la riga | tradotto, testo identico |
-| 193-194 | `MOVE ACCTFILE-STATUS TO IO-STATUS`, `PERFORM 9910-DISPLAY-IO-STATUS` | — | **escluso**: nessuno stato di file (sezione "Errori") |
-| 195 | `PERFORM 9999-ABEND-PROGRAM` | `fineAnomala(...)` | tradotto |
+| 172 | `PERFORM 1350-WRITE-ACCT-RECORD` | `p1350WriteAcctRecord(outAcctRec)` | tradotto |
+| 173 | `PERFORM 1400-POPUL-ARRAY-RECORD` | `p1400PopulArrayRecord(conto, arrArrayRec)` | tradotto |
+| 174 | `PERFORM 1450-WRITE-ARRY-RECORD` | `p1450WriteArryRecord(arrArrayRec)` | tradotto |
+| 175 | `INITIALIZE VBRC-REC1` | `new byte[12]` per `VBRC-REC1`; i suoi due campi sono poi valorizzati per intero (righe 277-279) | tradotto: nessun byte dell'inizializzazione arriva in uscita |
+| 176 | `PERFORM 1500-POPUL-VBRC-RECORD` | `p1500PopulVbrcRecord(conto, vbrcRec1, vbrcRec2)` | tradotto |
+| 177 | `PERFORM 1550-WRITE-VB1-RECORD` | `p1550WriteVb1Record(vbrcRec1)` | tradotto |
+| 178 | `PERFORM 1575-WRITE-VB2-RECORD` | `p1575WriteVb2Record(vbrcRec2)` | tradotto |
+| 180 | `IF ACCTFILE-STATUS = '10'` | `prossimo()` restituisce nessun conto | flusso, tradotto |
+| 181 | `MOVE 16 TO APPL-RESULT` | `return Optional.empty()` | flusso, tradotto |
+| 183 | `MOVE 12 TO APPL-RESULT` | `prossimo()` (o la ricomposizione del record) solleva un'eccezione | flusso, tradotto |
+| 186 | `IF APPL-AOK` | proseguimento dopo il `try` | flusso, tradotto |
+| 187 | `CONTINUE` | — | flusso |
+| 189 | `IF APPL-EOF` | `letto.isEmpty()` | flusso, tradotto |
+| 190 | `MOVE 'Y' TO END-OF-FILE` | `return Optional.empty()`: il ciclo di `esegui()` termina | tradotto |
+| 192 | `DISPLAY 'ERROR READING ACCOUNT FILE'` | `fineAnomala(FASE_LETTURA, e, ERRORE_LETTURA)` scrive la riga | tradotto, testo identico |
+| 193 | `MOVE ACCTFILE-STATUS TO IO-STATUS` | — | **escluso**: nessuno stato di file (sezione "Errori") |
+| 194 | `PERFORM 9910-DISPLAY-IO-STATUS` | — | **escluso**: nessuna riga `FILE STATUS IS:` (sezione "Errori") |
+| 195 | `PERFORM 9999-ABEND-PROGRAM` | `fineAnomala(...)`, poi `throw` | tradotto |
 
-### `1100-DISPLAY-ACCT-RECORD` (righe 200-213) → `p1100DisplayAcctRecord(conto)`
+### `1100-DISPLAY-ACCT-RECORD` (righe 200-213) → `p1100DisplayAcctRecord(accountRecord)`
 
-Ogni `DISPLAY` è una riga: letterale e poi i byte del campo come sono nel record (sezione "Console").
+Ogni `DISPLAY` è una riga: letterale e poi i byte del campo come sono nel record (`Cvact01y.campo(...)`; sezione "Console").
 
-| Riga | Istruzione | Riga di console prodotta | Esito |
+| Riga | Istruzione | Java: riga di console prodotta | Esito |
 | --- | --- | --- | --- |
-| 201 | `DISPLAY 'ACCT-ID                 :' ACCT-ID` | letterale + 11 cifre di `ACCT-ID` (`9(11)`) | tradotto |
-| 202 | `DISPLAY 'ACCT-ACTIVE-STATUS      :' ACCT-ACTIVE-STATUS` | letterale + 1 carattere | tradotto |
-| 203 | `DISPLAY 'ACCT-CURR-BAL           :' ACCT-CURR-BAL` | letterale + 12 byte del campo `S9(10)V99` (segno sovrapposto all'ultima cifra) | tradotto, forma dichiarata (non confrontata dal test di parità) |
-| 204 | `DISPLAY 'ACCT-CREDIT-LIMIT       :' ACCT-CREDIT-LIMIT` | come 203 | tradotto, forma dichiarata |
-| 205 | `DISPLAY 'ACCT-CASH-CREDIT-LIMIT  :' ACCT-CASH-CREDIT-LIMIT` | come 203 | tradotto, forma dichiarata |
-| 206 | `DISPLAY 'ACCT-OPEN-DATE          :' ACCT-OPEN-DATE` | letterale + 10 caratteri | tradotto |
-| 207 | `DISPLAY 'ACCT-EXPIRAION-DATE     :' ACCT-EXPIRAION-DATE` | letterale + 10 caratteri | tradotto |
-| 208 | `DISPLAY 'ACCT-REISSUE-DATE       :' ACCT-REISSUE-DATE` | letterale + 10 caratteri | tradotto |
-| 209 | `DISPLAY 'ACCT-CURR-CYC-CREDIT    :' ACCT-CURR-CYC-CREDIT` | come 203 | tradotto, forma dichiarata |
-| 210 | `DISPLAY 'ACCT-CURR-CYC-DEBIT     :' ACCT-CURR-CYC-DEBIT` | come 203 | tradotto, forma dichiarata |
-| 211 | `DISPLAY 'ACCT-GROUP-ID           :' ACCT-GROUP-ID` | letterale + 10 caratteri | tradotto |
-| 212 | `DISPLAY '-------------------------------------------------'` | 49 trattini | tradotto |
+| 201 | `DISPLAY 'ACCT-ID                 :' ACCT-ID` | `display(ETICHETTA_ACCT_ID, …)`: letterale + 11 cifre di `ACCT-ID` (`9(11)`) | tradotto |
+| 202 | `DISPLAY 'ACCT-ACTIVE-STATUS      :' ACCT-ACTIVE-STATUS` | `display(ETICHETTA_ACCT_ACTIVE_STATUS, …)`: letterale + 1 carattere | tradotto |
+| 203 | `DISPLAY 'ACCT-CURR-BAL           :' ACCT-CURR-BAL` | `display(ETICHETTA_ACCT_CURR_BAL, …)`: letterale + 12 byte del campo `S9(10)V99` (segno sovrapposto all'ultima cifra) | tradotto, forma dichiarata (non confrontata dal test di parità) |
+| 204 | `DISPLAY 'ACCT-CREDIT-LIMIT       :' ACCT-CREDIT-LIMIT` | `display(ETICHETTA_ACCT_CREDIT_LIMIT, …)`, come 203 | tradotto, forma dichiarata |
+| 205 | `DISPLAY 'ACCT-CASH-CREDIT-LIMIT  :' ACCT-CASH-CREDIT-LIMIT` | `display(ETICHETTA_ACCT_CASH_CREDIT_LIMIT, …)`, come 203 | tradotto, forma dichiarata |
+| 206 | `DISPLAY 'ACCT-OPEN-DATE          :' ACCT-OPEN-DATE` | `display(ETICHETTA_ACCT_OPEN_DATE, …)`: letterale + 10 caratteri | tradotto |
+| 207 | `DISPLAY 'ACCT-EXPIRAION-DATE     :' ACCT-EXPIRAION-DATE` | `display(ETICHETTA_ACCT_EXPIRAION_DATE, …)`: letterale + 10 caratteri | tradotto |
+| 208 | `DISPLAY 'ACCT-REISSUE-DATE       :' ACCT-REISSUE-DATE` | `display(ETICHETTA_ACCT_REISSUE_DATE, …)`: letterale + 10 caratteri | tradotto |
+| 209 | `DISPLAY 'ACCT-CURR-CYC-CREDIT    :' ACCT-CURR-CYC-CREDIT` | `display(ETICHETTA_ACCT_CURR_CYC_CREDIT, …)`, come 203 | tradotto, forma dichiarata |
+| 210 | `DISPLAY 'ACCT-CURR-CYC-DEBIT     :' ACCT-CURR-CYC-DEBIT` | `display(ETICHETTA_ACCT_CURR_CYC_DEBIT, …)`, come 203 | tradotto, forma dichiarata |
+| 211 | `DISPLAY 'ACCT-GROUP-ID           :' ACCT-GROUP-ID` | `display(ETICHETTA_ACCT_GROUP_ID, …)`: letterale + 10 caratteri | tradotto |
+| 212 | `DISPLAY '-------------------------------------------------'` | `display(TRATTINI)`: 49 trattini | tradotto |
 
 ### `1300-POPUL-ACCT-RECORD` (righe 215-240) → `p1300PopulAcctRecord(conto)`: `OUTFILE`, 107 byte
 
 | Riga | Istruzione | Byte di `OUTFILE` | Java | Esito |
 | --- | --- | --- | --- | --- |
-| 216 | `MOVE ACCT-ID TO OUT-ACCT-ID` (`9(11)`) | 1-11 | `encode(9(11), acctId)` | tradotto |
-| 217 | `MOVE ACCT-ACTIVE-STATUS TO OUT-ACCT-ACTIVE-STATUS` (`X(01)`) | 12 | `encode(X(1), …)` | tradotto (qualunque valore, non solo `Y`) |
-| 218 | `MOVE ACCT-CURR-BAL TO OUT-ACCT-CURR-BAL` (`S9(10)V99`) | 13-24 | `encode(S9(10)V9(2), …)` | tradotto |
-| 219 | `MOVE ACCT-CREDIT-LIMIT TO OUT-ACCT-CREDIT-LIMIT` | 25-36 | come sopra | tradotto |
-| 220 | `MOVE ACCT-CASH-CREDIT-LIMIT TO OUT-ACCT-CASH-CREDIT-LIMIT` | 37-48 | come sopra | tradotto |
-| 221 | `MOVE ACCT-OPEN-DATE TO OUT-ACCT-OPEN-DATE` (`X(10)`) | 49-58 | `encode(X(10), …)` | tradotto |
-| 222 | `MOVE ACCT-EXPIRAION-DATE TO OUT-ACCT-EXPIRAION-DATE` | 59-68 | come sopra | tradotto |
-| 223-224 | `MOVE ACCT-REISSUE-DATE TO CODATECN-INP-DATE WS-REISSUE-DATE` | — | ingresso di `Cobdatft.converti(…)` (i 10 caratteri della data, seguiti da 10 spazi del `MOVE` in un `X(20)`, che `COBDATFT` non legge in questo caso) e, per `WS-ACCT-REISSUE-YYYY`, di `p1500PopulVbrcRecord` | tradotto |
-| 225-226 | `MOVE '2' TO CODATECN-TYPE`, `MOVE '2' TO CODATECN-OUTTYPE` | — | la sola combinazione tradotta in `Cobdatft` | tradotto |
+| 216 | `MOVE ACCT-ID TO OUT-ACCT-ID` (`9(11)`) | 1-11 | `metti(r, 1, encode(CHIAVE, acctId))` | tradotto |
+| 217 | `MOVE ACCT-ACTIVE-STATUS TO OUT-ACCT-ACTIVE-STATUS` (`X(01)`) | 12 | `metti(r, 12, encode(X1, …))` | tradotto (qualunque valore, non solo `Y`) |
+| 218 | `MOVE ACCT-CURR-BAL TO OUT-ACCT-CURR-BAL` (`S9(10)V99`) | 13-24 | `metti(r, 13, encode(IMPORTO, …))` | tradotto |
+| 219 | `MOVE ACCT-CREDIT-LIMIT TO OUT-ACCT-CREDIT-LIMIT` | 25-36 | `metti(r, 25, encode(IMPORTO, …))` | tradotto |
+| 220 | `MOVE ACCT-CASH-CREDIT-LIMIT TO OUT-ACCT-CASH-CREDIT-LIMIT` | 37-48 | `metti(r, 37, encode(IMPORTO, …))` | tradotto |
+| 221 | `MOVE ACCT-OPEN-DATE TO OUT-ACCT-OPEN-DATE` (`X(10)`) | 49-58 | `metti(r, 49, encode(X10, …))` | tradotto |
+| 222 | `MOVE ACCT-EXPIRAION-DATE TO OUT-ACCT-EXPIRAION-DATE` | 59-68 | `metti(r, 59, encode(X10, …))` | tradotto |
+| 223 | `MOVE ACCT-REISSUE-DATE TO CODATECN-INP-DATE` (primo ricevente) | — | argomento di `Cobdatft.converti(encode(X10, acctReissueDate))`, che ricompone i 20 byte: i 10 della data e 10 spazi del `MOVE` in un `X(20)` (non letti dalla routine in questo caso) | tradotto |
+| 224 | (stesso `MOVE`) `… WS-REISSUE-DATE` (secondo ricevente) | — | `wsReissueDate` in `p1500PopulVbrcRecord`, da cui `WS-ACCT-REISSUE-YYYY` | tradotto |
+| 225 | `MOVE '2' TO CODATECN-TYPE` | — | la sola combinazione tradotta in `Cobdatft` (ingresso `2`) | tradotto |
+| 226 | `MOVE '2' TO CODATECN-OUTTYPE` | — | la sola combinazione tradotta in `Cobdatft` (uscita `2`) | tradotto |
 | 231 | `CALL 'COBDATFT' USING CODATECN-REC` | — | `Cobdatft.converti(data)`: caratteri 1-4, 6-7 e 9-10 dell'ingresso nei primi 8 byte dell'uscita, senza alcuna validazione (`COBDATFT.asm:46-53`: con ingresso `2` il controllo dei separatori è commentato, righe 47-48; con uscita `2` non si salta all'errore, righe 49-50) | tradotto. Le altre combinazioni di `COBDATFT` (ingresso `1`, tipi diversi da `1` e `2`, ramo `GOTOERR`) **escluse**: il programma non le usa |
-| 233 | `MOVE CODATECN-0UT-DATE TO OUT-ACCT-REISSUE-DATE` (10 dei 20 byte) | 69-76 | gli 8 byte scritti da `Cobdatft` | tradotto |
-| 233 | (stessa istruzione) | **77-78** | byte `X'00'` | **convenzione del progetto, non comportamento dell'originale** (sezione "Byte che il sorgente non determina", caso a) |
-| 235 | `MOVE ACCT-CURR-CYC-CREDIT TO OUT-ACCT-CURR-CYC-CREDIT` | 79-90 | `encode(S9(10)V9(2), …)` | tradotto |
-| 236-238 | `IF ACCT-CURR-CYC-DEBIT EQUAL TO ZERO MOVE 2525.00 TO OUT-ACCT-CURR-CYC-DEBIT` (`S9(10)V99 COMP-3`) | 91-97 | `debito.compareTo(ZERO) == 0` → `encode(COMP_3 S9(10)V9(2), new BigDecimal("2525.00"))` = `00 00 00 02 52 50 0C`; costante `CBACT01C.cbl:237` | tradotto |
-| 236-238 | (addebito diverso da zero: il `MOVE` è saltato) | **91-97** | sette byte `X'00'`; il programma prosegue | **convenzione del progetto, non comportamento dell'originale** (caso b) |
-| 239 | `MOVE ACCT-GROUP-ID TO OUT-ACCT-GROUP-ID` | 98-107 | `encode(X(10), …)` | tradotto |
+| 233 | `MOVE CODATECN-0UT-DATE TO OUT-ACCT-REISSUE-DATE` (10 dei 20 byte) | 69-76 | `metti(r, 69, Cobdatft.converti(…))`: gli 8 byte scritti dalla routine | tradotto |
+| 233 | (stesso `MOVE`) | **77-78** | gli ultimi 2 dei 10 byte restituiti da `Cobdatft.converti`: `X'00'` (`Cobdatft.NON_DETERMINATO`) | **convenzione del progetto, non comportamento dell'originale** (sezione "Byte che il sorgente non determina", caso a) |
+| 235 | `MOVE ACCT-CURR-CYC-CREDIT TO OUT-ACCT-CURR-CYC-CREDIT` | 79-90 | `metti(r, 79, encode(IMPORTO, …))` | tradotto |
+| 236 | `IF ACCT-CURR-CYC-DEBIT EQUAL TO ZERO` | — | `c.acctCurrCycDebit().compareTo(BigDecimal.ZERO) == 0` | flusso, tradotto (unico confronto del programma) |
+| 237 | `MOVE 2525.00 TO OUT-ACCT-CURR-CYC-DEBIT` (`S9(10)V99 COMP-3`) | 91-97 | `metti(r, 91, encode(IMPORTO_COMP3, COSTANTE_2525))` = `00 00 00 02 52 50 0C`; `COSTANTE_2525 = new BigDecimal("2525.00")` | tradotto |
+| 236-238 | (addebito diverso da zero: il `MOVE` della riga 237 è saltato) | **91-97** | `Arrays.fill(r, 90, 97, NON_DETERMINATO)`: sette byte `X'00'`; il programma prosegue | **convenzione del progetto, non comportamento dell'originale** (caso b) |
+| 239 | `MOVE ACCT-GROUP-ID TO OUT-ACCT-GROUP-ID` | 98-107 | `metti(r, 98, encode(X10, …))` | tradotto |
 
-### `1350-WRITE-ACCT-RECORD` (righe 242-251) → `p1350WriteAcctRecord(record)`
+### `1350-WRITE-ACCT-RECORD` (righe 242-251) → `p1350WriteAcctRecord(outAcctRec)`
 
 | Riga | Istruzione | Java | Esito |
 | --- | --- | --- | --- |
-| 243 | `WRITE OUT-ACCT-REC` | `outFile.scrivi(record)` (107 byte) | tradotto |
-| 245 | `IF OUTFILE-STATUS NOT = '00' AND NOT = '10'` | eccezione di `scrivi` | tradotto come flusso; lo stato `10` (fine file) non ha corrispondente in scrittura |
-| 246 | `DISPLAY 'ACCOUNT FILE WRITE STATUS IS:' OUTFILE-STATUS` | riga `ACCOUNT FILE WRITE STATUS IS:` **senza** lo stato | tradotto il letterale; **escluso** lo stato |
-| 247-248 | `MOVE OUTFILE-STATUS TO IO-STATUS`, `PERFORM 9910-DISPLAY-IO-STATUS` | — | **escluso** (sezione "Errori") |
-| 249 | `PERFORM 9999-ABEND-PROGRAM` | `fineAnomala(...)` | tradotto |
+| 243 | `WRITE OUT-ACCT-REC` | `scrivi(outFile, OUTFILE, outAcctRec)`: `outFile.scrivi(…)` (107 byte) | tradotto |
+| 245 | `IF OUTFILE-STATUS NOT = '00' AND OUTFILE-STATUS NOT = '10'` | `catch (Exception e)` in `scrivi(...)` | flusso, tradotto; lo stato `10` non ha corrispondente in scrittura |
+| 246 | `DISPLAY 'ACCOUNT FILE WRITE STATUS IS:' OUTFILE-STATUS` | `fineAnomala("scrittura di OUTFILE", e, ERRORE_SCRITTURA)`: riga `ACCOUNT FILE WRITE STATUS IS:` **senza** lo stato | tradotto il letterale; **escluso** lo stato |
+| 247 | `MOVE OUTFILE-STATUS TO IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 248 | `PERFORM 9910-DISPLAY-IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 249 | `PERFORM 9999-ABEND-PROGRAM` | `fineAnomala(...)`, poi `throw` | tradotto |
 
-### `1400-POPUL-ARRAY-RECORD` (righe 253-261) → `p1400PopulArrayRecord(conto, record)`: `ARRYFILE`, 110 byte
+### `1400-POPUL-ARRAY-RECORD` (righe 253-261) → `p1400PopulArrayRecord(conto, arrArrayRec)`: `ARRYFILE`, 110 byte
 
 | Riga | Istruzione | Byte di `ARRYFILE` | Java | Esito |
 | --- | --- | --- | --- | --- |
-| 254 | `MOVE ACCT-ID TO ARR-ACCT-ID` | 1-11 | `encode(9(11), …)` | tradotto |
-| 255 | `MOVE ACCT-CURR-BAL TO ARR-ACCT-CURR-BAL(1)` | 12-23 | `encode(S9(10)V9(2), …)` | tradotto |
-| 256 | `MOVE 1005.00 TO ARR-ACCT-CURR-CYC-DEBIT(1)` | 24-30 | `encode(COMP_3, new BigDecimal("1005.00"))`; costante `CBACT01C.cbl:256` | tradotto |
-| 257 | `MOVE ACCT-CURR-BAL TO ARR-ACCT-CURR-BAL(2)` | 31-42 | `encode(S9(10)V9(2), …)` del saldo | tradotto |
-| 258 | `MOVE 1525.00 TO ARR-ACCT-CURR-CYC-DEBIT(2)` | 43-49 | `new BigDecimal("1525.00")`; costante `CBACT01C.cbl:258` | tradotto |
-| 259 | `MOVE -1025.00 TO ARR-ACCT-CURR-BAL(3)` | 50-61 | `encode(S9(10)V9(2), new BigDecimal("-1025.00"))`; costante `CBACT01C.cbl:259` | tradotto |
-| 260 | `MOVE -2500.00 TO ARR-ACCT-CURR-CYC-DEBIT(3)` | 62-68 | `encode(COMP_3, new BigDecimal("-2500.00"))`; costante `CBACT01C.cbl:260` | tradotto |
-| 169 | (`INITIALIZE`, nessun `MOVE` successivo) `ARR-ACCT-CURR-BAL(4)`, `(5)` | 69-80, 88-99 | `30`×11 `7B` | tradotto (regole del linguaggio, #55) |
-| 169 | (`INITIALIZE`) `ARR-ACCT-CURR-CYC-DEBIT(4)`, `(5)` | 81-87, 100-106 | `00`×6 `0C` | tradotto |
+| 254 | `MOVE ACCT-ID TO ARR-ACCT-ID` | 1-11 | `metti(r, 1, encode(CHIAVE, …))` | tradotto |
+| 255 | `MOVE ACCT-CURR-BAL TO ARR-ACCT-CURR-BAL(1)` | 12-23 | `metti(r, 12, encode(IMPORTO, …))` | tradotto |
+| 256 | `MOVE 1005.00 TO ARR-ACCT-CURR-CYC-DEBIT(1)` | 24-30 | `metti(r, 24, encode(IMPORTO_COMP3, COSTANTE_1005))`, `new BigDecimal("1005.00")` | tradotto |
+| 257 | `MOVE ACCT-CURR-BAL TO ARR-ACCT-CURR-BAL(2)` | 31-42 | `metti(r, 31, encode(IMPORTO, …))` del saldo | tradotto |
+| 258 | `MOVE 1525.00 TO ARR-ACCT-CURR-CYC-DEBIT(2)` | 43-49 | `metti(r, 43, encode(IMPORTO_COMP3, COSTANTE_1525))`, `new BigDecimal("1525.00")` | tradotto |
+| 259 | `MOVE -1025.00 TO ARR-ACCT-CURR-BAL(3)` | 50-61 | `metti(r, 50, encode(IMPORTO, COSTANTE_MENO_1025))`, `new BigDecimal("-1025.00")` | tradotto |
+| 260 | `MOVE -2500.00 TO ARR-ACCT-CURR-CYC-DEBIT(3)` | 62-68 | `metti(r, 62, encode(IMPORTO_COMP3, COSTANTE_MENO_2500))`, `new BigDecimal("-2500.00")` | tradotto |
+| 169 | (`INITIALIZE`, nessun `MOVE` successivo) `ARR-ACCT-CURR-BAL(4)` | 69-80 | `30`×11 `7B` da `initializeArrArrayRec()` | tradotto (regole del linguaggio, #55) |
+| 169 | (`INITIALIZE`) `ARR-ACCT-CURR-CYC-DEBIT(4)` | 81-87 | `00`×6 `0C` | tradotto |
+| 169 | (`INITIALIZE`) `ARR-ACCT-CURR-BAL(5)` | 88-99 | `30`×11 `7B` | tradotto (regole del linguaggio, #55) |
+| 169 | (`INITIALIZE`) `ARR-ACCT-CURR-CYC-DEBIT(5)` | 100-106 | `00`×6 `0C` | tradotto |
 | 169 | (`INITIALIZE`) `ARR-FILLER` (`X(04)`, un nome, non `FILLER`) | 107-110 | 4 spazi | tradotto |
 
 Nessuna aritmetica: le costanti sono scritte come nel sorgente, con la scala della `PICTURE` (`BigDecimal` da stringa), e il solo confronto è quello con zero della riga 236.
 
-### `1450-WRITE-ARRY-RECORD` (righe 263-274) → `p1450WriteArryRecord(record)`
+### `1450-WRITE-ARRY-RECORD` (righe 263-274) → `p1450WriteArryRecord(arrArrayRec)`
 
 | Riga | Istruzione | Java | Esito |
 | --- | --- | --- | --- |
-| 264 | `WRITE ARR-ARRAY-REC` | `arryFile.scrivi(record)` (110 byte) | tradotto |
-| 266-273 | stato diverso da `00` e `10`: `DISPLAY 'ACCOUNT FILE WRITE STATUS IS:' ARRYFILE-STATUS`, 9910, 9999 | riga `ACCOUNT FILE WRITE STATUS IS:` senza stato, poi `fineAnomala` | tradotto il letterale e l'arresto; **esclusi** stato e 9910 |
+| 264 | `WRITE ARR-ARRAY-REC` | `scrivi(arryFile, ARRYFILE, arrArrayRec)` (110 byte) | tradotto |
+| 266-267 | `IF ARRYFILE-STATUS NOT = '00' AND ARRYFILE-STATUS NOT = '10'` | `catch (Exception e)` in `scrivi(...)` | flusso, tradotto |
+| 268-269 | `DISPLAY 'ACCOUNT FILE WRITE STATUS IS:' ARRYFILE-STATUS` | riga `ACCOUNT FILE WRITE STATUS IS:` senza stato (`ERRORE_SCRITTURA`) | tradotto il letterale; **escluso** lo stato |
+| 270 | `MOVE ARRYFILE-STATUS TO IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 271 | `PERFORM 9910-DISPLAY-IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 272 | `PERFORM 9999-ABEND-PROGRAM` | `fineAnomala(...)`, poi `throw` | tradotto |
 
-### `1500-POPUL-VBRC-RECORD` (righe 276-285) → `p1500PopulVbrcRecord(conto)`
+### `1500-POPUL-VBRC-RECORD` (righe 276-285) → `p1500PopulVbrcRecord(conto, vbrcRec1, vbrcRec2)`
 
 | Riga | Istruzione | Byte | Java | Esito |
 | --- | --- | --- | --- | --- |
-| 277-278 | `MOVE ACCT-ID TO VB1-ACCT-ID VB2-ACCT-ID` | `VBRC-REC1` 1-11, `VBRC-REC2` 1-11 | `encode(9(11), …)` in entrambi | tradotto |
-| 279 | `MOVE ACCT-ACTIVE-STATUS TO VB1-ACCT-ACTIVE-STATUS` | `VBRC-REC1` 12 | `encode(X(1), …)` | tradotto |
-| 280 | `MOVE ACCT-CURR-BAL TO VB2-ACCT-CURR-BAL` | `VBRC-REC2` 12-23 | `encode(S9(10)V9(2), …)` | tradotto |
-| 281 | `MOVE ACCT-CREDIT-LIMIT TO VB2-ACCT-CREDIT-LIMIT` | `VBRC-REC2` 24-35 | come sopra | tradotto |
-| 282 | `MOVE WS-ACCT-REISSUE-YYYY TO VB2-ACCT-REISSUE-YYYY` | `VBRC-REC2` 36-39 | primi 4 caratteri di `ACCT-REISSUE-DATE` (righe 223-224) | tradotto |
-| 283 | `DISPLAY 'VBRC-REC1:' VBRC-REC1` | console | letterale + 12 byte | tradotto |
-| 284 | `DISPLAY 'VBRC-REC2:' VBRC-REC2` | console | letterale + 39 byte (i due importi con il segno sovrapposto) | tradotto, forma dichiarata |
+| 277 | `MOVE ACCT-ID TO VB1-ACCT-ID` (primo ricevente) | `VBRC-REC1` 1-11 | `metti(vbrcRec1, 1, chiave)` | tradotto |
+| 278 | (stesso `MOVE`) `… VB2-ACCT-ID` (secondo ricevente) | `VBRC-REC2` 1-11 | `metti(vbrcRec2, 1, chiave)` | tradotto |
+| 279 | `MOVE ACCT-ACTIVE-STATUS TO VB1-ACCT-ACTIVE-STATUS` | `VBRC-REC1` 12 | `metti(vbrcRec1, 12, encode(X1, …))` | tradotto |
+| 280 | `MOVE ACCT-CURR-BAL TO VB2-ACCT-CURR-BAL` | `VBRC-REC2` 12-23 | `metti(vbrcRec2, 12, encode(IMPORTO, …))` | tradotto |
+| 281 | `MOVE ACCT-CREDIT-LIMIT TO VB2-ACCT-CREDIT-LIMIT` | `VBRC-REC2` 24-35 | `metti(vbrcRec2, 24, encode(IMPORTO, …))` | tradotto |
+| 282 | `MOVE WS-ACCT-REISSUE-YYYY TO VB2-ACCT-REISSUE-YYYY` | `VBRC-REC2` 36-39 | `metti(vbrcRec2, 36, Arrays.copyOf(wsReissueDate, 4))`: primi 4 caratteri di `ACCT-REISSUE-DATE` (riga 224) | tradotto |
+| 283 | `DISPLAY 'VBRC-REC1:' VBRC-REC1` | console | `display(ETICHETTA_VBRC_REC1, vbrcRec1)`: letterale + 12 byte | tradotto |
+| 284 | `DISPLAY 'VBRC-REC2:' VBRC-REC2` | console | `display(ETICHETTA_VBRC_REC2, vbrcRec2)`: letterale + 39 byte (i due importi con il segno sovrapposto) | tradotto, forma dichiarata |
 
-### `1550-WRITE-VB1-RECORD` (righe 287-300) e `1575-WRITE-VB2-RECORD` (righe 302-315) → `p1550WriteVb1Record`, `p1575WriteVb2Record`
-
-| Riga | Istruzione | Java | Esito |
-| --- | --- | --- | --- |
-| 288, 303 | `MOVE 12 TO WS-RECD-LEN`, `MOVE 39 TO WS-RECD-LEN` | lunghezza dei dati del record | tradotto |
-| 289, 304 | `MOVE VBRC-REC1 TO VBR-REC(1:WS-RECD-LEN)`, `MOVE VBRC-REC2 …` | i 12 o 39 byte del record; i byte di `VBR-REC` oltre la lunghezza non entrano nel record (#55) | tradotto |
-| 290, 305 | `WRITE VBR-REC` | `vbrcFile.scrivi(conDescrittore(RDW_…, dati, …))`: `00 10 00 00` + 12 byte, `00 2B 00 00` + 39 byte (lunghezza compresa del descrittore, byte più significativo per primo; contratto di #65) | tradotto |
-| 292-299, 307-314 | stato diverso da `00` e `10`: `DISPLAY 'ACCOUNT FILE WRITE STATUS IS:' VBRCFILE-STATUS`, 9910, 9999 | riga `ACCOUNT FILE WRITE STATUS IS:` senza stato, poi `fineAnomala` | tradotto il letterale e l'arresto; **esclusi** stato e 9910 |
-
-### Apertura e chiusura
+### `1550-WRITE-VB1-RECORD` (righe 287-300) → `p1550WriteVb1Record(vbrcRec1)`
 
 | Riga | Istruzione | Java | Esito |
 | --- | --- | --- | --- |
-| 317-333 | `0000-ACCTFILE-OPEN`: `OPEN INPUT ACCTFILE-FILE`; se lo stato non è `00`: `DISPLAY 'ERROR OPENING ACCTFILE'` (328), 9910, 9999 | `p0000AcctfileOpen()`: `SorgenteConti.apri()` (connessione e interrogazione ordinata); un'eccezione → riga `ERROR OPENING ACCTFILE`, `fineAnomala` | tradotto; **esclusi** stato e 9910 |
-| 334-350 | `2000-OUTFILE-OPEN`: `OPEN OUTPUT OUT-FILE`; errore: `DISPLAY 'ERROR OPENING OUTFILE' OUTFILE-STATUS` (345), 9910, 9999 | `p2000OutfileOpen()`: `ApertureUscite.apri("OUTFILE", …)`; un'eccezione → riga `ERROR OPENING OUTFILE` (senza lo stato), `fineAnomala` | tradotto; **esclusi** stato e 9910 |
-| 352-368 | `3000-ARRFILE-OPEN`: `OPEN OUTPUT ARRY-FILE`; errore: `DISPLAY 'ERROR OPENING ARRAYFILE' ARRYFILE-STATUS` (363) | `p3000ArrfileOpen()`; riga `ERROR OPENING ARRAYFILE` | tradotto; **esclusi** stato e 9910 |
-| 370-386 | `4000-VBRFILE-OPEN`: `OPEN OUTPUT VBRC-FILE`; errore: `DISPLAY 'ERROR OPENING VBRC FILE' VBRCFILE-STATUS` (381) | `p4000VbrfileOpen()`; riga `ERROR OPENING VBRC FILE` | tradotto; **esclusi** stato e 9910 |
-| 388-404 | `9000-ACCTFILE-CLOSE`: `CLOSE ACCTFILE-FILE`; errore: `DISPLAY 'ERROR CLOSING ACCOUNT FILE'` (399), 9910, 9999 | `p9000AcctfileClose()`: `CursoreConti.chiudi()`; un'eccezione → riga `ERROR CLOSING ACCOUNT FILE`, `fineAnomala` | tradotto; **esclusi** stato e 9910 |
-| 389, 392, 394 | `ADD 8 TO ZERO GIVING APPL-RESULT`, `SUBTRACT APPL-RESULT FROM APPL-RESULT`, `ADD 12 TO ZERO GIVING APPL-RESULT` | — | flusso: aritmetica su un codice interno, nessun effetto osservabile |
+| 288 | `MOVE 12 TO WS-RECD-LEN` | `LUNGHEZZA_VBRC_REC1` (12) e il descrittore costante `RDW_VBRC_REC1` = `00 10 00 00` (12 + 4 = 16, lunghezza compresa del descrittore; contratto di #65) | tradotto |
+| 289 | `MOVE VBRC-REC1 TO VBR-REC(1:WS-RECD-LEN)` | `conDescrittore(RDW_VBRC_REC1, vbrcRec1, 12)`: i 12 byte del record dopo il descrittore; i byte di `VBR-REC` oltre la lunghezza non entrano nel record (#55) | tradotto |
+| 290 | `WRITE VBR-REC` | `scrivi(vbrcFile, VBRCFILE, …)`: 16 byte | tradotto |
+| 292-293 | `IF VBRCFILE-STATUS NOT = '00' AND VBRCFILE-STATUS NOT = '10'` | `catch (Exception e)` in `scrivi(...)` | flusso, tradotto |
+| 294-295 | `DISPLAY 'ACCOUNT FILE WRITE STATUS IS:' VBRCFILE-STATUS` | riga `ACCOUNT FILE WRITE STATUS IS:` senza stato (`ERRORE_SCRITTURA`) | tradotto il letterale; **escluso** lo stato |
+| 296 | `MOVE VBRCFILE-STATUS TO IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 297 | `PERFORM 9910-DISPLAY-IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 298 | `PERFORM 9999-ABEND-PROGRAM` | `fineAnomala(...)`, poi `throw` | tradotto |
+
+### `1575-WRITE-VB2-RECORD` (righe 302-315) → `p1575WriteVb2Record(vbrcRec2)`
+
+| Riga | Istruzione | Java | Esito |
+| --- | --- | --- | --- |
+| 303 | `MOVE 39 TO WS-RECD-LEN` | `LUNGHEZZA_VBRC_REC2` (39) e il descrittore costante `RDW_VBRC_REC2` = `00 2B 00 00` (39 + 4 = 43) | tradotto |
+| 304 | `MOVE VBRC-REC2 TO VBR-REC(1:WS-RECD-LEN)` | `conDescrittore(RDW_VBRC_REC2, vbrcRec2, 39)` | tradotto |
+| 305 | `WRITE VBR-REC` | `scrivi(vbrcFile, VBRCFILE, …)`: 43 byte | tradotto |
+| 307-308 | `IF VBRCFILE-STATUS NOT = '00' AND VBRCFILE-STATUS NOT = '10'` | `catch (Exception e)` in `scrivi(...)` | flusso, tradotto |
+| 309-310 | `DISPLAY 'ACCOUNT FILE WRITE STATUS IS:' VBRCFILE-STATUS` | riga `ACCOUNT FILE WRITE STATUS IS:` senza stato | tradotto il letterale; **escluso** lo stato |
+| 311 | `MOVE VBRCFILE-STATUS TO IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 312 | `PERFORM 9910-DISPLAY-IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 313 | `PERFORM 9999-ABEND-PROGRAM` | `fineAnomala(...)`, poi `throw` | tradotto |
+
+### `0000-ACCTFILE-OPEN` (righe 317-333) → `p0000AcctfileOpen()`
+
+| Riga | Istruzione | Java | Esito |
+| --- | --- | --- | --- |
+| 318 | `MOVE 8 TO APPL-RESULT` | — | flusso, nessun effetto osservabile |
+| 319 | `OPEN INPUT ACCTFILE-FILE` | `acctfile = sorgente.apri()` (`SorgenteContiJdbc`: connessione e interrogazione ordinata) | tradotto |
+| 320 | `IF ACCTFILE-STATUS = '00'` | `try` / `catch (Exception e)` | flusso, tradotto |
+| 321 | `MOVE 0 TO APPL-RESULT` | — | flusso |
+| 323 | `MOVE 12 TO APPL-RESULT` | — | flusso |
+| 325 | `IF APPL-AOK` | `catch (Exception e)` | flusso, tradotto |
+| 326 | `CONTINUE` | — | flusso |
+| 328 | `DISPLAY 'ERROR OPENING ACCTFILE'` | `fineAnomala(FASE_APERTURA_CONTI, e, ERRORE_APERTURA_CONTI)` | tradotto, testo identico |
+| 329 | `MOVE ACCTFILE-STATUS TO IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 330 | `PERFORM 9910-DISPLAY-IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 331 | `PERFORM 9999-ABEND-PROGRAM` | `fineAnomala(...)`, poi `throw` | tradotto |
+
+### `2000-OUTFILE-OPEN` (righe 334-350) → `p2000OutfileOpen()`
+
+| Riga | Istruzione | Java | Esito |
+| --- | --- | --- | --- |
+| 335 | `MOVE 8 TO APPL-RESULT` | — | flusso |
+| 336 | `OPEN OUTPUT OUT-FILE` | `apriUscita(OUTFILE, …)`: `aperture.apri("OUTFILE", percorso)`, file creato con `CREATE_NEW` | tradotto |
+| 337 | `IF OUTFILE-STATUS = '00'` | `try` / `catch (Exception e)` | flusso, tradotto |
+| 338 | `MOVE 0 TO APPL-RESULT` | — | flusso |
+| 340 | `MOVE 12 TO APPL-RESULT` | — | flusso |
+| 342 | `IF APPL-AOK` | `catch (Exception e)` | flusso, tradotto |
+| 343 | `CONTINUE` | — | flusso |
+| 345 | `DISPLAY 'ERROR OPENING OUTFILE' OUTFILE-STATUS` | `fineAnomala("creazione di OUTFILE", e, ERRORE_APERTURA_OUTFILE)`: riga `ERROR OPENING OUTFILE` senza lo stato | tradotto il letterale; **escluso** lo stato |
+| 346 | `MOVE OUTFILE-STATUS TO IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 347 | `PERFORM 9910-DISPLAY-IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 348 | `PERFORM 9999-ABEND-PROGRAM` | `fineAnomala(...)`, poi `throw` | tradotto |
+
+### `3000-ARRFILE-OPEN` (righe 352-368) → `p3000ArrfileOpen()`
+
+| Riga | Istruzione | Java | Esito |
+| --- | --- | --- | --- |
+| 353 | `MOVE 8 TO APPL-RESULT` | — | flusso |
+| 354 | `OPEN OUTPUT ARRY-FILE` | `apriUscita(ARRYFILE, …)` | tradotto |
+| 355 | `IF ARRYFILE-STATUS = '00'` | `try` / `catch (Exception e)` | flusso, tradotto |
+| 356 | `MOVE 0 TO APPL-RESULT` | — | flusso |
+| 358 | `MOVE 12 TO APPL-RESULT` | — | flusso |
+| 360 | `IF APPL-AOK` | `catch (Exception e)` | flusso, tradotto |
+| 361 | `CONTINUE` | — | flusso |
+| 363 | `DISPLAY 'ERROR OPENING ARRAYFILE' ARRYFILE-STATUS` | riga `ERROR OPENING ARRAYFILE` senza lo stato (`ERRORE_APERTURA_ARRYFILE`) | tradotto il letterale; **escluso** lo stato |
+| 364 | `MOVE ARRYFILE-STATUS TO IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 365 | `PERFORM 9910-DISPLAY-IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 366 | `PERFORM 9999-ABEND-PROGRAM` | `fineAnomala(...)`, poi `throw` | tradotto |
+
+### `4000-VBRFILE-OPEN` (righe 370-386) → `p4000VbrfileOpen()`
+
+| Riga | Istruzione | Java | Esito |
+| --- | --- | --- | --- |
+| 371 | `MOVE 8 TO APPL-RESULT` | — | flusso |
+| 372 | `OPEN OUTPUT VBRC-FILE` | `apriUscita(VBRCFILE, …)` | tradotto |
+| 373 | `IF VBRCFILE-STATUS = '00'` | `try` / `catch (Exception e)` | flusso, tradotto |
+| 374 | `MOVE 0 TO APPL-RESULT` | — | flusso |
+| 376 | `MOVE 12 TO APPL-RESULT` | — | flusso |
+| 378 | `IF APPL-AOK` | `catch (Exception e)` | flusso, tradotto |
+| 379 | `CONTINUE` | — | flusso |
+| 381 | `DISPLAY 'ERROR OPENING VBRC FILE' VBRCFILE-STATUS` | riga `ERROR OPENING VBRC FILE` senza lo stato (`ERRORE_APERTURA_VBRCFILE`) | tradotto il letterale; **escluso** lo stato |
+| 382 | `MOVE VBRCFILE-STATUS TO IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 383 | `PERFORM 9910-DISPLAY-IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 384 | `PERFORM 9999-ABEND-PROGRAM` | `fineAnomala(...)`, poi `throw` | tradotto |
+
+### `9000-ACCTFILE-CLOSE` (righe 388-404) → `p9000AcctfileClose()`
+
+| Riga | Istruzione | Java | Esito |
+| --- | --- | --- | --- |
+| 389 | `ADD 8 TO ZERO GIVING APPL-RESULT` | — | flusso: aritmetica su un codice interno, nessun effetto osservabile |
+| 390 | `CLOSE ACCTFILE-FILE` | `daChiudere.chiudi()` (`SorgenteContiJdbc`: righe, interrogazione, conferma, connessione) | tradotto |
+| 391 | `IF ACCTFILE-STATUS = '00'` | `try` / `catch (Exception e)` | flusso, tradotto |
+| 392 | `SUBTRACT APPL-RESULT FROM APPL-RESULT` | — | flusso |
+| 394 | `ADD 12 TO ZERO GIVING APPL-RESULT` | — | flusso |
+| 396 | `IF APPL-AOK` | `catch (Exception e)` | flusso, tradotto |
+| 397 | `CONTINUE` | — | flusso |
+| 399 | `DISPLAY 'ERROR CLOSING ACCOUNT FILE'` | `fineAnomala(FASE_CHIUSURA_CONTI, e, ERRORE_CHIUSURA_CONTI)` | tradotto, testo identico |
+| 400 | `MOVE ACCTFILE-STATUS TO IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 401 | `PERFORM 9910-DISPLAY-IO-STATUS` | — | **escluso** (sezione "Errori") |
+| 402 | `PERFORM 9999-ABEND-PROGRAM` | `fineAnomala(...)`, poi `throw` | tradotto |
 
 ### `9999-ABEND-PROGRAM` (righe 406-410) → `Cbact01c.fineAnomala(...)` e `FineAnomala`
 
 | Riga | Istruzione | Java | Esito |
 | --- | --- | --- | --- |
-| 407 | `DISPLAY 'ABENDING PROGRAM'` | ultima riga di console della fine anomala | tradotto, testo identico |
-| 408-409 | `MOVE 0 TO TIMING`, `MOVE 999 TO ABCODE` | — | **escluso**: argomenti di `CEE3ABD` |
-| 410 | `CALL 'CEE3ABD' USING ABCODE, TIMING` | il passo termina con `FineAnomala`; `EsitoReadacct` dà il codice di uscita 99; i tre file di uscita sono cancellati (`DISP=(NEW,CATLG,DELETE)`) | tradotto (sezioni "Errori" e "Codice di uscita") |
+| 407 | `DISPLAY 'ABENDING PROGRAM'` | `display(ABENDING)`, ultima riga di console della fine anomala | tradotto, testo identico |
+| 408 | `MOVE 0 TO TIMING` | — | **escluso**: argomento di `CEE3ABD` |
+| 409 | `MOVE 999 TO ABCODE` | — | **escluso**: argomento di `CEE3ABD` |
+| 410 | `CALL 'CEE3ABD' USING ABCODE, TIMING` | `fineAnomala` chiude i file aperti, cancella i tre file di uscita (`DISP=(NEW,CATLG,DELETE)`) e restituisce `FineAnomala`, che il chiamante lancia; il passo termina con quell'eccezione e `EsitoReadacct` dà il codice di uscita 99 | tradotto (sezioni "Errori" e "Codice di uscita") |
 
 ### `9910-DISPLAY-IO-STATUS` (righe 413-426)
 
+Tutto il paragrafo è **escluso**: il nuovo sistema non ha gli stati di file del COBOL, quindi le righe `FILE STATUS IS: NNNN…` non si riproducono (decisione della specifica di #67). Il dettaglio tecnico dell'errore Java va sullo standard error.
+
 | Riga | Istruzione | Java | Esito |
 | --- | --- | --- | --- |
-| 413-426 | decodifica dello stato di file e `DISPLAY 'FILE STATUS IS: NNNN' IO-STATUS-04` (420, 424) | nessuna | **escluso**: il nuovo sistema non ha gli stati di file del COBOL, quindi le righe `FILE STATUS IS: NNNN…` non si riproducono (decisione della specifica di #67). Il dettaglio tecnico dell'errore Java va sullo standard error |
+| 414-415 | `IF IO-STATUS NOT NUMERIC OR IO-STAT1 = '9'` | — | **escluso** |
+| 416 | `MOVE IO-STAT1 TO IO-STATUS-04(1:1)` | — | **escluso** |
+| 417 | `MOVE 0 TO TWO-BYTES-BINARY` | — | **escluso** |
+| 418 | `MOVE IO-STAT2 TO TWO-BYTES-RIGHT` | — | **escluso** |
+| 419 | `MOVE TWO-BYTES-BINARY TO IO-STATUS-0403` | — | **escluso** |
+| 420 | `DISPLAY 'FILE STATUS IS: NNNN' IO-STATUS-04` | — | **escluso**: nessuna riga `FILE STATUS IS:` |
+| 422 | `MOVE '0000' TO IO-STATUS-04` | — | **escluso** |
+| 423 | `MOVE IO-STATUS TO IO-STATUS-04(3:2)` | — | **escluso** |
+| 424 | `DISPLAY 'FILE STATUS IS: NNNN' IO-STATUS-04` | — | **escluso**: nessuna riga `FILE STATUS IS:` |
 
 ## Byte che il sorgente non determina: una sola convenzione
 
@@ -267,7 +386,10 @@ In tutti i casi: codice di uscita 99 e **nessuno dei tre file di uscita resta**,
 | --- | --- |
 | 0 | fine regolare (`GOBACK`, riga 160) |
 | 99 | fine anomala del programma (`9999-ABEND-PROGRAM`, `CEE3ABD` con `ABCODE` 999): uno solo per tutti i rami della tabella "Errori". È lo stesso codice con cui termina lo stub `CEE3ABD` dell'oracle (`oracle/stubs/CEE3ABD.cbl`) |
-| altro (1) | errore di avvio dell'applicazione prima del job (database irraggiungibile all'avvio, migrazione rifiutata, parametri del job mancanti): non è una fine del programma |
+| 1 | errore di avvio dell'applicazione prima del job (database irraggiungibile all'avvio, migrazione rifiutata, parametri del job mancanti): non è una fine del programma |
+| 5 | job fallito per un guasto che il programma non intercetta (un `Error` della JVM): il codice di Spring Batch per lo stato `FAILED` (`JobExecutionExitCodeGenerator`). Anche qui le righe già scritte sono svuotate sulla console, nessuna riga del ramo d'errore si aggiunge e nessuno dei tre file resta |
+
+Due generatori di codice di uscita, nell'ordine: `EsitoReadacct` (99 per `FineAnomala`), poi `JobExecutionExitCodeGenerator` di Spring Boot, dichiarato in `ReadacctJobConfig`. Correzione del giro 1 della PR #70: Spring Boot crea il proprio generatore solo se non esiste alcun `ExitCodeGenerator` (`@ConditionalOnMissingBean(ExitCodeGenerator.class)`), quindi con `EsitoReadacct` da solo un job fallito per un guasto diverso da `FineAnomala` faceva uscire il processo con **0** (osservato con `ReadacctProcessoTest.unGuastoNonIntercettatoNonEsceConZero` prima della correzione).
 
 ## Riesecuzione
 
