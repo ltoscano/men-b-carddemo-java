@@ -490,3 +490,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T04:07:17Z,pr-58,merge,fable,orologio,squash; chiude #53
 2026-11-28T04:07:19Z,issue-55,esecutore-inizio,opus,orologio,affidata; ramo issue-55-golden-readacct
 2026-11-28T04:08:31Z,paper,fine,fable,orologio,passi 27-28; tabelle 16-17
+2026-11-28T04:08:45Z,paper,risposta-consegnata,fable,orologio,stato dopo il merge della PR #58
+2026-11-28T04:37:30Z,issue-55,needs-spec-update,opus,orologio,INITIALIZE: l'oracle scrive X'30' invece di X'7B'; specifica aggiornata (correzioni dell'oracle)
