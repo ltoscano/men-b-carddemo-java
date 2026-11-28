@@ -1,0 +1,1 @@
+OSSERVAZIONE - scenario osservazione: NON e' un golden ne' un riferimento di parita' (issue #55). Registra cio' che fa GnuCOBOL con un debito di ciclo diverso da zero (OUT-ACCT-CURR-CYC-DEBIT non valorizzato), uno zero negativo e un segno alternativo.

@@ -1,0 +1,53 @@
+# Tabella campo d'uscita <- campo d'ingresso, costante o trasformazione (issue #55), scritta a mano leggendo
+# app/cbl/CBACT01C.cbl. La usa SOLO il verificatore indipendente (oracle/golden/verificatore.sh, controllo 4), che
+# per ogni record e ogni campo calcola i byte attesi dal record d'ingresso con regole proprie e li confronta con i byte
+# d'uscita. Tracciati: OUTFILE e ARRYFILE quelli dell'FD (righe 56-78); VBRC1 e VBRC2 i tracciati logici VBRC-REC1
+# (12 byte) e VBRC-REC2 (39 byte) della WORKING-STORAGE (righe 123-130), non VBR-REC PIC X(80).
+# Colonne (separate da tabulazione):
+#   file           OUTFILE, ARRYFILE, VBRC1, VBRC2
+#   campo          nome nel sorgente
+#   posizione      primo byte nel record d'uscita, contando da 1
+#   lunghezza      byte
+#   trasformazione copia        byte d'uscita = byte d'ingresso dalla posizione "argomento" (stessa lunghezza)
+#                  copia-segno  come copia, tra DISPLAY con segno di uguale tracciato S9(10)V99; vale solo per una
+#                               rappresentazione canonica dell'ingresso (altrimenti il risultato dipende da NUMPROC e
+#                               la posizione deve essere esclusa)
+#                  data         C4 di COBDATFT: byte 1-4 <- ingresso 1-4, 5-6 <- 6-7, 7-8 <- 9-10 della data AAAA-MM-GG
+#                               che inizia alla posizione "argomento"; byte 9-10 non determinati
+#                  debito       ACCT-CURR-CYC-DEBIT (posizione "argomento", S9(10)V99) uguale a zero -> COMP-3 di
+#                               +2525.00; altrimenti non determinato
+#                  zoned        costante "argomento" in DISPLAY con segno S9(10)V99
+#                  packed       costante "argomento" in COMP-3 S9(10)V99 (7 byte)
+#                  spazi        byte 20
+#   argomento      posizione nel record d'ingresso di 300 byte (da 1) oppure la costante
+#   riga           righe di app/cbl/CBACT01C.cbl (o di altri sorgenti, indicati)
+file	campo	posizione	lunghezza	trasformazione	argomento	riga
+OUTFILE	OUT-ACCT-ID	1	11	copia	1	216
+OUTFILE	OUT-ACCT-ACTIVE-STATUS	12	1	copia	12	217
+OUTFILE	OUT-ACCT-CURR-BAL	13	12	copia-segno	13	218
+OUTFILE	OUT-ACCT-CREDIT-LIMIT	25	12	copia-segno	25	219
+OUTFILE	OUT-ACCT-CASH-CREDIT-LIMIT	37	12	copia-segno	37	220
+OUTFILE	OUT-ACCT-OPEN-DATE	49	10	copia	49	221
+OUTFILE	OUT-ACCT-EXPIRAION-DATE	59	10	copia	59	222
+OUTFILE	OUT-ACCT-REISSUE-DATE	69	10	data	69	223-233; asm/COBDATFT.asm:51-53; cpy/CODATECN.cpy:39-51
+OUTFILE	OUT-ACCT-CURR-CYC-CREDIT	79	12	copia-segno	79	235
+OUTFILE	OUT-ACCT-CURR-CYC-DEBIT	91	7	debito	91	236-238
+OUTFILE	OUT-ACCT-GROUP-ID	98	10	copia	113	239
+ARRYFILE	ARR-ACCT-ID	1	11	copia	1	169, 254
+ARRYFILE	ARR-ACCT-CURR-BAL(1)	12	12	copia-segno	13	255
+ARRYFILE	ARR-ACCT-CURR-CYC-DEBIT(1)	24	7	packed	+1005.00	256
+ARRYFILE	ARR-ACCT-CURR-BAL(2)	31	12	copia-segno	13	257
+ARRYFILE	ARR-ACCT-CURR-CYC-DEBIT(2)	43	7	packed	+1525.00	258
+ARRYFILE	ARR-ACCT-CURR-BAL(3)	50	12	zoned	-1025.00	259
+ARRYFILE	ARR-ACCT-CURR-CYC-DEBIT(3)	62	7	packed	-2500.00	260
+ARRYFILE	ARR-ACCT-CURR-BAL(4)	69	12	zoned	+0.00	169 (INITIALIZE: ZERO)
+ARRYFILE	ARR-ACCT-CURR-CYC-DEBIT(4)	81	7	packed	+0.00	169 (INITIALIZE: ZERO)
+ARRYFILE	ARR-ACCT-CURR-BAL(5)	88	12	zoned	+0.00	169 (INITIALIZE: ZERO)
+ARRYFILE	ARR-ACCT-CURR-CYC-DEBIT(5)	100	7	packed	+0.00	169 (INITIALIZE: ZERO)
+ARRYFILE	ARR-FILLER	107	4	spazi	-	169 (INITIALIZE: SPACE; ARR-FILLER e' un nome, non la parola FILLER)
+VBRC1	VB1-ACCT-ID	1	11	copia	1	175, 277, 289
+VBRC1	VB1-ACCT-ACTIVE-STATUS	12	1	copia	12	175, 279, 289
+VBRC2	VB2-ACCT-ID	1	11	copia	1	277-278, 304
+VBRC2	VB2-ACCT-CURR-BAL	12	12	copia-segno	13	280, 304
+VBRC2	VB2-ACCT-CREDIT-LIMIT	24	12	copia-segno	25	281, 304
+VBRC2	VB2-ACCT-REISSUE-YYYY	36	4	copia	69	223-224 (WS-REISSUE-DATE), 282, 304

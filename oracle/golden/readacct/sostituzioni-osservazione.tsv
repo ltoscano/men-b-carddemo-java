@@ -1,0 +1,14 @@
+# Scenario "osservazione" (issue #55): NON e' un riferimento di parita'. Parte dallo scenario "mirato" (tutte le sue
+# sostituzioni gia' applicate) e aggiunge queste, scritte a mano. Stesse colonne di sostituzioni-mirato.tsv.
+# - due record con ACCT-CURR-CYC-DEBIT diverso da zero, uno dei quali e' il primo del file: CBACT01C non valorizza
+#   OUT-ACCT-CURR-CYC-DEBIT (righe 236-238), quindi nel record scritto resta cio' che l'area conteneva;
+# - zero negativo nel saldo (undici byte 30 seguiti da 7D), copiato nelle uscite: il risultato di un MOVE su z/OS
+#   dipende dall'opzione NUMPROC, che il repository non fissa;
+# - un segno alternativo (ultimo byte cifra semplice, ammesso e positivo: codifica.md), stessa riserva.
+# Le ultime due non sono canoniche: il sistema Java non le accetta in ingresso; cio' che ne fa l'originale si registra
+# soltanto.
+chiave	campo	posizione	lunghezza	byte	tipo	valore	canonica	motivo
+00000000001	ACCT-CURR-CYC-DEBIT	91	12	30303030303030303130307b	zoned	+10.00	si	debito di ciclo diverso da zero nel primo record del file
+00000000020	ACCT-CURR-CYC-DEBIT	91	12	30303030303030303033357d	zoned	-3.50	si	debito di ciclo diverso da zero in un record successivo
+00000000021	ACCT-CURR-BAL	13	12	30303030303030303030307d	zoned	-0.00	no	zero negativo nel saldo (campo copiato in OUTFILE, ARRYFILE e VBRCFILE)
+00000000022	ACCT-CREDIT-LIMIT	25	12	303030303030383539393030	zoned	+8599.00	no	segno alternativo: ultimo byte 30 (cifra semplice) invece di 7B, stesso valore del dato di esempio

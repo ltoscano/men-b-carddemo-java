@@ -1,0 +1,3 @@
+OUTFILE: prima dell'esecuzione 20000 byte R, dopo 5350 byte, identico alla prima esecuzione: si
+ARRYFILE: prima dell'esecuzione 20000 byte R, dopo 5500 byte, identico alla prima esecuzione: si
+VBRCFILE: prima dell'esecuzione 20000 byte R, dopo 2950 byte, identico alla prima esecuzione: si
