@@ -1,0 +1,8 @@
+PATH=/usr/bin:/bin
+HOME=/tmp
+LC_ALL=C
+COB_LIBRARY_PATH=/oracle-bin
+DD_ACCTFILE=/acct/ACCTFILE.dat
+DD_OUTFILE=/w/s/esempio/lavoro-CBACT01C/OUTFILE
+DD_ARRYFILE=/w/s/esempio/lavoro-CBACT01C/ARRYFILE
+DD_VBRCFILE=/w/s/esempio/lavoro-CBACT01C/VBRCFILE
