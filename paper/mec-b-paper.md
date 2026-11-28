@@ -702,6 +702,49 @@ Il test di parità ha poi un problema proprio, che la contestazione ha reso espl
 
 Per chi replica, due osservazioni su questo passo. La prima: a questo punto del lavoro il pianificatore sbaglia più spesso sulle decisioni che sui fatti, e gli errori hanno tutti la stessa forma, cioè un'analogia con una decisione precedente applicata a un caso che le somiglia soltanto. La seconda: la contestazione di una specifica è il passaggio con il miglior rapporto tra costo e resa di tutto il metodo. Nelle cinque contestazioni di questa notte (tabelle 15 e 20) c'è stato ogni volta almeno un rilievo bloccante, per un costo complessivo di venticinque minuti di Validatore.
 
+**Passo 32 — Il test di parità, scritto prima della traduzione.** È il passo "test" della catena (sezione 2): un test che avvia il programma Java come lo avvierà chi lo usa, e ne confronta le uscite con quelle dell'originale. Lo ha scritto un Esecutore che non scriverà la traduzione, quando il programma Java non esisteva ancora (issue #65, PR #69).
+
+Che cosa fa, in breve. Carica i conti in un PostgreSQL vero, avvia il programma del batch in un processo separato, e confronta i tre file prodotti e la console con il riferimento del passo 29: byte per byte, tranne i due byte per record che l'originale non determina. Finché il job non esiste, i quattro casi sono marcati "fallimento atteso": risultano riusciti solo se falliscono per quel motivo e per nessun altro, e la verifica pretende per ciascuno una ricevuta della corsa corrente. Chi tradurrà toglie le quattro marcature e nient'altro.
+
+**Tabella 21 — Storia della PR #69** (durate dal registro degli eventi)
+
+| Fase | Chi | Durata | Esito |
+| --- | --- | ---: | --- |
+| Implementazione | Esecutore (Opus) | 31 min 32 s | PR aperta, 18 file, 1.684 righe, nessuna classe di produzione |
+| Validazione 1 | Codex | 28 min 0 s | bocciata: 1 bloccante, 1 importante, 1 minore |
+| Correzione | Esecutore | 26 min 18 s | tre rilievi corretti |
+| Validazione 2 (ristretta) | Codex | 13 min 51 s | bocciata: 1 bloccante, 1 importante |
+| Correzione mirata | Esecutore | 11 min 44 s | solo il bloccante |
+| Verifica della correzione | Approvatore | 4 min 21 s | tre corse di `./verify.sh`: esiti attesi |
+| Merge | Approvatore | — | 10:10, 2 ore e 6 minuti dopo l'affidamento |
+
+*La prova che contava: simulare la traduzione.* Un test scritto prima del programma ha due modi di essere sbagliato: lasciar passare una traduzione sbagliata, o respingerne una giusta. Nessuno dei due si vede finché il programma non c'è. Al Validatore è stato quindi chiesto di scrivere lui, nella sua copia, dei job di prova. Un job fedele ha reso verdi i quattro casi togliendo solo le marcature, senza toccare il test. Diciassette job sbagliati sono stati respinti, ciascuno con la diagnosi del punto esatto: l'errore dell'oracle copiato nei due byte del passo 29, il formato dei record variabili di GnuCOBOL al posto di quello di z/OS, la lettura senza ordinamento, un segno e una scala sbagliati in un solo conto, un record omesso, una riga di log sulla console, uno spazio finale tolto, la scrittura in coda ai file esistenti. È la validazione più utile di tutto il percorso, ed è costata 28 minuti.
+
+*Un'assenza nei log non prova un'assenza.* Il rilievo bloccante è stato lo stesso in due forme. Prima forma: il test riconosceva "il job non esiste" da una frase nell'output; un job che esisteva, partiva, stampava quella frase e falliva era scambiato per job assente. Corretto così: la frase vale solo dentro la traccia del componente di Spring Boot che sceglie il job, e solo se nei log non compaiono le righe di avvio di un job. Seconda forma, trovata alla seconda validazione: con i log ridotti al livello degli avvisi quelle righe non vengono scritte, e il falso verde tornava. La correzione definitiva guarda un fatto e non un testo: le tabelle in cui Spring Batch registra ogni job avviato devono essere presenti e vuote. Vale come regola generale per chi scrive controlli: **"non ho visto X" prova che X non c'è solo se X, quando c'è, lascia sempre una traccia là dove si sta guardando.**
+
+*Dopo la seconda validazione.* Le validazioni avversariali sono al massimo due per PR. Alla seconda restava un rischio di falso verde, quindi per regola niente merge: correzione di quel solo rilievo, poi verifica dell'Approvatore su un clone pulito. La verifica è stata di tre corse: il ramo com'è (verde); il nuovo controllo tolto (rossa la prova dedicata); una variante del controesempio del Validatore, con i log spenti del tutto anziché ridotti (verde, cioè il job avviato resta riconosciuto). Il secondo rilievo, un difetto di pulizia dei processi che non tocca la parità, è andato in una issue.
+
+Due errori dell'Approvatore in questo passo, per completezza: nel commento pubblico con l'esito della validazione sono finiti tre percorsi di file temporanei del Validatore (nessun dato personale; corretti dopo un minuto), e il prompt di validazione chiedeva un caso di prova che non esiste.
+
+**Passo 33 — L'obiezione dell'autore: così non scala.** Mentre il test era in scrittura l'autore ha chiesto un riassunto del metodo in parole semplici, e subito dopo ha obiettato: *un approccio di questo tipo impiegherebbe giorni per l'intera migrazione, e con migliaia di moduli e milioni di righe diventa abnorme.* L'obiezione è fondata, e i numeri del momento lo mostrano.
+
+**Tabella 22 — Lo stato quando è arrivata l'obiezione** (28 novembre 2026, 08:20 UTC; fonti: `paper/data/eventi.csv`, `paper/data/costi.csv`, GitHub)
+
+| Misura | Valore |
+| --- | ---: |
+| Tempo di calendario dall'inizio | 23 h 31 min |
+| PR mergiate | 24 |
+| Programmi tradotti | 0 |
+| Tempo mediano di una PR, da aperta a mergiata | 102 min (massimo 268) |
+| Lanci del Validatore | 67, per 20,6 ore di macchina (mediana 15 min) |
+| Token contati | 25,2 milioni degli Esecutori, 11,1 milioni del Validatore |
+
+Che cosa dicono questi numeri e che cosa no. Quasi tutto il tempo è andato in lavori che si fanno una volta sola: l'inventario, l'ambiente che esegue il COBOL, lo scheletro Java, i controlli, la CI. Il costo di un programma in più non era ancora stato misurato: è ciò che il pilota serve a dire. Ma tre cose del processo, così com'è, non reggono un sistema grande, comunque vada quella misura: ogni PR passa da due validazioni di 15-40 minuti con un solo coordinatore; il riferimento di ogni programma è costruito e controllato a mano; ogni specifica è contestata una per una.
+
+La risposta data all'autore, che qui si riporta come ipotesi e non come risultato: produrre il riferimento per esecuzione e non a mano; riservare il rigore pieno al primo programma di ogni tipo, e far passare i successivi dal solo test di parità con il Validatore a campione; lavorare in parallelo su perimetri disgiunti. L'autore ha deciso: *chiudere il pilota batch così com'è, poi fermarsi*. La scelta su come proseguire si farà con il costo del pilota misurato.
+
+Nello stesso momento è arrivata una conferma dalla parte opposta. La specifica del riferimento per i programmi a schermo, cioè una "matrice di comportamento" scritta a mano leggendo il sorgente (issue #11, programma di accesso `COSGN00C`), è stata contestata dal Validatore in 5 minuti e 20 secondi: 14 rilievi, 10 bloccanti. Il primo dice che nessuno dei controlli previsti verifica che la matrice descriva ciò che il programma fa: una matrice con i messaggi scambiati li supera tutti. La proposta del Validatore è eseguire davvero il programma, sostituendo i suoi dieci comandi CICS con piccoli adattatori che registrano che cosa il programma chiede e gli rispondono ciò che lo scenario prescrive. È la stessa direzione dell'obiezione dell'autore: un riferimento che nasce da un'esecuzione costa meno, per programma, di uno scritto e verificato a mano. La specifica non è stata riscritta: resta in attesa della decisione sul seguito (voce 115).
+
 *(passi successivi: da compilare)*
 
 **Come si misurano i tempi.** Su richiesta dell'autore, da questo punto ogni passaggio è cronometrato nel momento in cui avviene. Un piccolo script, `paper/data/tlog.sh`, aggiunge una riga con l'ora corrente al registro `paper/data/eventi.csv`; il registro non si modifica mai, si aggiunge soltanto. Per i passi precedenti i tempi sono stati ricostruiti da fonti verificabili (date dei commit, date di creazione su GitHub, date dei file) e ogni riga dichiara la propria fonte.
@@ -762,7 +805,7 @@ Dopo la revisione del piano (sezione 2.2) la wave comincia da una sola tabella, 
 *(da compilare)*
 
 ### 5.4 Wave 2 — pilota: una fetta batch e una online
-Pilota batch: `CBACT01C`. Pilota online: il programma di accesso `COSGN00C`, dopo quello batch. Il percorso è nella sezione 2.2. Stato al 28 novembre 2026, ore 08:10 UTC: specifiche del test di parità e della traduzione contestate (passo 31); test di parità in corso; nessuna riga di `CBACT01C` ancora tradotta.
+Pilota batch: `CBACT01C`. Pilota online: il programma di accesso `COSGN00C`, dopo quello batch. Il percorso è nella sezione 2.2. Stato al 28 novembre 2026, ore 10:15 UTC: test di parità su `main` (PR #69, passo 32), rosso per il motivo atteso; traduzione di `CBACT01C` affidata (#67). Il pilota online è sospeso: la specifica del suo riferimento è stata contestata e va riscritta (passo 33).
 
 *(da compilare)*
 

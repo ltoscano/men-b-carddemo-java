@@ -552,3 +552,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T10:03:05Z,pr-69,verifica-fable-fine,fable,orologio,tre corse di verify.sh: base 0; mutazione 1 sulla controprova; variante con log spenti 0
 2026-11-28T10:11:00Z,pr-69,merge,fable,orologio,PR #69 mergiata alle 10:10 UTC (fonte github); chiude #65
 2026-11-28T10:11:28Z,issue-67,esecutore-inizio,opus,orologio,traduzione di CBACT01C in Java (job READACCT)
+2026-11-28T10:12:20Z,paper,aggiornamento,fable,orologio,passi 32 e 33
