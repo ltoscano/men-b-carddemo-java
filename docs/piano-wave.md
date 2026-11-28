@@ -249,8 +249,8 @@ Questa sezione prevale sulle precedenti dove differiscono. In particolare la con
 | 3. Output di riferimento di `CBACT01C` | #55 (divisa da #9) | chiusa (PR #64) |
 | 4a. Tabella dei conti in PostgreSQL | #59 | chiusa (PR #61) |
 | 4b. Caricamento dei conti in PostgreSQL | #60 | chiusa (PR #66) |
-| 5. Test di parità di `CBACT01C` contro il golden, scritto prima della traduzione e rosso finché il Java non esiste | #65 | in corso |
-| 6. `CBACT01C` tradotto: il test del passo 5 passa, senza che l'Esecutore lo modifichi | #67 | specifica contestata; bloccata da #65 |
+| 5. Test di parità di `CBACT01C` contro il golden, scritto prima della traduzione e rosso finché il Java non esiste | #65 | **chiuso** (PR #69, 28 nov 10:10 UTC) |
+| 6. `CBACT01C` tradotto: il test del passo 5 passa, senza che l'Esecutore lo modifichi | #67 | in corso |
 
 I passi 5 e 6 applicano la catena del metodo (specifica → test → issue → implementazione agentica): due issue, due Esecutori diversi.
 

@@ -549,3 +549,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T09:47:00Z,pr-69,correzione-mirata-inizio,opus,orologio,dopo la validazione 2: solo il rilievo bloccante
 2026-11-28T09:58:44Z,pr-69,correzione-mirata-fine,opus,orologio,SHA 7c9e43f
 2026-11-28T09:58:44Z,pr-69,verifica-fable-inizio,fable,orologio,clone pulito; controesempio del Validatore
+2026-11-28T10:03:05Z,pr-69,verifica-fable-fine,fable,orologio,tre corse di verify.sh: base 0; mutazione 1 sulla controprova; variante con log spenti 0
+2026-11-28T10:11:00Z,pr-69,merge,fable,orologio,PR #69 mergiata alle 10:10 UTC (fonte github); chiude #65
