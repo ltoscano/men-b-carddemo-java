@@ -507,3 +507,7 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T05:48:06Z,wave2-test,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
 2026-11-28T05:59:33Z,issue-60,esecutore-fine,opus,orologio,PR #66 aperta; SHA c590388; criteri 1-5 dichiarati; CI in parte in attesa
 2026-11-28T05:59:42Z,pr-66,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-28T05:59:49Z,paper,risposta-consegnata,fable,orologio,PR #66 in validazione
+2026-11-28T06:22:28Z,pr-64,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0
+2026-11-28T06:23:10Z,pr-64,rinvio-esecutore,fable,orologio,4 accolti; 1 respinto
+2026-11-28T06:23:10Z,pr-64,correzione-inizio,opus,orologio,giro unico
