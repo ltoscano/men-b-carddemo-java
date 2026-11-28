@@ -291,7 +291,7 @@ muta_run() {
   MUTA_N=$((MUTA_N + 1))
   name="menb-codec-muta-$$-${MUTA_N}"
   limited "${SHORT_TIMEOUT}" docker run --rm --name "${name}" --user "${HOST_IDS}" -e HOME=/tmp \
-    -v "${ROOT}:/w" -v "${WORK}:/m" -w /w "${MUTA_IMAGE}" java /m/Muta.java "$@" </dev/null || MUTA_RC=$?
+    -v "${ROOT}:/w" -v "${WORK}:/m" -w /w --entrypoint java "${MUTA_IMAGE}" /m/Muta.java "$@" </dev/null || MUTA_RC=$?
   if [ "${MUTA_RC}" -ne 0 ]; then
     limited "${SHORT_TIMEOUT}" docker rm -f "${name}" </dev/null >/dev/null 2>&1 || true
     case "${MUTA_RC}" in
