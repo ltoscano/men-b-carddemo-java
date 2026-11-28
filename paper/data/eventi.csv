@@ -511,3 +511,6 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T06:22:28Z,pr-64,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0
 2026-11-28T06:23:10Z,pr-64,rinvio-esecutore,fable,orologio,4 accolti; 1 respinto
 2026-11-28T06:23:10Z,pr-64,correzione-inizio,opus,orologio,giro unico
+2026-11-28T06:27:27Z,pr-66,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0
+2026-11-28T06:28:24Z,pr-66,rinvio-esecutore,fable,orologio,5 accolti; specifica aggiornata (riesecuzione)
+2026-11-28T06:28:24Z,pr-66,correzione-inizio,opus,orologio,giro unico
