@@ -745,6 +745,49 @@ La risposta data all'autore, che qui si riporta come ipotesi e non come risultat
 
 Nello stesso momento è arrivata una conferma dalla parte opposta. La specifica del riferimento per i programmi a schermo, cioè una "matrice di comportamento" scritta a mano leggendo il sorgente (issue #11, programma di accesso `COSGN00C`), è stata contestata dal Validatore in 5 minuti e 20 secondi: 14 rilievi, 10 bloccanti. Il primo dice che nessuno dei controlli previsti verifica che la matrice descriva ciò che il programma fa: una matrice con i messaggi scambiati li supera tutti. La proposta del Validatore è eseguire davvero il programma, sostituendo i suoi dieci comandi CICS con piccoli adattatori che registrano che cosa il programma chiede e gli rispondono ciò che lo scenario prescrive. È la stessa direzione dell'obiezione dell'autore: un riferimento che nasce da un'esecuzione costa meno, per programma, di uno scritto e verificato a mano. La specifica non è stata riscritta: resta in attesa della decisione sul seguito (voce 115).
 
+**Passo 34 — La traduzione: il primo programma in Java.** È l'ultimo anello della catena: un secondo Esecutore, diverso da quello che ha scritto il test, traduce `CBACT01C` (430 righe di COBOL) così che il test del passo 32 passi. Del test può togliere le quattro marcature di fallimento atteso e le loro quattro righe nell'elenco, e nient'altro (issue #67, PR #70). Se il test gli sembra sbagliato deve fermarsi, non correggerlo.
+
+Come ha lavorato. Prima del codice ha scritto `docs/programmi/CBACT01C.md`: una tabella con una riga per ogni istruzione del sorgente che produce un effetto visibile (un campo copiato in un'area di uscita, una scrittura, una riga di console, un controllo d'errore), con la riga del COBOL e il punto del Java che la traduce. Poi il codice: 1.218 righe di Java di produzione e 1.245 di test del modulo. Poi la transizione: tolte le marcature, i quattro casi di parità sono diventati verdi alla prima corsa, senza altre modifiche al test.
+
+**Tabella 23 — Storia della PR #70** (durate dal registro degli eventi)
+
+| Fase | Chi | Durata | Esito |
+| --- | --- | ---: | --- |
+| Traduzione | Esecutore (Opus) | 1 h 10 min 10 s | PR aperta, 31 file, 2.585 righe; test di parità verde |
+| Validazione 1 | Codex | 28 min 48 s | bocciata: 2 bloccanti, 2 importanti, 1 minore |
+| Correzione | Esecutore | 33 min 22 s | cinque rilievi corretti, più un difetto trovato da sé |
+| Validazione 2 (ristretta) | Codex | 27 min 17 s | approvata, nessun rilievo nuovo |
+| Merge | Approvatore | — | 12:52, 2 ore e 41 minuti dopo l'affidamento |
+
+*Che cosa ha trovato il Validatore, e che cosa no.* Ha letto per intero i cinque sorgenti (programma, due copybook, la routine assembler della data, il JCL) e li ha confrontati con il Java: campi, costanti e i 24 messaggi coincidono, compreso un refuso dell'originale (`EXPIRAION`) che la traduzione conserva. Non ha trovato alcun byte sbagliato. I cinque rilievi riguardano tutti i controlli: ha alterato il Java in diciassette modi, e tre alterazioni passavano. Un importo sbagliato in un caso che i dati di esempio non contengono (si controllava la dimensione del file, non il contenuto); il codice di uscita verificato per due sole fasi su sei; la cancellazione iniziale dei file spostata dopo l'apertura dei conti. In più, lo smoke accettava dati spuri in coda alla console. Lo schema è uno solo: **si verificava la forma o lo stato finale, non il contenuto, il contratto verso l'esterno o il momento in cui un effetto avviene.**
+
+*Un difetto vero, trovato cercando lo schema.* Nel giro di correzione l'Esecutore deve cercare lo stesso schema in tutto il lavoro, non solo nei casi segnalati (sezione 7.2). Scrivendo il test che lancia l'applicazione vera per ogni tipo di guasto, ha trovato un caso in cui il processo usciva con codice 0 dopo un job fallito: avendo dichiarato un proprio componente per il codice di uscita, Spring Boot non creava più il suo, e un guasto diverso da quelli previsti non era più segnalato a nessuno. Un job notturno che fallisce e dichiara successo è il genere di errore che in produzione si scopre giorni dopo. Nessun test lo vedeva, nemmeno quello di parità, che prova il programma quando funziona. La correzione sono quattordici righe; le ha giudicate il Validatore alla seconda validazione.
+
+*Tre tentativi falliti dell'Esecutore*, come li ha riferiti: un meccanismo di Spring Batch previsto nella tabella di corrispondenza che alla prima prova scartava i parametri del job (sostituito, e la tabella corretta dichiarandolo); un passo dello smoke rimasto fermo per minuti perché una sostituzione di testo è quadratica nella vecchia `bash` di macOS; alcuni valori attesi scritti male a mano nei propri test.
+
+**Il conto del pilota batch.** Il pilota è chiuso: un programma COBOL gira in Java, dentro l'applicazione in container, e le sue uscite coincidono con quelle dell'originale in tutte le posizioni che l'originale determina. È il momento di rispondere, con misure, all'obiezione del passo 33.
+
+**Tabella 24 — Quanto è costato il primo programma** (fonti: `paper/data/eventi.csv`, `paper/data/costi.csv`, GitHub)
+
+| Misura | Valore |
+| --- | ---: |
+| Dalla decisione "prima il pilota" (27 nov, 22:53 UTC) al merge della traduzione | 13 h 59 min di calendario |
+| PR mergiate in quel tratto | 7 (#56, #58, #61, #64, #66, #69, #70) |
+| Token contati in quel tratto | 9,8 milioni degli Esecutori, 4,4 milioni del Validatore (23 lanci) |
+| Solo il test di parità (passo 32) | 2 h 6 min dall'affidamento al merge |
+| Solo la traduzione (questo passo) | 2 h 41 min dall'affidamento al merge |
+| Token della sola traduzione | Esecutore: 564.583 alla consegna, 732.202 dopo la correzione; Validatore: 433.964 in due sessioni |
+| Programma tradotto | 430 righe di COBOL → 1.218 righe di Java, 1.245 di test, 398 di tabella di corrispondenza |
+| Dall'inizio del lavoro | 28 h 3 min di calendario, 26 PR mergiate, 1 programma tradotto su 31 |
+
+Due avvertenze sui numeri. Il contatore dell'Esecutore, quando lo stesso agente viene ripreso per la correzione, è probabilmente cumulativo: il totale della traduzione sta tra 0,73 e 1,30 milioni di token, e non so dire dove (`paper/data/costi.md`). Il lavoro della sessione che pianifica e approva non è contato in token. Il denaro non è calcolato.
+
+Che cosa dicono, letti con onestà. Tradurre un programma batch semplice e portarlo al merge è costato circa cinque ore di macchina tra test e traduzione, di cui poco più di un'ora e mezza di scrittura vera (31 minuti il test, 70 la traduzione) e il resto validazioni e correzioni. Con questo processo, in sequenza, i trenta programmi restanti chiederebbero settimane; un sistema con migliaia di moduli non è alla portata. L'obiezione dell'autore è confermata dalla misura. Ma la misura dice anche dove sta il costo: non nel tradurre, che è la parte più breve e che è riuscita alla prima corsa, bensì nel provare che la traduzione è giusta. E dice che quella prova non è stata superflua: in due PR il Validatore ha trovato sei modi in cui un lavoro sbagliato sarebbe passato, e la ricerca che ne è seguita ha trovato un difetto di produzione reale. Chi vuole andare più veloce deve quindi rendere meno cara la prova, non toglierla. Le ipotesi su come farlo sono quelle del passo 33, e restano ipotesi: nessuna è stata provata.
+
+Che cosa è specifico di questo caso. `CBACT01C` è tra i programmi più semplici di CardDemo: legge un file e ne scrive tre, senza aritmetica e senza aggiornamenti. Un programma che aggiorna saldi o che dialoga con uno schermo costerà di più, e quanto non è stato misurato. All'opposto, molto di ciò che questo pilota ha pagato non si ripaga: il comparatore, il meccanismo del fallimento atteso, l'avvio del job in un processo separato, il passo dello smoke sono scritti e servono ai programmi successivi.
+
+**Il lavoro si ferma qui**, per istruzione dell'autore (28 novembre, 08:37 UTC): come proseguire è una sua decisione. Restano aperti, e non avviati: il riferimento per i programmi a schermo (issue #11, specifica da riscrivere), il pilota online, la scelta del processo per i programmi successivi.
+
 *(passi successivi: da compilare)*
 
 **Come si misurano i tempi.** Su richiesta dell'autore, da questo punto ogni passaggio è cronometrato nel momento in cui avviene. Un piccolo script, `paper/data/tlog.sh`, aggiunge una riga con l'ora corrente al registro `paper/data/eventi.csv`; il registro non si modifica mai, si aggiunge soltanto. Per i passi precedenti i tempi sono stati ricostruiti da fonti verificabili (date dei commit, date di creazione su GitHub, date dei file) e ogni riga dichiara la propria fonte.
@@ -805,7 +848,7 @@ Dopo la revisione del piano (sezione 2.2) la wave comincia da una sola tabella, 
 *(da compilare)*
 
 ### 5.4 Wave 2 — pilota: una fetta batch e una online
-Pilota batch: `CBACT01C`. Pilota online: il programma di accesso `COSGN00C`, dopo quello batch. Il percorso è nella sezione 2.2. Stato al 28 novembre 2026, ore 10:15 UTC: test di parità su `main` (PR #69, passo 32), rosso per il motivo atteso; traduzione di `CBACT01C` affidata (#67). Il pilota online è sospeso: la specifica del suo riferimento è stata contestata e va riscritta (passo 33).
+Pilota batch: `CBACT01C`. Pilota online: il programma di accesso `COSGN00C`, dopo quello batch. Il percorso è nella sezione 2.2. Stato al 28 novembre 2026, ore 12:55 UTC: **pilota batch chiuso**. Il test di parità (PR #69, passo 32) passa sulla traduzione di `CBACT01C` (PR #70, passo 34); tempi e costi misurati nella tabella 24. Il pilota online non è avviato: la specifica del suo riferimento è stata contestata e va riscritta (passo 33). Il lavoro è fermo in attesa della decisione dell'autore su come proseguire.
 
 *(da compilare)*
 

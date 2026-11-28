@@ -557,3 +557,9 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T11:22:22Z,pr-70,codex-inizio,codex,orologio,validazione 1 di 2
 2026-11-28T11:51:10Z,pr-70,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0
 2026-11-28T11:51:34Z,pr-70,esecutore-inizio,opus,orologio,giro di correzione dopo la validazione 1
+2026-11-28T12:24:56Z,pr-70,esecutore-fine,opus,orologio,giro di correzione; SHA bbd58cd
+2026-11-28T12:25:16Z,pr-70,codex-inizio,codex,orologio,validazione 2 di 2 ristretta
+2026-11-28T12:52:33Z,pr-70,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0
+2026-11-28T12:52:59Z,pr-70,merge,fable,orologio,chiude #67; pilota batch tradotto
+2026-11-28T12:54:22Z,paper,aggiornamento,fable,orologio,passo 34: traduzione e conto del pilota batch
+2026-11-28T12:54:22Z,stato,risposta-consegnata,fable,orologio,pilota batch chiuso (PR 70 mergiata); lavoro fermo in attesa dell'autore

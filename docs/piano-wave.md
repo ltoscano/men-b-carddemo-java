@@ -250,7 +250,9 @@ Questa sezione prevale sulle precedenti dove differiscono. In particolare la con
 | 4a. Tabella dei conti in PostgreSQL | #59 | chiusa (PR #61) |
 | 4b. Caricamento dei conti in PostgreSQL | #60 | chiusa (PR #66) |
 | 5. Test di parità di `CBACT01C` contro il golden, scritto prima della traduzione e rosso finché il Java non esiste | #65 | **chiuso** (PR #69, 28 nov 10:10 UTC) |
-| 6. `CBACT01C` tradotto: il test del passo 5 passa, senza che l'Esecutore lo modifichi | #67 | in corso |
+| 6. `CBACT01C` tradotto: il test del passo 5 passa, senza che l'Esecutore lo modifichi | #67 | **chiuso** (PR #70, 28 nov 12:52 UTC) |
+
+**Il pilota batch è chiuso (28 nov 2026, 12:52 UTC).** Per istruzione dell'autore il lavoro si ferma qui: come proseguire (pilota online, #11, processo per i programmi successivi) è una sua decisione, da prendere con i costi misurati del pilota (paper, passo 34).
 
 I passi 5 e 6 applicano la catena del metodo (specifica → test → issue → implementazione agentica): due issue, due Esecutori diversi.
 
