@@ -441,3 +441,8 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T00:08:26Z,pr-52,codex-inizio,codex,orologio,validazione 2 di 2 ristretta
 2026-11-28T00:15:46Z,pr-56,correzione-fine,opus,orologio,SHA b272c0a; 7 rilievi dichiarati corretti; 330630 token cumulativi
 2026-11-28T00:15:50Z,pr-56,codex-inizio,codex,orologio,validazione 2 di 2 ristretta
+2026-11-28T00:24:36Z,pr-56,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0
+2026-11-28T00:24:49Z,pr-57,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0
+2026-11-28T00:26:15Z,pr-56,merge,fable,orologio,squash 717a4ac; chiude #5
+2026-11-28T00:26:15Z,pr-57,rinvio-esecutore,fable,orologio,6 accolti; 1 in parte
+2026-11-28T00:26:15Z,pr-57,correzione-inizio,opus,orologio,giro unico
