@@ -594,6 +594,43 @@ Tre fatti sui dati e sul programma sono emersi solo a questo punto, quando la pr
 
 Per chi replica, è la lezione più importante di questo passo: **"identico byte per byte all'originale" è un criterio che va delimitato programma per programma.** Un programma legacy può scrivere nei suoi file byte che non dipendono da alcuna sua istruzione. Un confronto integrale con un riferimento prodotto altrove certifica allora il comportamento del compilatore usato per il riferimento. La tabella delle posizioni escluse è il modo di dirlo esplicitamente, invece di scoprirlo quando il confronto fallisce su un sistema diverso.
 
+**Passo 27 — Il file dei conti nell'oracle, e una PR finalmente approvata.** L'issue #53 chiedeva di mettere nell'oracle il file indicizzato dei conti con lo stesso contenuto che il JCL originale vi carica, e di dimostrarlo rileggendolo.
+
+**Tabella 16 — Storia della PR #58** (durate dal registro degli eventi)
+
+| Fase | Chi | Durata | Esito |
+| --- | --- | ---: | --- |
+| Implementazione | Esecutore (Opus) | 75 min | PR aperta |
+| Validazione 1 | Codex | 22 min 23 s | bocciata: 2 bloccanti, 3 importanti, 1 minore; un rilievo respinto |
+| Correzione | Esecutore | circa 40 min | cinque rilievi corretti |
+| Validazione 2 (ristretta) | Codex | 29 min 11 s | approvata con una riserva minore |
+| Merge | Approvatore | — | 04:07, 2 ore e 48 minuti dopo l'affidamento |
+
+È la prima PR a rischio pieno approvata dal Validatore da quando esiste la regola delle due validazioni estesa a tutte le PR (passo 22 in poi: la precedente era la #47). Il rilievo bloccante era ancora un controllo circolare, il terzo in due giorni: la rilettura che doveva provare il caricamento usava un programma dello stesso percorso, e alterando insieme caricatore e rilettore tutto restava verde. La correzione è un secondo lettore, scritto a parte con la dichiarazione di file del programma pilota: è, in piccolo, ciò che farà il programma vero.
+
+Due cose scoperte dagli agenti che non erano in nessuna specifica:
+
+- *GnuCOBOL legge senza errore un ultimo record incompleto*, lasciando nell'area i resti del precedente. Lo ha trovato l'Esecutore con una sonda; il Validatore l'ha confermato. Un controllo sugli stati di lettura non basta a rifiutare un file troncato: bisogna controllare la dimensione.
+- *Un file è stato pubblicato prima dell'ultima verifica.* Il passo metteva il risultato al suo percorso definitivo e poi lo rileggeva. Chi lo consuma in quel momento usa un file non verificato. Ora la pubblicazione è una rinomina, come ultimo atto.
+
+**Passo 28 — La tabella dei conti: due tipi sbagliati di fila.** La Wave 1 comincia dalla sola tabella che serve al pilota. Le due specifiche (tabella e caricamento) sono state scritte e contestate insieme: 5 minuti e 43 secondi, 12 rilievi, 3 bloccanti, tutti accolti.
+
+*Una decisione del pianificatore rovesciata in contestazione.* La bozza diceva: la tabella conserva valori e non byte, e ciò che si perde (per esempio lo zero scritto con il segno negativo, che come numero è zero) si maschera nel confronto con l'originale. Il Validatore ha mostrato che le due cose non stanno insieme: la tabella delle posizioni escluse del passo 26 serve per ciò che il programma originale non determina, non per ciò che il nuovo database perde; e una maschera per posizione nasconderebbe anche errori di segno veri. La decisione riscritta (voce 100): il sistema Java accetta solo dati in rappresentazione *canonica*, cioè scritti nell'unico modo in cui la codifica li scriverebbe; un record che ne usa un altro non viene caricato, e il caricatore lo dice. La parità si dichiara per gli ingressi canonici; ciò che l'originale fa con gli altri si registra come osservazione. I dati di esempio sono tutti canonici. È un limite dichiarato del prodotto: su un sistema reale con dati sporchi servirebbe una bonifica prima del caricamento.
+
+*Il tipo dei campi di testo, sbagliato due volte.* Un campo COBOL `PIC X(10)` contiene sempre dieci caratteri, spazi finali compresi. Il pianificatore ha scelto il tipo PostgreSQL che sembrava il suo gemello, `CHAR(10)`. Il Validatore, sulla PR, ha mostrato che non lo è: appena il valore passa da una funzione PostgreSQL toglie gli spazi finali, e un confronto senza distinzione tra maiuscole e minuscole non trova più la riga. In COBOL lo stesso confronto è vero, e uno dei programmi a schermo del sistema lo fa proprio su questi campi. L'Esecutore aveva visto metà del problema e l'aveva risolto vietando una forma in documentazione, invece di fermarsi come la specifica chiedeva.
+
+Il pianificatore ha corretto la specifica con `VARCHAR(10)` e un vincolo di lunghezza esatta, senza provarlo. L'Esecutore, prima di scrivere una riga, l'ha provato e si è fermato: PostgreSQL adatta il valore al tipo prima di valutare i vincoli, e in quel passaggio tronca senza errore un valore troppo lungo se i caratteri in più sono spazi. Il vincolo non vede mai il valore originale. La forma adottata alla fine (voce 103) è testo senza limite nel tipo, con il vincolo "esattamente n caratteri" e il confronto per codice del carattere.
+
+**Tabella 17 — Tre tipi per lo stesso campo**
+
+| Scelta | Chi l'ha proposta | Che cosa non va | Chi l'ha scoperto |
+| --- | --- | --- | --- |
+| `CHAR(n)` | pianificatore | toglie gli spazi finali in ogni conversione a testo, anche implicita | Validatore, sulla PR |
+| `VARCHAR(n)` con vincolo di lunghezza | pianificatore | tronca senza errore gli spazi in eccesso prima del vincolo | Esecutore, fermandosi |
+| testo con vincolo di lunghezza e confronto per codice | Esecutore | — (verificato con prove prima dell'adozione) | — |
+
+Che cosa se ne ricava. La corrispondenza tra un tipo del sistema vecchio e un tipo del nuovo non si stabilisce per somiglianza di nome: si stabilisce elencando le operazioni che i programmi fanno su quel dato (lettura, confronto, confronto attraverso funzioni, ordinamento, scrittura di valori troppo lunghi o troppo corti) e provandole una per una sul database vero. Il pianificatore non l'ha fatto, due volte. E la stessa regola, "se la realtà smentisce la specifica, fermati", è stata disattesa e poi applicata dallo stesso Esecutore a distanza di un'ora: la differenza l'ha fatta il prompt del secondo giro, che la ripeteva con il caso concreto ("non risolvere con un divieto in documentazione").
+
 *(passi successivi: da compilare)*
 
 **Come si misurano i tempi.** Su richiesta dell'autore, da questo punto ogni passaggio è cronometrato nel momento in cui avviene. Un piccolo script, `paper/data/tlog.sh`, aggiunge una riga con l'ora corrente al registro `paper/data/eventi.csv`; il registro non si modifica mai, si aggiunge soltanto. Per i passi precedenti i tempi sono stati ricostruiti da fonti verificabili (date dei commit, date di creazione su GitHub, date dei file) e ogni riga dichiara la propria fonte.
@@ -617,7 +654,7 @@ Dal clone di CardDemo (08:49:22) al momento in cui i primi due Esecutori hanno c
 
 ### 5.1 Wave 0A — mappa e oracle
 
-Stato al 28 novembre 2026, ore 02:00 UTC: in corso. Il racconto, nell'ordine in cui è avvenuto, è nei passi 7-26 della sezione 5.0; qui c'è che cosa esiste, con il comando per ottenerlo. Elenco completo in `docs/strumenti-creati.md`.
+Stato al 28 novembre 2026, ore 04:30 UTC: in corso. Il racconto, nell'ordine in cui è avvenuto, è nei passi 7-28 della sezione 5.0; qui c'è che cosa esiste, con il comando per ottenerlo. Elenco completo in `docs/strumenti-creati.md`.
 
 | Che cosa | Comando | Dove si legge il risultato | Passi |
 | --- | --- | --- | --- |
@@ -627,9 +664,10 @@ Stato al 28 novembre 2026, ore 02:00 UTC: in corso. Il racconto, nell'ordine in 
 | Contratto dati (posizione e tipo di ogni campo) | `./analysis/run.sh data-contract --check` | `docs/legacy-map/data-contract/` | 15, 16 |
 | Regole di codifica dei campi | `./analysis/run.sh data-codec --check` | `docs/legacy-map/data-contract/codifica.md` | 20, 21 |
 | Oracle: 12 programmi batch eseguibili | `./oracle/run.sh --all --check` | `oracle/README.md` | 15, 17, 20 |
+| File dei conti nell'oracle, caricato e riletto per due vie | `./analysis/run.sh oracle-dati --check`, `./oracle/run.sh dati --check` | `docs/legacy-map/oracle-dati.md` | 27 |
 | Dati di esempio decodificati (22 file, 1.813 record) e loro anomalie | `./analysis/run.sh data-fixtures --check` | `docs/legacy-map/fixture.md` | 25 |
 
-Dopo la revisione del piano (sezione 2.2) la wave non si chiude più tutta insieme. Per il pilota mancano: il file dei conti caricato nell'oracle (in corso) e l'output di riferimento (*golden*) di `CBACT01C` (specifica pronta). Il resto (output di riferimento degli altri programmi, grafo dei flussi batch, descrizione del comportamento dei programmi a schermo) è rinviato a subito prima del programma a cui serve.
+Dopo la revisione del piano (sezione 2.2) la wave non si chiude più tutta insieme. Per il pilota manca l'output di riferimento (*golden*) di `CBACT01C` (in corso). Il resto (output di riferimento degli altri programmi, grafo dei flussi batch, descrizione del comportamento dei programmi a schermo) è rinviato a subito prima del programma a cui serve.
 
 *(da completare alla chiusura della wave: issue, tempi aggregati, cosa si trasferisce ad altri sistemi)*
 
@@ -647,7 +685,7 @@ Stato al 27 novembre 2026, ore 21:30 UTC: quasi conclusa. Passi 8-10, 14, 15, 17
 *(da completare alla chiusura della wave)*
 
 ### 5.3 Wave 1 — dati
-Dopo la revisione del piano (sezione 2.2) la wave comincia da una sola tabella, quella dei conti, che serve al pilota. Le altre tabelle si aggiungono prima dei programmi che le usano.
+Dopo la revisione del piano (sezione 2.2) la wave comincia da una sola tabella, quella dei conti, che serve al pilota. Le altre tabelle si aggiungono prima dei programmi che le usano. Stato al 28 novembre 2026, ore 04:30 UTC: tabella in revisione (PR #61, passo 28), caricamento in attesa.
 
 *(da compilare)*
 
@@ -701,6 +739,8 @@ Ogni riga dice che cosa è successo, in quale passo della sezione 5.0 lo si legg
 | Ciò che il sorgente non determina non si inventa | Una routine assembler dipendeva dalla memoria vicina (17); un campo binario dava due valori (21) | L'oracle si ferma con un codice riconoscibile o registra un'osservazione; non produce un valore scelto da noi |
 | "Identico byte per byte" va delimitato programma per programma | Due byte di ogni record del pilota vengono da memoria mai inizializzata (26) | Il riferimento ha una tabella versionata delle posizioni escluse, con motivo e riga del sorgente; il file fisico si conserva com'è |
 | I dati di esempio possono non esercitare ciò che conta | Nessun importo negativo nei conti di esempio (26) | Accanto allo scenario con i dati di esempio, uno con sostituzioni mirate scritte a mano |
+| Un tipo del nuovo sistema non corrisponde a uno del vecchio per somiglianza di nome | Due tipi PostgreSQL sbagliati di fila per `PIC X(n)` (28) | Si elencano le operazioni che i programmi fanno sul dato e si provano una per una sul database vero, prima di scrivere la specifica |
+| La persistenza nuova non conserva tutto: va detto dove | Lo zero con segno negativo non sopravvive a una colonna numerica (28) | Il sistema nuovo accetta solo dati in forma canonica; ciò che non lo è non entra, e la parità si dichiara per gli ingressi canonici |
 | Un errore noto di uno strumento non diventa un valore atteso | Un conteggio sbagliato registrato come "atteso" per far passare il controllo (11) | Se un controllo non passa si decide per iscritto se cambia la richiesta; non si aggiusta l'atteso |
 
 **Sulle specifiche**
@@ -709,6 +749,7 @@ Ogni riga dice che cosa è successo, in quale passo della sezione 5.0 lo si legg
 | --- | --- | --- |
 | Far criticare la specifica prima di eseguirla conviene | Da tre a sei minuti di critica contro venti o trenta di lavoro su una specifica irrealizzabile (7, 12, 20) | Un'issue diventa `ready` solo dopo la contestazione del Validatore, con ogni rilievo accolto o respinto per iscritto |
 | Una issue, un lavoro solo | Le issue con due lavori indipendenti sono quelle con più giri; la più grande è costata quasi cinque ore (12, 16, 19) | Le issue grandi si dividono prima di affidarle |
+| Una regola generale va ripetuta con il caso concreto | Lo stesso Esecutore prima aggira un contrasto con una nota, poi si ferma (28) | Nel prompt del giro di correzione la regola "fermati" è scritta con l'esempio di ciò che non va fatto |
 | Un Esecutore che si ferma è un buon esito | Quattro fermi spontanei su criteri irrealizzabili o riferimenti ambigui, senza scorciatoie (13, 15, 17, 21) | Se il sorgente smentisce la specifica: fermarsi, commento tecnico, etichetta `needs-spec-update` |
 | La durata dei controlli va limitata nella specifica | Una validazione di 54 minuti, di cui 50 a eseguire uno script consegnato dalla PR (22) | Non ancora una regola scritta |
 
@@ -720,7 +761,7 @@ Ogni riga dice che cosa è successo, in quale passo della sezione 5.0 lo si legg
 | Il lavoro consegnato era quasi sempre giusto; i controlli no | Contenuti riconfermati a mano dal Validatore, difetti nei controlli (15, 22) | L'Esecutore fa un autocontrollo su quattro famiglie di difetto prima della PR. Effetto misurato: cambia il tipo di rilievi, non il numero di bocciature |
 | Chi valida deve eseguire, non solo leggere | Un difetto solo sospettato in lettura è stato dimostrato eseguendo (10) | Il Validatore lavora in un clone usa e getta, con Docker, e riesegue da sé i criteri |
 | Chi valida è di un altro fornitore e non condivide il contesto | I rilievi riguardavano ciò che l'Esecutore dava per buono (9, 11, 15) | Validatore di fornitore diverso, che riceve solo specifica, diff e test |
-| Un controllo circolare sembra un controllo | Dati decodificati confrontati con una copia letta dallo stesso codice (25) | Il controllo rilegge la fonte per una via indipendente da ciò che verifica |
+| Un controllo circolare sembra un controllo | Dati decodificati confrontati con una copia letta dallo stesso codice (25); rilettura fatta con un programma dello stesso percorso del caricamento (27) | Il controllo rilegge la fonte per una via indipendente da ciò che verifica |
 | "Bocciata" non significa "sbagliata" | Tre PR mai approvate dal Validatore, con il contenuto confermato per intero (25) | La voce di registro riporta separatamente che cosa il Validatore ha confermato e che cosa ha contestato |
 | Nessun controllo prova che un test verifichi | Richiesta di difendersi da un test svuotato o riscritto, respinta (25) | Chi implementa non modifica i test; una suite altera il codice e pretende che i test se ne accorgano |
 | Un Validatore avversariale non si ferma da solo | Rilievi nuovi a ogni giro; un terzo giro costa quanto il primo (14, 16) | Al massimo due validazioni per PR. Non si chiede a uno script di difendersi da uno strumento che restituisce dati falsi ma ben formati |
