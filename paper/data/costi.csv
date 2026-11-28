@@ -132,3 +132,4 @@ ora_utc,oggetto,ruolo,modello,token,tipo_contatore,fonte,note
 2026-11-28T09:05:28Z,pr-69,validatore,gpt-6.1-sol,244281,per sessione,log di Codex,validazione 1 di 2
 2026-11-28T09:32:07Z,pr-69,esecutore,opus,328051,subagent_tokens,notifica del task,giro di correzione; 60 chiamate; 1542 s
 2026-11-28T09:47:00Z,pr-69,validatore,gpt-6.1-sol,156776,per sessione,log di Codex,validazione 2 di 2 ristretta
+2026-11-28T09:58:56Z,pr-69,esecutore,opus,354617,subagent_tokens,notifica del task,correzione mirata dopo la validazione 2; 30 chiamate; 682 s
