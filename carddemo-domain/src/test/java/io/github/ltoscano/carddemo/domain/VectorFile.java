@@ -6,8 +6,11 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +25,13 @@ import java.util.regex.Pattern;
  */
 final class VectorFile {
 
-    /** One data line: the columns by header name and the line number in the file (from 1). */
-    record Row(int line, Map<String, String> columns) {
+    /**
+     * One data line: file name, line number (from 1), raw text and the columns by header name.
+     * {@link #id()} identifies the vector: {@code <file>:<line>:<first 16 hex digits of the SHA-256
+     * of the raw line, UTF-8>}. {@code quality/RapportoSurefire.java} computes the same identifiers
+     * from the file and requires each of them, in order, in the report of the run.
+     */
+    record Row(String file, int line, String raw, Map<String, String> columns) {
         String get(String column) {
             String v = columns.get(column);
             if (v == null) {
@@ -31,6 +39,33 @@ final class VectorFile {
             }
             return v;
         }
+
+        String id() {
+            try {
+                byte[] h = MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.UTF_8));
+                return file + ":" + line + ":" + HexFormat.of().formatHex(h).substring(0, 16);
+            } catch (NoSuchAlgorithmException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+    }
+
+    /**
+     * Python's {@code str.isspace} for one character: general category Zs, or bidirectional class
+     * WS, B or S. Wider than {@link Character#isWhitespace} (it includes U+00A0, U+2007, U+202F,
+     * U+001C-U+001F, U+0085).
+     */
+    static boolean pythonSpace(int c) {
+        byte dir = Character.getDirectionality(c);
+        return Character.getType(c) == Character.SPACE_SEPARATOR
+                || dir == Character.DIRECTIONALITY_WHITESPACE
+                || dir == Character.DIRECTIONALITY_PARAGRAPH_SEPARATOR
+                || dir == Character.DIRECTIONALITY_SEGMENT_SEPARATOR;
+    }
+
+    /** {@code not r.strip()} in Python: the line is empty or made only of Python whitespace. */
+    static boolean blank(String line) {
+        return line.codePoints().allMatch(VectorFile::pythonSpace);
     }
 
     private static final Pattern HEX_TOKEN = Pattern.compile("([0-9A-F]{2})(?:\\*([1-9][0-9]*))?");
@@ -50,7 +85,7 @@ final class VectorFile {
         List<Row> rows = new ArrayList<>();
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
-            if (line.isBlank() || line.startsWith("#")) {
+            if (blank(line) || line.startsWith("#")) {
                 continue;
             }
             if (header == null) {
@@ -69,7 +104,7 @@ final class VectorFile {
             for (int c = 0; c < header.length; c++) {
                 columns.put(header[c], fields.get(c));
             }
-            rows.add(new Row(i + 1, columns));
+            rows.add(new Row(path.getFileName().toString(), i + 1, line, columns));
         }
         if (header == null) {
             throw new IOException(path + ": file vuoto");

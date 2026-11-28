@@ -11,9 +11,9 @@ import java.util.regex.Pattern;
  */
 public final class FieldPicture {
 
-    private static final Pattern ALPHANUMERIC = Pattern.compile("X\\(([1-9][0-9]{0,3})\\)");
+    private static final Pattern ALPHANUMERIC = Pattern.compile("X\\(([1-9][0-9]*)\\)");
     private static final Pattern NUMERIC =
-            Pattern.compile("(S?)9\\(([1-9][0-9]{0,3})\\)(?:V9\\(([1-9][0-9]{0,3})\\))?");
+            Pattern.compile("(S?)9\\(([1-9][0-9]*)\\)(?:V9\\(([1-9][0-9]*)\\))?");
     private static final int MAX_BINARY_DIGITS = 18;
 
     private final FieldCategory category;
@@ -50,16 +50,16 @@ public final class FieldPicture {
             if (!m.matches()) {
                 throw new FieldEncodingException("PICTURE alfanumerica non valida: " + picture);
             }
-            return new FieldPicture(category, picture, false, 0, 0, Integer.parseInt(m.group(1)));
+            return new FieldPicture(category, picture, false, 0, 0, count(m.group(1), picture));
         }
         Matcher m = NUMERIC.matcher(picture);
         if (!m.matches()) {
             throw new FieldEncodingException("PICTURE numerica non valida: " + picture);
         }
         boolean signed = "S".equals(m.group(1));
-        int integerDigits = Integer.parseInt(m.group(2));
-        int scale = m.group(3) == null ? 0 : Integer.parseInt(m.group(3));
-        int digits = integerDigits + scale;
+        int integerDigits = count(m.group(2), picture);
+        int scale = m.group(3) == null ? 0 : count(m.group(3), picture);
+        int digits = sum(integerDigits, scale, picture);
         int length;
         switch (category) {
             case DISPLAY_UNSIGNED, DISPLAY_SIGNED -> {
@@ -73,6 +73,29 @@ public final class FieldPicture {
             default -> throw new FieldEncodingException("categoria senza regola: " + category);
         }
         return new FieldPicture(category, picture, signed, integerDigits, scale, length);
+    }
+
+    /**
+     * A count of the {@code PICTURE} ({@code X(n)}, {@code 9(i)}, {@code V9(d)}). The grammar is the
+     * glue's ({@code [1-9][0-9]*}, no upper limit); a count above {@link Integer#MAX_VALUE} cannot
+     * be a Java array length and is rejected explicitly.
+     */
+    private static int count(String digits, String picture) {
+        try {
+            return Integer.parseInt(digits);
+        } catch (NumberFormatException e) {
+            throw new FieldEncodingException("conteggio " + digits + " oltre " + Integer.MAX_VALUE
+                    + " (limite delle lunghezze in Java) in " + picture, e);
+        }
+    }
+
+    private static int sum(int integerDigits, int scale, String picture) {
+        try {
+            return Math.addExact(integerDigits, scale);
+        } catch (ArithmeticException e) {
+            throw new FieldEncodingException("cifre oltre " + Integer.MAX_VALUE + " (limite delle lunghezze in Java) in "
+                    + picture, e);
+        }
     }
 
     private static int binaryLength(int digits, String picture) {

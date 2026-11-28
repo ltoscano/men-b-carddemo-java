@@ -1,8 +1,19 @@
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -26,10 +37,11 @@ import org.w3c.dom.NodeList;
  *
  * <p>Seconda forma, per i test dinamici (test dei vettori del codec, issue #54):
  *
- * <pre>java quality/RapportoSurefire.java &lt;rapporto&gt; &lt;corsa&gt; &lt;classe&gt; &lt;fabbrica&gt;=&lt;casi&gt; ...</pre>
+ * <pre>java quality/RapportoSurefire.java &lt;rapporto&gt; &lt;corsa&gt; &lt;classe&gt; &lt;fabbrica&gt;=&lt;casi&gt;@&lt;file&gt; ...</pre>
  *
  * Stesse condizioni, ma i testcase devono essere esattamente {@code <fabbrica>()[1..casi]} per
- * ogni fabbrica dichiarata, e i saltati si controllano prima della corsa (vedi {@link #fabbriche}).
+ * ogni fabbrica dichiarata, ognuno con l'identificativo del vettore corrispondente del file, e i
+ * saltati si controllano prima della corsa (vedi {@link #fabbriche}).
  */
 public class RapportoSurefire {
 
@@ -45,7 +57,7 @@ public class RapportoSurefire {
         }
         if (args.length != 4 || args[1].isBlank()) {
             errore("uso: RapportoSurefire <rapporto> <corsa> <classe> <metodo>\n"
-                    + "   oppure: RapportoSurefire <rapporto> <corsa> <classe> <fabbrica>=<casi> [<fabbrica>=<casi> ...]");
+                    + "   oppure: RapportoSurefire <rapporto> <corsa> <classe> <fabbrica>=<casi>@<file> [...]");
         }
         String rapporto = args[0];
         String corsa = args[1];
@@ -86,12 +98,21 @@ public class RapportoSurefire {
                 + " skipped=0 failures=0 errors=0; " + PROPRIETA_CORSA + "=" + corsa);
     }
 
+    /** Marcatore che il test dei vettori scrive su stdout dopo aver superato ogni controllo di un vettore. */
+    static final String VERIFICATO = "VETTORE-VERIFICATO ";
+
     /**
-     * Forma con le fabbriche di test dinamici (issue #54, test dei vettori del codec): per ogni
-     * argomento {@code <fabbrica>=<n>} il rapporto deve contenere esattamente i testcase
-     * {@code <fabbrica>()[1]} ... {@code <fabbrica>()[n]}, e nessun altro testcase. Si controllano
-     * prima i saltati e il numero dei casi, poi la corsa: un test saltato perche' la proprieta'
-     * della corsa manca e' riportato come saltato.
+     * Forma con le fabbriche di test dinamici (issue #54, test dei vettori del codec): ogni
+     * argomento e' {@code <fabbrica>=<casi>@<file dei vettori>}. Dal file si ricavano gli
+     * identificativi dei vettori, con la grammatica delle righe di {@code comune.py} (righe vuote
+     * secondo {@code str.isspace} di Python e righe che iniziano con '#' ignorate, la prima riga
+     * utile e' l'intestazione): {@code <nome del file>:<riga>:<prime 16 cifre esadecimali dello
+     * SHA-256 della riga in UTF-8>}. Il file deve avere esattamente {@code casi} vettori; il rapporto
+     * deve contenere esattamente i testcase {@code <fabbrica>()[1]} ... {@code <fabbrica>()[casi]},
+     * e nessun altro; il k-esimo deve avere nel suo system-out una sola riga
+     * {@code VETTORE-VERIFICATO <id>} con l'identificativo del k-esimo vettore del file. Si
+     * controllano prima i saltati e il numero dei casi, poi gli identificativi, poi la corsa: un
+     * test saltato perche' la proprieta' della corsa manca e' riportato come saltato.
      */
     static void fabbriche(String[] args) {
         String rapporto = args[0];
@@ -100,20 +121,24 @@ public class RapportoSurefire {
         if (corsa.isBlank()) {
             errore("identificativo della corsa vuoto");
         }
-        Set<String> attesi = new LinkedHashSet<>();
+        Map<String, String> attesi = new LinkedHashMap<>();
         StringBuilder riepilogo = new StringBuilder();
         for (int i = 3; i < args.length; i++) {
-            String[] parti = args[i].split("=", -1);
-            if (parti.length != 2 || !parti[0].matches("[A-Za-z_][A-Za-z0-9_]*") || !parti[1].matches("[1-9][0-9]{0,5}")) {
-                errore("argomento non valido '" + args[i] + "': atteso <fabbrica>=<casi>");
+            Matcher m = Pattern.compile("([A-Za-z_][A-Za-z0-9_]*)=([1-9][0-9]{0,5})@(.+)").matcher(args[i]);
+            if (!m.matches()) {
+                errore("argomento non valido '" + args[i] + "': atteso <fabbrica>=<casi>@<file dei vettori>");
             }
-            int n = Integer.parseInt(parti[1]);
+            int n = Integer.parseInt(m.group(2));
+            List<String> ids = identificativi(m.group(3));
+            if (ids.size() != n) {
+                errore(m.group(3) + ": " + ids.size() + " vettori nel file, attesi " + n);
+            }
             for (int k = 1; k <= n; k++) {
-                if (!attesi.add(parti[0] + "()[" + k + "]")) {
-                    errore("fabbrica " + parti[0] + " ripetuta negli argomenti");
+                if (attesi.put(m.group(1) + "()[" + k + "]", ids.get(k - 1)) != null) {
+                    errore("fabbrica " + m.group(1) + " ripetuta negli argomenti");
                 }
             }
-            riepilogo.append(' ').append(parti[0]).append('=').append(n);
+            riepilogo.append(' ').append(m.group(1)).append('=').append(n);
         }
 
         Element suite = leggi(rapporto, classe);
@@ -136,16 +161,65 @@ public class RapportoSurefire {
         for (Element c : casi) {
             esitoPositivo(c);
             String nome = c.getAttribute("name");
-            if (!classe.equals(c.getAttribute("classname")) || !attesi.contains(nome)) {
+            if (!classe.equals(c.getAttribute("classname")) || !attesi.containsKey(nome)) {
                 errore("testcase inatteso: " + c.getAttribute("classname") + " " + nome);
             }
             if (!visti.add(nome)) {
                 errore("testcase " + nome + " ripetuto nel rapporto");
             }
+            List<String> marcatori = new ArrayList<>();
+            for (Element out : figli(c, "system-out")) {
+                for (String riga : out.getTextContent().split("\r?\n", -1)) {
+                    if (riga.startsWith(VERIFICATO)) {
+                        marcatori.add(riga.substring(VERIFICATO.length()));
+                    }
+                }
+            }
+            if (marcatori.size() != 1 || !marcatori.get(0).equals(attesi.get(nome))) {
+                errore("testcase " + nome + ": vettore verificato " + marcatori + ", atteso [" + attesi.get(nome) + "]");
+            }
         }
         corsaCorrente(suite, corsa);
-        System.out.println(classe + ": eseguiti e riusciti" + riepilogo + "; tests=" + tests
-                + " skipped=0 failures=0 errors=0; " + PROPRIETA_CORSA + "=" + corsa);
+        System.out.println(classe + ": eseguiti e riusciti" + riepilogo + ", ogni vettore verificato per identificativo"
+                + " e nell'ordine del file; tests=" + tests + " skipped=0 failures=0 errors=0; " + PROPRIETA_CORSA + "=" + corsa);
+    }
+
+    /** Identificativi dei vettori di un file TSV, nell'ordine del file (vedi {@link #fabbriche}). */
+    static List<String> identificativi(String percorso) {
+        Path p = Path.of(percorso);
+        List<String> righe;
+        try {
+            righe = Files.readAllLines(p, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            errore("file dei vettori " + percorso + " non leggibile: " + e);
+            return List.of();
+        }
+        List<String> out = new ArrayList<>();
+        boolean intestazione = true;
+        for (int i = 0; i < righe.size(); i++) {
+            String r = righe.get(i);
+            if (r.codePoints().allMatch(RapportoSurefire::spazioPython) || r.startsWith("#")) {
+                continue;
+            }
+            if (intestazione) {
+                intestazione = false;
+                continue;
+            }
+            try {
+                byte[] h = MessageDigest.getInstance("SHA-256").digest(r.getBytes(StandardCharsets.UTF_8));
+                out.add(p.getFileName() + ":" + (i + 1) + ":" + HexFormat.of().formatHex(h).substring(0, 16));
+            } catch (NoSuchAlgorithmException e) {
+                errore("SHA-256 non disponibile: " + e);
+            }
+        }
+        return out;
+    }
+
+    /** {@code str.isspace} di Python per un carattere: categoria Zs, o classe bidirezionale WS, B o S. */
+    static boolean spazioPython(int c) {
+        byte d = Character.getDirectionality(c);
+        return Character.getType(c) == Character.SPACE_SEPARATOR || d == Character.DIRECTIONALITY_WHITESPACE
+                || d == Character.DIRECTIONALITY_PARAGRAPH_SEPARATOR || d == Character.DIRECTIONALITY_SEGMENT_SEPARATOR;
     }
 
     static Element leggi(String rapporto, String classe) {

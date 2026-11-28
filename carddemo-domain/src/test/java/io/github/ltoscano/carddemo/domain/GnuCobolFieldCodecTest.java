@@ -96,6 +96,18 @@ class GnuCobolFieldCodecTest {
             {"ALPHANUMERIC", "X(0)"}, {"ALPHANUMERIC", "9(3)"}, {"DISPLAY_UNSIGNED", "S9(3)"},
             {"DISPLAY_SIGNED", "9(3)"}, {"COMP", "9(19)"}, {"COMP", "S9(10)V9(9)"}, {"COMP_3", "9(03)"},
             {"COMP_3", "X(3)"}, {"DISPLAY_UNSIGNED", "9(3)V9(0)"}, {"DISPLAY_UNSIGNED", " 9(3)"},
+            // forms the glue's regular expressions do not admit (_VAR_X, _VAR_9): P scaling, V without
+            // a count, repeated 9s, signs other than a leading S, lowercase, blanks, usage clauses
+            {"DISPLAY_UNSIGNED", "P9(4)"}, {"DISPLAY_UNSIGNED", "9(4)P"}, {"DISPLAY_UNSIGNED", "9(2)P(2)"},
+            {"COMP_3", "SP9(4)"}, {"COMP", "9(4)PP"}, {"DISPLAY_SIGNED", "S9(4)V99"}, {"DISPLAY_SIGNED", "S9(4)V"},
+            {"DISPLAY_SIGNED", "SV9(2)"}, {"DISPLAY_UNSIGNED", "9999"}, {"DISPLAY_UNSIGNED", "9(4)9"},
+            {"DISPLAY_SIGNED", "+9(4)"}, {"DISPLAY_SIGNED", "9(4)-"}, {"DISPLAY_SIGNED", "S9(4)S"},
+            {"DISPLAY_SIGNED", "s9(4)"}, {"ALPHANUMERIC", "x(4)"}, {"ALPHANUMERIC", "X(4) "}, {"ALPHANUMERIC", "A(4)"},
+            {"ALPHANUMERIC", "X(-1)"}, {"COMP_3", "9(4) COMP-3"}, {"COMP_3", "S9(4)V9(2)V9(1)"}, {"COMP", "9(4).V9(2)"},
+            {"COMP", ""}, {"ALPHANUMERIC", ""}, {"DISPLAY_UNSIGNED", "9()"},
+            // counts that cannot be a Java length (the glue's grammar has no upper limit)
+            {"ALPHANUMERIC", "X(2147483648)"}, {"DISPLAY_UNSIGNED", "9(99999999999)"},
+            {"DISPLAY_SIGNED", "S9(2147483647)V9(1)"},
         };
         for (String[] b : bad) {
             assertThrows(FieldEncodingException.class, () -> FieldPicture.of(FieldCategory.valueOf(b[0]), b[1]), b[0] + " " + b[1]);
@@ -110,6 +122,66 @@ class GnuCobolFieldCodecTest {
         assertEquals(FieldCategory.COMP_3, p.category());
         assertEquals(List.of(2, 4, 8), List.of(FieldPicture.of(FieldCategory.COMP, "9(4)").length(),
                 FieldPicture.of(FieldCategory.COMP, "9(5)").length(), FieldPicture.of(FieldCategory.COMP, "9(18)").length()));
+    }
+
+    /**
+     * Counts accepted as by the glue (no upper limit in its grammar), at the boundaries of every
+     * category. Every expected result below was obtained from analysis/data-codec/glue/codec.py
+     * (command and output in PR #57), with values of at most 28 digits: beyond that the glue is not
+     * exact (Python's default Decimal context rounds to 28 digits; integer conversions fail above
+     * 4300 digits), while this codec stays exact. Geometry (length, scale) of large counts matches.
+     */
+    @Test
+    void confiniDeiConteggiPerOgniCategoria() {
+        FieldPicture x = FieldPicture.of(FieldCategory.ALPHANUMERIC, "X(10000)");
+        byte[] a = new byte[10000];
+        java.util.Arrays.fill(a, (byte) 0x41);
+        DecodedField dx = GnuCobolFieldCodec.decode(x, a, 0);
+        assertEquals(Optional.of("A".repeat(10000)), dx.text(), "X(10000)");
+        assertArrayEquals(a, GnuCobolFieldCodec.reencode(dx));
+        assertArrayEquals(a, GnuCobolFieldCodec.encode(x, "A".repeat(10000)));
+        FieldPicture xmax = FieldPicture.of(FieldCategory.ALPHANUMERIC, "X(2147483647)");
+        assertEquals(Integer.MAX_VALUE, xmax.length());
+        assertThrows(IncompleteFieldException.class, () -> GnuCobolFieldCodec.decode(xmax, a, 0), "X(2147483647) su 10000 byte");
+
+        // geometry of large counts, as geometria() of the glue: (10000, 0), (10000, 9999), (5001, 0)
+        FieldPicture u = FieldPicture.of(FieldCategory.DISPLAY_UNSIGNED, "9(10000)");
+        FieldPicture s = FieldPicture.of(FieldCategory.DISPLAY_SIGNED, "S9(1)V9(9999)");
+        FieldPicture p = FieldPicture.of(FieldCategory.COMP_3, "9(10000)");
+        assertEquals(List.of(10000, 0, 10000, 9999, 5001, 0),
+                List.of(u.length(), u.scale(), s.length(), s.scale(), p.length(), p.scale()));
+
+        FieldPicture u28 = FieldPicture.of(FieldCategory.DISPLAY_UNSIGNED, "9(28)");
+        byte[] ones = ascii("1".repeat(28));
+        BigDecimal allOnes = new BigDecimal("1".repeat(28));
+        assertEquals(Optional.of(allOnes), GnuCobolFieldCodec.decode(u28, ones, 0).number(), "9(28)");
+        assertArrayEquals(ones, GnuCobolFieldCodec.encode(u28, allOnes));
+        FieldPicture u20 = FieldPicture.of(FieldCategory.DISPLAY_UNSIGNED, "9(20)");
+        assertArrayEquals(ascii("18446744073709551617"),
+                GnuCobolFieldCodec.encode(u20, new BigDecimal("18446744073709551617")), "9(20) oltre 2^64: nessuna perdita");
+
+        FieldPicture s27 = FieldPicture.of(FieldCategory.DISPLAY_SIGNED, "S9(1)V9(27)");
+        BigDecimal tiny = new BigDecimal("-1E-27");
+        byte[] st = GnuCobolFieldCodec.encode(s27, tiny);
+        assertArrayEquals(ascii("0".repeat(27) + "J"), st, "S9(1)V9(27) -1E-27");
+        assertEquals(Optional.of(tiny), GnuCobolFieldCodec.decode(s27, st, 0).number());
+
+        FieldPicture p28 = FieldPicture.of(FieldCategory.COMP_3, "9(28)");
+        BigDecimal nines = new BigDecimal("9".repeat(28));
+        byte[] pb = GnuCobolFieldCodec.encode(p28, nines);
+        assertEquals("09999999999999999999999999999f", java.util.HexFormat.of().formatHex(pb), "COMP-3 9(28)");
+        assertEquals(Optional.of(nines), GnuCobolFieldCodec.decode(p28, pb, 0).number());
+
+        FieldPicture b = FieldPicture.of(FieldCategory.COMP, "S9(18)");
+        BigDecimal max = new BigDecimal("999999999999999999");
+        assertEquals("0de0b6b3a763ffff", java.util.HexFormat.of().formatHex(GnuCobolFieldCodec.encode(b, max)), "S9(18) massimo");
+        byte[] min = GnuCobolFieldCodec.encode(b, max.negate());
+        assertEquals("f21f494c589c0001", java.util.HexFormat.of().formatHex(min), "S9(18) minimo");
+        assertEquals(Optional.of(max.negate()), GnuCobolFieldCodec.decode(b, min, 0).number());
+    }
+
+    private static byte[] ascii(String s) {
+        return s.getBytes(java.nio.charset.StandardCharsets.US_ASCII);
     }
 
     @Test

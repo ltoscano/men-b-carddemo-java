@@ -25,13 +25,22 @@
 #   offset-zero                lettura sempre dall'offset zero
 #   scala-sbagliata            binario valido con valore uguale e scala diversa
 #   passaggio-double           una conversione che passa per Math.pow (double), invisibile alle regole sul testo
-#   vettori-saltati            proprieta' menb.verify.run tolta da mvn in verify.sh: test saltato, il controllo
+#   conversione-longvalue      BigInteger.valueOf(x.longValue()) nella codifica (conversione con perdita)
+#   picture-p                  la PICTURE normalizzata togliendo le P (forma che la colla non ammette)
+#   picture-quattro-cifre      conteggi della PICTURE limitati a quattro cifre (la colla non ha limite)
+#   double-pacchetto-fratello  Math.pow in una classe di un altro pacchetto del modulo, chiamata dal codec
+#   vettore-ripetuto           il primo vettore verificato 375 volte: Maven verde, rapporto respinto
+#   lettore-salta              il lettore salta le righe con colonne sbagliate, e la vista ne ha una
+#   lettore-salta-rapporto     il lettore salta le righe che iniziano con '!', e la vista ne ha una:
+#                              Maven verde, rapporto respinto (376 vettori nel file)
+#   vettori-saltati           proprieta' menb.verify.run tolta da mvn in verify.sh: test saltato, il controllo
 #                              del rapporto fallisce
 #   rapporto-residuo           dopo il vero Maven il rapporto e' sostituito da quello sano della corsa di base
 #   rapporto-assente           dopo il vero Maven il rapporto e' cancellato
 #
 # Uso: ./quality/regressioni-codec.sh [<caso> ...] (la corsa di base gira sempre);
-# ./quality/regressioni-codec.sh --lista stampa i casi. Prerequisiti: bash, git, Docker, perl.
+# ./quality/regressioni-codec.sh --lista stampa i casi. Prerequisiti: bash, git, Docker (le
+# mutazioni e le viste si fanno con un programma Java nell'immagine Maven di verify.sh, a versione fissata).
 # Variabili opzionali: MENB_CODEC_TIMEOUT (secondi per ogni ./verify.sh, predefinito 1800),
 # MENB_CODEC_SHORT_TIMEOUT (altri comandi, predefinito 60), MENB_CODEC_LOGS (cartella esistente in
 # cui conservare il log di ogni caso). Esce con 0 solo se tutti i casi danno l'esito atteso e alla
@@ -80,6 +89,9 @@ selezionato() {
 
 PKG="carddemo-domain/src/main/java/io/github/ltoscano/carddemo/domain"
 CODEC="${PKG}/GnuCobolFieldCodec.java"
+PICTURE="${PKG}/FieldPicture.java"
+VECTORS_TEST="carddemo-domain/src/test/java/io/github/ltoscano/carddemo/domain/OracleGnuCobolVectorsTest.java"
+READER="carddemo-domain/src/test/java/io/github/ltoscano/carddemo/domain/VectorFile.java"
 VETTORI_IN_CONTAINER="/workspace/analysis/data-codec/vettori"
 REPORT="carddemo-domain/target/surefire-reports/TEST-io.github.ltoscano.carddemo.domain.OracleGnuCobolVectorsTest.xml"
 FALLITO_VETTORI="<<< FAILURE! -- in io.github.ltoscano.carddemo.domain.OracleGnuCobolVectorsTest"
@@ -95,6 +107,8 @@ limited "${SHORT_TIMEOUT}" mkdir -m 700 "${WORK}" </dev/null || { echo "ERRORE: 
 LOG_DIR="${MENB_CODEC_LOGS:-${WORK}}"
 RESULTS=()
 SAVED=()
+CREATED=()
+CREATED_DIRS=()
 RESTORE_FAILED=0
 FAILED=""
 CLEANUP_ARMED=0
@@ -109,6 +123,21 @@ ripristina() {
     fi
   done
   SAVED=()
+  for f in ${CREATED[@]+"${CREATED[@]}"}; do
+    if ! limited "${SHORT_TIMEOUT}" rm -f "${f}" </dev/null; then
+      echo "ERRORE: rimozione di ${f} fallita" >&2
+      RESTORE_FAILED=1
+    fi
+  done
+  CREATED=()
+  for ((i = ${#CREATED_DIRS[@]} - 1; i >= 0; i--)); do
+    f="${CREATED_DIRS[i]}"
+    if ! limited "${SHORT_TIMEOUT}" rmdir "${f}" </dev/null; then
+      echo "ERRORE: rimozione della cartella ${f} fallita" >&2
+      RESTORE_FAILED=1
+    fi
+  done
+  CREATED_DIRS=()
   return 0
 }
 
@@ -163,6 +192,13 @@ if [ -z "${LISTA}" ]; then
     exit 1
   fi
   CLEANUP_ARMED=1
+  limited_out "${WORK}/id-u.out" "${SHORT_TIMEOUT}" id -u </dev/null || { echo "ERRORE: id -u fallito" >&2; exit 1; }
+  uid="${LIMITED_OUT}"
+  limited_out "${WORK}/id-g.out" "${SHORT_TIMEOUT}" id -g </dev/null || { echo "ERRORE: id -g fallito" >&2; exit 1; }
+  case "${uid}:${LIMITED_OUT}" in
+    *[!0-9:]* | :* | *:) echo "ERRORE: utente dell'host non numerico: '${uid}:${LIMITED_OUT}'" >&2; exit 1 ;;
+  esac
+  HOST_IDS="${uid}:${LIMITED_OUT}"
 fi
 
 # ---- mutazioni -------------------------------------------------------------------------------
@@ -173,19 +209,112 @@ salva() { # file
   SAVED+=("$1")
 }
 
+# Le mutazioni e le viste si fanno con un piccolo programma Java eseguito nell'immagine Maven di
+# verify.sh (versione fissata), non con strumenti dell'host: sull'host servono solo Docker e Git
+# (oltre a bash e ai comandi di base gia' usati dagli altri script). Il programma esce con 0 solo
+# se ha fatto esattamente cio' che si chiede; ogni altro codice e' un errore dello script.
+#   sostituisci <file> <cercato> <sostituto>   prima occorrenza letterale; 3 se assente, 4 se il file non cambia
+#   crea <file> <testo>                        file nuovo; 3 se esiste gia'
+#   togli-riga <origine> <vista> <prefisso>    la vista e' l'origine senza la prima riga con quel prefisso; 3 se assente
+#   aggiungi-riga <origine> <vista> <riga>     la vista e' l'origine con una riga in fondo
+MUTA_IMAGE="maven:3.9.16-eclipse-temurin-21"
+MUTA_SRC='import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+public class Muta {
+    public static void main(String[] a) throws Exception {
+        switch (a[0]) {
+            case "sostituisci" -> {
+                Path f = Path.of(a[1]);
+                String t = Files.readString(f, StandardCharsets.UTF_8);
+                int i = t.indexOf(a[2]);
+                if (i < 0) {
+                    System.err.println("MUTA: testo non trovato in " + f);
+                    System.exit(3);
+                }
+                String n = t.substring(0, i) + a[3] + t.substring(i + a[2].length());
+                if (n.equals(t)) {
+                    System.err.println("MUTA: " + f + " non cambia");
+                    System.exit(4);
+                }
+                Files.writeString(f, n, StandardCharsets.UTF_8);
+            }
+            case "crea" -> {
+                Path f = Path.of(a[1]);
+                if (Files.exists(f)) {
+                    System.err.println("MUTA: " + f + " esiste gia");
+                    System.exit(3);
+                }
+                Files.writeString(f, a[2], StandardCharsets.UTF_8);
+            }
+            case "togli-riga" -> {
+                String[] r = Files.readString(Path.of(a[1]), StandardCharsets.UTF_8).split("\n", -1);
+                StringBuilder b = new StringBuilder();
+                boolean tolta = false;
+                for (int i = 0; i < r.length; i++) {
+                    if (!tolta && r[i].startsWith(a[3])) {
+                        tolta = true;
+                        continue;
+                    }
+                    b.append(r[i]).append(i < r.length - 1 ? "\n" : "");
+                }
+                if (!tolta) {
+                    System.err.println("MUTA: nessuna riga che inizia con il prefisso dato");
+                    System.exit(3);
+                }
+                Files.writeString(Path.of(a[2]), b.toString(), StandardCharsets.UTF_8);
+            }
+            case "aggiungi-riga" -> {
+                String t = Files.readString(Path.of(a[1]), StandardCharsets.UTF_8);
+                Files.writeString(Path.of(a[2]), t + a[3] + "\n", StandardCharsets.UTF_8);
+            }
+            default -> {
+                System.err.println("MUTA: comando sconosciuto " + a[0]);
+                System.exit(2);
+            }
+        }
+    }
+}'
+HOST_IDS=""
+MUTA_N=0
+# muta_java <comando> <argomenti...>: i percorsi sono gia' quelli del container (/w = repository,
+# /m = cartella di lavoro). Limite di tempo; container con nome proprio, rimosso anche se il limite scade.
+muta_java() {
+  local rc=0 name
+  MUTA_N=$((MUTA_N + 1))
+  name="menb-codec-muta-$$-${MUTA_N}"
+  limited "${SHORT_TIMEOUT}" docker run --rm --name "${name}" --user "${HOST_IDS}" -e HOME=/tmp \
+    -v "${ROOT}:/w" -v "${WORK}:/m" -w /w "${MUTA_IMAGE}" java /m/Muta.java "$@" </dev/null || rc=$?
+  if [ "${rc}" -ne 0 ]; then
+    limited "${SHORT_TIMEOUT}" docker rm -f "${name}" </dev/null >/dev/null 2>&1 || true
+    case "${rc}" in
+      124) echo "ERRORE: programma di mutazione ($1) oltre il limite di ${SHORT_TIMEOUT}s" >&2 ;;
+      3) echo "ERRORE: programma di mutazione ($1): bersaglio assente, mutazione non applicabile" >&2 ;;
+      4) echo "ERRORE: programma di mutazione ($1): il file non cambia, mutazione non applicata" >&2 ;;
+      *) echo "ERRORE: programma di mutazione ($1) fallito con codice ${rc}" >&2 ;;
+    esac
+    exit 1
+  fi
+}
+
 # muta <file-relativo> <cercato> <sostituto>: sostituisce la prima occorrenza letterale; fallisce se
 # il testo non c'e' o se il file non cambia (una mutazione che non altera nulla non dimostra niente).
 muta() {
-  local f="${ROOT}/$1"
-  [ -f "${f}" ] || { echo "ERRORE: $1 non trovato" >&2; exit 1; }
-  grep -qF -- "$2" "${f}" || { echo "ERRORE: '$2' non trovato in $1: mutazione non applicabile" >&2; exit 1; }
-  salva "${f}"
-  CERCATO="$2" SOSTITUTO="$3" perl -0777 -pi -e 'my $c = $ENV{CERCATO}; my $s = $ENV{SOSTITUTO}; my $i = index($_, $c); substr($_, $i, length($c)) = $s if $i >= 0;' "${f}" \
-    || { echo "ERRORE: perl su $1 fallito" >&2; exit 1; }
-  if cmp -s "${f}" "${WORK}/bak/$((${#SAVED[@]} - 1))"; then
-    echo "ERRORE: mutazione di $1 non applicata" >&2
-    exit 1
+  [ -f "${ROOT}/$1" ] || { echo "ERRORE: $1 non trovato" >&2; exit 1; }
+  salva "${ROOT}/$1"
+  muta_java sostituisci "/w/$1" "$2" "$3"
+}
+
+# crea <file-relativo> <testo>: file nuovo (con la sua cartella, se manca), rimosso al ripristino.
+crea() {
+  local d="${ROOT}/${1%/*}"
+  if [ ! -d "${d}" ]; then
+    CREATED_DIRS+=("${d}")
+    limited "${SHORT_TIMEOUT}" mkdir "${d}" </dev/null || { echo "ERRORE: creazione di ${d} fallita" >&2; exit 1; }
   fi
+  CREATED+=("${ROOT}/$1")
+  muta_java crea "/w/$1" "$2"
 }
 
 # ---- esecuzione di ./verify.sh --------------------------------------------------------------
@@ -207,6 +336,17 @@ run_verify() { # caso [PATH alternativo]
 }
 
 MOTIVI_ERRATI=("COMPILATION ERROR" "Could not resolve" "Could not transfer" "Non-resolvable" "Cannot access" "Unknown host" "superato il limite" "SHIM:")
+
+# Ultime 25 righe del log, solo con bash (nessun comando esterno senza limite).
+show_tail() {
+  local lines=() line i start
+  while IFS= read -r line; do lines+=("${line}"); done <<EOF
+${RUN_LOG}
+EOF
+  start=$(( ${#lines[@]} > 25 ? ${#lines[@]} - 25 : 0 ))
+  for ((i = start; i < ${#lines[@]}; i++)); do printf '     | %s\n' "${lines[i]}"; done
+  return 0
+}
 
 # expect <caso> <ko|ok> <messaggio atteso>...
 expect() {
@@ -242,7 +382,7 @@ expect() {
   case "${verdict}" in
     rilevato | riuscito) ;;
     *)
-      printf '%s\n' "${RUN_LOG}" | tail -n 25 | sed 's/^/     | /'
+      show_tail
       FAILED="${FAILED} ${name}"
       ;;
   esac
@@ -325,6 +465,7 @@ caso_rapporto() {
 # ---- base -----------------------------------------------------------------------------------
 
 if [ -z "${LISTA}" ]; then
+  printf '%s\n' "${MUTA_SRC}" >"${WORK}/Muta.java" || { echo "ERRORE: scrittura del programma di mutazione fallita" >&2; exit 1; }
   echo "== [base] ./verify.sh senza mutazioni (limite ${CASE_TIMEOUT}s)"
   run_verify base
   expect base ok "BUILD SUCCESS" \
@@ -381,6 +522,57 @@ caso_java passaggio-double "${CODEC}" \
   "BigInteger n = scaled.unscaledValue();" \
   "BigInteger n = scaled.multiply(BigDecimal.valueOf(Math.pow(10, 0))).setScale(picture.scale()).unscaledValue();" \
   "<<< FAILURE! -- in io.github.ltoscano.carddemo.domain.NoFloatingPointBytecodeTest" "java/lang/Math.pow(DD)D"
+caso_java conversione-longvalue "${CODEC}" \
+  "BigInteger n = scaled.unscaledValue();" \
+  "BigInteger n = BigInteger.valueOf(scaled.unscaledValue().longValue());" \
+  "<<< FAILURE! -- in io.github.ltoscano.carddemo.domain.NoFloatingPointBytecodeTest" "con perdita java/math/BigInteger.longValue()J"
+caso_java picture-p "${PICTURE}" \
+  "Matcher m = NUMERIC.matcher(picture);" \
+  "Matcher m = NUMERIC.matcher(picture.replace(\"P\", \"\"));" \
+  "<<< FAILURE! -- in io.github.ltoscano.carddemo.domain.GnuCobolFieldCodecTest" "P9(4)"
+caso_java picture-quattro-cifre "${PICTURE}" \
+  'Pattern.compile("X\\(([1-9][0-9]*)\\)");' \
+  'Pattern.compile("X\\(([1-9][0-9]{0,3})\\)");' \
+  "<<< FAILURE! -- in io.github.ltoscano.carddemo.domain.GnuCobolFieldCodecTest" "confiniDeiConteggiPerOgniCategoria"
+
+# double in una classe di un pacchetto fratello dello stesso modulo, chiamata dal codec
+if selezionato double-pacchetto-fratello; then
+  crea "carddemo-domain/src/main/java/io/github/ltoscano/carddemo/precision/Scale.java" 'package io.github.ltoscano.carddemo.precision;
+
+/** Prova negativa di regressioni-codec.sh: passa per double. */
+public final class Scale {
+    private Scale() {
+    }
+
+    /** @return 1, calcolato in virgola mobile */
+    public static java.math.BigDecimal one() {
+        return java.math.BigDecimal.valueOf(Math.pow(10, 0));
+    }
+}
+'
+  muta "${CODEC}" "BigInteger n = scaled.unscaledValue();" \
+    "BigInteger n = scaled.multiply(io.github.ltoscano.carddemo.precision.Scale.one()).setScale(picture.scale()).unscaledValue();"
+  run_verify double-pacchetto-fratello
+  expect double-pacchetto-fratello ko "<<< FAILURE! -- in io.github.ltoscano.carddemo.domain.NoFloatingPointBytecodeTest" \
+    "io/github/ltoscano/carddemo/precision/Scale.one()Ljava/math/BigDecimal;: chiamata java/lang/Math.pow(DD)D" \
+    "ERRORE: mvn verify fallito" "== VERIFICA FALLITA"
+  ripristina
+fi
+
+# lo stesso vettore verificato 375 volte: Maven verde, il controllo del rapporto lo respinge
+caso_rapporto_java() { # caso file cercato sostituto messaggio...
+  selezionato "$1" || return 0
+  local name="$1" file="$2" cercato="$3" sostituto="$4"
+  shift 4
+  muta "${file}" "${cercato}" "${sostituto}"
+  run_verify "${name}"
+  expect "${name}" ko "BUILD SUCCESS" "$@" "ERRORE: rapporto del test dei vettori non valido" "== VERIFICA FALLITA"
+  ripristina
+}
+caso_rapporto_java vettore-ripetuto "${VECTORS_TEST}" \
+  "return rows.stream().map(r -> dynamicTest(name(r), () -> {" \
+  "return java.util.Collections.nCopies(rows.size(), rows.get(0)).stream().map(r -> dynamicTest(name(r), () -> {" \
+  "testcase oracleGnuCobolVectors()[2]: vettore verificato [oracle-gnucobol.tsv:20:"
 
 # ---- mutazioni del file dei vettori (vista temporanea) --------------------------------------
 
@@ -394,14 +586,32 @@ if selezionato vettori-irraggiungibili; then
 fi
 
 if selezionato vettore-tolto; then
-  originale="${ROOT}/analysis/data-codec/vettori/oracle-gnucobol.tsv"
-  vista="${WORK}/vista-vettore-tolto.tsv"
-  awk 'BEGIN { tolto = 0 } !tolto && /^comp\t9\(3\)\tdecodifica\t/ { tolto = 1; next } { print }' "${originale}" >"${vista}" \
-    || { echo "ERRORE: awk sulla vista fallito" >&2; exit 1; }
-  prima="$(wc -l <"${originale}")" || { echo "ERRORE: wc fallito" >&2; exit 1; }
-  dopo="$(wc -l <"${vista}")" || { echo "ERRORE: wc fallito" >&2; exit 1; }
-  [ "$((prima - dopo))" -eq 1 ] || { echo "ERRORE: la vista non ha esattamente una riga in meno (${prima} -> ${dopo})" >&2; exit 1; }
-  caso_vista vettore-tolto "${vista}" "${FALLITO_VETTORI}" "vettori nel file ==> expected: <375> but was: <374>"
+  muta_java togli-riga "/w/analysis/data-codec/vettori/oracle-gnucobol.tsv" /m/vista-vettore-tolto.tsv "$(printf 'comp\t9(3)\tdecodifica\t')"
+  caso_vista vettore-tolto "${WORK}/vista-vettore-tolto.tsv" "${FALLITO_VETTORI}" "vettori nel file ==> expected: <375> but was: <374>"
+fi
+
+# lettore che salta in silenzio le righe con le colonne sbagliate, e una tale riga nella vista: lo
+# vede il test diretto della grammatica (VectorFileTest)
+if selezionato lettore-salta; then
+  muta "${READER}" "if (fields.size() != header.length) {" "if (fields.size() != header.length) { continue; } if (false) {"
+  muta_java aggiungi-riga "/w/analysis/data-codec/vettori/oracle-gnucobol.tsv" /m/vista-lettore-salta.tsv "riga incomprensibile"
+  caso_vista lettore-salta "${WORK}/vista-lettore-salta.tsv" "<<< FAILURE! -- in io.github.ltoscano.carddemo.domain.VectorFileTest" \
+    "righeSconosciuteRifiutateNonSaltate"
+  ripristina
+fi
+
+# lettore che salta in silenzio solo le righe che iniziano con '!' (il test diretto non lo vede),
+# e una tale riga nella vista: Maven verde, il controllo del rapporto conta 376 vettori nel file
+if selezionato lettore-salta-rapporto; then
+  muta "${READER}" 'if (blank(line) || line.startsWith("#")) {' 'if (blank(line) || line.startsWith("#") || line.startsWith("!")) {'
+  muta_java aggiungi-riga "/w/analysis/data-codec/vettori/oracle-gnucobol.tsv" /m/vista-lettore-salta-rapporto.tsv "!riga incomprensibile"
+  shim lettore-salta-rapporto -v "${WORK}/vista-lettore-salta-rapporto.tsv:${VETTORI_IN_CONTAINER}/oracle-gnucobol.tsv:ro"
+  run_verify lettore-salta-rapporto "${SHIM_DIR}:${PATH}"
+  if marker_ok lettore-salta-rapporto "${SHIM_DIR}/applicato"; then
+    expect lettore-salta-rapporto ko "BUILD SUCCESS" "oracle-gnucobol.tsv: 376 vettori nel file, attesi 375" \
+      "ERRORE: rapporto del test dei vettori non valido" "== VERIFICA FALLITA"
+  fi
+  ripristina
 fi
 
 # ---- controllo del rapporto in verify.sh ----------------------------------------------------
@@ -416,8 +626,8 @@ fi
 
 if selezionato rapporto-residuo; then
   caso_rapporto rapporto-residuo \
-    'cmp -s /menb-shim/base.xml "$R" && { echo "SHIM: rapporto gia uguale alla base" >&2; exit 95; }
-cp /menb-shim/base.xml "$R"' \
+    'cp /menb-shim/base.xml "$R"
+cmp -s /menb-shim/base.xml "$R" || { echo "SHIM: copia del rapporto di base non riuscita" >&2; exit 95; }' \
     "il rapporto non e' della corsa corrente" "ERRORE: rapporto del test dei vettori non valido"
 fi
 

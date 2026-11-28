@@ -27,8 +27,8 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
  * <p>Mandatory when the system property {@value #RUN_PROPERTY} is present ({@code ./verify.sh}
  * passes it to Maven and mounts the whole repository): a missing file is then a failure. Without
  * the property (image build, which copies only POMs, rules and modules) both factories are
- * disabled and reported as skipped; {@code verify.sh} checks in the report of its own run that it was executed
- * with the expected number of cases and none skipped.
+ * disabled and reported as skipped; {@code verify.sh} checks in the report of its own run that
+ * every vector of the two files was verified, by identifier and in order, and none skipped.
  */
 class OracleGnuCobolVectorsTest {
 
@@ -41,6 +41,8 @@ class OracleGnuCobolVectorsTest {
     static final int EXPECTED_ENCODE_OK = 25;
     static final int EXPECTED_ENCODE_REJECTED = 14;
     static final int EXPECTED_BEYOND_PICTURE = 10;
+    /** Marker of a vector whose checks all passed, followed by its identifier ({@link VectorFile.Row#id()}). */
+    static final String VERIFIED = "VETTORE-VERIFICATO ";
     /** Offset of the field inside the longer record, between different guard bytes. */
     static final int OFFSET = 8;
 
@@ -66,7 +68,19 @@ class OracleGnuCobolVectorsTest {
         assertEquals(EXPECTED_ENCODE, encode, "vettori di codifica");
         assertEquals(EXPECTED_ENCODE_OK, encodeOk, "codifiche che riescono");
         assertEquals(EXPECTED_ENCODE_REJECTED, rejected, "codifiche rifiutate");
-        return rows.stream().map(r -> dynamicTest(name(r), () -> check(r)));
+        return rows.stream().map(r -> dynamicTest(name(r), () -> {
+            check(r);
+            verified(r);
+        }));
+    }
+
+    /**
+     * Written on standard output only after every check of the vector has passed; surefire keeps it
+     * in the report, inside the case, and {@code verify.sh} requires one per vector of the file, in
+     * file order ({@code quality/RapportoSurefire.java}).
+     */
+    private static void verified(VectorFile.Row r) {
+        System.out.println(VERIFIED + r.id());
     }
 
     @TestFactory
@@ -81,7 +95,7 @@ class OracleGnuCobolVectorsTest {
                 inMainFile.add(r.get("variante") + "|" + Arrays.toString(VectorFile.hex(r.get("ingresso"))));
             }
         }
-        return rows.stream().map(r -> dynamicTest("riga " + r.line() + ": comp " + r.get("variante") + " " + r.get("ingresso"),
+        return rows.stream().map(r -> dynamicTest(r.id() + " comp " + r.get("variante") + " " + r.get("ingresso"),
                 () -> {
                     byte[] input = VectorFile.hex(r.get("ingresso"));
                     assertTrue(inMainFile.contains(r.get("variante") + "|" + Arrays.toString(input)),
@@ -94,12 +108,13 @@ class OracleGnuCobolVectorsTest {
                         assertArrayEquals(input, d.originalBytes(), "byte originali");
                         assertArrayEquals(input, GnuCobolFieldCodec.reencode(d), "ricodifica conservativa");
                     }
+                    verified(r);
                 }));
     }
 
     private static String name(VectorFile.Row r) {
         String in = r.get("ingresso");
-        return "riga " + r.line() + ": " + r.get("categoria") + " " + r.get("variante") + " " + r.get("operazione") + " "
+        return r.id() + " " + r.get("categoria") + " " + r.get("variante") + " " + r.get("operazione") + " "
                 + (in.length() > 40 ? in.substring(0, 40) + "..." : in);
     }
 

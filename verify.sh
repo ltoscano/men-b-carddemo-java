@@ -236,16 +236,19 @@ mvn -B verify "-Dmenb.verify.run=${MENB_VERIFY_RUN_ID}" </dev/null || { echo "ER
 # Test dei vettori del codec (#54): con la proprieta' menb.verify.run e' obbligatorio, senza (build
 # delle immagini) si salta. Qui si prova che in questa corsa non e' stato saltato: rapporto di
 # questa corsa, con esattamente i casi attesi (375 vettori di oracle-gnucobol.tsv, 10 osservazioni
-# di oracle-oltre-picture.tsv), zero saltati, falliti o in errore.
+# di oracle-oltre-picture.tsv), ognuno con l'identificativo del vettore corrispondente letto qui dal
+# file (riga e impronta del testo), zero saltati, falliti o in errore.
 echo "== [2/7] controllo del rapporto del test dei vettori del codec"
 report="carddemo-domain/target/surefire-reports/TEST-io.github.ltoscano.carddemo.domain.OracleGnuCobolVectorsTest.xml"
+vettori="analysis/data-codec/vettori"
 if [ ! -f "${report}" ]; then
   echo "ERRORE: rapporto del test dei vettori assente: ${report}" >&2
   exit 1
 fi
 if ! java quality/RapportoSurefire.java "${report}" "${MENB_VERIFY_RUN_ID}" \
     io.github.ltoscano.carddemo.domain.OracleGnuCobolVectorsTest \
-    oracleGnuCobolVectors=375 beyondPictureObservations=10 </dev/null; then
+    "oracleGnuCobolVectors=375@${vettori}/oracle-gnucobol.tsv" \
+    "beyondPictureObservations=10@${vettori}/oracle-oltre-picture.tsv" </dev/null; then
   echo "ERRORE: rapporto del test dei vettori non valido: ${report}" >&2
   exit 1
 fi
