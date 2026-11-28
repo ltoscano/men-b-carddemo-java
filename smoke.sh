@@ -6,19 +6,29 @@
 #
 # Passi (ognuno con un limite di tempo):
 #   1. controllo-iniziale  nessuna risorsa preesistente del progetto Compose di smoke
-#   2. build               costruzione delle immagini online e batch
-#   3. avvio               db e online con porta host scelta da Docker; attesa dello stato sano
+#   2. build               costruzione delle immagini loader, online e batch
+#   3. avvio               db, poi il caricatore dei conti (loader, termina), poi online con porta
+#                          host scelta da Docker; attesa dello stato sano (up --wait)
 #   4. salute              GET /actuator/health dall'host: HTTP 200, radice "UP", "db" "UP"
+#   4a. caricamento        (#60) container del caricatore terminato con 0, nel suo output la
+#                          migrazione applicata e il caricamento riuscito; in account 50 righe,
+#                          prima chiave 1, ultima 50
 #   4b. migrazione         (#59) account e flyway_schema_history tabelle secondo il catalogo,
-#                          account con 12 colonne, storico con la sola V1__account.sql riuscita:
-#                          su un database nuovo li ha creati online all'avvio
+#                          account con 12 colonne, storico con la sola V1__account.sql riuscita: su
+#                          un database nuovo li ha creati il caricatore, primo a partire (#60);
+#                          online ha eseguito Flyway all'avvio (nel suo output: migrazione validata)
 #   5. batch-1, batch-2    docker compose run --rm batch, due volte; dopo ciascun lancio,
 #                          Flyway eseguito anche da batch (nel suo output: migrazione validata,
 #                          nessuna da applicare) e verifica in PostgreSQL delle esecuzioni di
 #                          installationCheckJob
 #   6. batch-primo         (#59) batch su un secondo database vuoto dello stesso server: deve
 #                          creare da se' gli stessi oggetti del passo 4b ed eseguire il job
-#   7. pulizia             down con volumi, anche se un passo e' fallito; poi verifica via
+#   6b. online-primo       (#60) online su un terzo database vuoto: deve creare da se' gli stessi
+#                          oggetti del passo 4b (prima di #60 lo provava il passo 4b)
+#   7. secondo-avvio       (#60) down senza volumi e nuovo up sullo stesso volume: il caricatore
+#                          trova account piena, termina con 1, up fallisce, online non parte,
+#                          le 50 righe restano
+#   8. pulizia             down con volumi, anche se un passo e' fallito; poi verifica via
 #                          etichette che non restino container (anche arrestati), reti, volumi
 # Esce con 0 solo se tutti i passi, pulizia compresa, riescono; altrimenti con 1 (o il
 # codice del segnale ricevuto) e dice quale passo e' fallito.
@@ -413,6 +423,41 @@ EOF
   log "${n} esecuzioni di ${JOB_NAME} create da questo smoke test, tutte COMPLETED con ${STEP_NAME} COMPLETED"
 }
 
+# Identificativo dell'unico container (anche terminato) del servizio $1, in SERVICE_ID. Fallisce se
+# l'elenco non si ottiene o non contiene esattamente un identificativo nel formato di Docker.
+SERVICE_ID=""
+service_container() {
+  local ids
+  SERVICE_ID=""
+  ids="$(limited "${SHORT_TIMEOUT}" "${COMPOSE[@]}" ps -a -q "$1" </dev/null)" || fail "elenco dei container di $1 fallito"
+  case "${ids}" in
+    '' | *$'\n'*) fail "atteso un solo container di $1, trovati: '${ids}'" ;;
+  esac
+  valid_ids container "${ids}" || fail "identificativo inatteso del container di $1: '${ids}'"
+  SERVICE_ID="${ids}"
+}
+
+# Output del servizio $1 (docker compose logs, senza prefisso) nel file $2 della cartella privata,
+# poi stampato; il testo resta in SERVICE_LOG.
+SERVICE_LOG=""
+service_log() {
+  local line
+  SERVICE_LOG=""
+  limited "${SHORT_TIMEOUT}" "${COMPOSE[@]}" logs --no-color --no-log-prefix "$1" </dev/null >"$2" 2>&1 \
+    || fail "lettura dell'output di $1 fallita"
+  SERVICE_LOG="$(<"$2")" || fail "lettura del file $2 fallita"
+  while IFS= read -r line; do printf '   | %s\n' "${line}"; done <<EOF
+${SERVICE_LOG}
+EOF
+}
+
+# Conti caricati (#60): "righe|prima chiave|ultima chiave" in ordine di acct_id. Con la tabella
+# vuota le chiavi sono nulle e la concatenazione e' vuota.
+query_accounts() {
+  psql_db -c "select count(*) || '|' || (select acct_id from account order by acct_id limit 1) || '|' || (select acct_id from account order by acct_id desc limit 1) from account" </dev/null
+}
+ACCOUNTS_EXPECTED="50|1|50"
+
 # --- 1. controllo iniziale ------------------------------------------------------------
 STEP="controllo-iniziale"
 check_seconds MENB_SMOKE_BUILD_TIMEOUT "${BUILD_TIMEOUT}"
@@ -444,14 +489,14 @@ log "progetto ${PROJECT}: nessuna risorsa preesistente"
 
 # --- 2. build -------------------------------------------------------------------------
 STEP="build"
-log "costruzione delle immagini online e batch"
+log "costruzione delle immagini loader, online e batch"
 limited "${BUILD_TIMEOUT}" "${COMPOSE[@]}" --profile batch build </dev/null || fail "costruzione delle immagini fallita"
 
 # --- 3. avvio -------------------------------------------------------------------------
 STEP="avvio"
-log "docker compose up (db, online), attesa dello stato sano entro ${UP_TIMEOUT}s"
+log "docker compose up (db, loader, online), attesa dello stato sano entro ${UP_TIMEOUT}s"
 limited "$((UP_TIMEOUT + 30))" "${COMPOSE[@]}" up -d --no-build --wait --wait-timeout "${UP_TIMEOUT}" </dev/null \
-  || fail "docker compose up --wait fallito: db e online non sono diventati sani (limite ${UP_TIMEOUT}s)"
+  || fail "docker compose up --wait fallito: caricamento non riuscito o db e online non sani (limite ${UP_TIMEOUT}s)"
 for svc in db online; do
   ids="$(limited "${SHORT_TIMEOUT}" "${COMPOSE[@]}" ps -q "${svc}" </dev/null)" || fail "elenco dei container di ${svc} fallito"
   # Esattamente un identificativo, senza pipeline: nessun a capo e formato di Docker.
@@ -505,12 +550,44 @@ db_status="${verdict#*|}"
 [ "${db_status}" = "UP" ] || fail "componente db '${db_status}' (atteso presente e UP)"
 log "stato alla radice UP, componente db UP"
 
-# --- 4b. migrazione dello schema applicata da online (#59) ------------------------------
-# Il database e' nuovo (volume creato da questo smoke) e finora e' partito solo online: se la
-# tabella account e lo storico di Flyway ci sono, li ha creati online all'avvio.
+# --- 4a. caricamento dei conti (#60) ----------------------------------------------------
+# Il caricatore parte prima di online (online dipende dal suo completamento riuscito): sul database
+# nuovo applica la migrazione, carica ACCTFILE.rec (nell'immagine) e termina con 0.
+STEP="caricamento"
+service_container loader
+LOADER_ID="${SERVICE_ID}"
+loader_state="$(limited "${SHORT_TIMEOUT}" docker inspect --format '{{.State.Status}}|{{.State.ExitCode}}' "${LOADER_ID}" </dev/null)" \
+  || fail "ispezione del container del caricatore fallita"
+[ "${loader_state}" = "exited|0" ] || fail "caricatore in stato '${loader_state}' (atteso exited|0: terminato con codice 0)"
+service_log loader "${WORK}/loader-1.log"
+for atteso in 'Successfully applied 1 migration to schema "public"' \
+  'CARICAMENTO RIUSCITO: 50 record caricati da /app/dati/ACCTFILE.rec nella tabella account'; do
+  case "${SERVICE_LOG}" in
+    *"${atteso}"*) ;;
+    *) fail "nell'output del caricatore manca '${atteso}'" ;;
+  esac
+done
+if ! accounts="$(query_accounts)"; then
+  fail "lettura dei conti caricati fallita"
+fi
+[ "${accounts}" = "${ACCOUNTS_EXPECTED}" ] \
+  || fail "conti caricati: '${accounts}' (attesi ${ACCOUNTS_EXPECTED}: righe|prima chiave|ultima chiave)"
+log "caricatore terminato con 0 dopo aver applicato la migrazione; account con 50 righe, chiavi da 1 a 50"
+
+# --- 4b. migrazione dello schema (#59) ----------------------------------------------------
+# Il database e' nuovo (volume creato da questo smoke); il primo a partire e' il caricatore, che ha
+# applicato la migrazione (passo 4a). Online, partito dopo, l'ha validata all'avvio: la prova e' nel
+# suo output. Che online sappia anche applicarla su un database vuoto lo prova il passo online-primo.
 STEP="migrazione"
-verify_migration "" online
-log "online ha applicato la migrazione: account e' una tabella con 12 colonne, storico di Flyway con V1__account.sql riuscita"
+verify_migration "" "loader e online"
+service_log online "${WORK}/online-1.log"
+for atteso in 'Successfully validated 1 migration' 'Schema "public" is up to date. No migration necessary.'; do
+  case "${SERVICE_LOG}" in
+    *"${atteso}"*) ;;
+    *) fail "nell'output di online manca '${atteso}': Flyway non e' stato eseguito all'avvio di online" ;;
+  esac
+done
+log "account e' una tabella con 12 colonne, storico di Flyway con V1__account.sql riuscita; online ha validato la migrazione"
 
 # --- 5. job batch, due lanci ----------------------------------------------------------
 STEP="batch-0"
@@ -576,6 +653,78 @@ if ! runs="$(psql_in "${FIRST_DB}" -c "select count(*) || '|' || count(*) filter
 fi
 [ "${runs}" = "1|1" ] || fail "esecuzioni di ${JOB_NAME} nel database ${FIRST_DB}: '${runs}' (attese 1|1: una, COMPLETED)"
 log "batch ha applicato la migrazione su un database vuoto: account e' una tabella con 12 colonne, storico con V1__account.sql riuscita, job COMPLETED"
+
+# --- 6b. online come primo migratore su un database vuoto (#60) ---------------------------
+# Dal #60 il caricatore parte prima di online e applica lui la migrazione nel database del servizio:
+# online, con la sua immagine, si avvia da solo su un terzo database vuoto e deve creare da se' gli
+# stessi oggetti. Il container (run senza dipendenze ne' porte pubblicate) si ferma e si rimuove
+# alla fine del passo; se il passo fallisce lo rimuove la pulizia (down rimuove anche i container
+# di "run").
+STEP="online-primo"
+ONLINE_DB="menb_online_primo"
+ONLINE_RUN="${PROJECT}-online-primo"
+log "database vuoto ${ONLINE_DB}: online come primo migratore (limite ${UP_TIMEOUT}s)"
+psql_db -c "create database ${ONLINE_DB}" </dev/null || fail "creazione del database ${ONLINE_DB} fallita"
+if ! objects="$(psql_in "${ONLINE_DB}" -c "select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public'" </dev/null)"; then
+  fail "interrogazione del database ${ONLINE_DB} fallita"
+fi
+[ "${objects}" = "0" ] || fail "il database ${ONLINE_DB} non e' vuoto prima dell'avvio: ${objects} oggetti nello schema public"
+limited "${SHORT_TIMEOUT}" "${COMPOSE[@]}" run -d --no-deps -T --name "${ONLINE_RUN}" \
+  -e "SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${ONLINE_DB}" online </dev/null >"${WORK}/online-primo-run.log" 2>&1 \
+  || fail "avvio di online sul database ${ONLINE_DB} fallito: $(<"${WORK}/online-primo-run.log")"
+deadline=$((SECONDS + UP_TIMEOUT))
+while :; do
+  online_state="$(limited "${SHORT_TIMEOUT}" docker inspect --format '{{.State.Status}}|{{if .State.Health}}{{.State.Health.Status}}{{end}}' "${ONLINE_RUN}" </dev/null)" \
+    || fail "ispezione del container ${ONLINE_RUN} fallita"
+  case "${online_state}" in
+    'running|healthy') break ;;
+    'running|starting') ;;
+    *) fail "container ${ONLINE_RUN} in stato '${online_state}' (atteso running|healthy)" ;;
+  esac
+  [ "${SECONDS}" -lt "${deadline}" ] || fail "online sul database ${ONLINE_DB} non sano entro ${UP_TIMEOUT}s (stato '${online_state}')"
+  sleep 2
+done
+verify_migration "${ONLINE_DB}" online
+limited "${SHORT_TIMEOUT}" docker stop --time 10 "${ONLINE_RUN}" </dev/null >/dev/null || fail "arresto del container ${ONLINE_RUN} fallito"
+limited "${SHORT_TIMEOUT}" docker rm -v "${ONLINE_RUN}" </dev/null >/dev/null || fail "rimozione del container ${ONLINE_RUN} fallita"
+log "online ha applicato la migrazione su un database vuoto: account e' una tabella con 12 colonne, storico con V1__account.sql riuscita"
+
+# --- 7. secondo avvio sullo stesso volume (#60) -------------------------------------------
+# down senza --volumes (i container si rimuovono, il volume del database resta), poi un nuovo up: il
+# caricatore trova account piena e termina con 1 senza cambiare nulla, quindi up fallisce e online
+# (che dipende dal caricamento riuscito) resta creato ma non avviato. Per ricaricare si ricrea il
+# volume (docs/sviluppo.md).
+STEP="secondo-avvio"
+log "docker compose down senza --volumes, poi un nuovo up sullo stesso volume (atteso il fallimento)"
+limited "${DOWN_TIMEOUT}" "${COMPOSE[@]}" --profile batch down --remove-orphans --timeout 10 </dev/null \
+  || fail "docker compose down (senza volumi) fallito"
+rc=0
+limited "$((UP_TIMEOUT + 30))" "${COMPOSE[@]}" up -d --no-build --wait --wait-timeout "${UP_TIMEOUT}" </dev/null \
+  >"${WORK}/secondo-up.log" 2>&1 || rc=$?
+while IFS= read -r line; do printf '   | %s\n' "${line}"; done <"${WORK}/secondo-up.log"
+[ "${rc}" -ne 0 ] || fail "il secondo up sullo stesso volume e' riuscito: atteso il fallimento del caricatore sulla tabella piena"
+[ "${rc}" -ne 124 ] || fail "il secondo up ha superato il limite di tempo: non e' il fallimento atteso del caricatore"
+service_container loader
+[ "${SERVICE_ID}" != "${LOADER_ID}" ] || fail "il container del caricatore e' quello del primo avvio: down non l'ha rimosso"
+loader_state="$(limited "${SHORT_TIMEOUT}" docker inspect --format '{{.State.Status}}|{{.State.ExitCode}}' "${SERVICE_ID}" </dev/null)" \
+  || fail "ispezione del container del caricatore fallita"
+[ "${loader_state}" = "exited|1" ] || fail "caricatore in stato '${loader_state}' (atteso exited|1: caricamento rifiutato)"
+service_log loader "${WORK}/loader-2.log"
+atteso="CARICAMENTO RIFIUTATO: la tabella account non e' vuota (50 righe)"
+case "${SERVICE_LOG}" in
+  *"${atteso}"*) ;;
+  *) fail "nell'output del caricatore manca '${atteso}'" ;;
+esac
+service_container online
+online_state="$(limited "${SHORT_TIMEOUT}" docker inspect --format '{{.State.Status}}|{{.State.StartedAt}}' "${SERVICE_ID}" </dev/null)" \
+  || fail "ispezione del container di online fallita"
+[ "${online_state}" = "created|0001-01-01T00:00:00Z" ] \
+  || fail "online in stato '${online_state}' (atteso created e mai avviato, perche' il caricamento e' fallito)"
+if ! accounts="$(query_accounts)"; then
+  fail "lettura dei conti dopo il secondo avvio fallita"
+fi
+[ "${accounts}" = "${ACCOUNTS_EXPECTED}" ] || fail "conti dopo il secondo avvio: '${accounts}' (attesi ${ACCOUNTS_EXPECTED})"
+log "secondo up fallito come atteso: caricatore terminato con 1 (tabella non vuota), online non avviato, 50 righe invariate"
 
 STEP="fine"
 log "tutti i passi riusciti; segue la pulizia"
