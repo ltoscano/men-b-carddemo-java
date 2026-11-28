@@ -44,8 +44,10 @@ L'immagine in cui i programmi batch originali si compilano e si eseguono senza m
 | passo `build` | compila i 12 programmi e i moduli, registra ogni invocazione del compilatore, scrive un'impronta di ingressi e risultati | #4, #25, #35 |
 | passi `avvio`, `avviatore`, `abend`, `segno`, `dialetto` | prove mirate: ogni programma parte; il `PARM` arriva giusto; l'arresto anomalo dà il codice atteso; i segni degli importi si leggono giusti; il dialetto è quello fissato | #4 / PR #29 |
 | passo `routines`, `stubs/COBDATFT.cbl` | equivalente in COBOL di una routine assembler, solo per i casi determinati dal sorgente | #24 / PR #39 |
+| passo `routines`, `stubs/MVSWAIT.cbl` | equivalente in COBOL della routine assembler di attesa: non attende, scrive su stderr il valore richiesto, si ferma con 97 oltre il limite del servizio; la durata è controllata per differenza con una corsa di controllo | #36 / PR #52 |
+| `esegui.sh --sysin <file>` | passa a un programma l'ingresso che sul mainframe arriva dalla scheda `SYSIN` del JCL; il rapporto ne riporta dimensione e impronta | #36 / PR #52 |
 | passo `adattamenti` | il batch degli estratti conto (`CBSTM03A`) con due adattamenti su copie di compilazione, più uno scenario con quattro file indicizzati | #25 / PR #44 |
-| `stubs/` | sostituti dichiarati di ciò che in un container non esiste: `CEE3ABD` (arresto anomalo); segnaposto per `MVSWAIT` e `CEEDAYS`, che fermano l'esecuzione con un codice riconoscibile | #4; `MVSWAIT` in #36 |
+| `stubs/` | sostituti dichiarati di ciò che in un container non esiste: `CEE3ABD` (arresto anomalo); segnaposto per `CEEDAYS`, che ferma l'esecuzione con un codice riconoscibile | #4 |
 | `tests/` | piccoli programmi COBOL di prova scritti da noi (eco del `PARM`, sonde su segno e dialetto, caricamento e rilettura di file indicizzati) | varie |
 
 ## Lato Java (`verify.sh`, `smoke.sh`, `quality/`, `docker/`, `compose.yaml`)

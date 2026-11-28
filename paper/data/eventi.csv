@@ -451,3 +451,9 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T00:36:16Z,pr-52,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0
 2026-11-28T00:37:05Z,pr-52,rinvio-esecutore,fable,orologio,dopo validazione 2: rilievi nuovi 1 e 2
 2026-11-28T00:37:05Z,pr-52,correzione-inizio,opus,orologio,correzione mirata
+2026-11-28T01:05:04Z,pr-52,correzione-fine,opus,orologio,SHA ddd329d; correzione mirata
+2026-11-28T01:05:04Z,pr-52,verifica-inizio,fable,orologio,verifica dell'Approvatore su clone pulito
+2026-11-28T01:09:33Z,pr-57,correzione-fine,opus,orologio,SHA fa3ba93; 7 rilievi dichiarati corretti; 40 min 20 s; 469682 token cumulativi
+2026-11-28T01:09:37Z,pr-57,codex-inizio,codex,orologio,validazione 2 di 2 ristretta
+2026-11-28T01:18:00Z,pr-52,verifica-fine,fable,orologio,controesempio di Codex respinto; routines --check e --all --check verdi su clone pulito
+2026-11-28T01:18:00Z,pr-52,merge,fable,orologio,squash; chiude #36

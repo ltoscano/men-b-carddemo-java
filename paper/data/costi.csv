@@ -103,3 +103,5 @@ ora_utc,oggetto,ruolo,modello,token,tipo_contatore,fonte,note
 2026-11-28T00:26:15Z,pr-57,validatore,gpt-6.1-sol,207235,per sessione,log di Codex,validazione 1 di 2
 2026-11-28T00:31:50Z,issue-53,validatore,gpt-6.1-sol,140398,per sessione,log di Codex,contestazione della specifica
 2026-11-28T00:37:05Z,pr-52,validatore,gpt-6.1-sol,156617,per sessione,log di Codex,validazione 2 di 2 ristretta
+2026-11-28T01:09:33Z,pr-57,esecutore,opus,469682,cumulativo dichiarato,contatore riportato dall'ambiente alla fine della fase,giro di correzione
+2026-11-28T01:09:33Z,pr-52,esecutore,opus,556847,cumulativo dichiarato,contatore riportato dall'ambiente alla fine della fase,correzione mirata; 27 min 51 s
