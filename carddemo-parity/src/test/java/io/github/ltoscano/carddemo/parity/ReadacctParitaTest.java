@@ -26,20 +26,17 @@ class ReadacctParitaTest {
     Path tmp;
 
     @Test
-    @FallimentoAtteso(issue = 67, motivo = AvvioJob.JOB_ASSENTE)
     void esempio() throws Exception {
         primoAvvio("esempio", tmp);
     }
 
     @Test
-    @FallimentoAtteso(issue = 67, motivo = AvvioJob.JOB_ASSENTE)
     void mirato() throws Exception {
         primoAvvio("mirato", tmp);
     }
 
     /** Due avvii sugli stessi percorsi e sullo stesso database; prima del secondo, file sentinella. */
     @Test
-    @FallimentoAtteso(issue = 67, motivo = AvvioJob.JOB_ASSENTE)
     void miratoRiesecuzione() throws Exception {
         Path scenario = ComparatoreReadacct.scenario("mirato");
         try (PostgreSQLContainer postgres = PostgresDiProva.avvia()) {
@@ -54,7 +51,6 @@ class ReadacctParitaTest {
 
     /** Conti inseriti in ordine fisico inverso: le uscite devono coincidere con gli stessi riferimenti. */
     @Test
-    @FallimentoAtteso(issue = 67, motivo = AvvioJob.JOB_ASSENTE)
     void miratoOrdineDiLettura() throws Exception {
         Path scenario = ComparatoreReadacct.scenario("mirato");
         Path permutato = ParitaReadacct.permutato(ParitaReadacct.ingresso(scenario), tmp);
