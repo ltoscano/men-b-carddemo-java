@@ -362,6 +362,48 @@ pretendi_casi_caricamento CaricatoreApplicazioneTest \
   ilCaricatoreMigraCaricaETerminaConZeroPoiRiesceSenzaScrivereERifiutaUnaTabellaAlterata \
   fileRifiutatoTerminaConIlCodiceDiRifiutoEZeroRighe || exit 1
 
+# Test di parita' di READACCT (#65): obbligatori per nome, con le stesse regole. Comparatore,
+# meccanismo del fallimento atteso e prove sull'avvio: eseguiti e riusciti in modo ordinario. Casi
+# di parita': per nome, indipendentemente dall'elenco (un fallimento atteso riconosciuto risulta
+# riuscito, un caso tolto o rinominato manca). Poi ogni riga di quality/fallimenti-attesi.tsv
+# pretende la ricevuta di questa corsa, e ogni ricevuta la sua riga (procedura in docs/sviluppo.md).
+echo "== [3/7] controllo dei rapporti dei test di parita' di READACCT (#65)"
+pretendi_casi_caricamento ComparatoreReadacctTest \
+  conversioneDelDescrittoreSuiPrimiByteScrittiAMano \
+  usciteFedeliSimulateAccettatePerEsempioEMirato \
+  loScenarioOsservazioneNonEAmmesso \
+  outfileByteAlteratoInPosizioneDeterminata \
+  outfileConfiniDellaMascheraEDataRespinti \
+  arryfileByteAlterato \
+  arryfileByte80E99ComeLiScriveLOracleRespinti \
+  recordInMenoInPiuEScambiati \
+  vbrcfileLunghezzaDescrittoreInversoEFormatoGnuCobolRespinti \
+  consoleAlterataRespinta \
+  codiceDiUscitaEFileAssenteRespinti \
+  controprovaByteMascheratoAccettato \
+  controprovaRigaDiOsservazioneConContenutoDiversoAccettata \
+  byteMascheratiDeiRiferimentiSonoEsattamenteQuelliDiEsclusioni || exit 1
+pretendi_casi_caricamento FallimentoAttesoEstensioneTest \
+  corpoCheFallisceComeDichiaratoRiesceConRicevuta \
+  corpoCheFallissePerUnAltroMotivoRisultaFallitoSenzaRicevuta \
+  corpoCheRiesceRisultaFallitoConLaRichiestaDiTogliereLaMarcatura \
+  casoMarcatoSenzaRigaOConRigaDiversaRisultaFallito \
+  elencoDelProgettoBenFormato || exit 1
+pretendi_casi_caricamento AvvioJobTest \
+  nessunJobReadacctRiconosciutoComeMotivoDichiarato \
+  jobDiNomeReadacctConAltroBeanEsisteEFallisceSuiConfrontiPoiSullaRiesecuzione \
+  erroreDelDatabaseDelSoloAvvioNonEIlMotivoDichiarato || exit 1
+pretendi_casi_caricamento ReadacctParitaTest \
+  esempio \
+  mirato \
+  miratoRiesecuzione \
+  miratoOrdineDiLettura || exit 1
+if ! java quality/RicevuteFallimentiAttesi.java quality/fallimenti-attesi.tsv \
+    carddemo-parity/target/ricevute-fallimento-atteso "${MENB_VERIFY_RUN_ID}" </dev/null; then
+  echo "ERRORE: ricevute dei fallimenti attesi non valide (quality/fallimenti-attesi.tsv)" >&2
+  exit 1
+fi
+
 # POM effettivi del reattore (maven-help-plugin, versione fissata): la configurazione dei plugin di
 # copertura e di analisi statica si legge da qui, come la vede Maven (ereditarieta', profili,
 # proprieta' risolte), non cercando testo nei POM. Nome unico per corsa; esito controllato.

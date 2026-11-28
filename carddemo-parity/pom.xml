@@ -56,6 +56,13 @@
       <artifactId>postgresql</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- Test dell'estensione del fallimento atteso (issue #65): esecuzione di casi campione con il
+         motore JUnit. Versione gestita da Spring Boot 4.2.0 (BOM di JUnit). -->
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-testkit</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>com.tngtech.archunit</groupId>
       <artifactId>archunit</artifactId>
@@ -117,6 +124,12 @@
             <!-- File dei conti che legge l'oracle (#53), letto dal repository dai test del
                  caricamento (issue #60), non copiato. -->
             <menb.dati.acctfile>${project.parent.basedir}/analysis/oracle-dati/out/ACCTFILE.rec</menb.dati.acctfile>
+            <!-- Test di parita' di READACCT (issue #65): jar eseguibile di carddemo-batch prodotto da
+                 questa build (fase package del modulo, che il reattore completa prima dei test di questo
+                 modulo), riferimenti di #55 ed elenco dei fallimenti attesi. -->
+            <menb.batch.jar>${project.parent.basedir}/carddemo-batch/target/carddemo-batch-${project.version}-exec.jar</menb.batch.jar>
+            <menb.golden.readacct>${project.parent.basedir}/oracle/golden/readacct</menb.golden.readacct>
+            <menb.fallimenti.elenco>${project.parent.basedir}/quality/fallimenti-attesi.tsv</menb.fallimenti.elenco>
           </systemPropertyVariables>
         </configuration>
       </plugin>
