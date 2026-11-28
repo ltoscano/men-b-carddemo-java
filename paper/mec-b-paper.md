@@ -547,6 +547,53 @@ Il ragionamento della sezione 2.1 non cambia (si parte dal primo test di parità
 
 Per chi replica: la domanda "la preparazione è finita?" non ha una risposta naturale, perché si può sempre preparare meglio. Conviene fissare fin dall'inizio un pilota piccolo e far dipendere da quello, e solo da quello, ciò che si prepara prima. Qui lo si è capito a fine giornata.
 
+**Passo 24 — La catena resa esplicita, e un test che deve fallire.** Subito dopo il cambio di rotta l'autore ha richiamato l'ordine che regge il metodo: specifica, poi test, poi issue, poi implementazione agentica (sezione 2). Applicato al pilota, significa che la traduzione si divide in due lavori affidati a due Esecutori diversi: il primo scrive il test di parità contro l'output dell'originale, il secondo traduce il programma finché quel test passa, senza poterlo modificare.
+
+Nasce un problema pratico: un test scritto prima dell'implementazione fallisce, e un ramo principale con un test che fallisce ha la CI rossa. La soluzione approvata dall'autore (voce 89 del registro) è marcare il test come "fallimento atteso", con quattro vincoli: deve fallire perché manca la traduzione e non per un altro errore; se invece passa, la verifica diventa rossa; chi traduce toglie la marcatura e non tocca altro; l'elenco dei test marcati è esplicito e controllato. Il passo è stato deciso e non ancora eseguito: il test si scriverà dopo l'output di riferimento.
+
+**Passo 25 — Tre PR sul percorso al pilota.** Tra le 22:30 del primo giorno e le 02:00 del secondo si sono chiuse le tre PR aperte al momento del cambio di rotta.
+
+**Tabella 14 — Le tre PR chiuse nella notte** (durate dal registro degli eventi)
+
+| PR | Issue | Validazione 1 | Validazione 2 (ristretta) | Chiusura |
+| --- | --- | ---: | ---: | --- |
+| #56 | #5 dati di esempio decodificati | 39 min 34 s, bocciata (7 rilievi) | 8 min 46 s, bocciata (1 residuo non bloccante) | mergiata alle 00:25, residuo in una issue |
+| #52 | #36 routine `MVSWAIT` | 28 min 19 s, bocciata (5 rilievi) | 27 min 50 s, bocciata (3 rilievi nuovi, 1 bloccante) | correzione mirata, verifica dell'Approvatore; mergiata alle 01:17 |
+| #57 | #54 codifica dei campi in Java | 25 min 42 s, bocciata (7 rilievi) | 15 min 50 s, bocciata (3 rilievi nuovi, 2 bloccanti per il Validatore) | correzione mirata, verifica dell'Approvatore; mergiata alle 01:58 |
+
+Nessuna delle tre è stata approvata dal Validatore, né alla prima né alla seconda validazione. Tutte e tre sono state mergiate secondo la regola del passo 16. Conviene guardare perché, caso per caso.
+
+*PR #56: il contenuto era giusto, e lo si sa con certezza.* Il Validatore ha scritto da sé una seconda decodifica dei dati, senza usare il codice della PR: 1.813 record e 23.470 campi coincidevano. Il rilievo bloccante riguardava un controllo: quello che doveva garantire la corrispondenza tra dati decodificati e file originale confrontava il risultato con una copia letta dallo stesso codice. Alterando quella lettura e rigenerando, tutto restava verde. È lo schema più insidioso visto fin qui: un controllo circolare ha tutte le sembianze di un controllo. Dopo la correzione il residuo era un inventario incompleto delle verifiche, che il Validatore stesso giudicava non bloccante.
+
+*PR #52: la correzione ha introdotto il difetto.* Per respingere una routine che attende un secondo, l'Esecutore aveva misurato la durata; trovando un falso allarme su una macchina carica, aveva preso il tempo migliore di tre tentativi. Il Validatore ha mostrato che così passa una routine che attende solo la prima volta. La soluzione adottata nella correzione mirata: ogni esecuzione è affiancata da due corse di controllo dello stesso programma che non chiamano la routine, e si giudica la differenza. Il carico della macchina pesa su tutte e tre; un'attesa della routine solo su una. Se anche i controlli sono lenti, l'esito è "infrastruttura lenta", distinto sia dal verde sia dalla violazione. Chi deve verificare una proprietà di tempo in un container ha qui uno schema riusabile.
+
+*PR #57: due rilievi respinti in parte, e il motivo.* Il Validatore chiedeva che il controllo sui test si difendesse anche da un test riscritto per non verificare nulla, o per verificare dati diversi da quelli dichiarati. L'Approvatore ha accolto ciò che era realizzabile (provare *quali* casi di riferimento sono stati eseguiti, non solo quanti) e ha respinto il resto, per iscritto: nessun controllo sul rapporto di un test può dimostrare che il test verifichi qualcosa. La difesa è altrove: una suite che altera il codice in 26 modi e pretende che i test se ne accorgano, e la regola per cui chi implementa non modifica i test. È stato invece accolto, e corretto, un rilievo sul controllo che vieta le conversioni numeriche con perdita: non vedeva un errore che un Esecutore potrebbe commettere senza volerlo, come `(int)` applicato a un valore lungo.
+
+Tre osservazioni che valgono oltre questi casi.
+
+- *"Bocciata" non significa "sbagliata".* In tutte e tre le PR il contenuto consegnato è stato confermato dal Validatore con ricostruzioni indipendenti. Il verdetto misura i controlli. Chi legge solo la riga del verdetto si fa un'idea sbagliata del lavoro.
+- *La verifica dell'Approvatore dopo la seconda validazione è stata breve*: 13 minuti per la PR #52 e 4 minuti e mezzo per la #57, contro i 16-28 di una validazione ristretta. È breve perché ha un solo scopo: rieseguire i controesempi del Validatore. Per non limitarsi a rieseguire le prove scritte dall'Esecutore, l'Approvatore ha costruito ogni volta una variante propria del controesempio.
+- *Docker è caduto due volte sotto carico* (tre validazioni e due Esecutori insieme). Due corse sono state rifatte. Il limite di tre validazioni in parallelo è prudente su una macchina sola.
+
+**Passo 26 — Due specifiche sul percorso, e due byte che nessuno determina.** Mentre le PR si chiudevano, il pianificatore ha scritto e fatto contestare le specifiche dei due passi successivi: il caricamento del file dei conti nell'oracle (#53) e l'output di riferimento del programma pilota (#55).
+
+**Tabella 15 — Contestazione delle due specifiche**
+
+| Issue | Durata | Rilievi (bloccanti) | Che cosa ha cambiato |
+| --- | ---: | ---: | --- |
+| #53 file dei conti nell'oracle | 3 min 11 s | 6 (1) | una contraddizione del pianificatore; il programma di caricamento esistente riempiva le righe corte |
+| #55 output di riferimento di `CBACT01C` | 5 min 51 s | 8 (1) | la parità "byte per byte" non è sostenibile per due byte di ogni record |
+
+Tre fatti sui dati e sul programma sono emersi solo a questo punto, quando la preparazione ha cominciato a guardare *un* programma preciso.
+
+*I due file di esempio dei conti non concordano.* Il repository contiene gli stessi dati in due codifiche, ASCII ed EBCDIC. In un conto su cinquanta un campo è diverso, e nulla spiega perché. Si è scelto di caricare il contenuto del file EBCDIC, perché è quello che il JCL originale carica; l'altro serve da controprova, e il controllo pretende esattamente quella differenza e nessun'altra (voce 94).
+
+*I dati di esempio non mettono alla prova ciò che conta.* Nessun conto ha importi negativi, né crediti di ciclo, né un gruppo. Un output di riferimento prodotto solo da quei dati non distinguerebbe un programma che copia un campo da uno che scrive sempre zero, e non toccherebbe il segno negativo, cioè il punto in cui l'oracle sbagliava al passo 15. La specifica prevede quindi un secondo scenario: gli stessi dati con alcune sostituzioni scritte a mano, ciascuna con il suo motivo.
+
+*Due byte di ogni record non li determina nessuno.* Il programma pilota converte una data chiamando una routine esterna, che scrive otto byte in un'area di venti; poi copia nel file di uscita i primi dieci. I due byte in più vengono da memoria mai inizializzata. Sul mainframe il loro valore è imprevedibile; il compilatore libero ci mette zeri. La specifica del pianificatore chiedeva la parità su tutti i 107 byte del record: il Validatore l'ha smentita citando le righe del sorgente e il manuale IBM. La decisione (voce 98): la parità vale per 105 byte; il file si conserva com'è; il confronto maschera quei due byte; le posizioni escluse stanno in una tabella versionata, con il motivo e la riga del sorgente. Lo stesso programma ha un secondo caso dello stesso genere: un campo d'uscita che riceve un valore solo se l'addebito del ciclo è zero, e altrimenti conserva ciò che c'era. Con i dati di esempio non si manifesta; è registrato come osservazione in uno scenario a parte, non come riferimento.
+
+Per chi replica, è la lezione più importante di questo passo: **"identico byte per byte all'originale" è un criterio che va delimitato programma per programma.** Un programma legacy può scrivere nei suoi file byte che non dipendono da alcuna sua istruzione. Un confronto integrale con un riferimento prodotto altrove certifica allora il comportamento del compilatore usato per il riferimento. La tabella delle posizioni escluse è il modo di dirlo esplicitamente, invece di scoprirlo quando il confronto fallisce su un sistema diverso.
+
 *(passi successivi: da compilare)*
 
 **Come si misurano i tempi.** Su richiesta dell'autore, da questo punto ogni passaggio è cronometrato nel momento in cui avviene. Un piccolo script, `paper/data/tlog.sh`, aggiunge una riga con l'ora corrente al registro `paper/data/eventi.csv`; il registro non si modifica mai, si aggiunge soltanto. Per i passi precedenti i tempi sono stati ricostruiti da fonti verificabili (date dei commit, date di creazione su GitHub, date dei file) e ogni riga dichiara la propria fonte.
@@ -570,7 +617,7 @@ Dal clone di CardDemo (08:49:22) al momento in cui i primi due Esecutori hanno c
 
 ### 5.1 Wave 0A — mappa e oracle
 
-Stato al 27 novembre 2026, ore 21:30 UTC: in corso. Il racconto, nell'ordine in cui è avvenuto, è nei passi 7-22 della sezione 5.0; qui c'è che cosa esiste, con il comando per ottenerlo. Elenco completo in `docs/strumenti-creati.md`.
+Stato al 28 novembre 2026, ore 02:00 UTC: in corso. Il racconto, nell'ordine in cui è avvenuto, è nei passi 7-26 della sezione 5.0; qui c'è che cosa esiste, con il comando per ottenerlo. Elenco completo in `docs/strumenti-creati.md`.
 
 | Che cosa | Comando | Dove si legge il risultato | Passi |
 | --- | --- | --- | --- |
@@ -580,8 +627,9 @@ Stato al 27 novembre 2026, ore 21:30 UTC: in corso. Il racconto, nell'ordine in 
 | Contratto dati (posizione e tipo di ogni campo) | `./analysis/run.sh data-contract --check` | `docs/legacy-map/data-contract/` | 15, 16 |
 | Regole di codifica dei campi | `./analysis/run.sh data-codec --check` | `docs/legacy-map/data-contract/codifica.md` | 20, 21 |
 | Oracle: 12 programmi batch eseguibili | `./oracle/run.sh --all --check` | `oracle/README.md` | 15, 17, 20 |
+| Dati di esempio decodificati (22 file, 1.813 record) e loro anomalie | `./analysis/run.sh data-fixtures --check` | `docs/legacy-map/fixture.md` | 25 |
 
-Dopo la revisione del piano (sezione 2.2) la wave non si chiude più tutta insieme. Per il pilota mancano: i dati di esempio decodificati, il file dei conti caricato nell'oracle, l'output di riferimento (*golden*) di `CBACT01C`. Il resto (output di riferimento degli altri programmi, grafo dei flussi batch, descrizione del comportamento dei programmi a schermo) è rinviato a subito prima del programma a cui serve.
+Dopo la revisione del piano (sezione 2.2) la wave non si chiude più tutta insieme. Per il pilota mancano: il file dei conti caricato nell'oracle (in corso) e l'output di riferimento (*golden*) di `CBACT01C` (specifica pronta). Il resto (output di riferimento degli altri programmi, grafo dei flussi batch, descrizione del comportamento dei programmi a schermo) è rinviato a subito prima del programma a cui serve.
 
 *(da completare alla chiusura della wave: issue, tempi aggregati, cosa si trasferisce ad altri sistemi)*
 
@@ -594,6 +642,7 @@ Stato al 27 novembre 2026, ore 21:30 UTC: quasi conclusa. Passi 8-10, 14, 15, 17
 | Cinque moduli Java, compilazione e test con PostgreSQL reale | `./verify.sh` | 9, 10, 15 |
 | Applicazione avviata con Docker Compose e controllata | `./smoke.sh` | 14 |
 | Regole automatiche sul codice | dentro `./verify.sh`; regressioni in `./quality/regressioni-regole.sh` | 17, 19 |
+| Codifica dei campi COBOL in Java, uguale al riferimento su 375 casi | dentro `./verify.sh`; regressioni in `./quality/regressioni-codec.sh` | 25 |
 
 *(da completare alla chiusura della wave)*
 
@@ -635,7 +684,7 @@ Pilota batch: `CBACT01C`. Pilota online: il programma di accesso `COSGN00C`, dop
 
 ## 7. Come replicarlo sul proprio sistema
 
-Questa sezione è un elenco di lavoro: si aggiorna a ogni passo chiuso e sarà la base della versione finale. Ha due parti. La 7.1 raccoglie le lezioni, ciascuna con il fatto da cui viene e la regola che ne è nata. La 7.2 descrive il processo così com'è oggi, cioè il risultato di quelle regole messe in fila. Stato: fine del primo giorno, prima di qualsiasi traduzione.
+Questa sezione è un elenco di lavoro: si aggiorna a ogni passo chiuso e sarà la base della versione finale. Ha due parti. La 7.1 raccoglie le lezioni, ciascuna con il fatto da cui viene e la regola che ne è nata. La 7.2 descrive il processo così com'è oggi, cioè il risultato di quelle regole messe in fila. Stato: prime ore del secondo giorno, prima di qualsiasi traduzione.
 
 ### 7.1 Lezioni raccolte fin qui
 
@@ -645,10 +694,13 @@ Ogni riga dice che cosa è successo, in quale passo della sezione 5.0 lo si legg
 
 | Lezione | Il fatto (passo) | Regola che ne è nata |
 | --- | --- | --- |
+| Il test si scrive prima dell'implementazione, da chi non la scriverà | La catena specifica → test → issue → implementazione, richiamata dall'autore (24) | Output di riferimento e test di parità sul ramo principale prima dell'issue di traduzione; test marcato "fallimento atteso" con quattro vincoli |
 | Si sceglie il pilota prima di pianificare la preparazione | Un giorno intero senza un confronto tra vecchio e nuovo (23) | Si prepara ora solo ciò senza cui il prossimo programma non si traduce o non si confronta; ogni rinvio ha un innesco scritto (sezione 2.2) |
 | Uno strumento va provato su tutto il sorgente, non su un campione | Lo strumento per il JCL, scelto su 4 file, falliva su 3 dei 46, una volta in silenzio (13) | Il campione controlla la correttezza; la copertura si misura su tutti i file |
 | Il riferimento va verificato prima di fidarsene | L'oracle leggeva al contrario il segno degli importi (15) | Ogni comportamento dell'oracle su cui poggia un confronto ha una prova con valori decodificati a mano dai byte |
 | Ciò che il sorgente non determina non si inventa | Una routine assembler dipendeva dalla memoria vicina (17); un campo binario dava due valori (21) | L'oracle si ferma con un codice riconoscibile o registra un'osservazione; non produce un valore scelto da noi |
+| "Identico byte per byte" va delimitato programma per programma | Due byte di ogni record del pilota vengono da memoria mai inizializzata (26) | Il riferimento ha una tabella versionata delle posizioni escluse, con motivo e riga del sorgente; il file fisico si conserva com'è |
+| I dati di esempio possono non esercitare ciò che conta | Nessun importo negativo nei conti di esempio (26) | Accanto allo scenario con i dati di esempio, uno con sostituzioni mirate scritte a mano |
 | Un errore noto di uno strumento non diventa un valore atteso | Un conteggio sbagliato registrato come "atteso" per far passare il controllo (11) | Se un controllo non passa si decide per iscritto se cambia la richiesta; non si aggiusta l'atteso |
 
 **Sulle specifiche**
@@ -668,6 +720,9 @@ Ogni riga dice che cosa è successo, in quale passo della sezione 5.0 lo si legg
 | Il lavoro consegnato era quasi sempre giusto; i controlli no | Contenuti riconfermati a mano dal Validatore, difetti nei controlli (15, 22) | L'Esecutore fa un autocontrollo su quattro famiglie di difetto prima della PR. Effetto misurato: cambia il tipo di rilievi, non il numero di bocciature |
 | Chi valida deve eseguire, non solo leggere | Un difetto solo sospettato in lettura è stato dimostrato eseguendo (10) | Il Validatore lavora in un clone usa e getta, con Docker, e riesegue da sé i criteri |
 | Chi valida è di un altro fornitore e non condivide il contesto | I rilievi riguardavano ciò che l'Esecutore dava per buono (9, 11, 15) | Validatore di fornitore diverso, che riceve solo specifica, diff e test |
+| Un controllo circolare sembra un controllo | Dati decodificati confrontati con una copia letta dallo stesso codice (25) | Il controllo rilegge la fonte per una via indipendente da ciò che verifica |
+| "Bocciata" non significa "sbagliata" | Tre PR mai approvate dal Validatore, con il contenuto confermato per intero (25) | La voce di registro riporta separatamente che cosa il Validatore ha confermato e che cosa ha contestato |
+| Nessun controllo prova che un test verifichi | Richiesta di difendersi da un test svuotato o riscritto, respinta (25) | Chi implementa non modifica i test; una suite altera il codice e pretende che i test se ne accorgano |
 | Un Validatore avversariale non si ferma da solo | Rilievi nuovi a ogni giro; un terzo giro costa quanto il primo (14, 16) | Al massimo due validazioni per PR. Non si chiede a uno script di difendersi da uno strumento che restituisce dati falsi ma ben formati |
 | Dopo la seconda bocciatura serve una regola, non un altro giro | Tre PR ferme al terzo giro (16) | Residuo non bloccante: merge e issue. Falso verde: correzione mirata, verificata dall'Approvatore rieseguendo il controesempio |
 | I controesempi devono essere eseguibili | Due verifiche dell'Approvatore in sette minuti l'una, rieseguendo gli script del Validatore (19) | Il prompt di validazione chiede comando, file modificato ed esito osservato |
