@@ -31,7 +31,7 @@ Tutte nel modulo `carddemo-batch`, pacchetto `io.github.ltoscano.carddemo.batch.
 | `READACCT.jcl:35-36` | `ACCTFILE`: il KSDS dei conti | `SorgenteContiJdbc` sulla tabella `account` (#59, #60) | tradotto |
 | `READACCT.jcl:37-48` | `OUTFILE`, `ARRYFILE`, `VBRCFILE` con `DISP=(NEW,CATLG,DELETE)`: creati nuovi, conservati a fine regolare, cancellati a fine anomala | parametri del job con lo stesso nome; `ApertureUsciteSuDisco` crea il file con `CREATE_NEW`; `Cbact01c.fineAnomala(...)` cancella i tre file | tradotto |
 | `READACCT.jcl:39,43` | `RECFM=FB`, `LRECL=107` e `110` | record fissi senza terminatori | tradotto |
-| `READACCT.jcl:47` | `RECFM=VB,LRECL=84` | descrittore di record di 4 byte (RDW) davanti a ogni record: `Cbact01c.rdw(...)` | tradotto (formato fissato da #65) |
+| `READACCT.jcl:47` | `RECFM=VB,LRECL=84` | descrittore di record di 4 byte (RDW) davanti a ogni record: `Cbact01c.conDescrittore(...)`, con i descrittori costanti `RDW_VBRC_REC1` e `RDW_VBRC_REC2` | tradotto (formato fissato da #65) |
 | `READACCT.jcl:49-50` | `SYSOUT`, `SYSPRINT` | standard output: solo le righe dei `DISPLAY`; i log vanno sullo standard error | tradotto |
 
 ## `ENVIRONMENT DIVISION` e `DATA DIVISION`
@@ -140,7 +140,7 @@ Ogni `DISPLAY` è una riga: letterale e poi i byte del campo come sono nel recor
 
 | Riga | Istruzione | Java | Esito |
 | --- | --- | --- | --- |
-| 243 | `WRITE OUT-ACCT-REC` | `outfile.scrivi(record)` (107 byte) | tradotto |
+| 243 | `WRITE OUT-ACCT-REC` | `outFile.scrivi(record)` (107 byte) | tradotto |
 | 245 | `IF OUTFILE-STATUS NOT = '00' AND NOT = '10'` | eccezione di `scrivi` | tradotto come flusso; lo stato `10` (fine file) non ha corrispondente in scrittura |
 | 246 | `DISPLAY 'ACCOUNT FILE WRITE STATUS IS:' OUTFILE-STATUS` | riga `ACCOUNT FILE WRITE STATUS IS:` **senza** lo stato | tradotto il letterale; **escluso** lo stato |
 | 247-248 | `MOVE OUTFILE-STATUS TO IO-STATUS`, `PERFORM 9910-DISPLAY-IO-STATUS` | — | **escluso** (sezione "Errori") |
@@ -167,7 +167,7 @@ Nessuna aritmetica: le costanti sono scritte come nel sorgente, con la scala del
 
 | Riga | Istruzione | Java | Esito |
 | --- | --- | --- | --- |
-| 264 | `WRITE ARR-ARRAY-REC` | `arryfile.scrivi(record)` (110 byte) | tradotto |
+| 264 | `WRITE ARR-ARRAY-REC` | `arryFile.scrivi(record)` (110 byte) | tradotto |
 | 266-273 | stato diverso da `00` e `10`: `DISPLAY 'ACCOUNT FILE WRITE STATUS IS:' ARRYFILE-STATUS`, 9910, 9999 | riga `ACCOUNT FILE WRITE STATUS IS:` senza stato, poi `fineAnomala` | tradotto il letterale e l'arresto; **esclusi** stato e 9910 |
 
 ### `1500-POPUL-VBRC-RECORD` (righe 276-285) → `p1500PopulVbrcRecord(conto)`
@@ -188,7 +188,7 @@ Nessuna aritmetica: le costanti sono scritte come nel sorgente, con la scala del
 | --- | --- | --- | --- |
 | 288, 303 | `MOVE 12 TO WS-RECD-LEN`, `MOVE 39 TO WS-RECD-LEN` | lunghezza dei dati del record | tradotto |
 | 289, 304 | `MOVE VBRC-REC1 TO VBR-REC(1:WS-RECD-LEN)`, `MOVE VBRC-REC2 …` | i 12 o 39 byte del record; i byte di `VBR-REC` oltre la lunghezza non entrano nel record (#55) | tradotto |
-| 290, 305 | `WRITE VBR-REC` | `vbrcfile.scrivi(rdw(dati))`: `00 10 00 00` + 12 byte, `00 2B 00 00` + 39 byte (lunghezza compresa del descrittore, byte più significativo per primo; contratto di #65) | tradotto |
+| 290, 305 | `WRITE VBR-REC` | `vbrcFile.scrivi(conDescrittore(RDW_…, dati, …))`: `00 10 00 00` + 12 byte, `00 2B 00 00` + 39 byte (lunghezza compresa del descrittore, byte più significativo per primo; contratto di #65) | tradotto |
 | 292-299, 307-314 | stato diverso da `00` e `10`: `DISPLAY 'ACCOUNT FILE WRITE STATUS IS:' VBRCFILE-STATUS`, 9910, 9999 | riga `ACCOUNT FILE WRITE STATUS IS:` senza stato, poi `fineAnomala` | tradotto il letterale e l'arresto; **esclusi** stato e 9910 |
 
 ### Apertura e chiusura
