@@ -53,33 +53,65 @@ done
 log "   ok: script eseguibili; tabella, attesi, out/ e documento presenti"
 
 log "1. rigenerazione completa e confronto con le uscite versionate"
+# versionati GEN OUT DOC: out/ e documento rigenerati (GEN) identici a OUT e DOC; 0 uguali, 1 diversi, 2 errore operativo
+versionati() {
+  local coppia r
+  for coppia in "$1/out:$2" "$1/oracle-dati.md:$3"; do
+    r=0; confronta "${coppia%%:*}" "${coppia#*:}" "$tmp/diff.txt" || r=$?
+    case "$r" in
+      0) ;;
+      1) head -30 "$tmp/diff.txt"; echo "${coppia#*:"$REPO_ROOT"/} diverso dal rigenerato: rieseguire './analysis/run.sh oracle-dati'"; return 1 ;;
+      *) cat "$tmp/diff.txt"; echo "confronto non eseguito (diff uscito con $r)"; return 2 ;;
+    esac
+  done
+}
 odt_genera "$tmp/gen"
-for coppia in "$tmp/gen/out:$ODT_DIR/out" "$tmp/gen/oracle-dati.md:$ODT_DOC"; do
-  rc=0; confronta "${coppia%%:*}" "${coppia#*:}" "$tmp/diff.txt" || rc=$?
-  case "$rc" in
-    0) ;;
-    1) head -30 "$tmp/diff.txt" >&2; fail "${coppia#*:} diverso dal rigenerato: rieseguire './analysis/run.sh oracle-dati'" ;;
-    *) cat "$tmp/diff.txt" >&2; fail "confronto non eseguito (diff uscito con $rc)" ;;
-  esac
-done
+versionati "$tmp/gen" "$ODT_DIR/out" "$ODT_DOC" > "$tmp/v.out" 2>&1 || { cat "$tmp/v.out" >&2; fail "uscite versionate non aggiornate"; }
 sed 's/^/   /' "$tmp/gen/verifica.txt" "$tmp/gen/controprova.txt" >&2 || fail "uscite della generazione illeggibili"
 log "   ok: controlli 1-5 superati; out/ e documento identici ai versionati"
+rm -rf "$tmp/vx" && mkdir -p "$tmp/vx" && cp -R "$ODT_DIR/out" "$ODT_DOC" "$tmp/vx/" || fail "copia dei versionati fallita"
+cp "$tmp/vx/out/ACCTFILE.rec" "$tmp/vx/rec.orig" || fail "copia fallita"
+printf 'Z' | dd of="$tmp/vx/out/ACCTFILE.rec" bs=1 seek=5000 conv=notrunc 2> /dev/null || fail "alterazione della copia fallita"
+! cmp -s "$tmp/vx/out/ACCTFILE.rec" "$tmp/vx/rec.orig" || fail "alterazione della copia senza effetto"
+rc=0; versionati "$tmp/gen" "$tmp/vx/out" "$tmp/vx/oracle-dati.md" > "$tmp/vx.log" 2>&1 || rc=$?
+pretendi "out/ACCTFILE.rec versionato alterato (un byte)" 1 "out diverso dal rigenerato" "$tmp/vx.log"
+cp "$tmp/vx/rec.orig" "$tmp/vx/out/ACCTFILE.rec" && rm "$tmp/vx/out/ACCTFILE.elenco.tsv" || fail "preparazione fallita"
+rc=0; versionati "$tmp/gen" "$tmp/vx/out" "$tmp/vx/oracle-dati.md" > "$tmp/vx.log" 2>&1 || rc=$?
+pretendi "elenco versionato assente" 1 "out diverso dal rigenerato" "$tmp/vx.log"
+cp "$ODT_DIR/out/ACCTFILE.elenco.tsv" "$tmp/vx/out/" && printf '\nriga aggiunta\n' >> "$tmp/vx/oracle-dati.md" || fail "preparazione fallita"
+rc=0; versionati "$tmp/gen" "$tmp/vx/out" "$tmp/vx/oracle-dati.md" > "$tmp/vx.log" 2>&1 || rc=$?
+pretendi "documento versionato alterato" 1 "oracle-dati.md diverso dal rigenerato" "$tmp/vx.log"
 
 log "2. prove negative della colla (copie private)"
+# esito_negativi FILE USCITA: le prove negative della colla sono riuscite solo se l'uscita e' 0, l'ultima riga e' quella
+# di riuscita e nessuna riga e' una prova fallita. 0 riuscite; 1 no; 2 errore operativo.
+esito_negativi() {
+  local f="$1" u="$2" ultima r=0
+  if [ "$u" -ne 0 ]; then
+    grep -A6 "^PROVA NEGATIVA FALLITA\|^ERRORE operativo\|^INVENTARIO" "$f" || r=$?
+    case "$r" in 0) ;; 1) tail -40 "$f" || return 2 ;; *) echo "uscita delle prove negative illeggibile (grep $r)"; return 2 ;; esac
+    echo "prove negative della colla non superate (uscita $u)"; return 1
+  fi
+  ultima="$(odt_ultima "$f" "prove negative: ")" || { echo "esito delle prove negative illeggibile o assente"; return 1; }
+  case "$ultima" in "prove negative: "*" superate, ogni guardia coperta") ;; *) echo "prove negative senza esito riconoscibile"; return 1 ;; esac
+  r=0; presenza "^PROVA NEGATIVA FALLITA" "$f" || r=$?
+  case "$r" in
+    1) ;;
+    0) echo "una prova negativa della colla e' fallita ma l'uscita e' 0"; return 1 ;;
+    *) echo "uscita delle prove negative illeggibile (grep $r)"; return 2 ;;
+  esac
+}
 rc=0; odt_negativi "$tmp/neg.txt" || rc=$?
-if [ "$rc" -ne 0 ]; then
-  rg=0; grep -A6 "^PROVA NEGATIVA FALLITA\|^ERRORE operativo\|^INVENTARIO" "$tmp/neg.txt" >&2 || rg=$?
-  case "$rg" in 0) ;; 1) tail -40 "$tmp/neg.txt" >&2 || true ;; *) log "   uscita delle prove negative illeggibile (grep $rg)" ;; esac
-  fail "prove negative della colla non superate (uscita $rc)"
-fi
-ultima="$(odt_ultima "$tmp/neg.txt" "prove negative: ")" || fail "esito delle prove negative illeggibile o assente"
-case "$ultima" in "prove negative: "*" superate, ogni guardia coperta") ;; *) cat "$tmp/neg.txt" >&2; fail "prove negative senza esito riconoscibile" ;; esac
-rc=0; presenza "^PROVA NEGATIVA FALLITA" "$tmp/neg.txt" || rc=$?
-case "$rc" in
-  1) ;;
-  0) fail "una prova negativa della colla e' fallita ma l'uscita e' 0" ;;
-  *) fail "uscita delle prove negative illeggibile (grep $rc)" ;;
-esac
+esito_negativi "$tmp/neg.txt" "$rc" > "$tmp/en.out" 2>&1 || { cat "$tmp/en.out" >&2; fail "prove negative della colla non superate"; }
+printf 'ok: x -> [A01] y\nPROVA NEGATIVA FALLITA (z): atteso [A02]\nprove negative: 1 superate, ogni guardia coperta\n' > "$tmp/en1.txt" \
+  || fail "uscita finta non scritta"
+rc=0; esito_negativi "$tmp/en1.txt" 0 > "$tmp/en1.log" 2>&1 || rc=$?
+pretendi "uscita delle prove della colla con una prova fallita ma esito 0" 1 "una prova negativa della colla e' fallita ma l'uscita e' 0" "$tmp/en1.log"
+head -n 1 "$tmp/neg.txt" > "$tmp/en2.txt" || fail "uscita troncata non scritta"
+rc=0; esito_negativi "$tmp/en2.txt" 0 > "$tmp/en2.log" 2>&1 || rc=$?
+pretendi "uscita delle prove della colla troncata (senza riga finale) con esito 0" 1 "esito delle prove negative illeggibile o assente" "$tmp/en2.log"
+rc=0; esito_negativi "$tmp/neg.txt" 1 > "$tmp/en3.log" 2>&1 || rc=$?
+pretendi "prove della colla uscite con 1 con un'uscita in apparenza riuscita" 1 "prove negative della colla non superate (uscita 1)" "$tmp/en3.log"
 while IFS= read -r l; do
   case "$l" in "ok: "*) ok_neg "colla: ${l#ok: }" ;; *) log "   $l" ;; esac
 done < "$tmp/neg.txt"

@@ -34,13 +34,17 @@ passo() {
   mkdir -p "$tmp/$n" || fail "cartella di '$n' non creata"
   env DATI_OUT_DIR="$tmp/$n/out" "$@" bash "$DIR/run.sh" > "$tmp/$n.log" 2>&1
 }
+# pulita CARTELLA-D'USCITA: nessun file indicizzato (ne' al percorso stabile ne' nella cartella di lavoro)
+pulita() {
+  [ ! -e "$1/ACCTFILE.dat" ] || { echo "resta un file indicizzato al percorso stabile: $(rel "$1")/ACCTFILE.dat"; return 1; }
+  [ ! -e "$1/lavoro" ] || { echo "resta la cartella di lavoro: $(rel "$1")/lavoro"; return 1; }
+}
 # neg ID DESCRIZIONE SOTTOSTRINGA [VAR=VALORE ...]: run.sh deve fallire per quel motivo; dopo, nessun file indicizzato.
 neg() {
   local n="$1" d="$2" ago="$3"; shift 3
   mkdir -p "$tmp/$n" || fail "cartella di '$n' non creata"
   expect_fail "$d" "$ago" env DATI_OUT_DIR="$tmp/$n/out" "$@" bash "$DIR/run.sh"
-  [ ! -e "$tmp/$n/out/ACCTFILE.dat" ] && [ ! -e "$tmp/$n/out/lavoro" ] \
-    || fail "PROVA NEGATIVA FALLITA ($d): dopo il fallimento resta un file indicizzato o la cartella di lavoro"
+  pulita "$tmp/$n/out" > "$tmp/$n.pulita" 2>&1 || { cat "$tmp/$n.pulita" >&2; fail "PROVA NEGATIVA FALLITA ($d): dopo il fallimento"; }
 }
 # rileggi FILE-INDICIZZATO DEST: IDXDUMP della build rilegge il file in DEST/rilettura.bin, indipendentemente da
 # run.sh; ritorna 0 solo se IDXDUMP termina con 0.
@@ -95,10 +99,20 @@ dichiarazioni() {
     f == 2 && l ~ /^05 / { print "fd: " l; next }
     f == 2 { f = 0 }' "$1"
 }
+# dich_cbact01c SORGENTE USCITA: le righe significative di CBACT01C, che devono essere 5 (3 del SELECT, 2 dell'FD): con
+# meno righe (o nessuna) il confronto sotto sarebbe vuoto e passerebbe.
+dich_cbact01c() {
+  local n
+  dichiarazioni "$1" "SELECT ACCTFILE-FILE " "FD ACCTFILE-FILE" > "$2" || { echo "lettura di CBACT01C fallita"; return 2; }
+  n="$(wc -l < "$2")" || { echo "conteggio fallito"; return 2; }
+  [ "$n" -eq 5 ] || { cat "$2"; echo "CBACT01C: attese 5 righe significative (3 del SELECT, 2 dell'FD), lette $n"; return 1; }
+}
 attese="$tmp/dich-cbact01c.txt"
-dichiarazioni "$LEGACY/app/cbl/CBACT01C.cbl" "SELECT ACCTFILE-FILE " "FD ACCTFILE-FILE" > "$attese" || fail "lettura di CBACT01C fallita"
-n="$(wc -l < "$attese")" || fail "conteggio fallito"
-[ "$n" -eq 5 ] || { cat "$attese" >&2; fail "CBACT01C: attese 5 righe significative (3 del SELECT, 2 dell'FD), lette $n"; }
+dich_cbact01c "$LEGACY/app/cbl/CBACT01C.cbl" "$attese" > "$tmp/dc.out" 2>&1 || { cat "$tmp/dc.out" >&2; fail "dichiarazioni di CBACT01C non lette"; }
+cp "$LEGACY/app/cbl/CBACT01C.cbl" "$tmp/CBACT01C-x.cbl" || fail "copia di CBACT01C fallita"
+mutate "$tmp/CBACT01C-x.cbl" 's/SELECT ACCTFILE-FILE ASSIGN TO ACCTFILE/SELECT ALTRO-FILE ASSIGN TO ACCTFILE/'
+expect_fail "SELECT di CBACT01C non trovato (estrazione incompleta)" "CBACT01C: attese 5 righe significative" \
+  dich_cbact01c "$tmp/CBACT01C-x.cbl" "$tmp/dich-x.txt"
 confronta_dich() { # confronta_dich SORGENTE NOME
   local r=0
   dichiarazioni "$1" "SELECT ACCT-FILE " "FD ACCT-FILE" > "$tmp/dich.txt" || { echo "lettura di $2 fallita"; return 1; }
@@ -214,6 +228,15 @@ passo resb || { cat "$tmp/resb.log" >&2; fail "residuo (b): corsa sana non riusc
 [ -f "$tmp/resb/out/ACCTFILE.dat" ] || fail "residuo (b): file sano assente"
 neg resb "residuo (b): file sano rimasto e caricamento che fallisce" "IDXLOADF ACCTFILE ERRORE WRITE 21" DATI_INGRESSO="$tmp/scambio.rec"
 log "   e non resta alcun file indicizzato (ne' al percorso stabile ne' nella cartella di lavoro)"
+# Prova negativa del controllo "nessun file rimasto": una copia di run.sh senza la pulizia nella trap lascia la
+# cartella di lavoro (con il file indicizzato parziale) dopo un caricamento fallito, e pulita se ne accorge.
+cp "$DIR/run.sh" "$tmp/run-senza-pulizia.sh" || fail "copia di run.sh fallita"
+mutate "$tmp/run-senza-pulizia.sh" 's#rm -rf "$out/lavoro" "$out/ACCTFILE.dat" "$out/ACCTFILE.rapporto"#true#'
+mkdir -p "$tmp/npul" || fail "cartella non creata"
+r=0; env DATI_OUT_DIR="$tmp/npul/out" DATI_INGRESSO="$tmp/scambio.rec" bash "$tmp/run-senza-pulizia.sh" > "$tmp/npul.log" 2>&1 || r=$?
+[ "$r" -ne 0 ] || fail "la copia di run.sh senza pulizia non e' fallita con l'ingresso scambiato"
+[ -f "$tmp/npul/out/lavoro/ACCTFILE.dat" ] || fail "la copia di run.sh senza pulizia non ha lasciato il file di lavoro"
+expect_fail "run.sh senza la pulizia dopo un fallimento: file indicizzato parziale rimasto" "resta la cartella di lavoro" pulita "$tmp/npul/out"
 
 log "5. presenza del passo nel controllo di build/check.sh"
 # PASSI e passi_presenti presi dal testo di build/check.sh (non ricopiati): e' il controllo vero che si prova.
