@@ -39,14 +39,15 @@ prova:ABDNOARG:eseguibile:/oracle/tests/ABDNOARG.cbl prova:M03BCALL:eseguibile:/
 prova:DTCCALL:eseguibile:/oracle/tests/DTCCALL.cbl prova:SEGNOPRB:eseguibile:/oracle/tests/SEGNOPRB.cbl
 prova:PERFPRB:eseguibile:/oracle/tests/PERFPRB.cbl prova:DATFTPRB:eseguibile:/oracle/tests/DATFTPRB.cbl
 prova:IDXLOAD:eseguibile:/oracle/tests/IDXLOAD.cbl prova:IDXDUMP:eseguibile:/oracle/tests/IDXDUMP.cbl
-prova:WAITPRB:eseguibile:/oracle/tests/WAITPRB.cbl"
+prova:WAITPRB:eseguibile:/oracle/tests/WAITPRB.cbl prova:IDXLOADF:eseguibile:/oracle/tests/IDXLOADF.cbl
+prova:IDXLEGGI:eseguibile:/oracle/tests/IDXLEGGI.cbl"
 # Ambiente fissato (deve coincidere con oracle/ambiente.sh): variabili ricevute da cobc e dai programmi.
 AMB_COBC_FISSO="PATH=/usr/bin:/bin HOME=/tmp LC_ALL=C"
 AMB_RUN_FISSO="PATH=/usr/bin:/bin HOME=/tmp LC_ALL=C COB_LIBRARY_PATH=/oracle-bin"
 # Opzioni fissate, nell'ordine (motivi in oracle/cobc.opts e oracle/README.md).
 OPZIONI_FISSE="-std=ibm -fbinary-truncate -fsingle-quote -fsign=EBCDIC -Wall -I/legacy/app/cpy"
 # Passi dei criteri di accettazione: nome e dipendenza (- = nessuna). selftest ha solo check.sh.
-PASSI="build:- avvio:build avviatore:build abend:build segno:build dialetto:build routines:build adattamenti:build selftest:-"
+PASSI="build:- avvio:build avviatore:build abend:build segno:build dialetto:build routines:build adattamenti:build dati:build selftest:-"
 
 tmp="$(mktmp)" || exit 1
 # Volume di prova di ensure_legacy_volume (punto 6d), rimosso all'uscita: solo questo, nessuna risorsa condivisa.

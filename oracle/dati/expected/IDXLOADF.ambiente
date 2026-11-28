@@ -1,0 +1,6 @@
+PATH=/usr/bin:/bin
+HOME=/tmp
+LC_ALL=C
+COB_LIBRARY_PATH=/oracle-bin
+DD_ENTRATA=/in/ACCTFILE.rec
+DD_ACCTFILE=/out/ACCTFILE.dat.verifica

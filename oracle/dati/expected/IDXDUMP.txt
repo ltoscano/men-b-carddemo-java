@@ -1,0 +1,7 @@
+== codice di uscita
+0
+== stdout
+IDXDUMP ACCTFILE RECORD LETTI 000050
+== stderr
+Warning: program compiled against libxml 212 using older 209
+== file nella cartella di lavoro

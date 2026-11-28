@@ -1,0 +1,16 @@
+# File da caricare nell'oracle GnuCOBOL (issue #53), scritta a mano. Una riga per file indicizzato: aggiungere un file
+# significa aggiungere una riga qui e i suoi attesi in attesi/ (<dd>.record.tsv e, se c'e' una controprova,
+# <dd>.controprova.tsv). Righe vuote e righe '#' ignorate; colonne separate da tabulazione.
+#   dd                nome DD con cui il programma del legacy apre il file (CBACT01C: SELECT ACCTFILE-FILE ASSIGN TO
+#                     ACCTFILE, app/cbl/CBACT01C.cbl righe 29-33); e' anche il nome dei file d'uscita
+#   origine           file che il JCL carica nel KSDS (REPRO INFILE), sotto il legacy
+#   contratto         contratto dei dati di #3 (docs/legacy-map/data-contract/contratti/<contratto>.tsv)
+#   chiave_lunghezza  primo valore di KEYS(lunghezza offset) del DEFINE CLUSTER
+#   chiave_offset     secondo valore di KEYS (offset da 0)
+#   rif_chiave        file:riga del JCL con KEYS
+#   lunghezza_record  RECORDSIZE(media massima) del DEFINE CLUSTER: i due valori sono uguali, record fissi
+#   rif_lunghezza     file:riga del JCL con RECORDSIZE
+#   controprova       file ASCII con gli stessi record a righe, per la controprova byte per byte ('-' se non c'e')
+#   uscita            nome del file prodotto in analysis/oracle-dati/out/
+dd	origine	contratto	chiave_lunghezza	chiave_offset	rif_chiave	lunghezza_record	rif_lunghezza	controprova	uscita
+ACCTFILE	app/data/EBCDIC/AWS.M2.CARDDEMO.ACCTDATA.PS	CVACT01Y.ACCOUNT-RECORD	11	0	app/jcl/ACCTFILE.jcl:40	300	app/jcl/ACCTFILE.jcl:41	app/data/ASCII/acctdata.txt	ACCTFILE.rec

@@ -1,0 +1,11 @@
+# Controprova con il file ASCII (issue #53, controllo 3), scritta a mano PRIMA della colla. I 50 record prodotti
+# devono coincidere byte per byte con le righe di app/data/ASCII/acctdata.txt (senza terminatori) TRANNE i byte
+# elencati qui, e lo scarto deve essere esattamente questo: questi byte, a queste posizioni, e nessun altro.
+# Origine: docs/legacy-map/fixture.md (#5), differenza di valore non spiegata dal repository; byte letti con od dalle
+# due righe/record 49 dei due file e, per il prodotto, ricavati dai byte EBCDIC E9 C5 D9 D6 C1 D7 D9 40 40 40 con la
+# pagina 037 (vedi ACCTFILE.record.tsv). Si carica il contenuto del file EBCDIC perche' e' quello che ACCTFILE.jcl
+# carica (REPRO INFILE(ACCTDATA), DD alle righe 56-57): decisione delegata registrata nell'issue #53.
+# Colonne: record (posizione nel file, da 1), chiave attesa del record nel prodotto, campo, offset e lunghezza nel
+# record, byte della riga del file ASCII, byte del record prodotto (esadecimale, un byte per voce).
+record	chiave	campo	offset	lunghezza	ascii	prodotto
+49	00000000049	ACCT-ADDR-ZIP	102	10	41 30 30 30 30 30 30 30 30 30	5A 45 52 4F 41 50 52 20 20 20
