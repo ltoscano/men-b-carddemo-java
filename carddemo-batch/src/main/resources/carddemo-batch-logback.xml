@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Log di carddemo-batch (issue #67): come la console predefinita di Spring Boot (stesso formato e
+     stessa soglia), ma sullo standard error, perche' lo standard output del job READACCT contiene solo
+     le righe dei DISPLAY di CBACT01C (docs/contratti.md, "Contratto del job READACCT"). Il nome non e'
+     logback-spring.xml: lo leggono solo le applicazioni che caricano l'application.properties del batch
+     (logging.config), non le altre applicazioni con lo stesso classpath nei test di carddemo-parity. -->
+<configuration>
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.err</target>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>${CONSOLE_LOG_THRESHOLD}</level>
+    </filter>
+    <encoder>
+      <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+      <charset>${CONSOLE_LOG_CHARSET}</charset>
+    </encoder>
+  </appender>
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+</configuration>

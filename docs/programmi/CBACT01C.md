@@ -19,6 +19,8 @@ Tutte nel modulo `carddemo-batch`, pacchetto `io.github.ltoscano.carddemo.batch.
 | `ApertureUscite`, `FileUscita`, `ApertureUsciteSuDisco` | i tre file sequenziali di uscita (creazione, scrittura, chiusura) |
 | `FineAnomala` | `9999-ABEND-PROGRAM` e la chiamata a `CEE3ABD` |
 | `EsitoReadacct` | il codice di uscita del processo (0 a fine regolare, 99 a fine anomala del programma) |
+| `UscitaConsole` | lo standard output delle righe dei `DISPLAY` (`SYSOUT`) |
+| `ParametriDiAvvio` | la riesecuzione dello stesso comando (sezione "Riesecuzione") |
 
 ## JCL e ambiente di esecuzione
 
@@ -269,4 +271,6 @@ In tutti i casi: codice di uscita 99 e **nessuno dei tre file di uscita resta**,
 
 ## Riesecuzione
 
-Due avvii consecutivi con lo stesso comando riescono entrambi: il job ha un incrementatore (`RunIdIncrementer`), quindi ogni avvio crea una nuova istanza nel repository di Spring Batch, e `predel()` cancella i file della corsa precedente prima di crearli di nuovo. Nessuna idempotenza in più: il secondo avvio rifà tutto.
+Due avvii consecutivi con lo stesso comando riescono entrambi: `ParametriDiAvvio` (la conversione degli argomenti usata dal selettore dei job di Spring Boot) aggiunge a ogni avvio con parametri un parametro identificativo `menb.avvio` con un valore nuovo, quindi ogni avvio è una nuova istanza nel repository di Spring Batch; e `predel()` cancella i file della corsa precedente prima di crearli di nuovo. Nessuna idempotenza in più: il secondo avvio rifà tutto.
+
+Correzione rispetto alla prima versione di questo documento, scritta prima del codice: prevedeva un incrementatore sul job (`RunIdIncrementer`). Alla prima prova, in Spring Batch 6.1 `JobOperator.start` di un job con incrementatore scarta i parametri passati (il job partiva con il solo `run.id`, senza `OUTFILE`, `ARRYFILE`, `VBRCFILE`, e il controllo dei parametri lo rifiutava): da qui `ParametriDiAvvio`.
