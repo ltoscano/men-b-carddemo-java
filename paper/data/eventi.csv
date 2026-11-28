@@ -457,3 +457,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T01:09:37Z,pr-57,codex-inizio,codex,orologio,validazione 2 di 2 ristretta
 2026-11-28T01:18:00Z,pr-52,verifica-fine,fable,orologio,controesempio di Codex respinto; routines --check e --all --check verdi su clone pulito
 2026-11-28T01:18:00Z,pr-52,merge,fable,orologio,squash; chiude #36
+2026-11-28T01:18:47Z,issue-53,esecutore-inizio,opus,orologio,affidata; ramo issue-53-acctfile
