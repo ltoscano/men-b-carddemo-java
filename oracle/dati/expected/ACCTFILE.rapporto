@@ -1,0 +1,6 @@
+file ACCTFILE
+record 50
+byte 15000
+prima chiave 00000000001
+ultima chiave 00000000050
+sha256 rilettura 591952211bfa94397d633a6f6553cf6dda29051f978ec8c0459ed036431dd700
