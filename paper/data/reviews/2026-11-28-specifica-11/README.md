@@ -1,0 +1,10 @@
+# Contestazione della specifica della matrice di comportamento (issue #11, `COSGN00C`)
+
+28 novembre 2026. Codex in sola lettura: 5 min 20 s, 196.252 token. Quattordici rilievi (10 bloccanti, 4 importanti). I fatti citati sul sorgente sono stati riletti dal pianificatore su `COSGN00C.cbl` e reggono; nessun rilievo è respinto.
+
+- `prompt.txt`, `prima.md` (la specifica contestata), `codex-rilievi.md`. Non esiste ancora un `dopo.md`: la specifica non è stata riscritta (vedi sotto).
+- Il rilievo di fondo è il primo: i controlli chiesti (schema, righe citate, copertura dichiarata, conteggio di `IF` e `WHEN`) non verificano che la matrice descriva ciò che il COBOL fa. Una matrice con i messaggi scambiati o le destinazioni invertite li supera tutti. È il controllo circolare già visto nel pilota batch.
+- La via d'uscita proposta: eseguire davvero la logica originale. Il programma ha dieci comandi `EXEC CICS`; sostituiti quelli con adattatori minimi che registrano ciò che il programma chiede e gli restituiscono ciò che lo scenario prescrive, GnuCOBOL esegue le decisioni originali senza riscriverle. Si ottiene una seconda derivazione, indipendente dalla lettura a mano. Non verifica il runtime BMS né il terminale.
+- Altri rilievi di sostanza: la COMMAREA ricevuta non è mai letta dal programma (conta solo `EIBCALEN`), e la specifica la confondeva con quella di lavoro; servono scenari a più invii, non casi isolati; l'esito di `RECEIVE` non è controllato dal programma; con utente e password vuoti esce un solo messaggio e il programma prosegue fino alle conversioni; il tipo utente distingue solo `'A'` da tutto il resto; "non determinabile dal sorgente" senza struttura diventa una maschera senza limiti; "leggibile da programma" non fissava alcun formato.
+- Un difetto fuori dalla specifica: `./analysis/run.sh <nome> --check` riesce se la cartella esiste ma non contiene `check.sh`. Portato all'issue #45.
+- Esito: la specifica non passa a `ready`. La riscrittura è rinviata a dopo la misura del pilota batch (registro delle approvazioni, voce 115).
