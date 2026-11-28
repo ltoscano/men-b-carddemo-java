@@ -526,3 +526,9 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T08:04:18Z,pr-64,merge,fable,orologio,squash; chiude #55
 2026-11-28T08:04:20Z,issue-65,esecutore-inizio,opus,orologio,affidata; ramo issue-65-test-parita-readacct
 2026-11-28T08:06:08Z,paper,fine,fable,orologio,passi 29-31; tabelle 18-20; lezioni
+2026-11-28T08:06:11Z,paper,risposta-consegnata,fable,orologio,stato dopo i merge di #64 e #66
+2026-11-28T08:11:23Z,stato,richiesta-autore,autore,orologio,a che punto siamo
+2026-11-28T08:11:28Z,stato,risposta-consegnata,fable,orologio,riepilogo dello stato
+2026-11-28T08:13:04Z,stato,richiesta-autore,autore,orologio,ok procedi
+2026-11-28T08:13:39Z,issue-11,codex-inizio,codex,orologio,contestazione della specifica
+2026-11-28T08:13:41Z,stato,risposta-consegnata,fable,orologio,procedo: #65 in corso; contestazione di #11 avviata
