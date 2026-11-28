@@ -154,45 +154,56 @@ class Cbact01cTest {
     }
 
     // --- addebito di ciclo diverso da zero: il programma prosegue, byte 91-97 convenzionali ---------------------
+    // Rilievo 2 della validazione 1 della PR #70: si confrontano per intero i tre file (conto interessato e conti
+    // successivi), con addebito positivo e negativo, nel primo conto e in uno successivo. Gli attesi sono scritti a
+    // mano dai campi (Prove.out, arr, vbrc); quelli del conto 1 coincidono con le righe 1 dei riferimenti di #55.
 
-    @Test
-    void addebitoDiversoDaZeroNelPrimoContoIlProgrammaProsegue() throws Exception {
-        programma(new Prove.Conti(List.of(conDebito(esempio1(), 1, "10.00"), conDebito(esempio1(), 2, "0.00"))))
-                .esegui();
-        byte[] out = Files.readAllBytes(outfile());
-        assertEquals(2 * 107, out.length);
-        byte[] atteso1 = hex(OUT_E1);
-        Arrays.fill(atteso1, 90, 97, (byte) 0x00);
-        assertArrayEquals(atteso1, Arrays.copyOfRange(out, 0, 107), "OUTFILE record 1: 91-97 a X'00', il resto come da regole");
-        assertArrayEquals(hex(OUT_E1.replaceFirst("3030303030303030303031", "3030303030303030303032")),
-                Arrays.copyOfRange(out, 107, 214), "OUTFILE record 2: 2525,00 come da regole");
-        byte[] arr = Files.readAllBytes(arryfile());
-        assertArrayEquals(hex(ARR_E1 + ARR_E1.replaceFirst("3030303030303030303031", "3030303030303030303032")), arr);
-        assertArrayEquals(vbrc(VB1_E1, VB2_E1, VB1_E1.replace("3159", "3259"), VB2_E1.replaceFirst("31", "32")),
-                Files.readAllBytes(vbrcfile()));
-        assertEquals(concatena(List.of(List.of(Cbact01c.START), righeE1("00000000001", "00000000100{"),
-                righeE1("00000000002", "00000000000{"), List.of(Cbact01c.END))), console.righe());
+    /** Confronto integrale dei tre file e della console con gli attesi dei conti dati (chiave, addebito zonato). */
+    private void tuttoUgualeAContiE1(long[] chiavi, String[] debitiZonati, String[] debitiOutfile) throws Exception {
+        StringBuilder out = new StringBuilder();
+        StringBuilder arr = new StringBuilder();
+        StringBuilder vb = new StringBuilder();
+        List<List<String>> righe = new ArrayList<>();
+        righe.add(List.of(Cbact01c.START));
+        for (int i = 0; i < chiavi.length; i++) {
+            out.append(Prove.outE1(chiavi[i], debitiOutfile[i]));
+            arr.append(Prove.arrE1(chiavi[i]));
+            vb.append(Prove.vbrcE1(chiavi[i]));
+            righe.add(righeE1(Prove.chiave(chiavi[i]), debitiZonati[i]));
+        }
+        righe.add(List.of(Cbact01c.END));
+        assertEquals(out.toString(), Prove.HEX.formatHex(Files.readAllBytes(outfile())), "OUTFILE, tutti i byte");
+        assertEquals(arr.toString(), Prove.HEX.formatHex(Files.readAllBytes(arryfile())), "ARRYFILE, tutti i byte");
+        assertEquals(vb.toString(), Prove.HEX.formatHex(Files.readAllBytes(vbrcfile())), "VBRCFILE, tutti i byte");
+        assertEquals(concatena(righe), console.righe(), "console");
     }
 
     @Test
-    void addebitoDiversoDaZeroInUnContoSuccessivoIlProgrammaProsegue() throws Exception {
-        programma(new Prove.Conti(List.of(conDebito(esempio1(), 1, "0.00"), conDebito(esempio1(), 2, "-3.50"),
+    void gliAttesiScrittiAManoCoincidonoConIRiferimentiDelConto1() {
+        // I costruttori di attesi di Prove, sul conto 1 di esempio, danno le righe 1 dei riferimenti di #55.
+        assertEquals(OUT_E1, Prove.outE1(1, Prove.DEBITO_2525));
+        assertEquals(ARR_E1, Prove.arrE1(1));
+        assertEquals("00100000" + VB1_E1 + "002b0000" + VB2_E1, Prove.vbrcE1(1));
+    }
+
+    @Test
+    void addebitoPositivoNelPrimoContoNegativoInUnSuccessivo() throws Exception {
+        programma(new Prove.Conti(List.of(conDebito(esempio1(), 1, "10.00"), conDebito(esempio1(), 2, "0.00"),
+                conDebito(esempio1(), 3, "-3.50"), conDebito(esempio1(), 4, "0.00")))).esegui();
+        tuttoUgualeAContiE1(new long[] {1, 2, 3, 4},
+                new String[] {"00000000100{", "00000000000{", "00000000035}", "00000000000{"},
+                new String[] {Prove.DEBITO_NON_DETERMINATO, Prove.DEBITO_2525, Prove.DEBITO_NON_DETERMINATO,
+                    Prove.DEBITO_2525});
+    }
+
+    @Test
+    void addebitoNegativoNelPrimoContoPositivoInUnSuccessivo() throws Exception {
+        programma(new Prove.Conti(List.of(conDebito(esempio1(), 1, "-0.01"), conDebito(esempio1(), 2, "9999999999.99"),
                 conDebito(esempio1(), 3, "0.00")))).esegui();
-        byte[] out = Files.readAllBytes(outfile());
-        assertEquals(3 * 107, out.length);
-        assertArrayEquals(hex(OUT_E1), Arrays.copyOfRange(out, 0, 107), "OUTFILE record 1");
-        byte[] atteso2 = hex(OUT_E1.replaceFirst("3030303030303030303031", "3030303030303030303032"));
-        Arrays.fill(atteso2, 90, 97, (byte) 0x00);
-        assertArrayEquals(atteso2, Arrays.copyOfRange(out, 107, 214), "OUTFILE record 2: 91-97 a X'00', non il valore del record 1");
-        assertArrayEquals(hex(OUT_E1.replaceFirst("3030303030303030303031", "3030303030303030303033")),
-                Arrays.copyOfRange(out, 214, 321), "OUTFILE record 3");
-        assertEquals(3 * 110, Files.size(arryfile()));
-        assertEquals(3 * (16 + 43), Files.size(vbrcfile()));
-        assertEquals(concatena(List.of(List.of(Cbact01c.START), righeE1("00000000001", "00000000000{"),
-                righeE1("00000000002", "00000000035}"), righeE1("00000000003", "00000000000{"), List.of(Cbact01c.END))),
-                console.righe());
+        tuttoUgualeAContiE1(new long[] {1, 2, 3},
+                new String[] {"00000000000J", "99999999999I", "00000000000{"},
+                new String[] {Prove.DEBITO_NON_DETERMINATO, Prove.DEBITO_NON_DETERMINATO, Prove.DEBITO_2525});
     }
-
     // --- forma delle righe di console non confrontate dal test di parita' --------------------------------------
 
     @Test
@@ -239,12 +250,18 @@ class Cbact01cTest {
         assertEquals(attese, console.righe());
         assertEquals(10 + 39, attese.get(14).length(), "riga VBRC-REC2: etichetta di 10 caratteri e 39 byte");
         assertEquals(300, attese.get(15).length(), "riga DISPLAY ACCOUNT-RECORD: 300 byte");
-        byte[] out = Files.readAllBytes(outfile());
-        // secondo conto: addebito diverso da zero, byte 91-97 a X'00'
-        assertArrayEquals(new byte[7], Arrays.copyOfRange(out, 107 + 90, 107 + 97));
-        // primo conto: 2525,00 e data di riemissione riordinata
-        assertArrayEquals(hex("0000000252500c"), Arrays.copyOfRange(out, 90, 97));
-        assertArrayEquals("20871126".getBytes(StandardCharsets.US_ASCII), Arrays.copyOfRange(out, 68, 76));
+        // I tre file per intero (non solo alcune posizioni): primo conto con addebito zero (2525,00) e data
+        // riordinata, secondo con addebito negativo (byte convenzionali) e importi negativi.
+        assertEquals(Prove.out("12345678901", "N", "00000012345P", "99999999999I", "00000000000G", "2087-11-26",
+                "2030-01-31", "20871126", "00000000123D", Prove.DEBITO_2525, "GRP-0010AB")
+                + Prove.out("99999999999", "Y", "00000000000{", "00000005000J", "00000000000J", "2001-02-03",
+                        "2004-05-06", "20070809", "00000000567Q", Prove.DEBITO_NON_DETERMINATO, " D E      "),
+                Prove.HEX.formatHex(Files.readAllBytes(outfile())), "OUTFILE");
+        assertEquals(Prove.arr("12345678901", "00000012345P") + Prove.arr("99999999999", "00000000000{"),
+                Prove.HEX.formatHex(Files.readAllBytes(arryfile())), "ARRYFILE");
+        assertEquals(Prove.vbrc("12345678901", "N", "00000012345P", "99999999999I", "2087")
+                + Prove.vbrc("99999999999", "Y", "00000000000{", "00000005000J", "2007"),
+                Prove.HEX.formatHex(Files.readAllBytes(vbrcfile())), "VBRCFILE");
     }
 
     @Test
@@ -252,12 +269,32 @@ class Cbact01cTest {
         RecordConto c = conto(7, "Y", "1.00", "2.00", "3.00", "2020-01-01", "2021-01-01", "ABCDEFGHIJ", "0.00", "0.00",
                 "          ", "          ");
         programma(new Prove.Conti(List.of(c))).esegui();
-        byte[] out = Files.readAllBytes(outfile());
-        assertEquals("ABCDFGIJ", Prove.latin1(Arrays.copyOfRange(out, 68, 76)), "OUTFILE 69-76: caratteri 1-4, 6-7, 9-10");
-        assertArrayEquals(new byte[2], Arrays.copyOfRange(out, 76, 78), "OUTFILE 77-78: byte convenzionali X'00'");
-        byte[] vb = Files.readAllBytes(vbrcfile());
-        assertEquals("ABCD", Prove.latin1(Arrays.copyOfRange(vb, 16 + 4 + 35, 16 + 4 + 39)), "VB2-ACCT-REISSUE-YYYY");
-        assertEquals("ACCT-REISSUE-DATE       :ABCDEFGHIJ", console.righe().get(8));
+        // OUTFILE 69-76: caratteri 1-4, 6-7, 9-10 dell'ingresso; 77-78 byte convenzionali; i tre file per intero.
+        assertEquals(Prove.out("00000000007", "Y", "00000000010{", "00000000020{", "00000000030{", "2020-01-01",
+                "2021-01-01", "ABCDFGIJ", "00000000000{", Prove.DEBITO_2525, "          "),
+                Prove.HEX.formatHex(Files.readAllBytes(outfile())), "OUTFILE");
+        assertEquals(Prove.arr("00000000007", "00000000010{"), Prove.HEX.formatHex(Files.readAllBytes(arryfile())),
+                "ARRYFILE");
+        assertEquals(Prove.vbrc("00000000007", "Y", "00000000010{", "00000000020{", "ABCD"),
+                Prove.HEX.formatHex(Files.readAllBytes(vbrcfile())), "VBRCFILE: VB2-ACCT-REISSUE-YYYY = ABCD");
+        assertEquals(List.of(Cbact01c.START,
+                "ACCT-ID                 :00000000007",
+                "ACCT-ACTIVE-STATUS      :Y",
+                "ACCT-CURR-BAL           :00000000010{",
+                "ACCT-CREDIT-LIMIT       :00000000020{",
+                "ACCT-CASH-CREDIT-LIMIT  :00000000030{",
+                "ACCT-OPEN-DATE          :2020-01-01",
+                "ACCT-EXPIRAION-DATE     :2021-01-01",
+                "ACCT-REISSUE-DATE       :ABCDEFGHIJ",
+                "ACCT-CURR-CYC-CREDIT    :00000000000{",
+                "ACCT-CURR-CYC-DEBIT     :00000000000{",
+                "ACCT-GROUP-ID           :          ",
+                "-------------------------------------------------",
+                "VBRC-REC1:00000000007Y",
+                "VBRC-REC2:0000000000700000000010{00000000020{ABCD",
+                "00000000007Y00000000010{00000000020{00000000030{2020-01-012021-01-01ABCDEFGHIJ00000000000{"
+                        + "00000000000{" + " ".repeat(20) + SPAZI_178,
+                Cbact01c.END), console.righe());
     }
 
     @Test
@@ -425,6 +462,56 @@ class Cbact01cTest {
                 concatena(List.of(List.of(Cbact01c.START), righeE1("00000000001", "00000000000{"),
                         righeE1("00000000002", "00000000000{").subList(0, 12),
                         List.of("ACCOUNT FILE WRITE STATUS IS:", "ABENDING PROGRAM"))));
+    }
+
+    /**
+     * Rilievo 4 della validazione 1 della PR #70: non basta lo stato finale, conta il momento. PREDEL
+     * (READACCT.jcl:22-28) e' il primo atto: con tre file sentinella, al primo byte della console (il DISPLAY
+     * della riga 141) e all'apertura dell'accesso ai conti (0000-ACCTFILE-OPEN) i tre file non ci sono gia' piu'.
+     */
+    @Test
+    void predelPrimaDelPrimoDisplayEDellAperturaDeiConti() throws Exception {
+        sentinelle();
+        List<Path> uscite = List.of(outfile(), arryfile(), vbrcfile());
+        Prove.Conti conti = new Prove.Conti(List.of(esempio1()));
+        conti.sorvegliati = uscite;
+        console.sorvegliati = uscite;
+        programma(conti).esegui();
+        assertEquals(List.of(false, false, false), console.presentiAlPrimoDisplay,
+                "presenza di OUTFILE, ARRYFILE, VBRCFILE al primo DISPLAY");
+        assertEquals(List.of(false, false, false), conti.presentiAllApertura,
+                "presenza di OUTFILE, ARRYFILE, VBRCFILE all'apertura dell'accesso ai conti");
+        assertEquals(Cbact01c.START, console.righe().get(0));
+    }
+
+    @Test
+    void predelPrimaDellAperturaAncheQuandoLAperturaFallisce() throws Exception {
+        sentinelle();
+        List<Path> uscite = List.of(outfile(), arryfile(), vbrcfile());
+        Prove.Conti conti = new Prove.Conti(List.of(esempio1()));
+        conti.sorvegliati = uscite;
+        console.sorvegliati = uscite;
+        conti.guastoApertura = true;
+        fineAnomala(conti, List.of(Cbact01c.START, "ERROR OPENING ACCTFILE", "ABENDING PROGRAM"));
+        assertEquals(List.of(false, false, false), console.presentiAlPrimoDisplay);
+        assertEquals(List.of(false, false, false), conti.presentiAllApertura);
+    }
+
+    /**
+     * Un errore della JVM (un {@link Error}) non e' una fine anomala del programma e non diventa {@link FineAnomala}
+     * (il processo esce con il codice di Spring Batch, vedi {@link ReadacctProcessoTest}), ma la pulizia vale:
+     * console svuotata, nessuna riga del ramo d'errore, nessuno dei tre file rimasto.
+     */
+    @Test
+    void erroreDellaJvmSvuotaLaConsoleENonLasciaFile() throws Exception {
+        sentinelle();
+        Prove.Conti conti = new Prove.Conti(List.of(esempio1()));
+        conti.erroreGraveApertura = true;
+        AssertionError e = assertThrows(AssertionError.class, () -> programma(conti).esegui());
+        assertTrue(e.getMessage().startsWith("errore grave di prova"), e.getMessage());
+        assertEquals(List.of(Cbact01c.START), console.righe());
+        assertTrue(console.svuotamenti > 0, "la console non e' stata svuotata prima di propagare l'errore");
+        nessunaUscita();
     }
 
     @Test

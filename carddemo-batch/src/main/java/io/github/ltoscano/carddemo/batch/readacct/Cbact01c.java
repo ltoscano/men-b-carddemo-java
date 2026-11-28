@@ -65,6 +65,7 @@ public final class Cbact01c {
     static final String FASE_CHIUSURA_USCITE = "svuotamento e chiusura dei file di uscita";
     static final String FASE_CONSOLE = "scrittura della console";
     static final String FASE_IMPREVISTA = "errore imprevisto";
+    static final String FASE_ERRORE_GRAVE = "errore della JVM (non una fine anomala del programma)";
 
     static final String OUTFILE = "OUTFILE";
     static final String ARRYFILE = "ARRYFILE";
@@ -164,6 +165,12 @@ public final class Cbact01c {
             throw fineAnomala(FASE_CONSOLE, e.getCause());
         } catch (RuntimeException e) {
             throw fineAnomala(FASE_IMPREVISTA, e);
+        } catch (Error e) {
+            // Un errore della JVM non e' una fine anomala del programma (il processo esce con il codice di Spring
+            // Batch per un job fallito, non con 99), ma la pulizia vale lo stesso: righe gia' scritte svuotate
+            // sulla console, file chiusi, nessuno dei tre file di uscita rimasto.
+            fineAnomala(FASE_ERRORE_GRAVE, e);
+            throw e;
         }
     }
 
@@ -409,16 +416,17 @@ public final class Cbact01c {
      */
     private FineAnomala fineAnomala(String fase, Throwable causa, String... righe) {
         LOG.error("CBACT01C: fine anomala nella fase '{}'", fase, causa);
-        if (righe.length > 0) {
-            try {
+        try {
+            if (righe.length > 0) {
                 for (String riga : righe) {
                     display(riga);
                 }
                 display(ABENDING);
-                svuotaConsole();
-            } catch (ErroreConsole e) {
-                LOG.error("CBACT01C: console non scrivibile durante la fine anomala", e.getCause());
             }
+            // Anche senza righe del ramo: le righe gia' scritte non devono restare nel buffer della console.
+            svuotaConsole();
+        } catch (ErroreConsole e) {
+            LOG.error("CBACT01C: console non scrivibile durante la fine anomala", e.getCause());
         }
         if (acctfile != null) {
             CursoreConti daChiudere = acctfile;

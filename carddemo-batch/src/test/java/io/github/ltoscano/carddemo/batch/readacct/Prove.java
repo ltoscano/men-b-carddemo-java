@@ -48,6 +48,70 @@ final class Prove {
                 c.acctCurrCycCredit(), new BigDecimal(debito), c.acctAddrZip(), c.acctGroupId());
     }
 
+    /** Presenza di ciascun file, nell'ordine dato. */
+    static List<Boolean> presenze(List<Path> file) {
+        List<Boolean> r = new ArrayList<>();
+        for (Path p : file) {
+            r.add(java.nio.file.Files.exists(p, java.nio.file.LinkOption.NOFOLLOW_LINKS));
+        }
+        return r;
+    }
+
+    /** Esadecimale dei byte US-ASCII del testo: per scrivere a mano i byte di un campo zonato o di testo. */
+    static String asc(String testo) {
+        return HEX.formatHex(testo.getBytes(StandardCharsets.US_ASCII));
+    }
+
+    /** Chiave di 11 cifre ({@code ACCT-ID PIC 9(11)}). */
+    static String chiave(long id) {
+        return String.format("%011d", id);
+    }
+
+    /** Addebito di OUTFILE con addebito d'ingresso zero: 2525,00 compresso (CBACT01C.cbl:237). */
+    static final String DEBITO_2525 = "0000000252500c";
+    /** Addebito di OUTFILE con addebito d'ingresso diverso da zero: sette byte convenzionali X'00'. */
+    static final String DEBITO_NON_DETERMINATO = "00000000000000";
+
+    /**
+     * Record di OUTFILE scritto a mano dai campi gia' nella forma dei loro byte: testi e zonati come testo,
+     * data di riemissione riordinata (8 caratteri, poi i byte convenzionali 00 00), addebito compresso in
+     * esadecimale (14 cifre).
+     */
+    static String out(String chiave, String stato, String saldo, String limite, String anticipi, String apertura,
+            String scadenza, String riemissione8, String credito, String debitoHex, String gruppo) {
+        return asc(chiave) + asc(stato) + asc(saldo) + asc(limite) + asc(anticipi) + asc(apertura) + asc(scadenza)
+                + asc(riemissione8) + "0000" + asc(credito) + debitoHex + asc(gruppo);
+    }
+
+    /**
+     * Record di ARRYFILE scritto a mano: chiave; (1) saldo e 1005,00; (2) saldo e 1525,00; (3) -1025,00 e
+     * -2500,00; (4) e (5) zero con segno C; quattro spazi. Non dipende dall'addebito del conto.
+     */
+    static String arr(String chiave, String saldo) {
+        return asc(chiave) + asc(saldo) + "0000000100500c" + asc(saldo) + "0000000152500c" + asc("00000010250}")
+                + "0000000250000d" + asc("00000000000{") + "0000000000000c" + asc("00000000000{") + "0000000000000c"
+                + asc("    ");
+    }
+
+    /** I due record di VBRCFILE di un conto, ciascuno con il suo descrittore (00 10 00 00, 00 2B 00 00). */
+    static String vbrc(String chiave, String stato, String saldo, String limite, String anno) {
+        return "00100000" + asc(chiave) + asc(stato) + "002b0000" + asc(chiave) + asc(saldo) + asc(limite) + asc(anno);
+    }
+
+    /** OUTFILE del conto 1 di esempio con un'altra chiave e l'addebito compresso dato (esadecimale). */
+    static String outE1(long id, String debitoHex) {
+        return out(chiave(id), "Y", "00000001940{", "00000020200{", "00000010200{", "2014-11-20", "2025-05-20",
+                "20250520", "00000000000{", debitoHex, "          ");
+    }
+
+    static String arrE1(long id) {
+        return arr(chiave(id), "00000001940{");
+    }
+
+    static String vbrcE1(long id) {
+        return vbrc(chiave(id), "Y", "00000001940{", "00000020200{", "2025");
+    }
+
     static byte[] hex(String esadecimale) {
         return HEX.parseHex(esadecimale);
     }
@@ -67,6 +131,10 @@ final class Prove {
         private final ByteArrayOutputStream riga = new ByteArrayOutputStream();
         private final Registro registro;
         int svuotamenti;
+        /** File di cui registrare la presenza quando si scrive il primo byte (momento del primo DISPLAY). */
+        List<Path> sorvegliati = List.of();
+        /** Presenza dei file sorvegliati al primo byte scritto; null finche' non si scrive nulla. */
+        List<Boolean> presentiAlPrimoDisplay;
 
         Console(Registro registro) {
             this.registro = registro;
@@ -74,6 +142,9 @@ final class Prove {
 
         @Override
         public void write(int b) {
+            if (presentiAlPrimoDisplay == null) {
+                presentiAlPrimoDisplay = presenze(sorvegliati);
+            }
             tutto.write(b);
             if (b == '\n') {
                 registro.eventi.add("C:" + latin1(riga.toByteArray()));
@@ -114,8 +185,14 @@ final class Prove {
         boolean guastoApertura;
         int guastoLettura;
         boolean guastoChiusura;
+        /** All'apertura un {@link Error} invece di un'eccezione: un guasto che il programma non intercetta. */
+        boolean erroreGraveApertura;
         int aperture;
         int chiusure;
+        /** File di cui registrare la presenza all'apertura (momento della prima interrogazione dei conti). */
+        List<Path> sorvegliati = List.of();
+        /** Presenza dei file sorvegliati all'ultima apertura; null se non e' mai stata aperta. */
+        List<Boolean> presentiAllApertura;
 
         Conti(List<RecordConto> conti) {
             this.conti = conti;
@@ -124,6 +201,10 @@ final class Prove {
         @Override
         public CursoreConti apri() throws Exception {
             aperture++;
+            presentiAllApertura = presenze(sorvegliati);
+            if (erroreGraveApertura) {
+                throw new AssertionError("errore grave di prova (non un'eccezione) all'apertura");
+            }
             if (guastoApertura) {
                 throw new java.sql.SQLException("guasto di prova all'apertura");
             }

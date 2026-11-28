@@ -13,6 +13,7 @@ import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.batch.autoconfigure.JobExecutionExitCodeGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -63,6 +64,19 @@ public class ReadacctJobConfig {
     @Bean
     EsitoReadacct esitoReadacct() {
         return new EsitoReadacct();
+    }
+
+    /**
+     * Il generatore di codice di uscita di Spring Boot per i job (stato {@code FAILED} → 5), dichiarato qui
+     * perche' Spring Boot lo crea solo se non c'e' alcun {@code ExitCodeGenerator}
+     * ({@code @ConditionalOnMissingBean(ExitCodeGenerator.class)} in {@code BatchJobLauncherAutoConfiguration}):
+     * con {@link EsitoReadacct} da solo, un job fallito per un guasto diverso da {@link FineAnomala} (per esempio
+     * un {@code Error}, o un fallimento di {@code installationCheckJob}) farebbe uscire il processo con 0.
+     * {@link EsitoReadacct} lo precede: per la fine anomala del programma vale 99.
+     */
+    @Bean
+    JobExecutionExitCodeGenerator codiceDiUscitaDeiJob() {
+        return new JobExecutionExitCodeGenerator();
     }
 
     @Bean

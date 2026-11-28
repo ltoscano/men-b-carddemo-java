@@ -60,10 +60,12 @@ class ReadacctJobTest {
             assertEquals(0, SpringApplication.exit(contesto), "codice di uscita a fine regolare");
         }
         assertArrayEquals(Prove.hex(Cbact01cTest.OUT_E1), Files.readAllBytes(tmp.resolve("OUTFILE")));
-        assertEquals(110, Files.size(tmp.resolve("ARRYFILE")));
-        assertEquals(16 + 43, Files.size(tmp.resolve("VBRCFILE")));
-        assertEquals(2 + 15, console.righe().size());
-        assertEquals(Cbact01c.END, console.righe().get(16));
+        assertArrayEquals(Prove.hex(Cbact01cTest.ARR_E1), Files.readAllBytes(tmp.resolve("ARRYFILE")));
+        assertArrayEquals(Prove.hex(Prove.vbrcE1(1)), Files.readAllBytes(tmp.resolve("VBRCFILE")));
+        List<String> attese = new java.util.ArrayList<>(List.of(Cbact01c.START));
+        attese.addAll(Cbact01cTest.righeE1("00000000001", "00000000000{"));
+        attese.add(Cbact01c.END);
+        assertEquals(attese, console.righe());
     }
 
     @Test
@@ -90,8 +92,13 @@ class ReadacctJobTest {
         try (ConfigurableApplicationContext contesto = avvia(conti, argomenti())) {
             assertEquals(EsitoReadacct.USCITA_FINE_ANOMALA, SpringApplication.exit(contesto));
         }
-        assertEquals("ABENDING PROGRAM", console.righe().get(console.righe().size() - 1));
-        assertFalse(Files.exists(tmp.resolve("OUTFILE")));
+        List<String> attese = new java.util.ArrayList<>(List.of(Cbact01c.START));
+        attese.addAll(Cbact01cTest.righeE1("00000000001", "00000000000{"));
+        attese.addAll(List.of("ERROR READING ACCOUNT FILE", "ABENDING PROGRAM"));
+        assertEquals(attese, console.righe());
+        for (String p : List.of("OUTFILE", "ARRYFILE", "VBRCFILE")) {
+            assertFalse(Files.exists(tmp.resolve(p)), p + " rimasto");
+        }
     }
 
     @Test
