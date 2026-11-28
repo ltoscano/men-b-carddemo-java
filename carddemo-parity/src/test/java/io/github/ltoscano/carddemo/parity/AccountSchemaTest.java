@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -287,6 +289,7 @@ class AccountSchemaTest {
     @Test
     void testoPiuLungoOPiuCortoRifiutatoAncheConSoliSpazi() throws Exception {
         long chiave = 1;
+        List<String> difformi = new ArrayList<>();
         for (Map.Entry<String, Integer> t : TESTI.entrySet()) {
             int n = t.getValue();
             List<String> valori = new ArrayList<>(List.of(
@@ -302,9 +305,35 @@ class AccountSchemaTest {
             for (String valore : valori) {
                 Map<String, Object> riga = rigaValida(chiave++);
                 riga.put(t.getKey(), valore);
-                String messaggio = rifiutato(riga, VIOLAZIONE_CHECK,
-                        t.getKey() + " = '" + valore + "' (" + valore.length() + " caratteri)");
-                assertTrue(messaggio.contains("account_" + t.getKey() + "_check"), "vincolo violato: " + messaggio);
+                String esito = esitoInserimento(riga);
+                String atteso = VIOLAZIONE_CHECK + " account_" + t.getKey() + "_check";
+                System.out.println("[account] " + t.getKey() + " = '" + valore + "' (" + valore.length()
+                        + " caratteri): " + esito);
+                if (!esito.equals(atteso)) {
+                    difformi.add(t.getKey() + " = '" + valore + "' (" + valore.length() + " caratteri): " + esito
+                            + ", atteso " + atteso);
+                }
+            }
+        }
+        // Tutti i casi si provano prima di decidere: l'elenco dice quali valori sono passati o con quale errore.
+        assertEquals(List.of(), difformi, "valori di lunghezza diversa da n non rifiutati dal vincolo di lunghezza");
+    }
+
+    /**
+     * Esito di un inserimento in una transazione annullata: {@code ACCETTATO}, oppure SQLSTATE e
+     * nome del vincolo violato (dal messaggio di PostgreSQL), oppure SQLSTATE e prima riga del messaggio.
+     */
+    private String esitoInserimento(Map<String, Object> riga) throws SQLException {
+        try (Connection c = transazione()) {
+            try {
+                inserisci(c, riga);
+                return "ACCETTATO";
+            } catch (SQLException e) {
+                Matcher m = Pattern.compile("violates check constraint \"([a-z_]+)\"")
+                        .matcher(e.getMessage());
+                return e.getSQLState() + " " + (m.find() ? m.group(1) : e.getMessage().split("\n")[0]);
+            } finally {
+                c.rollback();
             }
         }
     }

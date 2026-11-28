@@ -125,11 +125,11 @@ class AccountMigrazioneTest {
                 }
                 assertEquals(storicoIniziale, storico, "storico cambiato dal riavvio di " + app);
                 try (Connection c = PostgresDiProva.connessione(postgres)) {
+                    // Tipo dal catalogo (relkind 'r' = tabella), non la sola risoluzione del nome.
+                    assertEquals("r", tipoDiRelazione(c, "account"), "account dopo " + app);
                     assertEquals(List.of("12"), PostgresDiProva.righe(c, "select count(*) from information_schema.columns"
                             + " where table_schema = 'public' and table_name = 'account'"), "colonne di account dopo " + app);
-                    String batchJobExecution = PostgresDiProva.righe(c,
-                            "select to_regclass('public.batch_job_execution') is not null").get(0);
-                    assertEquals(lanciBatch > 0 ? "t" : "f", batchJobExecution,
+                    assertEquals(lanciBatch > 0 ? "r" : "<assente>", tipoDiRelazione(c, "batch_job_execution"),
                             "tabelle di Spring Batch dopo " + app + " (lanci batch: " + lanciBatch + ")");
                     if (lanciBatch > 0) {
                         assertEquals(List.of(lanciBatch + "|" + lanciBatch), PostgresDiProva.righe(c,
@@ -141,6 +141,13 @@ class AccountMigrazioneTest {
                         + ", lanci batch " + lanciBatch);
             }
         }
+    }
+
+    /** relkind di una relazione dello schema public ('r' tabella, 'v' vista, ...), {@code <assente>} se non c'e'. */
+    static String tipoDiRelazione(Connection c, String nome) throws Exception {
+        List<String> r = PostgresDiProva.righe(c, "select c.relkind from pg_class c join pg_namespace n"
+                + " on n.oid = c.relnamespace where n.nspname = 'public' and c.relname = '" + nome + "'");
+        return r.isEmpty() ? "<assente>" : String.join(",", r);
     }
 
     /** Avvia un'applicazione con il suo application.properties sul database del container. */
