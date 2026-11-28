@@ -255,3 +255,58 @@ Test in `carddemo-parity/src/test/java/io/github/ltoscano/carddemo/parity/` (pi�
 - Il file si legge tutto in memoria (15.000 byte per l'esempio): adatto ai file di CardDemo e degli scenari, non a file di dimensioni arbitrarie.
 - Il confronto con una tabella già piena legge tutta la tabella in ordine di chiave: proporzionato a una tabella dei conti di CardDemo.
 - Il blocco `EXCLUSIVE` protegge solo dai caricatori e dalle scritture concorrenti durante la transazione; un'applicazione che scrive in `account` dopo il caricamento rende la tabella diversa dal file, e il caricatore successivo (per esempio al prossimo `up`) si ferma.
+
+## Contratto del job READACCT
+
+Fissato dall'issue #65 insieme al test di parità (`carddemo-parity`, `ReadacctParitaTest`), prima della traduzione di `CBACT01C` (issue #67). La traduzione offre questa interfaccia e non la cambia.
+
+| Punto | Contratto |
+| --- | --- |
+| Comando | jar eseguibile di `carddemo-batch` (`carddemo-batch-<versione>-exec.jar`), in un processo proprio, con questi argomenti e nessun altro: `--spring.batch.job.name=READACCT OUTFILE=<percorso> ARRYFILE=<percorso> VBRCFILE=<percorso>` (nomi DD di `app/jcl/READACCT.jcl`; i tre argomenti senza `--` sono parametri del job) |
+| Nome del job | `Job.getName()` = `READACCT`; nome del bean e della classe liberi |
+| Database | proprietà standard di Spring dalle variabili d'ambiente `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`; nessun'altra variabile è impostata dal test |
+| Nessun job predefinito | con più di un job ogni avvio indica `spring.batch.job.name`. `smoke.sh` e `AccountMigrazioneTest`, che oggi non lo indicano, li adegua l'issue di traduzione nel suo perimetro; #65 non li tocca |
+| Riesecuzione | due avvii consecutivi con lo stesso comando, sullo stesso database e sugli stessi percorsi riescono entrambi; il secondo sostituisce per intero i file esistenti (equivalente di `PREDEL` + esecuzione). Il chiamante non aggiunge parametri; come ottenerlo con Spring Batch è scelta della traduzione |
+| Lettura | tabella `account` in ordine crescente di `acct_id`, qualunque sia l'ordine fisico di inserimento |
+| `OUTFILE` | record fissi di 107 byte, senza terminatori |
+| `ARRYFILE` | record fissi di 110 byte, senza terminatori |
+| `VBRCFILE` | record variabili con descrittore di record di z/OS (RDW), senza descrittore di blocco: 2 byte di lunghezza del record **compreso il descrittore** (byte più significativo per primo) e 2 byte `00`. Per un conto: `00 10 00 00` + 12 byte, `00 2B 00 00` + 39 byte. Lunghezza ammessa 5-84 (`LRECL=84`). Decisione delegata di #65: formato del sistema di origine, non quello di GnuCOBOL (`00 0C 00 00`, `00 27 00 00`) |
+| Console | standard output: solo le righe dei `DISPLAY` dell'originale, una per `DISPLAY`, nell'ordine dell'originale, spazi finali conservati, ognuna terminata da LF (nessun CR); nessun banner, nessuna riga di log (log su standard error o su file). 2 + 15 × N righe |
+| Codice di uscita | 0 a fine regolare |
+
+### Che cosa confronta il test
+
+Riferimento: soltanto `oracle/golden/readacct/generati/golden/<scenario>/` (#55), scenari `esempio` e `mirato`; lo scenario `osservazione` è rifiutato (`SCENARIO-NON-AMMESSO`). Il comparatore (`ComparatoreReadacct`) non legge `esclusioni.tsv` né `correzioni.tsv`.
+
+- `OUTFILE`, `ARRYFILE`: byte per byte con `<file>.riferimento.txt` (una riga esadecimale per record); si saltano solo i byte `**`, uno per uno. Un test a parte verifica che i byte `**` siano esattamente quelli di `esclusioni.tsv`.
+- `VBRCFILE`: descrittori controllati con la regola sopra, record logici estratti da un lettore proprio, confrontati per numero, ordine, lunghezza e contenuto con `VBRCFILE.riferimento.txt`.
+- Console: le righe di classe a di `console.riferimento.txt` coincidono, nella stessa posizione, con quelle dello standard output; le righe `#OSSERVAZIONE` devono esserci ma il contenuto non si confronta; totale 2 + 15 × N.
+- Record N, N, 2N; codice di uscita 0.
+- Preparazione: PostgreSQL reale e vuoto (Testcontainers), migrazione, conti caricati con `CaricatoreConti` (#60) da `ingresso.rec` dello scenario, contenuto di `account` ricomposto con il codificatore indipendente dei test e confrontato con quell'ingresso prima dell'avvio.
+- Riesecuzione (`mirato`): dopo il primo avvio i tre file sono sostituiti da file più lunghi con contenuto sentinella (`S`); secondo avvio senza ricaricare; tutti i confronti si ripetono.
+- Ordine di lettura (`mirato`): ingresso con i record in ordine inverso, caricato così (il test verifica l'ordine fisico con `ctid`); stessi riferimenti.
+
+### Come si riconosce il job assente
+
+Diagnostica nativa letta dall'applicazione attuale (Spring Boot 4.2.0, comando del contratto): il bean `jobLauncherApplicationRunner` non si crea perché `JobLauncherApplicationRunner.afterPropertiesSet` chiama `Assert.state`, il processo esce con 1 e lo standard output contiene:
+
+```
+org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'jobLauncherApplicationRunner' defined in class path resource [...BatchJobLauncherAutoConfiguration.class]: No job found with name 'READACCT'
+...
+Caused by: java.lang.IllegalStateException: No job found with name 'READACCT'
+	at org.springframework.util.Assert.state(Assert.java:102) ...
+	at org.springframework.boot.batch.autoconfigure.JobLauncherApplicationRunner.afterPropertiesSet(JobLauncherApplicationRunner.java:90) ...
+```
+
+Il test (`AvvioJob.jobAssente`) lo riconosce solo se valgono tutte: codice di uscita 1; in uno stesso flusso (stdout o stderr) una riga che inizia con `org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'jobLauncherApplicationRunner'` e, una volta sola in tutto l'output, la riga esatta `Caused by: java.lang.IllegalStateException: No job found with name 'READACCT'` seguita subito dai due frame `Assert.state(` e `JobLauncherApplicationRunner.afterPropertiesSet(`; nessuna traccia di avvio di un job o di un passo (`] launched with the following parameters`, `Executing step: [`, righe che Spring Batch scrive davvero: `AvvioJobTest` lo verifica sull'uscita reale di un job di prova); e, **indipendentemente dai log dell'applicazione sotto prova**, il repository JDBC di Spring Batch nel database del job esiste e non registra alcun job: `select (select count(*) from batch_job_instance), (select count(*) from batch_job_execution)` dà `0|0` (`AvvioJob.nessunJobRegistrato`). L'applicazione attuale usa il repository JDBC (`spring-boot-starter-batch-jdbc`, `spring.batch.jdbc.initialize-schema=always`) e crea le tabelle prima che il selettore fallisca: nel caso del job assente sono presenti e vuote (verificato da `AvvioJobTest.nessunJobReadacctRiconosciutoComeMotivoDichiarato` e dai quattro casi di parità con il jar vero); un job avviato vi registra un'istanza e un'esecuzione prima del primo passo. Database irraggiungibile o tabelle assenti: non è il job assente. Le righe di log da sole non bastano: un'applicazione con `logging.level.root=WARN` non le scrive. Ogni altro esito non è il motivo dichiarato: un errore con lo stesso testo prima della selezione (frame diversi), un job avviato che fallisce con lo stesso testo stampando la stessa traccia (traccia di avvio presente) e lo stesso job con i log a WARN fissati nell'applicazione (traccia di avvio assente, `1|1` nel repository) sono fallimenti ordinari (`AvvioJobTest`, tre controprove obbligatorie). Limite dichiarato: un'applicazione che stampasse la traccia nativa senza avviare alcun job, o che avviasse il job senza il repository JDBC nel database del test, sarebbe riconosciuta come job assente; casi di questo genere sono contraffazioni o configurazioni diverse da quella attuale, e la traduzione (#67) toglie comunque la marcatura.
+
+### Diagnosi del comparatore
+
+Ogni diagnosi nomina file, record e posizione da 1 (`BYTE-DIVERSO: OUTFILE record 3 posizione 20: atteso 32, trovato 33`). Le diagnosi strutturali indicano il primo record mancante o in eccesso e il suo offset in byte dall'inizio del file, contato da 0 (`NUMERO-DI-RECORD: OUTFILE ha 49 record, attesi 50: primo record mancante 50 (fine del file all'offset 5243)`; `LUNGHEZZA: OUTFILE di 5280 byte: record 50 troncato a 37 byte su 107 (fine del file all'offset 5280)`, dopo aver confrontato i byte presenti del record troncato); per la console la riga e la colonna del primo carattere diverso (`CONSOLE: riga 12 colonna 35: ...`) o la prima riga mancante o in eccesso con il suo testo.
+
+### Che cosa il test non garantisce
+
+- I byte mascherati (`**`: byte 77-78 di `OUTFILE`) non sono confrontati: qualunque valore è accettato (controprova `controprovaByteMascheratoAccettato`).
+- Le righe di console `#OSSERVAZIONE` non sono confrontate nel contenuto (controprova `controprovaRigaDiOsservazioneConContenutoDiversoAccettata`).
+- Lo standard error non è confrontato.
+- Il comportamento su ingressi diversi dai due scenari, su tabella vuota o con errori di I/O non è coperto.

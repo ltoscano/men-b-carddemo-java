@@ -1,0 +1,9 @@
+# Casi di test marcati @FallimentoAtteso (issue #65): unica fonte. Un caso marcato senza riga fa fallire il caso
+# (FallimentoAttesoEstensione); una riga senza la ricevuta della corsa corrente fa fallire ./verify.sh.
+# Chi rende vero un caso toglie insieme la marcatura e la sua riga (procedura in docs/sviluppo.md).
+# Colonne (separate da tabulazione): classe qualificata, metodo, issue che togliera' la marcatura, codice del motivo.
+classe	metodo	issue	motivo
+io.github.ltoscano.carddemo.parity.ReadacctParitaTest	esempio	67	job-readacct-assente
+io.github.ltoscano.carddemo.parity.ReadacctParitaTest	mirato	67	job-readacct-assente
+io.github.ltoscano.carddemo.parity.ReadacctParitaTest	miratoRiesecuzione	67	job-readacct-assente
+io.github.ltoscano.carddemo.parity.ReadacctParitaTest	miratoOrdineDiLettura	67	job-readacct-assente
