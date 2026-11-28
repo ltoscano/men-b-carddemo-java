@@ -19,8 +19,8 @@ od -An -v -tx1 "$base" > "$lav/base.hex" || die "lettura della base fallita (od)
 # Chiavi della base: una riga "<numero del record> <chiave>" (la chiave sono i primi 11 byte, come testo).
 awk -v L="$L" '
   BEGIN { for (i = 0; i < 256; i++) h[sprintf("%02x", i)] = i }
-  { for (i = 1; i <= NF; i++) { n++; p = (n - 1) % L; if (p < 11) k = k sprintf("%c", h[$i]); if (p == L - 1) { print int(n / L), k; k = "" } } }
-  END { if (n % L != 0) { print "dimensione della base non multipla di " L > "/dev/stderr"; exit 3 } }' "$lav/base.hex" > "$lav/chiavi" \
+  { for (i = 1; i <= NF; i++) { if (!($i in h)) { print "token non esadecimale (od): " $i > "/dev/stderr"; rotto = 1 }; n++; p = (n - 1) % L; if (p < 11) k = k sprintf("%c", h[$i]); if (p == L - 1) { print int(n / L), k; k = "" } } }
+  END { if (rotto) exit 3; if (n % L != 0) { print "dimensione della base non multipla di " L > "/dev/stderr"; exit 3 } }' "$lav/base.hex" > "$lav/chiavi" \
   || die "chiavi della base non lette (awk)"
 # Righe della tabella -> "<scostamento da 0> <lunghezza> <byte in ottale per printf>".
 awk -F '\t' -v L="$L" '

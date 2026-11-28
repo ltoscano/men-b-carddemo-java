@@ -58,6 +58,13 @@ raccogli() { # raccogli SCENARIO DEST MARCATURA
 raccogli esempio "$W/generati/golden/esempio" "RIFERIMENTO DI PARITA' - scenario esempio: i 50 record di AWS.M2.CARDDEMO.ACCTDATA.PS (issue #55). Riferimento: *.riferimento.txt; i file fisici sono come li scrive l'oracle."
 raccogli mirato "$W/generati/golden/mirato" "RIFERIMENTO DI PARITA' - scenario mirato: esempio con le sostituzioni di sostituzioni-mirato.tsv (issue #55). Riferimento: *.riferimento.txt; i file fisici sono come li scrive l'oracle."
 raccogli osservazione "$W/generati/osservazioni/osservazione" "OSSERVAZIONE - scenario osservazione: NON e' un golden ne' un riferimento di parita' (issue #55). Registra cio' che fa GnuCOBOL con un debito di ciclo diverso da zero (OUT-ACCT-CURR-CYC-DEBIT non valorizzato), uno zero negativo e un segno alternativo."
+# Si verifica cio' che si pubblica (giro 1 della PR #64): gli ingressi copiati nei golden si riverificano dopo la copia.
+r=0; cmp "$W/generati/golden/esempio/ingresso.rec" "$W/in/esempio.rec" > "$W/cmp.txt" 2>&1 || r=$?
+case "$r" in 0) ;; 1) cat "$W/cmp.txt" >&2; echo "genera.sh: ingresso pubblicato dello scenario esempio diverso dall'ingresso" >&2; exit 4 ;;
+  *) cat "$W/cmp.txt" >&2; die "confronto dell'ingresso pubblicato non eseguito (cmp, codice $r)" ;; esac
+rm -f "$W/cmp.txt" || die "temporaneo non rimosso"
+passo "differenze mirato, ingressi pubblicati" sh "$G/differenze.sh" "$W/generati/golden/esempio/ingresso.rec" "$T/sostituzioni-mirato.tsv" "$W/generati/golden/mirato/ingresso.rec"
+passo "differenze osservazione, ingressi pubblicati" sh "$G/differenze.sh" "$W/generati/golden/mirato/ingresso.rec" "$T/sostituzioni-osservazione.tsv" "$W/generati/osservazioni/osservazione/ingresso.rec"
 for s in esempio mirato; do
   passo "riferimenti $s" sh "$G/maschera.sh" "$s" "$W/generati/golden/$s" "$T/esclusioni.tsv" "$T/correzioni.tsv" "$T/console.tsv"
 done
@@ -80,4 +87,5 @@ passo "controllo 5" sh "$G/separazione.sh" "$W/generati"
 
 echo "== 6. documento"
 passo "documento" sh "$G/documento.sh" "$W/generati" "$T" "$W/golden-readacct.md"
+passo "impronte del documento" sh "$G/impronte.sh" "$W/golden-readacct.md" "$W/generati"
 echo "genera.sh: golden generati e verificati in $W/generati"

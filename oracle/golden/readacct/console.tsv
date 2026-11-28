@@ -31,7 +31,7 @@ inizio	141	START OF EXECUTION OF PROGRAM CBACT01C	a	solo letterale
 10	210	ACCT-CURR-CYC-DEBIT     :	b	PIC S9(10)V99, come sopra
 11	211	ACCT-GROUP-ID           :	a	letterale e PIC X(10)
 12	212	-------------------------------------------------	a	solo letterale
-13	283	VBRC-REC1:	a	letterale e gruppo di 12 byte (PIC 9(11) e PIC X(01)): nessun campo con segno, entro il record del dispositivo (decisione dell'Approvatore, 28 novembre 2026)
+13	283	VBRC-REC1:	a	letterale e DISPLAY di un gruppo di 12 byte (VB1-ACCT-ID PIC 9(11) e VB1-ACCT-ACTIVE-STATUS PIC X(01), righe 123-125): nessun campo con segno, quindi nessuna differenza di DISPSIGN; 22 caratteri in tutto, sotto il record predefinito del dispositivo (IBM, DISPLAY statement: 120 caratteri), quindi nessuna suddivisione. I due motivi per cui la specifica fa dei DISPLAY di gruppo un osservazione (lunghezza oltre il record del dispositivo, numerici con segno) qui non valgono (decisione dell Approvatore, 28 novembre 2026; rilievo 5 del giro 1 della PR #64 respinto)
 14	284	VBRC-REC2:	b	gruppo che contiene due PIC S9(10)V99: i loro byte di segno arrivano alla console cosi' come sono in memoria (la specifica la classifica osservazione)
 15	151	-	c	DISPLAY ACCOUNT-RECORD, gruppo di 300 byte: su z/OS un operando piu' lungo del record del dispositivo continua nel record successivo (IBM, DISPLAY statement), GnuCOBOL scrive una riga sola
 fine	158	END OF EXECUTION OF PROGRAM CBACT01C	a	solo letterale; ultima riga della corsa regolare

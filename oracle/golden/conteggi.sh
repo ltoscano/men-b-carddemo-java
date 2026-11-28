@@ -32,11 +32,12 @@ awk -v N="$n" -v FD="$lav/dimensioni" -v FI="$lav/i.hex" -v FO="$lav/o.hex" -v F
   function chiave(arr, base,   i, s) { s = ""; for (i = 1; i <= 11; i++) s = s sprintf("%c", index("0123456789abcdef", substr(arr[base + i], 1, 1)) * 16 + index("0123456789abcdef", substr(arr[base + i], 2, 1)) - 17); return s }
   function chiaveh(h,   i, s) { s = ""; for (i = 1; i <= 21; i += 2) s = s sprintf("%c", index("0123456789abcdef", substr(h, i, 1)) * 16 + index("0123456789abcdef", substr(h, i + 1, 1)) - 17); return s }
   FILENAME == FD { DIM[$1] = $2 + 0; next }
-  FILENAME == FI { for (i = 1; i <= NF; i++) I[++ni] = $i; next }
-  FILENAME == FO { for (i = 1; i <= NF; i++) O[++no] = $i; next }
-  FILENAME == FA { for (i = 1; i <= NF; i++) A[++na] = $i; next }
-  FILENAME == FL { nl++; if (NF != 3 || $1 + 0 != nl || $2 !~ /^[0-9]+$/ || length($3) != 2 * $2) { print "record logico " nl ": riga malformata"; err++ }; LN[nl] = $2 + 0; LH[nl] = $3; somma += 4 + $2; next }
+  FILENAME == FI { for (i = 1; i <= NF; i++) { if ($i !~ /^[0-9a-f][0-9a-f]$/) { print "token non esadecimale \"" $i "\" (od)"; rotto = 1 }; I[++ni] = $i }; next }
+  FILENAME == FO { for (i = 1; i <= NF; i++) { if ($i !~ /^[0-9a-f][0-9a-f]$/) { print "token non esadecimale \"" $i "\" (od)"; rotto = 1 }; O[++no] = $i }; next }
+  FILENAME == FA { for (i = 1; i <= NF; i++) { if ($i !~ /^[0-9a-f][0-9a-f]$/) { print "token non esadecimale \"" $i "\" (od)"; rotto = 1 }; A[++na] = $i }; next }
+  FILENAME == FL { nl++; if (NF != 3 || $1 + 0 != nl || $2 !~ /^[0-9]+$/ || length($3) != 2 * $2 || $3 !~ /^([0-9a-f][0-9a-f])+$/) { print "record logico " nl ": riga malformata"; err++ }; LN[nl] = $2 + 0; LH[nl] = $3; somma += 4 + $2; next }
   END {
+    if (rotto) exit 4
     if (DIM["ingresso"] != 300 * N) { print "ingresso di " DIM["ingresso"] " byte: attesi " N " record di 300 (" 300 * N " byte)"; err++ }
     if (DIM["OUTFILE"] != 107 * N) { print "OUTFILE di " DIM["OUTFILE"] " byte: attesi " N " record di 107 (" 107 * N ")"; err++ }
     if (DIM["ARRYFILE"] != 110 * N) { print "ARRYFILE di " DIM["ARRYFILE"] " byte: attesi " N " record di 110 (" 110 * N ")"; err++ }

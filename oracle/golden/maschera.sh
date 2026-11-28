@@ -60,11 +60,12 @@ awk -F '\t' -v S="$scen" -v FE="$esc" -v FC="$cor" -v FK="$con" -v FO="$lav/o.he
   FILENAME == FK { if ($0 ~ /^#/ || $0 ~ /^posizione\t/ || $0 == "") next
     if (NF != 5 || ($4 != "a" && $4 != "b" && $4 != "c")) { print "console, riga " FNR ": formato non valido"; bad = 1; next }
     KP[$1] = $3; KC[$1] = $4; KR[$1] = $2; nk++; next }
-  FILENAME == FO { m = split($0, a, " "); for (i = 1; i <= m; i++) O[++no] = a[i]; next }
-  FILENAME == FA { m = split($0, a, " "); for (i = 1; i <= m; i++) A[++na] = a[i]; next }
-  FILENAME == FV { nv++; if (split($0, a, " ") != 3 || a[1] + 0 != nv || length(a[3]) != 2 * a[2]) { print "record logici, riga " nv ": formato non valido"; bad = 1 }; VN[nv] = a[2]; VH[nv] = a[3]; next }
+  FILENAME == FO { m = split($0, a, " "); for (i = 1; i <= m; i++) { if (a[i] !~ /^[0-9a-f][0-9a-f]$/) { print "token non esadecimale \"" a[i] "\" (od)"; rotto = 1 }; O[++no] = a[i] }; next }
+  FILENAME == FA { m = split($0, a, " "); for (i = 1; i <= m; i++) { if (a[i] !~ /^[0-9a-f][0-9a-f]$/) { print "token non esadecimale \"" a[i] "\" (od)"; rotto = 1 }; A[++na] = a[i] }; next }
+  FILENAME == FV { nv++; if (split($0, a, " ") != 3 || a[1] + 0 != nv || length(a[3]) != 2 * a[2] || a[3] !~ /^([0-9a-f][0-9a-f])+$/) { print "record logici, riga " nv ": formato non valido"; bad = 1 }; VN[nv] = a[2]; VH[nv] = a[3]; next }
   FILENAME == FR { if ($0 == "== stdout") { inso = 1; next } if ($0 == "== stderr") { inso = 0; next } if (inso) SO[++ns] = $0; next }
   END {
+    if (rotto) exit 4
     if (bad) exit 4
     if (nk != 17) { print "console.tsv: " nk " posizioni, attese 17 (inizio, 1-15, fine)"; exit 4 }
     if (no == 0 || no % 107 || na == 0 || na % 110) { print "OUTFILE (" no " byte) o ARRYFILE (" na " byte) non multipli positivi del record"; exit 4 }

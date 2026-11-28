@@ -220,7 +220,7 @@ cat <<'FINE' || die "testo non scritto (cat)"
 
 Ramo d'errore del programma (prove negative di `oracle/golden/check.sh`):
 
-- **Errore di lettura** (stato diverso da 00 e 10): **non provocabile** nel container senza modificare il programma. Prove tentate: pagine del file Berkeley DB alterate (sei varianti); record di 299 byte (letti con stato 00); record di 301 byte (errore all'apertura, stato 39, ramo di apertura).
+- **Errore di lettura** (stato diverso da 00 e 10): **raggiungibile** senza modificare il programma (rilievo 2 del giro 1 della PR #64: la prima versione di questo documento lo dichiarava, a torto, non provocabile). In una copia del file indicizzato si cambia da `80` a `00` il primo byte del quarto elemento del vettore degli scostamenti della pagina 2 (la prima foglia del B-tree di Berkeley DB; scostamento 2 x dimensione di pagina + 32, ricavato dal file, con il formato verificato prima di alterarlo). `CBACT01C` stampa `ERROR READING ACCOUNT FILE`, `FILE STATUS IS: NNNN0043` (stato osservato nell'oracle), `ABENDING PROGRAM`, chiama `CEE3ABD` con `ABCODE=+0000000999 TIMING=+0000000000` (righe 192-195 e 406-410) e termina con codice 99. Attraverso il passo (la rilettura con `IDXLEGGI` usa il file sano, `CBACT01C` quello alterato) `run.sh` fallisce, nessun golden e' pubblicato e il risultato precedente e' rimosso. Altre prove: altre alterazioni delle pagine danno la fine file silenziosa (sotto); record di 299 byte letti con stato 00; record di 301 byte: errore all'apertura (stato 39).
 - **Limite dell'oracle**: un file indicizzato corrotto (pagina Berkeley DB alterata) non produce un errore ma una **fine file silenziosa**: il programma esce con 0 e le uscite sono troncate, con solo righe `BDB0058`/`PANIC` su stderr. Il passo lo attenua rileggendo il file con `IDXLEGGI` prima dell'esecuzione (la lettura deve coincidere con l'ingresso) e pretendendo il numero di record atteso (controllo 2).
 - **Errore di scrittura**: raggiungibile, con le uscite su un file system pieno (tmpfs di 8 KiB). Diagnostica `ACCOUNT FILE WRITE STATUS IS:` e `FILE STATUS IS: NNNN00..` (34 osservato con 8 KiB, 30 con 12 KiB), `ABENDING PROGRAM`, `CEE3ABD` con `ABCODE=+0000000999 TIMING=+0000000000` (righe 406-410), codice dell'oracle 99, nessun golden pubblicato. Lo stub lascia i file parziali, mentre il JCL li cancellerebbe (`DISP=(NEW,CATLG,DELETE)`, `READACCT.jcl:37-47`): osservazione distinta.
 
@@ -233,8 +233,9 @@ Ramo d'errore del programma (prove negative di `oracle/golden/check.sh`):
 | 1 | golden rigenerati da zero coincidenti byte per byte con i versionati (due corse) | `check.sh` |
 | 2 | N record in OUTFILE e ARRYFILE, 2N record logici, ordine e chiavi dell'ingresso, dimensione del fisico | `conteggi.sh` |
 | 3 | attesi scritti a mano (`attesi-a-mano.tsv`, 15 conti) uguali ai golden; posizioni ND = escluse | `attesi.sh` |
-| 4 | verificatore indipendente su tutti i record degli scenari esempio e mirato, sul riferimento corretto | `verificatore.sh` |
-| 4b | fisico e riferimento differiscono solo nelle posizioni delle due tabelle | `coerenza.sh` |
+| 4 | verificatore indipendente su tutti i record degli scenari esempio e mirato: legge e controlla ogni file pubblicato come riferimento (OUTFILE, ARRYFILE, VBRCFILE e console), il fisico, i record logici, il rapporto e l ambiente; valida ogni token | `verificatore.sh` |
+| 4b | fisico (VBRCFILE letto da se) e riferimento differiscono solo nelle posizioni delle due tabelle | `coerenza.sh` |
+| - | ogni file dei golden elencato nel documento con dimensione e SHA-256 reali | `impronte.sh` |
 | 5 | scenario osservazione fuori dai golden, marcato | `separazione.sh` |
 | 6 | riesecuzione con file preesistenti (osservazione) | `riesecuzione.sh` |
 | - | sostituzioni e proprieta' degli scenari derivati | `differenze.sh`, `proprieta.sh` |

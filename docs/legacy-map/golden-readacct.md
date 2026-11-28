@@ -182,7 +182,7 @@ Assunzione dichiarata sul legacy: compilazione IBM con `DISPSIGN(COMPAT)`, il va
 | 10 | 210 | ACCT-CURR-CYC-DEBIT     : | b | PIC S9(10)V99, come sopra |
 | 11 | 211 | ACCT-GROUP-ID           : | a | letterale e PIC X(10) |
 | 12 | 212 | ------------------------------------------------- | a | solo letterale |
-| 13 | 283 | VBRC-REC1: | a | letterale e gruppo di 12 byte (PIC 9(11) e PIC X(01)): nessun campo con segno, entro il record del dispositivo (decisione dell'Approvatore, 28 novembre 2026) |
+| 13 | 283 | VBRC-REC1: | a | letterale e DISPLAY di un gruppo di 12 byte (VB1-ACCT-ID PIC 9(11) e VB1-ACCT-ACTIVE-STATUS PIC X(01), righe 123-125): nessun campo con segno, quindi nessuna differenza di DISPSIGN; 22 caratteri in tutto, sotto il record predefinito del dispositivo (IBM, DISPLAY statement: 120 caratteri), quindi nessuna suddivisione. I due motivi per cui la specifica fa dei DISPLAY di gruppo un osservazione (lunghezza oltre il record del dispositivo, numerici con segno) qui non valgono (decisione dell Approvatore, 28 novembre 2026; rilievo 5 del giro 1 della PR #64 respinto) |
 | 14 | 284 | VBRC-REC2: | b | gruppo che contiene due PIC S9(10)V99: i loro byte di segno arrivano alla console cosi' come sono in memoria (la specifica la classifica osservazione) |
 | 15 | 151 | - | c | DISPLAY ACCOUNT-RECORD, gruppo di 300 byte: su z/OS un operando piu' lungo del record del dispositivo continua nel record successivo (IBM, DISPLAY statement), GnuCOBOL scrive una riga sola |
 | fine | 158 | END OF EXECUTION OF PROGRAM CBACT01C | a | solo letterale; ultima riga della corsa regolare |
@@ -212,7 +212,7 @@ Riesecuzione (controllo 6): seconda esecuzione con i tre file d'uscita gia' pres
 
 Ramo d'errore del programma (prove negative di `oracle/golden/check.sh`):
 
-- **Errore di lettura** (stato diverso da 00 e 10): **non provocabile** nel container senza modificare il programma. Prove tentate: pagine del file Berkeley DB alterate (sei varianti); record di 299 byte (letti con stato 00); record di 301 byte (errore all'apertura, stato 39, ramo di apertura).
+- **Errore di lettura** (stato diverso da 00 e 10): **raggiungibile** senza modificare il programma (rilievo 2 del giro 1 della PR #64: la prima versione di questo documento lo dichiarava, a torto, non provocabile). In una copia del file indicizzato si cambia da `80` a `00` il primo byte del quarto elemento del vettore degli scostamenti della pagina 2 (la prima foglia del B-tree di Berkeley DB; scostamento 2 x dimensione di pagina + 32, ricavato dal file, con il formato verificato prima di alterarlo). `CBACT01C` stampa `ERROR READING ACCOUNT FILE`, `FILE STATUS IS: NNNN0043` (stato osservato nell'oracle), `ABENDING PROGRAM`, chiama `CEE3ABD` con `ABCODE=+0000000999 TIMING=+0000000000` (righe 192-195 e 406-410) e termina con codice 99. Attraverso il passo (la rilettura con `IDXLEGGI` usa il file sano, `CBACT01C` quello alterato) `run.sh` fallisce, nessun golden e' pubblicato e il risultato precedente e' rimosso. Altre prove: altre alterazioni delle pagine danno la fine file silenziosa (sotto); record di 299 byte letti con stato 00; record di 301 byte: errore all'apertura (stato 39).
 - **Limite dell'oracle**: un file indicizzato corrotto (pagina Berkeley DB alterata) non produce un errore ma una **fine file silenziosa**: il programma esce con 0 e le uscite sono troncate, con solo righe `BDB0058`/`PANIC` su stderr. Il passo lo attenua rileggendo il file con `IDXLEGGI` prima dell'esecuzione (la lettura deve coincidere con l'ingresso) e pretendendo il numero di record atteso (controllo 2).
 - **Errore di scrittura**: raggiungibile, con le uscite su un file system pieno (tmpfs di 8 KiB). Diagnostica `ACCOUNT FILE WRITE STATUS IS:` e `FILE STATUS IS: NNNN00..` (34 osservato con 8 KiB, 30 con 12 KiB), `ABENDING PROGRAM`, `CEE3ABD` con `ABCODE=+0000000999 TIMING=+0000000000` (righe 406-410), codice dell'oracle 99, nessun golden pubblicato. Lo stub lascia i file parziali, mentre il JCL li cancellerebbe (`DISP=(NEW,CATLG,DELETE)`, `READACCT.jcl:37-47`): osservazione distinta.
 
@@ -225,8 +225,9 @@ Ramo d'errore del programma (prove negative di `oracle/golden/check.sh`):
 | 1 | golden rigenerati da zero coincidenti byte per byte con i versionati (due corse) | `check.sh` |
 | 2 | N record in OUTFILE e ARRYFILE, 2N record logici, ordine e chiavi dell'ingresso, dimensione del fisico | `conteggi.sh` |
 | 3 | attesi scritti a mano (`attesi-a-mano.tsv`, 15 conti) uguali ai golden; posizioni ND = escluse | `attesi.sh` |
-| 4 | verificatore indipendente su tutti i record degli scenari esempio e mirato, sul riferimento corretto | `verificatore.sh` |
-| 4b | fisico e riferimento differiscono solo nelle posizioni delle due tabelle | `coerenza.sh` |
+| 4 | verificatore indipendente su tutti i record degli scenari esempio e mirato: legge e controlla ogni file pubblicato come riferimento (OUTFILE, ARRYFILE, VBRCFILE e console), il fisico, i record logici, il rapporto e l ambiente; valida ogni token | `verificatore.sh` |
+| 4b | fisico (VBRCFILE letto da se) e riferimento differiscono solo nelle posizioni delle due tabelle | `coerenza.sh` |
+| - | ogni file dei golden elencato nel documento con dimensione e SHA-256 reali | `impronte.sh` |
 | 5 | scenario osservazione fuori dai golden, marcato | `separazione.sh` |
 | 6 | riesecuzione con file preesistenti (osservazione) | `riesecuzione.sh` |
 | - | sostituzioni e proprieta' degli scenari derivati | `differenze.sh`, `proprieta.sh` |

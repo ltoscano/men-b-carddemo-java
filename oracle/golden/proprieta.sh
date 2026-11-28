@@ -48,9 +48,10 @@ awk -F '\t' -v L="$L" -v S="$scen" -v FT="$tab" -v FL="$lav/l.hex" -v FE="$lav/e
     if (NF != 8) { print "tabella, riga " FNR ": " NF " colonne, attese 8"; bad = 1; next }
     if ($1 != S) next
     nr++; K[nr] = $2; C[nr] = $3; P[nr] = $4 + 0; N[nr] = $5 + 0; Q[nr] = $6; A[nr] = $7; M[nr] = $8; next }
-  FILENAME == FL { m = split($0, a, " "); for (i = 1; i <= m; i++) LB[++nl] = a[i]; next }
-  FILENAME == FE { m = split($0, a, " "); for (i = 1; i <= m; i++) EB[++ne] = a[i]; next }
+  FILENAME == FL { m = split($0, a, " "); for (i = 1; i <= m; i++) { if (a[i] !~ /^[0-9a-f][0-9a-f]$/) { print "token non esadecimale \"" a[i] "\" (od)"; rotto = 1 }; LB[++nl] = a[i] }; next }
+  FILENAME == FE { m = split($0, a, " "); for (i = 1; i <= m; i++) { if (a[i] !~ /^[0-9a-f][0-9a-f]$/) { print "token non esadecimale \"" a[i] "\" (od)"; rotto = 1 }; EB[++ne] = a[i] }; next }
   END {
+    if (rotto) exit 4
     if (bad) exit 4
     if (nr < 1) { print "nessuna proprieta per lo scenario " S; exit 4 }
     if (nl == 0 || nl % L != 0) { print "file letto di " nl " byte: non un multiplo positivo di " L; exit 4 }

@@ -44,9 +44,10 @@ awk -F '\t' -v L="$L" -v FT="$tab" -v FB="$lav/b.hex" -v FD="$lav/d.hex" '
   FILENAME == FT { if ($0 ~ /^#/ || $0 ~ /^chiave\t/ || $0 == "") next
     if (NF != 9) { print "tabella, riga " FNR ": " NF " colonne, attese 9"; bad = 1; next }
     nr++; K[nr] = $1; C[nr] = $2; P[nr] = $3 + 0; N[nr] = $4 + 0; X[nr] = $5; T[nr] = $6; V[nr] = $7; Q[nr] = $8; next }
-  FILENAME == FB { m = split($0, a, " "); for (i = 1; i <= m; i++) B[++nb] = a[i]; next }
-  FILENAME == FD { m = split($0, a, " "); for (i = 1; i <= m; i++) D[++nd] = a[i]; next }
+  FILENAME == FB { m = split($0, a, " "); for (i = 1; i <= m; i++) { if (a[i] !~ /^[0-9a-f][0-9a-f]$/) { print "token non esadecimale \"" a[i] "\" (od)"; rotto = 1 }; B[++nb] = a[i] }; next }
+  FILENAME == FD { m = split($0, a, " "); for (i = 1; i <= m; i++) { if (a[i] !~ /^[0-9a-f][0-9a-f]$/) { print "token non esadecimale \"" a[i] "\" (od)"; rotto = 1 }; D[++nd] = a[i] }; next }
   END {
+    if (rotto) exit 4
     if (bad) exit 4
     if (nr < 1) { print "tabella senza righe"; exit 4 }
     if (nb != nd) { print "dimensioni diverse: base " nb " byte, derivato " nd; exit 4 }
