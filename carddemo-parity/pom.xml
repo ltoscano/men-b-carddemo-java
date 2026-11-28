@@ -57,6 +57,18 @@
       <artifactId>snakeyaml</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- Test della tabella dei conti (issue #59): i test applicano la migrazione con l'API di
+         Flyway. Versioni gestite da Spring Boot 4.2.0 (Flyway 12.11.0). -->
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -90,6 +102,9 @@
             <!-- compose.yaml della radice del repository (cartella del POM padre), non della
                  cartella del modulo: il test ne legge l'immagine del servizio db. -->
             <menb.compose.file>${project.parent.basedir}/compose.yaml</menb.compose.file>
+            <!-- Contratto dati del record dei conti (#3), letto dal repository dal test di
+                 corrispondenza tra tabella e contratto (issue #59), non copiato. -->
+            <menb.contratto.account>${project.parent.basedir}/docs/legacy-map/data-contract/contratti/CVACT01Y.ACCOUNT-RECORD.tsv</menb.contratto.account>
           </systemPropertyVariables>
         </configuration>
       </plugin>
