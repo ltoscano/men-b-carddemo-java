@@ -247,14 +247,14 @@ Questa sezione prevale sulle precedenti dove differiscono. In particolare la con
 | 1. Dati di esempio decodificati e verificati | #5 | chiusa (PR #56) |
 | 2. File dei conti caricato nell'oracle | #53 (ristretta al solo file dei conti) | chiusa (PR #58) |
 | 3. Output di riferimento di `CBACT01C` | #55 (divisa da #9) | in corso |
-| 4a. Tabella dei conti in PostgreSQL | #59 | in revisione (PR #61) |
-| 4b. Caricamento dei conti in PostgreSQL | #60 | bloccata da #59 |
+| 4a. Tabella dei conti in PostgreSQL | #59 | chiusa (PR #61) |
+| 4b. Caricamento dei conti in PostgreSQL | #60 | in corso |
 | 5. Test di parità di `CBACT01C` contro il golden, scritto prima della traduzione e rosso finché il Java non esiste | Wave 2: da aprire | — |
 | 6. `CBACT01C` tradotto: il test del passo 5 passa, senza che l'Esecutore lo modifichi | Wave 2, pilota batch: da aprire | — |
 
 I passi 5 e 6 applicano la catena del metodo (specifica → test → issue → implementazione agentica): due issue, due Esecutori diversi.
 
-In parallelo, senza dipendenze dal percorso: codifica dei campi in Java (#54, chiusa con la PR #57), routine `MVSWAIT` (#36, chiusa con la PR #52). Stato aggiornato il 28 novembre 2026, 04:30 UTC.
+In parallelo, senza dipendenze dal percorso: codifica dei campi in Java (#54, chiusa con la PR #57), routine `MVSWAIT` (#36, chiusa con la PR #52). Stato aggiornato il 28 novembre 2026, 05:10 UTC.
 
 ### Percorso al pilota online (`COSGN00C`, accesso)
 
