@@ -543,3 +543,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T08:37:23Z,stato,risposta-consegnata,fable,orologio,ricevuto: pilota batch fino al merge della traduzione; poi fermo
 2026-11-28T09:04:56Z,pr-69,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0
 2026-11-28T09:05:28Z,pr-69,correzione-inizio,opus,orologio,giro di correzione dopo la validazione 1
+2026-11-28T09:31:46Z,pr-69,correzione-fine,opus,orologio,SHA 9078e2b
+2026-11-28T09:32:10Z,pr-69,codex-inizio,codex,orologio,validazione 2 di 2 ristretta
