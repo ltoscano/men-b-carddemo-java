@@ -26,9 +26,11 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  *
  * <ul>
  *   <li>Controllo 1: forma della tabella letta dal catalogo e confrontata con le attese scritte
- *       a mano qui sotto (colonne, vincoli, valori predefiniti, indici, oggetti dello schema).</li>
- *   <li>Controllo 3: limiti delle colonne numeriche e comportamento delle colonne {@code CHAR(n)},
- *       sempre con inserimento parametrizzato e senza cast.</li>
+ *       a mano qui sotto (colonne con collazione, vincoli, valori predefiniti, indici, oggetti dello
+ *       schema).</li>
+ *   <li>Controllo 3: limiti delle colonne numeriche e comportamento delle colonne di testo
+ *       ({@code TEXT COLLATE "C"} con lunghezza esatta n), sempre con inserimento parametrizzato
+ *       e senza cast.</li>
  *   <li>Controllo 4: ordinamento numerico della chiave.</li>
  * </ul>
  *
@@ -39,45 +41,51 @@ class AccountSchemaTest {
 
     /** Codici SQLSTATE di PostgreSQL usati nei rifiuti attesi. */
     static final String VALORE_FUORI_INTERVALLO = "22003";
-    static final String TESTO_TROPPO_LUNGO = "22001";
     static final String VIOLAZIONE_CHECK = "23514";
     static final String CHIAVE_DUPLICATA = "23505";
 
     /**
      * Colonne attese, scritte a mano dalla specifica di #59: posizione | nome | tipo | lunghezza
-     * massima | precisione | scala | annullabile | valore predefinito.
+     * massima | precisione | scala | collazione | annullabile | valore predefinito. Le colonne di
+     * testo sono {@code text} senza lunghezza nel tipo: la lunghezza sta nel vincolo.
      */
     static final List<String> COLONNE_ATTESE = List.of(
-            "1|acct_id|numeric|<null>|11|0|NO|<null>",
-            "2|acct_active_status|character|1|<null>|<null>|NO|<null>",
-            "3|acct_curr_bal|numeric|<null>|12|2|NO|<null>",
-            "4|acct_credit_limit|numeric|<null>|12|2|NO|<null>",
-            "5|acct_cash_credit_limit|numeric|<null>|12|2|NO|<null>",
-            "6|acct_open_date|character|10|<null>|<null>|NO|<null>",
-            "7|acct_expiraion_date|character|10|<null>|<null>|NO|<null>",
-            "8|acct_reissue_date|character|10|<null>|<null>|NO|<null>",
-            "9|acct_curr_cyc_credit|numeric|<null>|12|2|NO|<null>",
-            "10|acct_curr_cyc_debit|numeric|<null>|12|2|NO|<null>",
-            "11|acct_addr_zip|character|10|<null>|<null>|NO|<null>",
-            "12|acct_group_id|character|10|<null>|<null>|NO|<null>");
+            "1|acct_id|numeric|<null>|11|0|<null>|NO|<null>",
+            "2|acct_active_status|text|<null>|<null>|<null>|C|NO|<null>",
+            "3|acct_curr_bal|numeric|<null>|12|2|<null>|NO|<null>",
+            "4|acct_credit_limit|numeric|<null>|12|2|<null>|NO|<null>",
+            "5|acct_cash_credit_limit|numeric|<null>|12|2|<null>|NO|<null>",
+            "6|acct_open_date|text|<null>|<null>|<null>|C|NO|<null>",
+            "7|acct_expiraion_date|text|<null>|<null>|<null>|C|NO|<null>",
+            "8|acct_reissue_date|text|<null>|<null>|<null>|C|NO|<null>",
+            "9|acct_curr_cyc_credit|numeric|<null>|12|2|<null>|NO|<null>",
+            "10|acct_curr_cyc_debit|numeric|<null>|12|2|<null>|NO|<null>",
+            "11|acct_addr_zip|text|<null>|<null>|<null>|C|NO|<null>",
+            "12|acct_group_id|text|<null>|<null>|<null>|C|NO|<null>");
 
     /**
      * Tutti i vincoli attesi (nome | tipo | definizione), in ordine di nome. Da PostgreSQL 18 i
      * {@code NOT NULL} sono vincoli del catalogo (tipo {@code n}), uno per colonna.
      */
     static final List<String> VINCOLI_ATTESI = List.of(
+            "account_acct_active_status_check|c|CHECK ((char_length(acct_active_status) = 1))",
             "account_acct_active_status_not_null|n|NOT NULL acct_active_status",
+            "account_acct_addr_zip_check|c|CHECK ((char_length(acct_addr_zip) = 10))",
             "account_acct_addr_zip_not_null|n|NOT NULL acct_addr_zip",
             "account_acct_cash_credit_limit_not_null|n|NOT NULL acct_cash_credit_limit",
             "account_acct_credit_limit_not_null|n|NOT NULL acct_credit_limit",
             "account_acct_curr_bal_not_null|n|NOT NULL acct_curr_bal",
             "account_acct_curr_cyc_credit_not_null|n|NOT NULL acct_curr_cyc_credit",
             "account_acct_curr_cyc_debit_not_null|n|NOT NULL acct_curr_cyc_debit",
+            "account_acct_expiraion_date_check|c|CHECK ((char_length(acct_expiraion_date) = 10))",
             "account_acct_expiraion_date_not_null|n|NOT NULL acct_expiraion_date",
+            "account_acct_group_id_check|c|CHECK ((char_length(acct_group_id) = 10))",
             "account_acct_group_id_not_null|n|NOT NULL acct_group_id",
             "account_acct_id_check|c|CHECK ((acct_id >= (0)::numeric))",
             "account_acct_id_not_null|n|NOT NULL acct_id",
+            "account_acct_open_date_check|c|CHECK ((char_length(acct_open_date) = 10))",
             "account_acct_open_date_not_null|n|NOT NULL acct_open_date",
+            "account_acct_reissue_date_check|c|CHECK ((char_length(acct_reissue_date) = 10))",
             "account_acct_reissue_date_not_null|n|NOT NULL acct_reissue_date",
             "account_pkey|p|PRIMARY KEY (acct_id)");
 
@@ -115,7 +123,7 @@ class AccountSchemaTest {
                 new BigDecimal("10000000000.00"));
     }
 
-    /** Colonne di testo e loro lunghezza {@code n} di {@code CHAR(n)}. */
+    /** Colonne di testo e loro lunghezza n (PIC X(n)). */
     static final Map<String, Integer> TESTI = testi();
 
     static Map<String, Integer> testi() {
@@ -147,12 +155,12 @@ class AccountSchemaTest {
     // --- controllo 1: forma della tabella -------------------------------------------------------
 
     @Test
-    void colonneNomiOrdineTipiPrecisioneScalaNotNullNessunPredefinito() throws Exception {
+    void colonneNomiOrdineTipiPrecisioneScalaCollazioneNotNullNessunPredefinito() throws Exception {
         try (Connection c = PostgresDiProva.connessione(postgres)) {
             List<String> lette = PostgresDiProva.righe(c, "select ordinal_position, column_name, data_type,"
-                    + " character_maximum_length, numeric_precision, numeric_scale, is_nullable, column_default"
-                    + " from information_schema.columns where table_schema = 'public' and table_name = 'account'"
-                    + " order by ordinal_position");
+                    + " character_maximum_length, numeric_precision, numeric_scale, collation_name, is_nullable,"
+                    + " column_default from information_schema.columns"
+                    + " where table_schema = 'public' and table_name = 'account' order by ordinal_position");
             assertEquals(COLONNE_ATTESE, lette, "colonne di account");
             // Valori predefiniti anche dal catalogo di PostgreSQL, non solo da information_schema.
             assertEquals(List.of("0"), PostgresDiProva.righe(c, "select count(*) from pg_attrdef"
@@ -161,7 +169,7 @@ class AccountSchemaTest {
     }
 
     @Test
-    void vincoliChiavePrimariaECheckSullaChiave() throws Exception {
+    void vincoliChiavePrimariaCheckSullaChiaveELunghezzaDeiTesti() throws Exception {
         try (Connection c = PostgresDiProva.connessione(postgres)) {
             List<String> letti = PostgresDiProva.righe(c, "select conname, contype, pg_get_constraintdef(oid)"
                     + " from pg_constraint where conrelid = 'public.account'::regclass order by conname");
@@ -248,9 +256,9 @@ class AccountSchemaTest {
     }
 
     /**
-     * Osservazione, non requisito della specifica: un importo con piu' di due decimali non e'
-     * rifiutato, PostgreSQL lo arrotonda alla scala della colonna (meta' lontano da zero). Chi
-     * scrive deve quindi portare il valore alla scala 2 prima (docs/contratti.md).
+     * Un importo con piu' di due decimali non e' rifiutato: PostgreSQL lo arrotonda alla scala
+     * della colonna (meta' lontano da zero). Da qui la regola: gli importi si scrivono gia' alla
+     * scala della colonna (docs/contratti.md).
      */
     @Test
     void decimaliInPiuArrotondatiDalDatabase() throws Exception {
@@ -269,86 +277,116 @@ class AccountSchemaTest {
         }
     }
 
-    // --- controllo 3: testo CHAR(n) -----------------------------------------------------------------
+    // --- controllo 3: testo, esattamente n caratteri -----------------------------------------------
 
+    /**
+     * Un valore di lunghezza diversa da n e' rifiutato dal vincolo di lunghezza della colonna,
+     * anche quando l'eccedenza e' di soli spazi (con {@code VARCHAR(n)} o {@code CHAR(n)} sarebbe
+     * troncato senza errore) e anche quando il valore e' di soli spazi o vuoto.
+     */
     @Test
-    void testoPiuLungoConCaratteriEccedentiNonSpazioRifiutato() throws Exception {
+    void testoPiuLungoOPiuCortoRifiutatoAncheConSoliSpazi() throws Exception {
         long chiave = 1;
         for (Map.Entry<String, Integer> t : TESTI.entrySet()) {
-            for (String valore : List.of("A".repeat(t.getValue()) + "X", " ".repeat(t.getValue()) + "X",
-                    "A".repeat(t.getValue()) + " X")) {
+            int n = t.getValue();
+            List<String> valori = new ArrayList<>(List.of(
+                    pieno("G", n) + "X", // eccedenza con un carattere non spazio
+                    pieno("G", n) + " ", // eccedenza di un solo spazio
+                    pieno("G", n) + " ".repeat(12), // eccedenza di soli spazi, lunga
+                    " ".repeat(n + 1), // soli spazi, uno in piu'
+                    "")); // vuoto
+            if (n > 1) {
+                valori.add("G"); // piu' corto, non riempito
+                valori.add(" ".repeat(n - 1)); // soli spazi, uno in meno
+            }
+            for (String valore : valori) {
                 Map<String, Object> riga = rigaValida(chiave++);
                 riga.put(t.getKey(), valore);
-                rifiutato(riga, TESTO_TROPPO_LUNGO, t.getKey() + " = '" + valore + "'");
+                String messaggio = rifiutato(riga, VIOLAZIONE_CHECK,
+                        t.getKey() + " = '" + valore + "' (" + valore.length() + " caratteri)");
+                assertTrue(messaggio.contains("account_" + t.getKey() + "_check"), "vincolo violato: " + messaggio);
             }
         }
     }
 
-    /** Eccedenza di soli spazi: accettata e troncata alla lunghezza della colonna. */
+    /** Un valore di n caratteri si rilegge identico via JDBC, spazi finali compresi. */
     @Test
-    void testoPiuLungoConEccedenzaDiSoliSpaziTroncato() throws Exception {
+    void testoDiNCaratteriRilettoIdenticoSpaziCompresi() throws Exception {
         long chiave = 1;
         for (Map.Entry<String, Integer> t : TESTI.entrySet()) {
-            String pieno = "B".repeat(t.getValue());
-            Letto l = scriviERileggi(chiave++, t.getKey(), pieno + "   ");
-            assertEquals(pieno, l.jdbc(), t.getKey() + ": lettura JDBC");
-            assertEquals(pieno, l.comeTesto(), t.getKey() + ": conversione a text");
-            assertEquals(t.getValue(), l.ottetti(), t.getKey() + ": byte memorizzati");
-        }
-    }
-
-    /** Stringa piu' corta: riempita di spazi; la lettura JDBC li restituisce, la conversione a text li toglie. */
-    @Test
-    void testoPiuCortoRiempitoDiSpazi() throws Exception {
-        long chiave = 1;
-        for (Map.Entry<String, Integer> t : TESTI.entrySet()) {
-            if (t.getValue() < 2) {
-                continue;
+            int n = t.getValue();
+            List<String> valori = new ArrayList<>(List.of(" ".repeat(n), "Z".repeat(n)));
+            if (n > 1) {
+                valori.add(pieno("G1", n)); // spazi finali
+                valori.add(pieno(" D E", n)); // spazi iniziali, interni e finali
             }
-            Letto l = scriviERileggi(chiave++, t.getKey(), "C");
-            assertEquals("C" + " ".repeat(t.getValue() - 1), l.jdbc(), t.getKey() + ": lettura JDBC");
-            assertEquals("C", l.comeTesto(), t.getKey() + ": conversione a text");
-            assertEquals(t.getValue(), l.ottetti(), t.getKey() + ": byte memorizzati");
-            // Spazi interni e iniziali restano; si tolgono solo quelli finali, e solo nella conversione.
-            Letto interni = scriviERileggi(chiave++, t.getKey(), " D E");
-            assertEquals(" D E" + " ".repeat(t.getValue() - 4), interni.jdbc(), t.getKey() + ": lettura JDBC");
-            assertEquals(" D E", interni.comeTesto(), t.getKey() + ": conversione a text");
-        }
-    }
-
-    /** Campo di soli spazi (e stringa vuota): memorizzati come n spazi, non come NULL. */
-    @Test
-    void campoDiSoliSpazi() throws Exception {
-        long chiave = 1;
-        for (Map.Entry<String, Integer> t : TESTI.entrySet()) {
-            for (String valore : List.of(" ".repeat(t.getValue()), "")) {
-                Letto l = scriviERileggi(chiave++, t.getKey(), valore);
-                assertEquals(" ".repeat(t.getValue()), l.jdbc(), t.getKey() + " = '" + valore + "': lettura JDBC");
-                assertEquals("", l.comeTesto(), t.getKey() + " = '" + valore + "': conversione a text");
-                assertEquals(t.getValue(), l.ottetti(), t.getKey() + " = '" + valore + "': byte memorizzati");
+            for (String valore : valori) {
+                try (Connection c = transazione()) {
+                    Map<String, Object> riga = rigaValida(chiave++);
+                    riga.put(t.getKey(), valore);
+                    inserisci(c, riga);
+                    try (PreparedStatement ps = c.prepareStatement("select " + t.getKey() + ", char_length("
+                            + t.getKey() + ") from account where acct_id = ?")) {
+                        ps.setBigDecimal(1, (BigDecimal) riga.get("acct_id"));
+                        try (ResultSet rs = ps.executeQuery()) {
+                            assertTrue(rs.next(), "riga assente");
+                            assertEquals(valore, rs.getString(1), t.getKey() + ": lettura JDBC");
+                            assertEquals(n, rs.getInt(2), t.getKey() + ": char_length");
+                            System.out.println("[account] " + t.getKey() + " scritto '" + valore + "' riletto '"
+                                    + rs.getString(1) + "'");
+                        }
+                    }
+                    c.rollback();
+                }
             }
         }
     }
 
     /**
-     * Confronti: con un parametro passato da {@code setString} (il driver lo invia come
-     * {@code varchar}) PostgreSQL confronta come {@code CHAR}, senza tener conto degli spazi
-     * finali, come il COBOL che allunga con spazi l'operando piu' corto. Con un parametro
-     * convertito esplicitamente a {@code text} il confronto avviene tra testi, la colonna perde gli
-     * spazi finali e il valore riempito non e' piu' uguale: e' la trappola da evitare.
+     * Confronti con un parametro di n caratteri: uguaglianza, {@code lower} su entrambi i lati
+     * (come {@code FUNCTION LOWER-CASE} in {@code COACTUPC.cbl}) e conversione a {@code text}
+     * trovano la riga; lo stesso parametro senza gli spazi finali non la trova.
      */
     @Test
-    void confrontiConParametroVarcharOText() throws Exception {
+    void confrontiConParametroDiNCaratteri() throws Exception {
         try (Connection c = transazione()) {
             Map<String, Object> riga = rigaValida(7);
-            riga.put("acct_group_id", "G1");
+            riga.put("acct_group_id", pieno("G1", 10));
             inserisci(c, riga);
-            assertEquals(1, conta(c, "acct_group_id = ?", "G1"), "parametro corto");
-            assertEquals(1, conta(c, "acct_group_id = ?", "G1        "), "parametro riempito a 10");
-            assertEquals(1, conta(c, "acct_group_id = ?", "G1  "), "parametro riempito in parte");
-            assertEquals(0, conta(c, "acct_group_id = ?", " G1"), "spazio iniziale");
-            assertEquals(1, conta(c, "acct_group_id = ?::text", "G1"), "parametro text corto");
-            assertEquals(0, conta(c, "acct_group_id = ?::text", "G1        "), "parametro text riempito");
+            assertEquals(1, conta(c, "acct_group_id = ?", pieno("G1", 10)), "= con 10 caratteri");
+            assertEquals(1, conta(c, "lower(acct_group_id) = lower(?)", pieno("g1", 10)), "lower con 10 caratteri");
+            assertEquals(1, conta(c, "acct_group_id::text = ?", pieno("G1", 10)), "::text con 10 caratteri");
+            assertEquals(0, conta(c, "acct_group_id = ?", "G1"), "= senza spazi finali");
+            assertEquals(0, conta(c, "lower(acct_group_id) = lower(?)", "g1"), "lower senza spazi finali");
+            assertEquals(0, conta(c, "acct_group_id::text = ?", "G1"), "::text senza spazi finali");
+            c.rollback();
+        }
+    }
+
+    /** Ordinamento delle colonne di testo per codice del carattere (collazione "C"). */
+    @Test
+    void ordinamentoDeiTestiPerCodiceDelCarattere() throws Exception {
+        List<String> sparsi = List.of("g1", "B", " ", "a", "G1", "1", "b", "A", "a1", "A1");
+        List<String> attesi = List.of(" ", "1", "A", "A1", "B", "G1", "a", "a1", "b", "g1");
+        try (Connection c = transazione()) {
+            long chiave = 1;
+            for (String s : sparsi) {
+                Map<String, Object> riga = rigaValida(chiave++);
+                riga.put("acct_group_id", pieno(s, 10));
+                inserisci(c, riga);
+            }
+            List<String> letti = new ArrayList<>();
+            try (PreparedStatement ps = c.prepareStatement("select acct_group_id from account order by acct_group_id");
+                    ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    letti.add(rs.getString(1));
+                }
+            }
+            assertEquals(attesi.stream().map(s -> pieno(s, 10)).toList(), letti, "ORDER BY acct_group_id");
+            // La collazione del database e' un'altra: l'ordine sopra viene dalla collazione della colonna.
+            assertEquals(List.of("en_US.utf8|UTF8"), PostgresDiProva.righe(c, "select datcollate || '|' ||"
+                    + " pg_encoding_to_char(encoding) from pg_database where datname = current_database()"),
+                    "collazione e codifica del database");
             c.rollback();
         }
     }
@@ -376,6 +414,14 @@ class AccountSchemaTest {
 
     // --- appoggio ------------------------------------------------------------------------------------
 
+    /** Il testo allungato con spazi a n caratteri (come un campo PIC X(n) del COBOL). */
+    static String pieno(String s, int n) {
+        if (s.length() > n) {
+            throw new IllegalArgumentException("'" + s + "' piu' lungo di " + n);
+        }
+        return s + " ".repeat(n - s.length());
+    }
+
     /** Connessione con una transazione aperta: il test la annulla alla fine. */
     private Connection transazione() throws SQLException {
         Connection c = PostgresDiProva.connessione(postgres);
@@ -383,7 +429,7 @@ class AccountSchemaTest {
         return c;
     }
 
-    /** Riga con valori validi per ogni colonna, nell'ordine della tabella. */
+    /** Riga con valori validi per ogni colonna, nell'ordine della tabella; testi di n caratteri. */
     static Map<String, Object> rigaValida(long chiave) {
         Map<String, Object> r = new LinkedHashMap<>();
         r.put("acct_id", BigDecimal.valueOf(chiave));
@@ -396,8 +442,8 @@ class AccountSchemaTest {
         r.put("acct_reissue_date", "2025-05-20");
         r.put("acct_curr_cyc_credit", new BigDecimal("0.00"));
         r.put("acct_curr_cyc_debit", new BigDecimal("0.00"));
-        r.put("acct_addr_zip", "12345");
-        r.put("acct_group_id", "A");
+        r.put("acct_addr_zip", pieno("12345", 10));
+        r.put("acct_group_id", pieno("A", 10));
         return r;
     }
 
@@ -423,7 +469,8 @@ class AccountSchemaTest {
         try (Connection c = transazione()) {
             SQLException e = assertThrows(SQLException.class, () -> inserisci(c, riga), descrizione + " accettato");
             assertEquals(sqlState, e.getSQLState(), descrizione + ": SQLSTATE (" + e.getMessage() + ")");
-            System.out.println("[account] rifiutato " + descrizione + ": " + e.getSQLState() + " " + e.getMessage());
+            System.out.println("[account] rifiutato " + descrizione + ": " + e.getSQLState() + " "
+                    + e.getMessage().split("\n")[0]);
             c.rollback();
             return e.getMessage();
         }
@@ -436,31 +483,6 @@ class AccountSchemaTest {
                 assertTrue(rs.next(), "riga " + chiave + " assente");
                 return rs.getBigDecimal(1);
             }
-        }
-    }
-
-    /** Valore di una colonna di testo riletto in tre modi. */
-    record Letto(String jdbc, String comeTesto, int ottetti) {
-    }
-
-    private Letto scriviERileggi(long chiave, String colonna, String valore) throws SQLException {
-        try (Connection c = transazione()) {
-            Map<String, Object> riga = rigaValida(chiave);
-            riga.put(colonna, valore);
-            inserisci(c, riga);
-            Letto l;
-            try (PreparedStatement ps = c.prepareStatement("select " + colonna + ", " + colonna + "::text, octet_length("
-                    + colonna + ") from account where acct_id = ?")) {
-                ps.setBigDecimal(1, BigDecimal.valueOf(chiave));
-                try (ResultSet rs = ps.executeQuery()) {
-                    assertTrue(rs.next(), "riga " + chiave + " assente");
-                    l = new Letto(rs.getString(1), rs.getString(2), rs.getInt(3));
-                }
-            }
-            System.out.println("[account] " + colonna + " scritto '" + valore + "': JDBC '" + l.jdbc() + "', text '"
-                    + l.comeTesto() + "', " + l.ottetti() + " byte");
-            c.rollback();
-            return l;
         }
     }
 

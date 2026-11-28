@@ -11,9 +11,11 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,10 +31,11 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  * <p>Per ogni riga elementare del contratto diversa dal {@code FILLER} deve esistere, nello stesso
  * ordine, una colonna con il nome del campo (minuscolo, {@code -} diventa {@code _}) e il tipo dato
  * dalla regola scritta qui, indipendente dalle attese di {@link AccountSchemaTest}:
- * {@code X(n)} → {@code character(n)}; {@code 9(n)} → {@code numeric(n,0)};
- * {@code S9(i)V9(d)} → {@code numeric(i+d,d)} (le ripetizioni {@code 9(k)} e {@code 99...} si
- * espandono prima). Nessuna colonna in piu'. Una {@code PICTURE} o un {@code USAGE} che la regola
- * non copre fanno fallire il test.
+ * {@code X(n)} → {@code text} con collazione {@code "C"} e un vincolo
+ * {@code CHECK ((char_length(colonna) = n))}, con n letta dalla definizione del vincolo nel
+ * catalogo; {@code 9(n)} → {@code numeric(n,0)}; {@code S9(i)V9(d)} → {@code numeric(i+d,d)} (le
+ * ripetizioni {@code 9(k)} e {@code 99...} si espandono prima). Nessuna colonna in piu'. Una
+ * {@code PICTURE} o un {@code USAGE} che la regola non copre fanno fallire il test.
  */
 class AccountContrattoTest {
 
@@ -53,15 +56,26 @@ class AccountContrattoTest {
         try (PostgreSQLContainer postgres = PostgresDiProva.avvia()) {
             PostgresDiProva.migraDaVuoto(postgres);
             try (Connection c = PostgresDiProva.connessione(postgres)) {
+                // Vincoli CHECK su una sola colonna, per colonna: la lunghezza dei testi sta qui.
+                Map<String, List<String>> check = new LinkedHashMap<>();
+                for (String r : PostgresDiProva.righe(c, "select a.attname, pg_get_constraintdef(k.oid)"
+                        + " from pg_constraint k join pg_attribute a on a.attrelid = k.conrelid and a.attnum = k.conkey[1]"
+                        + " where k.conrelid = 'public.account'::regclass and k.contype = 'c'"
+                        + " and cardinality(k.conkey) = 1 order by a.attname, 2")) {
+                    String[] v = r.split("\\|", 2);
+                    check.computeIfAbsent(v[0], k -> new ArrayList<>()).add(v[1]);
+                }
                 lette = new ArrayList<>();
-                for (String r : PostgresDiProva.righe(c, "select column_name, data_type, character_maximum_length,"
-                        + " numeric_precision, numeric_scale from information_schema.columns"
+                for (String r : PostgresDiProva.righe(c, "select column_name, data_type, collation_name,"
+                        + " character_maximum_length, numeric_precision, numeric_scale from information_schema.columns"
                         + " where table_schema = 'public' and table_name = 'account' order by ordinal_position")) {
                     String[] v = r.split("\\|", -1);
                     switch (v[1]) {
-                        case "character" -> lette.add(v[0] + " character(" + v[2] + ")");
-                        case "numeric" -> lette.add(v[0] + " numeric(" + v[3] + "," + v[4] + ")");
-                        default -> lette.add(v[0] + " " + v[1] + "(tipo fuori dalla regola)");
+                        case "text" -> lette.add(v[0] + " text collate " + v[2] + " "
+                                + lunghezzaDaiVincoli(v[0], check.getOrDefault(v[0], List.of())));
+                        case "numeric" -> lette.add(v[0] + " numeric(" + v[4] + "," + v[5] + ")");
+                        default -> lette.add(v[0] + " " + v[1] + "(" + v[3] + ") collate " + v[2]
+                                + " (tipo fuori dalla regola)");
                     }
                 }
             }
@@ -75,6 +89,24 @@ class AccountContrattoTest {
         assertTrue(mancanti.isEmpty(), "campi del contratto senza colonna corrispondente (nome e tipo): " + mancanti);
         assertTrue(inPiu.isEmpty(), "colonne senza campo corrispondente nel contratto: " + inPiu);
         assertEquals(attese, lette, "ordine delle colonne diverso da quello del contratto");
+    }
+
+    /**
+     * Lunghezza esatta di una colonna di testo letta dalla definizione del suo vincolo:
+     * {@code char_length=n} se c'e' esattamente un vincolo {@code CHECK ((char_length(colonna) = n))},
+     * altrimenti una descrizione che non coincide con nessuna attesa.
+     */
+    static String lunghezzaDaiVincoli(String colonna, List<String> definizioni) {
+        Pattern p = Pattern.compile("CHECK \\(\\(char_length\\(" + Pattern.quote(colonna) + "\\) = ([0-9]{1,6})\\)\\)");
+        List<String> lunghezze = new ArrayList<>();
+        for (String d : definizioni) {
+            Matcher m = p.matcher(d);
+            if (m.matches()) {
+                lunghezze.add(String.valueOf(Integer.parseInt(m.group(1))));
+            }
+        }
+        return lunghezze.size() == 1 ? "char_length=" + lunghezze.get(0)
+                : "char_length=" + (lunghezze.isEmpty() ? "<nessun vincolo di lunghezza>" : lunghezze);
     }
 
     /** Percorso del contratto, passato dal POM; nessun ripiego. */
@@ -129,7 +161,7 @@ class AccountContrattoTest {
         String e = espansa.toString();
         if (ALFANUMERICO.matcher(e).matches()) {
             assertEquals(String.valueOf(e.length()), lunghezza, "riga " + riga + ": lunghezza di " + picture);
-            return "character(" + e.length() + ")";
+            return "text collate C char_length=" + e.length();
         }
         Matcher n = NUMERICO.matcher(e);
         if (n.matches()) {

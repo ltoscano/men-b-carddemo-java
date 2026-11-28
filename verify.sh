@@ -291,8 +291,8 @@ pretendi_casi() {
   return 0
 }
 pretendi_casi AccountSchemaTest \
-  colonneNomiOrdineTipiPrecisioneScalaNotNullNessunPredefinito \
-  vincoliChiavePrimariaECheckSullaChiave \
+  colonneNomiOrdineTipiPrecisioneScalaCollazioneNotNullNessunPredefinito \
+  vincoliChiavePrimariaCheckSullaChiaveELunghezzaDeiTesti \
   soloLIndiceDellaChiavePrimaria \
   oggettiDelloSchemaETrigger \
   massimoEMinimoDellaPictureSiRileggonoIdentici \
@@ -300,11 +300,10 @@ pretendi_casi AccountSchemaTest \
   chiaveNegativaRifiutata \
   chiaveDuplicataRifiutata \
   decimaliInPiuArrotondatiDalDatabase \
-  testoPiuLungoConCaratteriEccedentiNonSpazioRifiutato \
-  testoPiuLungoConEccedenzaDiSoliSpaziTroncato \
-  testoPiuCortoRiempitoDiSpazi \
-  campoDiSoliSpazi \
-  confrontiConParametroVarcharOText \
+  testoPiuLungoOPiuCortoRifiutatoAncheConSoliSpazi \
+  testoDiNCaratteriRilettoIdenticoSpaziCompresi \
+  confrontiConParametroDiNCaratteri \
+  ordinamentoDeiTestiPerCodiceDelCarattere \
   ordinePerChiaveNumericoCrescente || exit 1
 pretendi_casi AccountContrattoTest \
   ogniCampoElementareDelContrattoHaLaSuaColonnaENessunaInPiu || exit 1
