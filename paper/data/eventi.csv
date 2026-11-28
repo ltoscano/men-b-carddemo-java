@@ -485,3 +485,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T04:01:09Z,pr-61,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0
 2026-11-28T04:02:20Z,pr-61,rinvio-esecutore,fable,orologio,5 accolti; specifica aggiornata (VARCHAR con lunghezza esatta)
 2026-11-28T04:02:20Z,pr-61,correzione-inizio,opus,orologio,giro unico
+2026-11-28T04:05:10Z,issue-59,needs-spec-update,opus,orologio,VARCHAR(n) tronca gli spazi eccedenti; specifica corretta (TEXT + CHECK)
