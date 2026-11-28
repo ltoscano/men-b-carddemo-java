@@ -3,8 +3,9 @@
 #  1. elimina gli output precedenti (fallisce se la cancellazione fallisce);
 #  2. lancia mvn -B verify in un'immagine Maven ufficiale (JDK 21, versione fissata), con
 #     accesso al Docker dell'host per i test di integrazione (Testcontainers);
-#  3. controlla che il rapporto del test di integrazione PostgreSQL sia XML completo, di
-#     questa corsa, con il caso di test eseguito e riuscito (quality/RapportoSurefire.java);
+#  3. controlla che il rapporto del test dei vettori del codec (#54) e quello del test di
+#     integrazione PostgreSQL siano XML completi, di questa corsa, con i casi attesi eseguiti e
+#     riusciti, nessuno saltato (quality/RapportoSurefire.java);
 #  4. controlla i rapporti di copertura (JaCoCo: rapporto aggregato e prova dell'agente in ogni
 #     modulo che esegue test) e di analisi statica (SpotBugs: un rapporto per ogni modulo di
 #     produzione) con quality/RapportiQualita.java; i plugin li producono dentro mvn verify;
@@ -212,7 +213,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "== [1/6] pulizia degli output precedenti e mvn -B verify"
+echo "== [1/7] pulizia degli output precedenti e mvn -B verify"
 rm -rf carddemo-*/target || { echo "ERRORE: cancellazione dei target/ precedenti fallita" >&2; exit 1; }
 residui=(carddemo-*/target)
 if [ "${#residui[@]}" -ne 0 ]; then
@@ -232,10 +233,30 @@ esac
 # -Dmenb.verify.run arriva come proprieta' di sistema ai test e surefire la registra nel rapporto.
 mvn -B verify "-Dmenb.verify.run=${MENB_VERIFY_RUN_ID}" </dev/null || { echo "ERRORE: mvn verify fallito" >&2; exit 1; }
 
+# Test dei vettori del codec (#54): con la proprieta' menb.verify.run e' obbligatorio, senza (build
+# delle immagini) si salta. Qui si prova che in questa corsa non e' stato saltato: rapporto di
+# questa corsa, con esattamente i casi attesi (375 vettori di oracle-gnucobol.tsv, 10 osservazioni
+# di oracle-oltre-picture.tsv), ognuno con l'identificativo del vettore corrispondente letto qui dal
+# file (riga e impronta del testo), zero saltati, falliti o in errore.
+echo "== [2/7] controllo del rapporto del test dei vettori del codec"
+report="carddemo-domain/target/surefire-reports/TEST-io.github.ltoscano.carddemo.domain.OracleGnuCobolVectorsTest.xml"
+vettori="analysis/data-codec/vettori"
+if [ ! -f "${report}" ]; then
+  echo "ERRORE: rapporto del test dei vettori assente: ${report}" >&2
+  exit 1
+fi
+if ! java quality/RapportoSurefire.java "${report}" "${MENB_VERIFY_RUN_ID}" \
+    io.github.ltoscano.carddemo.domain.OracleGnuCobolVectorsTest \
+    "oracleGnuCobolVectors=375@${vettori}/oracle-gnucobol.tsv" \
+    "beyondPictureObservations=10@${vettori}/oracle-oltre-picture.tsv" </dev/null; then
+  echo "ERRORE: rapporto del test dei vettori non valido: ${report}" >&2
+  exit 1
+fi
+
 # Il rapporto di surefire deve essere un XML ben formato e completo, di questa corsa (proprieta'
 # menb.verify.run), con il caso di test atteso eseguito e riuscito: lo legge il parser XML del
 # JDK del container (quality/RapportoSurefire.java, lanciato come sorgente).
-echo "== [2/6] controllo del rapporto del test di integrazione"
+echo "== [3/7] controllo del rapporto del test di integrazione"
 report="carddemo-parity/target/surefire-reports/TEST-io.github.ltoscano.carddemo.parity.PostgresIntegrazioneTest.xml"
 if [ ! -f "${report}" ]; then
   echo "ERRORE: rapporto del test di integrazione assente: ${report}" >&2
@@ -252,7 +273,7 @@ fi
 # copertura e di analisi statica si legge da qui, come la vede Maven (ereditarieta', profili,
 # proprieta' risolte), non cercando testo nei POM. Nome unico per corsa; esito controllato.
 EFFECTIVE_POM="/tmp/menb-effective-pom-${MENB_VERIFY_RUN_ID}.xml"
-echo "== [3/6] POM effettivi (maven-help-plugin ${HELP_PLUGIN_VERSION})"
+echo "== [4/7] POM effettivi (maven-help-plugin ${HELP_PLUGIN_VERSION})"
 mvn -B -q "org.apache.maven.plugins:maven-help-plugin:${HELP_PLUGIN_VERSION}:effective-pom" \
   "-Dmenb.verify.run=${MENB_VERIFY_RUN_ID}" "-Doutput=${EFFECTIVE_POM}" </dev/null \
   || { echo "ERRORE: generazione dei POM effettivi fallita" >&2; exit 1; }
@@ -262,7 +283,7 @@ mvn -B -q "org.apache.maven.plugins:maven-help-plugin:${HELP_PLUGIN_VERSION}:eff
 # deve essere di questa corsa e contenere ogni classe di produzione eseguibile compilata; ogni
 # modulo che ha eseguito test deve avere la prova dell'agente (sessione di questa corsa nel suo
 # target/jacoco.exec). Nessuna soglia di copertura.
-echo "== [4/6] controllo del rapporto di copertura (JaCoCo)"
+echo "== [5/7] controllo del rapporto di copertura (JaCoCo)"
 if ! java quality/RapportiQualita.java jacoco . "${MENB_VERIFY_RUN_ID}" "${EFFECTIVE_POM}" </dev/null; then
   echo "ERRORE: rapporto di copertura JaCoCo non valido" >&2
   exit 1
@@ -270,14 +291,14 @@ fi
 
 # Analisi statica: ogni modulo con codice di produzione deve avere un rapporto SpotBugs di questa
 # corsa, senza difetti ne' errori di analisi, con tutte le sue classi analizzate.
-echo "== [5/6] controllo dei rapporti di analisi statica (SpotBugs)"
+echo "== [6/7] controllo dei rapporti di analisi statica (SpotBugs)"
 if ! java quality/RapportiQualita.java spotbugs . "${MENB_VERIFY_RUN_ID}" "${RUN_START}" "${EFFECTIVE_POM}" </dev/null; then
   echo "ERRORE: rapporti SpotBugs non validi" >&2
   exit 1
 fi
 
 # Dopo la pulizia puo' esistere solo l'eseguibile prodotto da questa build: ne serve uno.
-echo "== [6/6] controllo dei jar eseguibili"
+echo "== [7/7] controllo dei jar eseguibili"
 for module in carddemo-online carddemo-batch; do
   jars=("${module}"/target/*-exec.jar)
   if [ "${#jars[@]}" -ne 1 ]; then
