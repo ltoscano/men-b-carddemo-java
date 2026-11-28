@@ -463,3 +463,7 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T01:26:22Z,pr-57,rinvio-esecutore,fable,orologio,dopo validazione 2: rilievi 2; 3 e parte dell'1
 2026-11-28T01:26:22Z,pr-57,correzione-inizio,opus,orologio,correzione mirata
 2026-11-28T01:26:23Z,issue-55,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-28T01:53:58Z,pr-57,correzione-fine,opus,orologio,SHA da21e9c; correzione mirata
+2026-11-28T01:53:58Z,pr-57,verifica-inizio,fable,orologio,verifica dell'Approvatore su clone pulito
+2026-11-28T01:58:23Z,pr-57,verifica-fine,fable,orologio,regressioni 26/26; mutante proprio I2S respinto; verify sano 0
+2026-11-28T01:58:23Z,pr-57,merge,fable,orologio,squash; chiude #54
