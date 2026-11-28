@@ -539,3 +539,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T08:21:19Z,stato,risposta-consegnata,fable,orologio,risposta all'obiezione sulla scala; con i numeri misurati; #11 contestata e rinviata
 2026-11-28T08:35:52Z,issue-65,esecutore-fine,opus,orologio,PR #69 aperta; SHA 553930f
 2026-11-28T08:36:56Z,pr-69,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-28T08:37:23Z,stato,richiesta-autore,autore,orologio,chiudere il pilota batch così com'è e poi fermarsi
+2026-11-28T08:37:23Z,stato,risposta-consegnata,fable,orologio,ricevuto: pilota batch fino al merge della traduzione; poi fermo
