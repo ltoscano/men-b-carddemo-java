@@ -188,9 +188,37 @@ final class AvvioJob {
      * READACCT inesistente: codice di uscita 1; in uno stesso flusso (stdout o stderr) la riga
      * {@link #ECCEZIONE_BEAN} e, esattamente una volta, la riga {@link #CAUSA} seguita subito da
      * {@link #PRIMO_FRAME} e {@link #SECONDO_FRAME}; in nessuno dei due flussi una traccia di avvio di
-     * un job o di un passo ({@link #TRACCE_DI_AVVIO}). Ogni altro errore, prima o dopo la selezione, no.
+     * un job o di un passo ({@link #TRACCE_DI_AVVIO}); e, indipendentemente dai log dell'applicazione,
+     * nessun job registrato nel repository JDBC di Spring Batch ({@link #nessunJobRegistrato}). Ogni
+     * altro errore, prima o dopo la selezione, no.
      */
-    static boolean jobAssente(Esito esito) {
+    static boolean jobAssente(Esito esito, Map<String, String> ambiente) {
+        return tracciaNativa(esito) && nessunJobRegistrato(ambiente);
+    }
+
+    /**
+     * Evidenza indipendente dai log dell'applicazione sotto prova: il repository JDBC di Spring Batch
+     * dell'applicazione (tabelle {@code batch_job_instance} e {@code batch_job_execution}, create
+     * all'avvio da {@code spring.batch.jdbc.initialize-schema=always}) esiste e non registra alcuna
+     * istanza ne' esecuzione di job. Un job avviato vi lascia almeno un'istanza e un'esecuzione prima
+     * di entrare nel primo passo. Database irraggiungibile o tabelle assenti: non e' il job assente.
+     */
+    static boolean nessunJobRegistrato(Map<String, String> ambiente) {
+        try (java.sql.Connection c = java.sql.DriverManager.getConnection(ambiente.get("SPRING_DATASOURCE_URL"),
+                ambiente.get("SPRING_DATASOURCE_USERNAME"), ambiente.get("SPRING_DATASOURCE_PASSWORD"));
+                java.sql.Statement st = c.createStatement();
+                java.sql.ResultSet rs = st.executeQuery(CONTEGGIO_JOB)) {
+            return rs.next() && rs.getLong(1) == 0 && rs.getLong(2) == 0;
+        } catch (java.sql.SQLException e) {
+            return false;
+        }
+    }
+
+    static final String CONTEGGIO_JOB =
+            "select (select count(*) from batch_job_instance), (select count(*) from batch_job_execution)";
+
+    /** Condizioni sull'uscita del processo (vedi {@link #jobAssente}): codice, traccia nativa, nessuna traccia di avvio. */
+    static boolean tracciaNativa(Esito esito) {
         if (esito.uscita() != USCITA_JOB_ASSENTE) {
             return false;
         }
@@ -226,8 +254,8 @@ final class AvvioJob {
     }
 
     /** Lancia {@link MotivoDichiarato} se il job READACCT non esiste; altrimenti non fa nulla. */
-    static void verificaJobPresente(Esito esito) {
-        if (jobAssente(esito)) {
+    static void verificaJobPresente(Esito esito, Map<String, String> ambiente) {
+        if (jobAssente(esito, ambiente)) {
             throw new MotivoDichiarato(JOB_ASSENTE, "l'applicazione non trova un job di nome READACCT ("
                     + "diagnostica del selettore di Spring Boot: " + CAUSA.substring("Caused by: ".length())
                     + " da JobLauncherApplicationRunner.afterPropertiesSet, codice di uscita " + esito.uscita() + ")");

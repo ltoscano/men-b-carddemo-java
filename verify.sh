@@ -394,6 +394,7 @@ pretendi_casi_caricamento AvvioJobTest \
   nessunJobReadacctRiconosciutoComeMotivoDichiarato \
   jobDiNomeReadacctConAltroBeanEsisteEFallisceSuiConfrontiPoiSullaRiesecuzione \
   jobReadacctPresenteCheFallisceConIlTestoDelJobAssenteNonEIlMotivoDichiarato \
+  jobReadacctAvviatoConLogAWarnCheFallisceConLaTracciaNonEIlMotivoDichiarato \
   erroreConIlTestoDelJobAssentePrimaDellaSelezioneNonEIlMotivoDichiarato \
   erroreDelDatabaseDelSoloAvvioNonEIlMotivoDichiarato \
   alloScadereDelLimiteSiTerminaLInteroAlbero || exit 1

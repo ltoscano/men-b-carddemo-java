@@ -67,7 +67,7 @@ final class ParitaReadacct {
     static void avviaEConfronta(List<String> prefisso, Map<String, String> ambiente, Path scenario, Path uscite,
             Path log) throws Exception {
         AvvioJob.Esito esito = AvvioJob.avvia(prefisso, AvvioJob.argomenti(uscite), ambiente, log, AvvioJob.limite());
-        AvvioJob.verificaJobPresente(esito);
+        AvvioJob.verificaJobPresente(esito, ambiente);
         ComparatoreReadacct.confronta(scenario, uscite, esito);
     }
 
