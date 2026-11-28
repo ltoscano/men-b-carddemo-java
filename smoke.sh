@@ -22,6 +22,10 @@
 #                          Flyway eseguito anche da batch (nel suo output: migrazione validata,
 #                          nessuna da applicare) e verifica in PostgreSQL delle esecuzioni di
 #                          installationCheckJob
+#   5b. readacct           (#67) job READACCT nell'immagine di batch sui 50 conti caricati: codice 0,
+#                          tre file di uscita copiati dal container con docker cp, dimensioni e
+#                          confronto con i riferimenti dello scenario esempio (byte ** esclusi), righe
+#                          di console di classe a uguali; fallisce se il job non scrive
 #   6. batch-primo         (#59) batch su un secondo database vuoto dello stesso server: deve
 #                          creare da se' gli stessi oggetti del passo 4b ed eseguire il job
 #   6b. online-primo       (#60) online su un terzo database vuoto: deve creare da se' gli stessi
@@ -633,6 +637,147 @@ EOF
   log "batch ha eseguito Flyway all'avvio: 1 migrazione validata, schema alla versione 1, nessuna da applicare"
   verify_executions "${n}"
 done
+
+# --- 5b. job READACCT sui conti caricati (#67) -------------------------------------------
+# Il job READACCT (CBACT01C tradotto) gira nell'immagine distribuita di batch, con il comando del
+# contratto (docs/contratti.md), sui 50 conti che il caricatore ha messo in account (lo stesso file
+# dello scenario esempio di #55). Le uscite si scrivono in /tmp del container di "run", che non si
+# rimuove alla fine del job: i tre file si copiano con "docker cp" in una cartella nuova della corsa.
+# Poi: codice 0, dimensioni (107 x 50, 110 x 50, 50 x (4 + 12 + 4 + 39)) e confronto con i riferimenti
+# dello scenario esempio (oracle/golden/readacct/generati/golden/esempio/), byte per byte tranne i byte
+# mascherati (**) dei riferimenti; console: le righe di classe a uguali, nella stessa posizione. Il
+# comparatore del test di parita' e' codice di test di carddemo-parity, non utilizzabile qui: il
+# confronto e' riscritto con builtin di bash, sui byte letti con od nel container del database.
+STEP="readacct"
+READACCT_REF="${ROOT}/oracle/golden/readacct/generati/golden/esempio"
+READACCT_RUN="${PROJECT}-readacct"
+READACCT_DIR="${WORK}/readacct"
+READACCT_N=50
+
+# Byte del file $1 in esadecimale minuscolo continuo, in HEX_OUT; $2 distingue i file di appoggio. La
+# conversione gira nel container db (Debian), senza pipeline: od scrive in un file temporaneo del
+# container e tr ne toglie spazi e a capo; set -e fa fallire il comando se uno dei due fallisce. Nessuno
+# strumento sull'host, e nessuna sostituzione di bash su testi lunghi (in bash 3.2 e' quadratica: la prima
+# versione del passo restava minuti su 16 KB). Fallisce se la conversione fallisce o se l'uscita non e'
+# esadecimale.
+HEX_OUT=""
+hex_of() {
+  local raw
+  HEX_OUT=""
+  if ! limited "${SHORT_TIMEOUT}" "${COMPOSE[@]}" exec -T db \
+    sh -c 'set -eu; t="$(mktemp)"; od -An -v -tx1 >"${t}"; tr -d " \n" <"${t}"; rm -f "${t}"' \
+    <"$1" >"${WORK}/od-$2.out" 2>"${WORK}/od-$2.err"; then
+    err "lettura dei byte di $1 fallita (od nel container db): $(<"${WORK}/od-$2.err")"
+    return 1
+  fi
+  raw="$(<"${WORK}/od-$2.out")" || return 1
+  if ! [[ "${raw}" =~ ^[0-9a-f]*$ ]]; then
+    err "uscita di od non esadecimale per $1"
+    return 1
+  fi
+  HEX_OUT="${raw}"
+}
+
+# compare_fixed NOME LUNGHEZZA ESADECIMALE RIFERIMENTO: record fissi, uno per riga del riferimento
+# (esadecimale, ** per un byte mascherato), confrontati byte per byte; poi nessun byte in piu'.
+compare_fixed() {
+  local name="$1" len="$2" hex="$3" ref="$4" line rec want got r=0 i
+  local width=$((len * 2))
+  [ -f "${ref}" ] || fail "riferimento assente: ${ref}"
+  while IFS= read -r line; do
+    [ "${#line}" -eq "${width}" ] || fail "riferimento ${ref##*/}, riga $((r + 1)): ${#line} caratteri, attesi ${width}"
+    rec="${hex:$((r * width)):${width}}"
+    [ "${#rec}" -eq "${width}" ] \
+      || fail "${name}: record $((r + 1)) mancante o troncato ($(( ${#hex} / 2 )) byte nel file, attesi $((READACCT_N * len)))"
+    for ((i = 0; i < len; i++)); do
+      want="${line:$((2 * i)):2}"
+      if [ "${want}" != "**" ]; then
+        got="${rec:$((2 * i)):2}"
+        [ "${want}" = "${got}" ] || fail "${name} record $((r + 1)) posizione $((i + 1)): atteso ${want}, trovato ${got}"
+      fi
+    done
+    r=$((r + 1))
+  done <"${ref}"
+  [ "${r}" -eq "${READACCT_N}" ] || fail "riferimento ${ref##*/}: ${r} record, attesi ${READACCT_N}"
+  [ "${#hex}" -eq $((r * width)) ] \
+    || fail "${name}: $(( ${#hex} / 2 )) byte, attesi $((r * len)) (${r} record di ${len} byte)"
+  log "${name}: $(( ${#hex} / 2 )) byte, ${r} record di ${len} byte uguali al riferimento (byte ** esclusi)"
+}
+
+# compare_vbrc ESADECIMALE RIFERIMENTO: ogni record logico del riferimento (<numero> <lunghezza> <dati>)
+# preceduto dal descrittore del contratto (lunghezza compreso il descrittore su 2 byte, poi 00 00).
+compare_vbrc() {
+  local hex="$1" ref="$2" num len data want_num want_rdw rdw got l p=0 r=0
+  [ -f "${ref}" ] || fail "riferimento assente: ${ref}"
+  while IFS=' ' read -r num len data; do
+    r=$((r + 1))
+    printf -v want_num '%06d' "${r}"
+    [ "${num}" = "${want_num}" ] || fail "riferimento ${ref##*/}, riga ${r}: numero '${num}'"
+    case "${len}" in
+      [0-9][0-9][0-9]) ;;
+      *) fail "riferimento ${ref##*/}, riga ${r}: lunghezza '${len}'" ;;
+    esac
+    l=$((10#${len}))
+    [ "${#data}" -eq $((2 * l)) ] || fail "riferimento ${ref##*/}, riga ${r}: dati di ${#data} caratteri, attesi $((2 * l))"
+    printf -v want_rdw '%04x0000' $((l + 4))
+    rdw="${hex:${p}:8}"
+    [ "${rdw}" = "${want_rdw}" ] \
+      || fail "VBRCFILE record ${r} (byte $((p / 2 + 1))): descrittore '${rdw}', atteso ${want_rdw}"
+    got="${hex:$((p + 8)):$((2 * l))}"
+    [ "${got}" = "${data}" ] || fail "VBRCFILE record ${r}: atteso ${data}, trovato ${got}"
+    p=$((p + 8 + 2 * l))
+  done <"${ref}"
+  [ "${r}" -eq $((2 * READACCT_N)) ] || fail "riferimento ${ref##*/}: ${r} record, attesi $((2 * READACCT_N))"
+  [ "${p}" -eq "${#hex}" ] || fail "VBRCFILE: $(( ${#hex} / 2 )) byte, attesi $((p / 2)) (${r} record con il descrittore)"
+  log "VBRCFILE: $((p / 2)) byte, ${r} record logici con il descrittore uguali al riferimento"
+}
+
+# compare_console STDOUT RIFERIMENTO: stesso numero di righe (2 + 15 x N); le righe di classe a uguali,
+# nella stessa posizione; le righe #OSSERVAZIONE del riferimento presenti ma non confrontate.
+compare_console() {
+  local out="$1" ref="$2" a b i=0
+  [ -f "${ref}" ] || fail "riferimento assente: ${ref}"
+  exec 3<"${ref}" 4<"${out}" || fail "apertura della console o del riferimento fallita"
+  while IFS= read -r a <&3; do
+    i=$((i + 1))
+    IFS= read -r b <&4 || fail "console: ${i} righe attese o piu', lo standard output finisce prima (riga ${i}: «${a}»)"
+    case "${a}" in
+      '#OSSERVAZIONE'*) continue ;;
+    esac
+    [ "${a}" = "${b}" ] || fail "console riga ${i}: attesa «${a}», trovata «${b}»"
+  done
+  if IFS= read -r b <&4; then
+    fail "console: riga in eccesso $((i + 1)): «${b}»"
+  fi
+  exec 3<&- 4<&-
+  [ "${i}" -eq $((2 + 15 * READACCT_N)) ] || fail "riferimento della console di ${i} righe, attese $((2 + 15 * READACCT_N))"
+  log "console: ${i} righe, quelle di classe a uguali al riferimento"
+}
+
+limited "${SHORT_TIMEOUT}" mkdir "${READACCT_DIR}" </dev/null || fail "creazione della cartella ${READACCT_DIR} fallita"
+log "docker compose run batch --spring.batch.job.name=READACCT sui conti caricati (limite ${BATCH_TIMEOUT}s)"
+rc=0
+limited "${BATCH_TIMEOUT}" "${COMPOSE[@]}" run -T --name "${READACCT_RUN}" batch --spring.batch.job.name=READACCT \
+  OUTFILE=/tmp/OUTFILE ARRYFILE=/tmp/ARRYFILE VBRCFILE=/tmp/VBRCFILE \
+  </dev/null >"${READACCT_DIR}/stdout" 2>"${READACCT_DIR}/stderr" || rc=$?
+if [ "${rc}" -ne 0 ]; then
+  while IFS= read -r line; do printf '   | %s\n' "${line}"; done <"${READACCT_DIR}/stderr"
+  fail "il job READACCT e' terminato con codice ${rc} (atteso 0)"
+fi
+log "job READACCT terminato con 0; copia delle uscite dal container ${READACCT_RUN}"
+for f in OUTFILE ARRYFILE VBRCFILE; do
+  limited "${SHORT_TIMEOUT}" docker cp "${READACCT_RUN}:/tmp/${f}" "${READACCT_DIR}/${f}" </dev/null >/dev/null \
+    || fail "${f} non copiato dal container: il job non l'ha scritto"
+done
+limited "${SHORT_TIMEOUT}" docker rm -v "${READACCT_RUN}" </dev/null >/dev/null || fail "rimozione del container ${READACCT_RUN} fallita"
+hex_of "${READACCT_DIR}/OUTFILE" outfile || fail "lettura di OUTFILE fallita"
+compare_fixed OUTFILE 107 "${HEX_OUT}" "${READACCT_REF}/OUTFILE.riferimento.txt"
+hex_of "${READACCT_DIR}/ARRYFILE" arryfile || fail "lettura di ARRYFILE fallita"
+compare_fixed ARRYFILE 110 "${HEX_OUT}" "${READACCT_REF}/ARRYFILE.riferimento.txt"
+hex_of "${READACCT_DIR}/VBRCFILE" vbrcfile || fail "lettura di VBRCFILE fallita"
+compare_vbrc "${HEX_OUT}" "${READACCT_REF}/VBRCFILE.riferimento.txt"
+compare_console "${READACCT_DIR}/stdout" "${READACCT_REF}/console.riferimento.txt"
+log "READACCT: uscite e console uguali ai riferimenti dello scenario esempio"
 
 # --- 6. batch come primo migratore su un database vuoto (#59) ---------------------------
 # Nel database del servizio la migrazione l'ha gia' applicata online: qui batch parte da solo,

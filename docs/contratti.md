@@ -265,14 +265,14 @@ Fissato dall'issue #65 insieme al test di parità (`carddemo-parity`, `ReadacctP
 | Comando | jar eseguibile di `carddemo-batch` (`carddemo-batch-<versione>-exec.jar`), in un processo proprio, con questi argomenti e nessun altro: `--spring.batch.job.name=READACCT OUTFILE=<percorso> ARRYFILE=<percorso> VBRCFILE=<percorso>` (nomi DD di `app/jcl/READACCT.jcl`; i tre argomenti senza `--` sono parametri del job) |
 | Nome del job | `Job.getName()` = `READACCT`; nome del bean e della classe liberi |
 | Database | proprietà standard di Spring dalle variabili d'ambiente `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`; nessun'altra variabile è impostata dal test |
-| Nessun job predefinito | con più di un job ogni avvio indica `spring.batch.job.name`. `smoke.sh` e `AccountMigrazioneTest`, che oggi non lo indicano, li adegua l'issue di traduzione nel suo perimetro; #65 non li tocca |
-| Riesecuzione | due avvii consecutivi con lo stesso comando, sullo stesso database e sugli stessi percorsi riescono entrambi; il secondo sostituisce per intero i file esistenti (equivalente di `PREDEL` + esecuzione). Il chiamante non aggiunge parametri; come ottenerlo con Spring Batch è scelta della traduzione |
+| Nessun job predefinito | con più di un job ogni avvio indica `spring.batch.job.name`. Da #67 i job sono due (`installationCheckJob`, `READACCT`): `smoke.sh`, `AccountMigrazioneTest` e `BatchApplicationTest` indicano `installationCheckJob`, il job che già eseguivano |
+| Riesecuzione | due avvii consecutivi con lo stesso comando, sullo stesso database e sugli stessi percorsi riescono entrambi; il secondo sostituisce per intero i file esistenti (equivalente di `PREDEL` + esecuzione). Il chiamante non aggiunge parametri; come ottenerlo con Spring Batch è scelta della traduzione. Scelta di #67: `ParametriDiAvvio` (conversione degli argomenti del selettore di Spring Boot) aggiunge a ogni avvio con parametri un parametro identificativo `menb.avvio` con un valore nuovo, quindi ogni avvio è un'istanza nuova; un incrementatore sul job non serve, perché in Spring Batch 6.1 fa scartare i parametri passati |
 | Lettura | tabella `account` in ordine crescente di `acct_id`, qualunque sia l'ordine fisico di inserimento |
 | `OUTFILE` | record fissi di 107 byte, senza terminatori |
 | `ARRYFILE` | record fissi di 110 byte, senza terminatori |
 | `VBRCFILE` | record variabili con descrittore di record di z/OS (RDW), senza descrittore di blocco: 2 byte di lunghezza del record **compreso il descrittore** (byte più significativo per primo) e 2 byte `00`. Per un conto: `00 10 00 00` + 12 byte, `00 2B 00 00` + 39 byte. Lunghezza ammessa 5-84 (`LRECL=84`). Decisione delegata di #65: formato del sistema di origine, non quello di GnuCOBOL (`00 0C 00 00`, `00 27 00 00`) |
 | Console | standard output: solo le righe dei `DISPLAY` dell'originale, una per `DISPLAY`, nell'ordine dell'originale, spazi finali conservati, ognuna terminata da LF (nessun CR); nessun banner, nessuna riga di log (log su standard error o su file). 2 + 15 × N righe |
-| Codice di uscita | 0 a fine regolare |
+| Codice di uscita | 0 a fine regolare. Da #67: 99 alla fine anomala del programma (`9999-ABEND-PROGRAM`, ogni ramo d'errore di `docs/programmi/CBACT01C.md`), dopo le righe letterali del ramo e la cancellazione dei tre file di uscita; 1 per un errore di avvio dell'applicazione prima del job (database irraggiungibile all'avvio, parametri `OUTFILE`/`ARRYFILE`/`VBRCFILE` mancanti o vuoti) |
 
 ### Che cosa confronta il test
 
@@ -309,4 +309,4 @@ Ogni diagnosi nomina file, record e posizione da 1 (`BYTE-DIVERSO: OUTFILE recor
 - I byte mascherati (`**`: byte 77-78 di `OUTFILE`) non sono confrontati: qualunque valore è accettato (controprova `controprovaByteMascheratoAccettato`).
 - Le righe di console `#OSSERVAZIONE` non sono confrontate nel contenuto (controprova `controprovaRigaDiOsservazioneConContenutoDiversoAccettata`).
 - Lo standard error non è confrontato.
-- Il comportamento su ingressi diversi dai due scenari, su tabella vuota o con errori di I/O non è coperto.
+- Il comportamento su ingressi diversi dai due scenari, su tabella vuota o con errori di I/O non è coperto da questo test. Da #67 lo coprono i test del modulo `batch` (`Cbact01cTest`, `ReadacctJobTest`: addebito di ciclo diverso da zero, ogni ramo d'errore, tabella vuota, forma delle righe di console non confrontate qui); la tabella vuota è confrontata con l'oracle su un file dei conti vuoto (descrizione della PR di #67).
