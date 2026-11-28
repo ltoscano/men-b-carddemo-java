@@ -516,3 +516,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T06:28:24Z,pr-66,correzione-inizio,opus,orologio,giro unico
 2026-11-28T07:19:34Z,pr-66,correzione-fine,opus,orologio,SHA 8a52d3f; 5 rilievi dichiarati corretti con la specifica aggiornata
 2026-11-28T07:19:41Z,pr-66,codex-inizio,codex,orologio,validazione 2 di 2 ristretta
+2026-11-28T07:21:05Z,wave2-traduzione,codex-inizio,codex,orologio,contestazione della specifica
+2026-11-28T07:21:27Z,pr-64,correzione-fine,opus,orologio,SHA 805b0eb; rilievi 1-4 dichiarati corretti; riferimenti invariati
