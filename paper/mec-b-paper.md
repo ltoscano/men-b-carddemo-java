@@ -606,7 +606,7 @@ Per chi replica, è la lezione più importante di questo passo: **"identico byte
 | Validazione 2 (ristretta) | Codex | 29 min 11 s | approvata con una riserva minore |
 | Merge | Approvatore | — | 04:07, 2 ore e 48 minuti dopo l'affidamento |
 
-È la prima PR a rischio pieno approvata dal Validatore da quando esiste la regola delle due validazioni estesa a tutte le PR (passo 22 in poi: la precedente era la #47). Il rilievo bloccante era ancora un controllo circolare, il terzo in due giorni: la rilettura che doveva provare il caricamento usava un programma dello stesso percorso, e alterando insieme caricatore e rilettore tutto restava verde. La correzione è un secondo lettore, scritto a parte con la dichiarazione di file del programma pilota: è, in piccolo, ciò che farà il programma vero.
+È la prima PR approvata dal Validatore dopo cinque di fila chiuse senza la sua approvazione (#49, #50, #56, #52, #57); la precedente approvata era la #51. Il rilievo bloccante era ancora un controllo circolare, il terzo in due giorni: la rilettura che doveva provare il caricamento usava un programma dello stesso percorso, e alterando insieme caricatore e rilettore tutto restava verde. La correzione è un secondo lettore, scritto a parte con la dichiarazione di file del programma pilota: è, in piccolo, ciò che farà il programma vero.
 
 Due cose scoperte dagli agenti che non erano in nessuna specifica:
 
