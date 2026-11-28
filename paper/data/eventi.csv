@@ -458,3 +458,7 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T01:18:00Z,pr-52,verifica-fine,fable,orologio,controesempio di Codex respinto; routines --check e --all --check verdi su clone pulito
 2026-11-28T01:18:00Z,pr-52,merge,fable,orologio,squash; chiude #36
 2026-11-28T01:18:47Z,issue-53,esecutore-inizio,opus,orologio,affidata; ramo issue-53-acctfile
+2026-11-28T01:20:32Z,issue-55,codex-inizio,codex,orologio,contestazione della specifica
+2026-11-28T01:25:27Z,pr-57,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0
+2026-11-28T01:26:22Z,pr-57,rinvio-esecutore,fable,orologio,dopo validazione 2: rilievi 2; 3 e parte dell'1
+2026-11-28T01:26:22Z,pr-57,correzione-inizio,opus,orologio,correzione mirata
