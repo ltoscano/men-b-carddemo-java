@@ -131,7 +131,13 @@ Atteso di ogni caso: `mvswait-attesi/<caso>.txt`, nel formato del rapporto di `e
 
 Ogni esecuzione che chiama `MVSWAIT` (casi qui sopra e osservazioni, quindi anche ogni lancio di `COBSWAIT`) ha due limiti, applicati all'artefatto vero e non solo alle varianti delle prove negative:
 
-- **durata misurata** attorno a `esegui.sh` nel container: al massimo **800 ms**, come minimo su fino a 3 tentativi (le esecuzioni sane misurano circa 15-140 ms; un picco di 561 ms, osservato con Docker appena riavviato, ha suggerito il secondo tentativo: un picco di carico sparisce, un'attesa vera non scende mai sotto la propria durata). Respinge anche un'attesa fissa di un secondo (prova negativa `unsecondo`, aggiunta dopo il giro 1 di validazione della PR #52, che aveva mostrato una routine con `sleep 1` passare il controllo);
+- **durata per differenza con una corsa di controllo** (giro 2 di validazione della PR #52). Ogni caso è preceduto e seguito, nello stesso container, da `WAITPRB` senza PARM: si ferma prima della `CALL`, quindi non carica `MVSWAIT`, ma ha lo stesso `esegui.sh` e lo stesso avvio di libcob. Si giudica differenza = durata del caso − max(controllo prima, controllo dopo): il carico della macchina pesa su entrambi, un'attesa della routine solo sul caso. Ogni caso si esegue **una sola volta** e nessuna esecuzione lenta si scarta.
+  - **Violazione** (codice 1): in un caso qualunque la differenza supera **500 ms** con controlli veloci.
+  - **Infrastruttura lenta** (codice 3, messaggio `INFRASTRUTTURA LENTA`): la differenza supera la soglia ma i controlli superano 300 ms. Il giudizio è impossibile: non è un verde e non è una violazione.
+  - **Misure in condizioni normali:** caso 10-40 ms, controlli 8-60 ms, differenze tra −21 e +18 ms.
+  - **Prove negative:** attesa fissa di un secondo, attesa solo alla prima esecuzione, attesa solo all'ultimo caso (`O4`); ciascuna respinta per i casi giusti e con una differenza misurata di almeno 900 ms.
+  - **Controprova con `--cpus 0.015`:** routine sana, nessuna violazione.
+  - **Storia:** il primo controllo (giro 1) guardava la durata assoluta e poi il minimo su tre tentativi; il secondo giro di validazione ha mostrato che il minimo nasconde un'attesa intermittente e che, con la CPU strozzata, respinge la routine sana;
 - **arresto** dopo **3 secondi** (`ORACLE_TIMEOUT_RUN=3` passato a `esegui.sh`, che allo scadere termina il programma e fallisce con codice 3): una routine che attendesse davvero l'intervallo richiesto (36 secondi per `S1`) fallisce senza restare appesa.
 
 La prova di avvio (`oracle/avvio/`) lancia `COBSWAIT` anche lei, con il limite generale di 60 s e senza misura di durata: un'attesa fissa vi passerebbe, ma lo stesso artefatto è respinto dal passo `routines`, che fa parte di `./oracle/run.sh --all --check`.

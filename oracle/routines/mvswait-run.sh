@@ -11,18 +11,29 @@
 #   testo:<testo>  printf '%s\n' '<testo>'
 # Limiti operativi, su ogni esecuzione che chiama MVSWAIT (casi e osservazioni, quindi anche ogni lancio di
 # COBSWAIT), applicati all'artefatto vero:
-#   - durata: misurata nel container attorno a esegui.sh (date +%s%N), deve restare entro MVSWAIT_DURATA_MS
-#     (800 ms, minimo su fino a 3 tentativi); respinge anche un'attesa fissa di un secondo (giro 1 della PR #52). Valori in <CASO>.durata;
+#   - durata, per DIFFERENZA con una corsa di controllo (giro 2 della PR #52): ogni esecuzione del caso e'
+#     preceduta e seguita, nello stesso container, da un'esecuzione di controllo, WAITPRB senza PARM, che si
+#     ferma prima della CALL e quindi non carica MVSWAIT (stesso esegui.sh, stesso avvio di libcob). Si
+#     misurano le tre durate (date +%s%N) e si giudica differenza = caso - max(controllo prima, controllo
+#     dopo): il carico della macchina pesa sul caso e sui controlli, un'attesa della routine solo sul caso.
+#     Ogni caso si esegue una sola volta e la prova fallisce se in un caso qualunque la differenza supera
+#     MVSWAIT_DIFFERENZA_MS (500 ms): nessuna esecuzione lenta viene scartata o ripetuta. Se i controlli
+#     stessi sono lenti (oltre MVSWAIT_CONTROLLO_LENTO_MS, 300 ms) la riga del caso dice "infrastruttura
+#     lenta"; se in quel caso la differenza supera la soglia, la prova termina con il codice 3 e il
+#     messaggio "INFRASTRUTTURA LENTA" (giudizio impossibile: ne' verde ne' violazione, che ha codice 1).
+#     Valori in <CASO>.durata: "caso controllo-prima controllo-dopo" in millisecondi;
 #   - arresto: MVSWAIT_LIMITE secondi (3), applicato da esegui.sh (ORACLE_TIMEOUT_RUN): allo scadere esegui.sh
 #     termina il programma e fallisce, e con lui questa prova (un'attesa lunga non resta appesa).
-# Output in oracle/routines/out/mvswait/: <CASO>.txt, <CASO>.ambiente, <CASO>.durata, schede/<CASO>.sysin.
+# Output in oracle/routines/out/mvswait/: <CASO>.txt, <CASO>.ambiente, <CASO>.durata, schede/<CASO>.sysin,
+# controllo/<CASO>-{prima,dopo}.txt (rapporti dei controlli: codice 2, nessuna riga di MVSWAIT).
 # Solo per le prove negative di mvswait-check.sh: MVSWAIT_OUT_DIR sposta l'output, MVSWAIT_BIN_DIR gli
 # artefatti (con WAITPRB, COBSWAIT e MVSWAIT.so), MVSWAIT_ESEGUI indica una copia alterata di esegui.sh
-# (sotto oracle/).
+# (sotto oracle/), MVSWAIT_CPUS limita la CPU del container (docker --cpus: la macchina lenta simulata).
 . "$ORACLE_ROOT/lib.sh"
 
 MVSWAIT_LIMITE=3
-MVSWAIT_DURATA_MS=800
+MVSWAIT_DIFFERENZA_MS=500
+MVSWAIT_CONTROLLO_LENTO_MS=300
 DIR="$ORACLE_ROOT/routines"
 # Elenchi dei casi: un elemento per percorso (giro 1 della PR #52: la lista separata da spazi non reggeva
 # una radice del repository con spazi nel nome).
@@ -56,17 +67,37 @@ for f in "${casi[@]}"; do
 done
 [ "${#terne[@]}" -gt 0 ] || fail "nessun caso di MVSWAIT"
 
+
+# CPU limitata solo per le prove (MVSWAIT_CPUS, macchina lenta simulata).
+opz_docker=()
+if [ -n "${MVSWAIT_CPUS:-}" ]; then opz_docker=(--cpus "$MVSWAIT_CPUS"); fi
+mkdir -p "$out/controllo" || fail "cartella dei controlli non creabile"
+
 # Un solo container per tutti i casi, con un limite complessivo di 300 s. Ogni comando ha l'esito
-# controllato: il primo fallimento (scheda non ricavabile, esegui.sh fallito o fuori tempo) ferma la prova.
-orun -v "$out:/out" -v "$bin:/oracle-bin:ro" -e ORACLE_TIMEOUT_RUN="$MVSWAIT_LIMITE" -e MVSWAIT_DURATA_MS="$MVSWAIT_DURATA_MS" \
+# controllato: il primo fallimento (scheda non ricavabile, esegui.sh fallito o fuori tempo, orologio) ferma
+# la prova. Per ogni caso: controllo prima, caso, controllo dopo, ciascuno misurato una sola volta.
+orun -v "$out:/out" -v "$bin:/oracle-bin:ro" -e ORACLE_TIMEOUT_RUN="$MVSWAIT_LIMITE" ${opz_docker[@]+"${opz_docker[@]}"} \
   -- timeout -k 10 300 sh -c '
   set -u
   esegui="$1"; shift
   jcl=/legacy/app/jcl/WAITSTEP.jcl
-  # orologio NOME: nanosecondi dall epoca in $ns, con esito e forma controllati.
+  # orologio: nanosecondi dall epoca in $ns, con esito e forma controllati.
   orologio() {
     ns="$(date +%s%N)" || { echo "orologio non leggibile (date) per $caso" >&2; return 1; }
     case "$ns" in ""|*[!0-9]*) echo "orologio non valido per $caso: $ns" >&2; return 1 ;; esac
+  }
+  # cronometra CARTELLA PROGRAMMA [OPZIONE VALORE]: esegui.sh, durata in millisecondi in $ms.
+  cronometra() {
+    orologio || return 1; inizio="$ns"
+    sh "$esegui" "$@" || { echo "esegui.sh fallito per $caso ($2)" >&2; return 1; }
+    orologio || return 1; ms=$(( (ns - inizio) / 1000000 ))
+  }
+  # controllo FASE: WAITPRB senza PARM (si ferma prima della CALL), rapporto in /out/controllo/CASO-FASE.txt.
+  controllo() {
+    c="/out/controllo/$caso-$1"
+    mkdir -p "$c" || return 1
+    cronometra "$c" WAITPRB || return 1
+    mv "$c/WAITPRB.txt" "$c.txt" && rm -rf "$c" || return 1
   }
   while [ $# -ge 3 ]; do
     caso="$1"; prog="$2"; ingr="$3"; shift 3
@@ -87,34 +118,54 @@ orun -v "$out:/out" -v "$bin:/oracle-bin:ro" -e ORACLE_TIMEOUT_RUN="$MVSWAIT_LIM
       esac
       opz=--sysin; val="$s"
     fi
-    # Fino a 3 tentativi: una durata oltre il limite si rimisura e vale la minima. Un picco di carico della
-    # macchina sparisce al tentativo successivo; un attesa vera no, perche non scende mai sotto la propria
-    # durata. Il rapporto conservato e quello dell ultimo tentativo (esegui.sh riparte da zero ogni volta).
-    tent=0; min=""
-    while [ "$tent" -lt 3 ]; do
-      tent=$((tent + 1))
-      orologio || exit 1; t0="$ns"
-      sh "$esegui" "/out/$caso" "$prog" "$opz" "$val" || { echo "esegui.sh fallito per $caso" >&2; exit 1; }
-      orologio || exit 1; t1="$ns"
-      d=$(( (t1 - t0) / 1000000 ))
-      if [ -z "$min" ] || [ "$d" -lt "$min" ]; then min="$d"; fi
-      [ "$min" -gt "$MVSWAIT_DURATA_MS" ] || break
-    done
-    echo "$min $tent" > "/out/$caso.durata" || exit 1
+    controllo prima || exit 1; prima="$ms"
+    cronometra "/out/$caso" "$prog" "$opz" "$val" || exit 1; reale="$ms"
+    controllo dopo || exit 1; dopo="$ms"
+    echo "$reale $prima $dopo" > "/out/$caso.durata" || exit 1
     mv "/out/$caso/$prog.txt" "/out/$caso.txt" && mv "/out/$caso/$prog.ambiente" "/out/$caso.ambiente" \
       && rm -rf "/out/$caso" || exit 1
   done' sh "$esegui" "${terne[@]}" || fail "esecuzione dei casi di MVSWAIT fallita"
 
-i=0; lenti=""
+# controllo_valido RAPPORTO: il controllo ha davvero saltato la CALL (codice 2, nessuna riga di MVSWAIT).
+controllo_valido() {
+  local rc g=0
+  [ -f "$1" ] || fail "rapporto di controllo assente: $(rel "$1")"
+  rc="$(sed -n '2p' "$1")" || fail "rapporto di controllo illeggibile: $(rel "$1")"
+  [ "$rc" = 2 ] || fail "il controllo $(rel "$1") termina con '$rc' invece di 2"
+  grep -q '^MENB-ORACLE MVSWAIT' "$1" || g=$?
+  case "$g" in
+    1) ;;
+    0) fail "il controllo $(rel "$1") ha chiamato MVSWAIT" ;;
+    *) fail "lettura del controllo $(rel "$1") fallita (grep, codice $g)" ;;
+  esac
+}
+i=0; violazioni=""; indecisi=""; lente=0
 while [ "$i" -lt "${#terne[@]}" ]; do
   caso="${terne[$i]}"
   [ -f "$out/$caso.txt" ] || fail "rapporto di $caso assente"
   rc="$(sed -n '2p' "$out/$caso.txt")" || fail "rapporto di $caso illeggibile"
   riga="$(cat "$out/$caso.durata")" || fail "durata di $caso illeggibile"
-  d="${riga%% *}"; tn="${riga#* }"
-  case "$d:$tn" in *[!0-9:]*|:*|*:) fail "durata di $caso non valida: '$riga'" ;; esac
-  log "$caso (${terne[$((i + 1))]} ${terne[$((i + 2))]}): codice di uscita $rc, durata $d ms ($tn tentativi)"
-  [ "$d" -le "$MVSWAIT_DURATA_MS" ] || lenti="$lenti $caso=${d}ms"
+  set -- $riga
+  [ $# -eq 3 ] || fail "durata di $caso non valida: '$riga'"
+  case "$1$2$3" in ''|*[!0-9]*) fail "durata di $caso non valida: '$riga'" ;; esac
+  controllo_valido "$out/controllo/$caso-prima.txt"
+  controllo_valido "$out/controllo/$caso-dopo.txt"
+  rif="$2"; [ "$3" -le "$rif" ] || rif="$3"
+  diff_ms=$(( $1 - rif ))
+  nota=""
+  if [ "$rif" -gt "$MVSWAIT_CONTROLLO_LENTO_MS" ]; then nota=", infrastruttura lenta"; lente=$((lente + 1)); fi
+  log "$caso (${terne[$((i + 1))]} ${terne[$((i + 2))]}): codice di uscita $rc; durata $1 ms, controlli $2 e $3 ms, differenza $diff_ms ms$nota"
+  if [ "$diff_ms" -gt "$MVSWAIT_DIFFERENZA_MS" ]; then
+    if [ -n "$nota" ]; then indecisi="$indecisi $caso=${diff_ms}ms"; else violazioni="$violazioni $caso=${diff_ms}ms"; fi
+  fi
   i=$((i + 3))
 done
-[ -z "$lenti" ] || fail "durata oltre il limite operativo di ${MVSWAIT_DURATA_MS} ms (MVSWAIT non deve attendere):$lenti"
+# Esiti: differenza oltre la soglia con controlli veloci = violazione (codice 1); oltre la soglia con controlli
+# lenti = macchina troppo lenta per giudicare (codice 3, distinto: non e' un verde e non e' una violazione).
+# Nessuna ripetizione: un'esecuzione lenta non si scarta mai.
+[ -z "$violazioni" ] || fail "differenza con il controllo oltre ${MVSWAIT_DIFFERENZA_MS} ms (MVSWAIT non deve attendere):$violazioni."
+if [ -n "$indecisi" ]; then
+  echo "[$ORACLE_NAME] INFRASTRUTTURA LENTA: differenza oltre ${MVSWAIT_DIFFERENZA_MS} ms con controlli oltre ${MVSWAIT_CONTROLLO_LENTO_MS} ms, giudizio impossibile:$indecisi." >&2
+  exit 3
+fi
+[ "$lente" -eq 0 ] || log "nota: infrastruttura lenta in $lente casi (controlli oltre ${MVSWAIT_CONTROLLO_LENTO_MS} ms), differenze entro la soglia"

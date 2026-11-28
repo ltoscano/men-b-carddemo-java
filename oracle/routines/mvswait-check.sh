@@ -211,6 +211,13 @@ solo_diversi() {
   done
   log "     variante '$v': cambiano solo i rapporti di ${*:-nessun caso}"
 }
+# arresto_97 RAPPORTO VARIANTE: il codice d'uscita del rapporto (riga 2) e' ancora 97. La lettura ha l'esito
+# controllato a parte (giro 2 della PR #52: dentro [ "$(sed ...)" = 97 ] l'esito di sed si perdeva).
+arresto_97() {
+  local rc
+  rc="$(sed -n 2p "$1")" || fail "variante '$2': lettura del codice di $(rel "$1") fallita (sed)"
+  [ "$rc" = 97 ] || fail "la variante '$2' ha cambiato l'arresto ($rc invece di 97)"
+}
 V_TUTTI="D00000000 D00000001 D00000E10 D05F5E0FF D05F5E100 D7FFFFFFF S1 S2 O1 O2 O3 O4"
 R0='^           MOVE 0 TO RETURN-CODE$'
 sorgente argomento "s/$R0/           MOVE X'00' TO LK-INTERVALLO(4:1)\n           MOVE 0 TO RETURN-CODE/"
@@ -228,19 +235,87 @@ sorgente stdout "s/$R0/           DISPLAY 'MVSWAIT SU STDOUT'\n           MOVE 0
 variante stdout
 solo_diversi stdout $V_TUTTI
 expect_fail "routine che scrive su stdout" "+MVSWAIT SU STDOUT" verifica "$tmp/stdout/obs"
-# Attesa fissa di un secondo (giro 1 della PR #52): rapporti identici a quelli sani, ma ogni esecuzione con
-# valore ammesso dura circa 1000 ms, oltre il limite di durata di mvswait-run.sh (800 ms, minimo su 3 tentativi) e sotto l'arresto
-# di 3 s: la prova deve fallire per la durata misurata, non per il contenuto.
+# Attese di un secondo (giri 1 e 2 della PR #52): rapporti identici a quelli sani, ma la durata del caso
+# supera quella dei controlli di circa 1000 ms, oltre la soglia di 500 ms di mvswait-run.sh e sotto l'arresto
+# di 3 s: la prova deve fallire per la differenza misurata, non per il contenuto, e indicare i casi giusti.
+# esito_variante NOME: esegue la variante, conserva output ed esito; mostra NOME li restituisce.
+esito_variante() {
+  local rc=0
+  esegui_variante "$1" > "$tmp/$1.esito" 2>&1 || rc=$?
+  echo "$rc" > "$tmp/$1.rc" || fail "esito della variante '$1' non registrabile"
+}
+mostra() { local rc; cat "$tmp/$1.esito" || return 99; rc="$(cat "$tmp/$1.rc")" || return 99; return "$rc"; }
+# misure CARTELLA: le durate di ogni caso (caso, controlli, differenza), per il log (solo diagnostica).
+misure() {
+  local d="$1" c r s=""
+  for c in $PROVE_CASI $OSS_CASI; do
+    r="$(cat "$d/$c.durata")" || return 1
+    set -- $r
+    s="$s $c=$1/$2/$3/$(( $1 - ($2 > $3 ? $2 : $3) ))"
+  done
+  echo "caso=durata/controllo prima/controllo dopo/differenza (ms):$s"
+}
+# differenze VARIANTE CASI...: per ogni caso, durata - max(controlli) >= 900 ms (la variante ha atteso davvero).
+differenze() {
+  local v="$1" c r; shift
+  for c in "$@"; do
+    r="$(cat "$tmp/$v/obs/$c.durata")" || fail "durata di $c della variante '$v' illeggibile"
+    set -- $r
+    [ $# -eq 3 ] && [ $(( $1 - ($2 > $3 ? $2 : $3) )) -ge 900 ] \
+      || fail "la variante '$v' non ha atteso per $c ($r): prova negativa non significativa"
+  done
+}
+# - fissa: ogni esecuzione con valore ammesso attende un secondo;
 sorgente unsecondo "s/^      \* Riga 23 (ASMWAIT): l'attesa non e' eseguita\.\$/           MOVE 1 TO WS-HI\n           CALL 'C\$SLEEP' USING WS-HI/"
 prepara unsecondo "$tmp/src-unsecondo/MVSWAIT.cbl"
-expect_fail "routine che attende un secondo fisso" "durata oltre il limite operativo di 800 ms" esegui_variante unsecondo
+esito_variante unsecondo
+expect_fail "routine che attende un secondo fisso" "(MVSWAIT non deve attendere): D00000000=" mostra unsecondo
 solo_diversi unsecondo
-for c in $V_TUTTI; do
-  r="$(cat "$tmp/unsecondo/obs/$c.durata")" || fail "durata di $c della variante 'unsecondo' illeggibile"
-  [ "${r%% *}" -ge 900 ] && [ "${r#* }" = 3 ] \
-    || fail "la variante 'unsecondo' non ha atteso per $c ($r): prova negativa non significativa"
+differenze unsecondo $V_TUTTI
+log "     e in ogni caso con valore ammesso (WAITPRB e tutti i lanci di COBSWAIT) il caso supera i controlli di almeno 900 ms"
+# - solo alla prima esecuzione della routine nel container (marcatore in /tmp): il caso D00000000;
+sorgente primo "s#^      \* Riga 23 (ASMWAIT): l'attesa non e' eseguita\.\$#           CALL 'SYSTEM' USING '[ -e /tmp/m ]||{ :>/tmp/m;sleep 1;}'#"
+prepara primo "$tmp/src-primo/MVSWAIT.cbl"
+esito_variante primo
+expect_fail "routine che attende un secondo solo alla prima esecuzione" "(MVSWAIT non deve attendere): D00000000=" mostra primo
+grep -Eq 'attendere\): D00000000=[0-9]+ms\.$' "$tmp/primo.esito" || fail "la variante 'primo' non e' respinta solo per D00000000"
+solo_diversi primo
+differenze primo D00000000
+# - solo all'ultimo caso (dodicesima chiamata che arriva all'attesa, contata in /tmp): il caso O4.
+sorgente ultimo \
+  "s#^\(       01  WS-LO .*\)\$#\1\n       01  WS-CMD                  PIC X(60).#" \
+  "s#^      \* Riga 23 (ASMWAIT): l'attesa non e' eseguita\.\$#           MOVE 'echo>>/tmp/c;[ \$(wc -l </tmp/c) -lt 12 ]' TO WS-CMD\n           MOVE '||sleep 1' TO WS-CMD(41:)\n           CALL 'SYSTEM' USING WS-CMD#"
+prepara ultimo "$tmp/src-ultimo/MVSWAIT.cbl"
+esito_variante ultimo
+expect_fail "routine che attende un secondo solo all'ultimo caso" "(MVSWAIT non deve attendere): O4=" mostra ultimo
+grep -Eq 'attendere\): O4=[0-9]+ms\.$' "$tmp/ultimo.esito" || fail "la variante 'ultimo' non e' respinta solo per O4"
+solo_diversi ultimo
+differenze ultimo O4
+# Controprova: routine sana con la CPU del container strozzata (docker --cpus 0.015). Esiti ammessi: 0 (nessun
+# falso rosso) oppure 3 con "INFRASTRUTTURA LENTA" (giudizio impossibile, distinto); mai la violazione.
+lento_sano() {
+  local rc=0 g=0 c
+  MVSWAIT_CPUS=0.015 MVSWAIT_OUT_DIR="$tmp/lento" bash "$DIR/mvswait-run.sh" > "$tmp/lento.log" 2>&1 || rc=$?
+  grep -q "MVSWAIT non deve attendere" "$tmp/lento.log" || g=$?
+  case "$g" in 1) ;; 0) indent "$tmp/lento.log" >&2; fail "routine sana con CPU strozzata: falso rosso (violazione)" ;;
+    *) fail "lettura del log con CPU strozzata fallita (grep, codice $g)" ;; esac
+  case "$rc" in
+    0) esito_lento="nessun falso rosso" ;;
+    3) g=0; grep -q "INFRASTRUTTURA LENTA" "$tmp/lento.log" || g=$?
+       [ "$g" = 0 ] || { indent "$tmp/lento.log" >&2; fail "codice 3 senza il messaggio INFRASTRUTTURA LENTA"; }
+       esito_lento="infrastruttura lenta dichiarata (codice 3), nessuna violazione" ;;
+    *) indent "$tmp/lento.log" >&2; fail "routine sana con CPU strozzata: esito $rc" ;;
+  esac
+  for c in $PROVE_CASI $OSS_CASI; do
+    cmp -s "$tmp/obs/$c.txt" "$tmp/lento/$c.txt" || fail "CPU strozzata: rapporto di $c diverso da quello di M1"
+  done
+}
+lento_sano
+log "   controprova ok: routine sana con --cpus 0.015: $esito_lento; rapporti identici a quelli di M1"
+for v in obs unsecondo/obs primo/obs ultimo/obs lento; do
+  m="$(misure "$tmp/$v")" || fail "durate di $v illeggibili"
+  log "     durate $v: $m"
 done
-log "     e ogni caso con valore ammesso (WAITPRB e tutti i lanci di COBSWAIT) dura almeno 900 ms in ognuno dei 3 tentativi"
 # Attesa vera dell'intervallo richiesto (C\$SLEEP, secondi = centesimi / 100): 36 s per D00000E10, oltre il
 # limite operativo; la prova fallisce per durata e non resta appesa.
 sorgente attende "s/^      \* Riga 23 (ASMWAIT): l'attesa non e' eseguita\.\$/           COMPUTE WS-HI = WS-VALORE \/ 100\n           CALL 'C\$SLEEP' USING WS-HI/"
@@ -262,13 +337,13 @@ expect_fail "routine che ritorna 0 anche con il bit alto acceso (X'FFFFFFFF')" "
 sorgente ordine 's/^           MOVE WS-VALORE TO WS-DEC$/           COMPUTE WS-DEC = WS-BYTE(4) * 16777216 + WS-BYTE(3) * 65536\n                          + WS-BYTE(2) * 256 + WS-BYTE(1)/'
 variante ordine
 solo_diversi ordine D00000001 D00000E10 D05F5E0FF D05F5E100 D7FFFFFFF D80000000 S1 S2 O2
-[ "$(sed -n 2p "$tmp/ordine/obs/D80000000.txt")" = 97 ] || fail "la variante 'ordine' ha cambiato l'arresto di D80000000"
+arresto_97 "$tmp/ordine/obs/D80000000.txt" ordine
 expect_fail "routine che riporta il valore con i 4 byte in ordine inverso" "D00000E10: rapporto diverso dall'atteso" verifica "$tmp/ordine/obs"
 sorgente segno "s/^               DISPLAY 'MENB-ORACLE MVSWAIT: ATTESA RICHIESTA '\$/               COMPUTE WS-DEC = 4294967296 - WS-VALORE\n               DISPLAY 'MENB-ORACLE MVSWAIT: ATTESA RICHIESTA -'/"
 variante segno
 grep -q "ATTESA RICHIESTA -2147483648 (X'80000000') OLTRE" "$tmp/segno/obs/D80000000.txt" \
   || fail "la variante 'segno' non riporta il valore con il segno: prova negativa non significativa"
-[ "$(sed -n 2p "$tmp/segno/obs/D80000000.txt")" = 97 ] || fail "la variante 'segno' ha cambiato l'arresto di D80000000"
+arresto_97 "$tmp/segno/obs/D80000000.txt" segno
 solo_diversi segno D80000000 DFFFFFFFF
 expect_fail "routine che riporta il valore con segno (X'80000000' = -2147483648), arresto 97 invariato" "D80000000: rapporto diverso dall'atteso" verifica "$tmp/segno/obs"
 
@@ -326,9 +401,15 @@ ingresso_perso() {
   orun -v "$d:/out" -v "$BUILD_OUT/bin:/oracle-bin:ro" -v "$tmp/obs/schede:/s:ro" -e ORACLE_TIMEOUT_RUN=3 \
     -- timeout -k 10 60 sh "$(in_container "$e")" /out COBSWAIT --sysin /s/S1.sysin || rc=$?
   [ "$rc" -ne 0 ] || { echo "esegui.sh terminato con 0 senza ingresso"; return 0; }
-  if [ -s "$d/COBSWAIT.txt" ] || grep -q VECCHIO "$d/COBSWAIT.stdout" "$d/COBSWAIT.stderr" 2>/dev/null; then
-    echo "dopo il fallimento resta un rapporto o un residuo della corsa precedente"; return 0
-  fi
+  [ ! -s "$d/COBSWAIT.txt" ] || { echo "dopo il fallimento resta un rapporto"; return 0; }
+  # Esiti di grep (giro 2 della PR #52): 1 = nessun residuo; 0 = residuo; ogni altro esito = verifica fallita.
+  local g=0
+  grep -q VECCHIO "$d/COBSWAIT.stdout" "$d/COBSWAIT.stderr" || g=$?
+  case "$g" in
+    1) ;;
+    0) echo "dopo il fallimento resta un residuo della corsa precedente"; return 0 ;;
+    *) echo "ricerca dei residui fallita (grep, codice $g)"; return 0 ;;
+  esac
   return "$rc"
 }
 expect_fail "ingresso cancellato prima del controllo di apertura" "esegui.sh: ingresso non apribile" \
@@ -347,6 +428,18 @@ expect_fail "esegui.sh che ignora --sysin (ingresso vuoto al posto della scheda)
 
 # 4b. Esiti dei comandi nuovi di esegui.sh (wc e sha256sum su --sysin): l'involucro build/avvolgi.sh, davanti
 #     nel PATH del container, esegue davvero il comando e ne cambia solo l'esito (o tronca l'output).
+# scrivi_involucro CARTELLA COMANDO MODO: CARTELLA/avv/COMANDO. MODO finto:TESTO = uno script che stampa
+# TESTO ed esce con 0 (risposta malformata); ogni altro MODO = build/avvolgi.sh. La scrittura e il chmod
+# hanno ciascuno il proprio esito controllato (giro 2 della PR #52: l'esito di printf era coperto dal chmod).
+scrivi_involucro() {
+  local f="$1/avv/$2"
+  case "$3" in
+    finto:*) printf '#!/bin/sh\necho '\''%s'\''\n' "${3#finto:}" > "$f" || fail "involucro di $2 non scrivibile (printf)" ;;
+    *) printf '#!/bin/sh\nexec sh /avv/.avvolgi.sh /res/registro %s '\''%s'\'' /usr/bin/%s "$@"\n' "$2" "$3" "$2" > "$f" \
+         || fail "involucro di $2 non scrivibile (printf)" ;;
+  esac
+  chmod +x "$f" || fail "involucro di $2 non eseguibile (chmod)"
+}
 avvolto() { # avvolto NOME COMANDO=MODO...: COBSWAIT con --sysin /s/S1.sysin e i comandi avvolti
   local d="$tmp/av-$1" s c m; shift
   clean_dir "$d"
@@ -354,12 +447,7 @@ avvolto() { # avvolto NOME COMANDO=MODO...: COBSWAIT con --sysin /s/S1.sysin e i
   cp "$ORACLE_ROOT/build/avvolgi.sh" "$d/avv/.avvolgi.sh" || fail "copia di avvolgi.sh fallita"
   for s in "$@"; do
     c="${s%%=*}"; m="${s#*=}"
-    case "$m" in
-      # finto:TESTO: al posto del comando, uno script che stampa TESTO ed esce con 0 (risposta malformata).
-      finto:*) printf '#!/bin/sh\necho '\''%s'\''\n' "${m#finto:}" > "$d/avv/$c" ;;
-      *) printf '#!/bin/sh\nexec sh /avv/.avvolgi.sh /res/registro %s '\''%s'\'' /usr/bin/%s "$@"\n' "$c" "$m" "$c" > "$d/avv/$c" ;;
-    esac
-    chmod +x "$d/avv/$c" || fail "involucro di $c non creabile"
+    scrivi_involucro "$d" "$c" "$m"
   done
   orun -v "$d/avv:/avv:ro" -v "$d/res:/res" -v "$BUILD_OUT/bin:/oracle-bin:ro" -v "$tmp/obs/schede:/s:ro" \
     -e PATH=/avv:/usr/bin:/bin -e ORACLE_TIMEOUT_RUN=3 \
@@ -392,6 +480,30 @@ for d in mk42 cp42 wc42 sha42 shaT42 wcfinto shacorta shanonhex; do
 done
 log "     e in nessuno di questi casi esegui.sh ha scritto un rapporto"
 
+# 4b-bis. Esiti dei comandi delle verifiche di questo controllo (giro 2 della PR #52): sed in arresto_97,
+#     printf e chmod in scrivi_involucro, grep in ingresso_perso. Ogni comando restituisce 42 dopo aver
+#     fatto davvero il suo lavoro (output autentico): la verifica deve fallire e dirlo.
+sed_42() ( sed() { command sed "$@"; return 42; }; arresto_97 "$tmp/segno/obs/D80000000.txt" segno )
+expect_fail "arresto_97 con sed che restituisce 42 (codice letto 97)" "lettura del codice di" sed_42
+involucro_42() ( # involucro_42 COMANDO: scrivi_involucro con COMANDO (printf o chmod) che restituisce 42
+  case "$1" in
+    printf) printf() { builtin printf "$@"; return 42; } ;;
+    chmod) chmod() { command chmod "$@"; return 42; } ;;
+  esac
+  rm -rf "$tmp/inv42" && mkdir -p "$tmp/inv42/avv" || exit 1
+  scrivi_involucro "$tmp/inv42" wc passa
+)
+expect_fail "scrivi_involucro con printf che restituisce 42" "involucro di wc non scrivibile (printf)" involucro_42 printf
+expect_fail "scrivi_involucro con chmod che restituisce 42" "involucro di wc non eseguibile (chmod)" involucro_42 chmod
+# ingresso_perso segnala un difetto della verifica ritornando 0 (cosi' la sua prova negativa fallisce): qui
+# quel ritorno diventa 1, e un ritorno diverso da 0 (grep fallito senza che la verifica se ne accorga) diventa 0.
+grep_42() ( grep() { command grep "$@"; return 42; }
+  if ingresso_perso grep 's#^( exec < "\$ingresso" ) 2>/dev/null || #rm -f "$ingresso"; ( exec < "$ingresso" ) 2>/dev/null || #'; then
+    exit 1
+  fi
+  exit 0 )
+expect_fail "ingresso_perso con grep (ricerca dei residui) che restituisce 42" "ricerca dei residui fallita (grep, codice 42)" grep_42
+
 # 4c. Esiti dei comandi di mvswait-run.sh nel container (sed che ricava le schede, mv dei rapporti) e del
 #     calcolo delle impronte: ogni docker run della sottoshell ha gli involucri davanti nel PATH.
 run_avvolto() { # run_avvolto NOME COMANDO=MODO: mvswait-run.sh con il comando avvolto
@@ -400,11 +512,7 @@ run_avvolto() { # run_avvolto NOME COMANDO=MODO: mvswait-run.sh con il comando a
   mkdir -p "$d/avv" "$d/res" || fail "cartelle degli involucri non creabili"
   cp "$ORACLE_ROOT/build/avvolgi.sh" "$d/avv/.avvolgi.sh" || fail "copia di avvolgi.sh fallita"
   c="${s%%=*}"; m="${s#*=}"
-  case "$m" in
-    finto:*) printf '#!/bin/sh\necho '\''%s'\''\n' "${m#finto:}" > "$d/avv/$c" ;;
-    *) printf '#!/bin/sh\nexec sh /avv/.avvolgi.sh /res/registro %s '\''%s'\'' /usr/bin/%s "$@"\n' "$c" "$m" "$c" > "$d/avv/$c" ;;
-  esac
-  chmod +x "$d/avv/$c" || fail "involucro di $c non creabile"
+  scrivi_involucro "$d" "$c" "$m"
   (
     AVV_D="$d"
     docker() {
@@ -430,8 +538,7 @@ impronte_avvolte() { # impronte_avvolte NOME COMANDO=MODO: impronte delle schede
   mkdir -p "$d/avv" "$d/res" || fail "cartelle degli involucri non creabili"
   cp "$ORACLE_ROOT/build/avvolgi.sh" "$d/avv/.avvolgi.sh" || fail "copia di avvolgi.sh fallita"
   c="${s%%=*}"; m="${s#*=}"
-  printf '#!/bin/sh\nexec sh /avv/.avvolgi.sh /res/registro %s '\''%s'\'' /usr/bin/%s "$@"\n' "$c" "$m" "$c" > "$d/avv/$c" \
-    && chmod +x "$d/avv/$c" || fail "involucro di $c non creabile"
+  scrivi_involucro "$d" "$c" "$m"
   (
     docker() {
       if [ "${1:-}" = run ]; then shift; command docker run -e PATH=/avv:/usr/bin:/bin -v "$d/avv:/avv:ro" -v "$d/res:/res" "$@"
