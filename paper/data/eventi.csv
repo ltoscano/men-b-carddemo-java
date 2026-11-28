@@ -474,3 +474,7 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T02:36:07Z,wave1-conti,codex-inizio,codex,orologio,contestazione della specifica
 2026-11-28T02:41:50Z,wave1-conti,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
 2026-11-28T02:44:03Z,issue-59,esecutore-inizio,opus,orologio,affidata; ramo issue-59-tabella-account
+2026-11-28T02:44:35Z,paper,risposta-consegnata,fable,orologio,stato; #59 affidata
+2026-11-28T02:56:45Z,pr-58,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0
+2026-11-28T02:57:28Z,pr-58,rinvio-esecutore,fable,orologio,5 accolti; 1 respinto
+2026-11-28T02:57:28Z,pr-58,correzione-inizio,opus,orologio,giro unico
