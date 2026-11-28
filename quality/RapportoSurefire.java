@@ -26,13 +26,14 @@ import org.w3c.dom.NodeList;
  * Controllo del rapporto XML di surefire di un test, eseguito da verify.sh dentro il container
  * di build con il lanciatore di sorgenti del JDK:
  *
- * <pre>java quality/RapportoSurefire.java &lt;rapporto&gt; &lt;corsa&gt; &lt;classe&gt; &lt;metodo&gt;</pre>
+ * <pre>java quality/RapportoSurefire.java &lt;rapporto&gt; &lt;corsa&gt; &lt;classe&gt; &lt;metodo&gt; [&lt;metodo&gt; ...]</pre>
  *
  * Esce con 0 solo se il rapporto e' un XML ben formato e completo (lo legge per intero il parser
  * del JDK), la radice e' il testsuite della classe attesa, la proprieta' menb.verify.run vale
  * l'identificativo della corsa corrente (quindi il rapporto e' di questa build), gli attributi
  * tests/skipped/failures/errors sono coerenti (tests uguale al numero di testcase, gli altri 0)
- * e il caso di test atteso compare senza skipped, failure, error o riesecuzioni. Altrimenti
+ * e ognuno dei casi di test attesi (uno o piu', per nome; dalla issue #59 piu' d'uno) compare una
+ * sola volta, e nessun caso del rapporto ha skipped, failure, error o riesecuzioni. Altrimenti
  * stampa il motivo su stderr ed esce con 1.
  *
  * <p>Seconda forma, per i test dinamici (test dei vettori del codec, issue #54):
@@ -55,14 +56,22 @@ public class RapportoSurefire {
             fabbriche(args);
             return;
         }
-        if (args.length != 4 || args[1].isBlank()) {
-            errore("uso: RapportoSurefire <rapporto> <corsa> <classe> <metodo>\n"
+        if (args.length < 4 || args[1].isBlank()) {
+            errore("uso: RapportoSurefire <rapporto> <corsa> <classe> <metodo> [<metodo> ...]\n"
                     + "   oppure: RapportoSurefire <rapporto> <corsa> <classe> <fabbrica>=<casi>@<file> [...]");
         }
         String rapporto = args[0];
         String corsa = args[1];
         String classe = args[2];
-        String metodo = args[3];
+        Set<String> metodi = new LinkedHashSet<>();
+        for (int i = 3; i < args.length; i++) {
+            if (!args[i].matches("[A-Za-z_][A-Za-z0-9_]*")) {
+                errore("nome di metodo non valido negli argomenti: '" + args[i] + "'");
+            }
+            if (!metodi.add(args[i])) {
+                errore("metodo " + args[i] + " ripetuto negli argomenti");
+            }
+        }
 
         Element suite = leggi(rapporto, classe);
 
@@ -81,21 +90,23 @@ public class RapportoSurefire {
             errore("skipped=" + skipped + " failures=" + failures + " errors=" + errors + " (attesi 0)");
         }
 
-        Element atteso = null;
+        Set<String> trovati = new LinkedHashSet<>();
         for (Element c : casi) {
             esitoPositivo(c);
-            if (classe.equals(c.getAttribute("classname")) && metodo.equals(c.getAttribute("name"))) {
-                if (atteso != null) {
-                    errore("testcase " + metodo + " ripetuto nel rapporto");
-                }
-                atteso = c;
+            String nome = c.getAttribute("name");
+            if (classe.equals(c.getAttribute("classname")) && metodi.contains(nome) && !trovati.add(nome)) {
+                errore("testcase " + nome + " ripetuto nel rapporto");
             }
         }
-        if (atteso == null) {
-            errore("testcase " + classe + "." + metodo + " assente dal rapporto");
+        for (String metodo : metodi) {
+            if (!trovati.contains(metodo)) {
+                errore("testcase " + classe + "." + metodo + " assente dal rapporto");
+            }
         }
-        System.out.println(classe + "." + metodo + ": eseguito e riuscito; tests=" + tests
-                + " skipped=0 failures=0 errors=0; " + PROPRIETA_CORSA + "=" + corsa);
+        for (String metodo : metodi) {
+            System.out.println(classe + "." + metodo + ": eseguito e riuscito; tests=" + tests
+                    + " skipped=0 failures=0 errors=0; " + PROPRIETA_CORSA + "=" + corsa);
+        }
     }
 
     /** Marcatore che il test dei vettori scrive su stdout dopo aver superato ogni controllo di un vettore. */

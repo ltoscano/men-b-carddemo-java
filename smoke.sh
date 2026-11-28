@@ -9,9 +9,16 @@
 #   2. build               costruzione delle immagini online e batch
 #   3. avvio               db e online con porta host scelta da Docker; attesa dello stato sano
 #   4. salute              GET /actuator/health dall'host: HTTP 200, radice "UP", "db" "UP"
+#   4b. migrazione         (#59) account e flyway_schema_history tabelle secondo il catalogo,
+#                          account con 12 colonne, storico con la sola V1__account.sql riuscita:
+#                          su un database nuovo li ha creati online all'avvio
 #   5. batch-1, batch-2    docker compose run --rm batch, due volte; dopo ciascun lancio,
-#                          verifica in PostgreSQL delle esecuzioni di installationCheckJob
-#   6. pulizia             down con volumi, anche se un passo e' fallito; poi verifica via
+#                          Flyway eseguito anche da batch (nel suo output: migrazione validata,
+#                          nessuna da applicare) e verifica in PostgreSQL delle esecuzioni di
+#                          installationCheckJob
+#   6. batch-primo         (#59) batch su un secondo database vuoto dello stesso server: deve
+#                          creare da se' gli stessi oggetti del passo 4b ed eseguire il job
+#   7. pulizia             down con volumi, anche se un passo e' fallito; poi verifica via
 #                          etichette che non restino container (anche arrestati), reti, volumi
 # Esce con 0 solo se tutti i passi, pulizia compresa, riescono; altrimenti con 1 (o il
 # codice del segnale ricevuto) e dice quale passo e' fallito.
@@ -43,6 +50,11 @@ STEP_NAME="installationCheckStep"
 
 STEP="avvio-script"
 CLEANUP_ARMED=0
+# Cartella privata della corsa per l'output del runner batch (#59): nome unico, creata con mkdir
+# (che fallisce se esiste gia': nessun output di altre corse viene riletto), rimossa alla fine.
+TMP_BASE="${TMPDIR:-/tmp}"
+WORK="${TMP_BASE%/}/menb-smoke-$$-${RANDOM}${RANDOM}"
+WORK_CREATED=0
 
 log() { printf '== [%s] %s\n' "${STEP}" "$*"; }
 err() { printf 'ERRORE [%s]: %s\n' "${STEP}" "$*" >&2; }
@@ -260,6 +272,13 @@ on_exit() {
       fi
     fi
   fi
+  if [ "${WORK_CREATED}" -eq 1 ] && ! limited "${SHORT_TIMEOUT}" rm -rf "${WORK}" </dev/null; then
+    err "cancellazione di ${WORK} fallita"
+    if [ "${rc}" -eq 0 ]; then
+      rc=1
+      failed_step="pulizia"
+    fi
+  fi
   if [ "${rc}" -eq 0 ]; then
     echo "== SMOKE RIUSCITO"
   else
@@ -272,10 +291,48 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-# Esegue psql nel container db, con lo script SQL sullo standard input.
-psql_db() {
+# Esegue psql nel container db, con lo script SQL sullo standard input. psql_in <database> usa il
+# database indicato (vuoto: quello del servizio, POSTGRES_DB); psql_db usa quello del servizio.
+psql_in() {
+  local database="$1"
+  shift
   limited "${SHORT_TIMEOUT}" "${COMPOSE[@]}" exec -T db \
-    sh -c 'exec psql -X -q -A -t -v ON_ERROR_STOP=1 -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" "$@"' psql "$@"
+    sh -c 'd="$1"; shift; exec psql -X -q -A -t -v ON_ERROR_STOP=1 -U "${POSTGRES_USER}" -d "${d:-${POSTGRES_DB}}" "$@"' \
+    psql "${database}" "$@"
+}
+psql_db() {
+  psql_in "" "$@"
+}
+
+# Oggetti creati dalla migrazione (#59) nel database $1 (vuoto: quello del servizio), dopo l'avvio
+# dell'applicazione $2: account e flyway_schema_history devono essere tabelle secondo il catalogo
+# (relkind 'r' in pg_class, non una vista o un'altra relazione con lo stesso nome), account con 12
+# colonne, e lo storico deve contenere la sola V1__account.sql riuscita.
+query_migration_objects() {
+  psql_in "$1" -f - <<'SQL'
+select coalesce((select c.relkind::text from pg_class c join pg_namespace n on n.oid = c.relnamespace
+                 where n.nspname = 'public' and c.relname = 'account'), '<assente>')
+       || '|' ||
+       coalesce((select c.relkind::text from pg_class c join pg_namespace n on n.oid = c.relnamespace
+                 where n.nspname = 'public' and c.relname = 'flyway_schema_history'), '<assente>')
+       || '|' ||
+       (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'account');
+SQL
+}
+verify_migration() {
+  local database="$1" who="$2" kinds history
+  if ! kinds="$(query_migration_objects "${database}")"; then
+    fail "interrogazione del catalogo fallita (database '${database:-del servizio}')"
+  fi
+  [ "${kinds}" = "r|r|12" ] \
+    || fail "dopo l'avvio di ${who}: attese account e flyway_schema_history come tabelle (relkind r) e 12 colonne in account, trovati '${kinds}' (relkind account|relkind storico|colonne)"
+  if ! history="$(psql_in "${database}" -c "select installed_rank || '|' || coalesce(version, '<null>') || '|' || script || '|' || success from flyway_schema_history order by installed_rank" </dev/null)"; then
+    fail "lettura dello storico di Flyway fallita (database '${database:-del servizio}')"
+  fi
+  printf '   %s\n' "${history}"
+  [ "${history}" = "1|1|V1__account.sql|true" ] \
+    || fail "storico di Flyway inatteso: '${history}' (attesa la sola migrazione 1|1|V1__account.sql|true)"
+  return 0
 }
 
 # Lettura del JSON con jsonb: "stato radice|stato del componente db", <assente> se manca
@@ -373,6 +430,8 @@ COMPOSE=(docker compose --project-name "${PROJECT}" --project-directory "${ROOT}
   --file "${ROOT}/compose.yaml" --env-file /dev/null)
 
 limited "${SHORT_TIMEOUT}" docker compose version </dev/null || fail "docker compose non disponibile"
+limited "${SHORT_TIMEOUT}" mkdir -m 700 "${WORK}" </dev/null || fail "creazione della cartella di lavoro ${WORK} fallita"
+WORK_CREATED=1
 if ! collect_project_resources; then
   fail "impossibile verificare l'assenza di risorse con l'etichetta ${LABEL}"
 fi
@@ -446,6 +505,13 @@ db_status="${verdict#*|}"
 [ "${db_status}" = "UP" ] || fail "componente db '${db_status}' (atteso presente e UP)"
 log "stato alla radice UP, componente db UP"
 
+# --- 4b. migrazione dello schema applicata da online (#59) ------------------------------
+# Il database e' nuovo (volume creato da questo smoke) e finora e' partito solo online: se la
+# tabella account e lo storico di Flyway ci sono, li ha creati online all'avvio.
+STEP="migrazione"
+verify_migration "" online
+log "online ha applicato la migrazione: account e' una tabella con 12 colonne, storico di Flyway con V1__account.sql riuscita"
+
 # --- 5. job batch, due lanci ----------------------------------------------------------
 STEP="batch-0"
 if ! tables="$(psql_db -c "select count(*) from pg_tables where schemaname = 'public' and tablename = 'batch_job_execution'" </dev/null)"; then
@@ -461,10 +527,55 @@ for n in 1 2; do
   STEP="batch-${n}"
   log "docker compose run --rm batch (lancio ${n}, limite ${BATCH_TIMEOUT}s)"
   rc=0
-  limited "${BATCH_TIMEOUT}" "${COMPOSE[@]}" run --rm -T batch </dev/null || rc=$?
+  # Output in un file della cartella privata (non in $(...): un processo figlio sopravvissuto
+  # all'arresto terrebbe aperta la pipe), poi mostrato e letto.
+  batch_log="${WORK}/batch-${n}.log"
+  limited "${BATCH_TIMEOUT}" "${COMPOSE[@]}" run --rm -T batch </dev/null >"${batch_log}" 2>&1 || rc=$?
+  batch_out="$(<"${batch_log}")" || fail "lettura dell'output del runner batch fallita"
+  while IFS= read -r line; do printf '   | %s\n' "${line}"; done <<EOF
+${batch_out}
+EOF
   [ "${rc}" -eq 0 ] || fail "il runner batch e' terminato con codice ${rc}"
+  # Anche batch esegue Flyway all'avvio (#59): sul database gia' migrato da online valida la
+  # migrazione e non ne applica altre. Il database non cambia, quindi la prova e' nel suo output.
+  for atteso in 'Successfully validated 1 migration' 'Current version of schema "public": 1' \
+    'Schema "public" is up to date. No migration necessary.'; do
+    case "${batch_out}" in
+      *"${atteso}"*) ;;
+      *) fail "nell'output del runner batch manca '${atteso}': Flyway non e' stato eseguito all'avvio di batch" ;;
+    esac
+  done
+  log "batch ha eseguito Flyway all'avvio: 1 migrazione validata, schema alla versione 1, nessuna da applicare"
   verify_executions "${n}"
 done
+
+# --- 6. batch come primo migratore su un database vuoto (#59) ---------------------------
+# Nel database del servizio la migrazione l'ha gia' applicata online: qui batch parte da solo,
+# con il suo classpath distribuito (la sua immagine), su un secondo database vuoto dello stesso
+# server, e deve creare da se' account e lo storico di Flyway, accanto alle tabelle di Spring Batch.
+STEP="batch-primo"
+FIRST_DB="menb_batch_primo"
+log "database vuoto ${FIRST_DB}: batch come primo migratore (limite ${BATCH_TIMEOUT}s)"
+psql_db -c "create database ${FIRST_DB}" </dev/null || fail "creazione del database ${FIRST_DB} fallita"
+if ! objects="$(psql_in "${FIRST_DB}" -c "select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public'" </dev/null)"; then
+  fail "interrogazione del database ${FIRST_DB} fallita"
+fi
+[ "${objects}" = "0" ] || fail "il database ${FIRST_DB} non e' vuoto prima del lancio: ${objects} oggetti nello schema public"
+rc=0
+batch_log="${WORK}/batch-primo.log"
+limited "${BATCH_TIMEOUT}" "${COMPOSE[@]}" run --rm -T \
+  -e "SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${FIRST_DB}" batch </dev/null >"${batch_log}" 2>&1 || rc=$?
+batch_out="$(<"${batch_log}")" || fail "lettura dell'output del runner batch fallita"
+while IFS= read -r line; do printf '   | %s\n' "${line}"; done <<EOF
+${batch_out}
+EOF
+[ "${rc}" -eq 0 ] || fail "il runner batch e' terminato con codice ${rc}"
+verify_migration "${FIRST_DB}" batch
+if ! runs="$(psql_in "${FIRST_DB}" -c "select count(*) || '|' || count(*) filter (where status = 'COMPLETED' and exit_code = 'COMPLETED') from batch_job_execution" </dev/null)"; then
+  fail "interrogazione delle esecuzioni nel database ${FIRST_DB} fallita"
+fi
+[ "${runs}" = "1|1" ] || fail "esecuzioni di ${JOB_NAME} nel database ${FIRST_DB}: '${runs}' (attese 1|1: una, COMPLETED)"
+log "batch ha applicato la migrazione su un database vuoto: account e' una tabella con 12 colonne, storico con V1__account.sql riuscita, job COMPLETED"
 
 STEP="fine"
 log "tutti i passi riusciti; segue la pulizia"

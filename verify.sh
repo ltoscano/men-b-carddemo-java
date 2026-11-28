@@ -5,7 +5,9 @@
 #     accesso al Docker dell'host per i test di integrazione (Testcontainers);
 #  3. controlla che il rapporto del test dei vettori del codec (#54) e quello del test di
 #     integrazione PostgreSQL siano XML completi, di questa corsa, con i casi attesi eseguiti e
-#     riusciti, nessuno saltato (quality/RapportoSurefire.java);
+#     riusciti, nessuno saltato (quality/RapportoSurefire.java); lo stesso per i test della
+#     tabella dei conti (#59: AccountSchemaTest, AccountContrattoTest, AccountMigrazioneTest),
+#     con tutti i casi elencati per nome;
 #  4. controlla i rapporti di copertura (JaCoCo: rapporto aggregato e prova dell'agente in ogni
 #     modulo che esegue test) e di analisi statica (SpotBugs: un rapporto per ogni modulo di
 #     produzione) con quality/RapportiQualita.java; i plugin li producono dentro mvn verify;
@@ -268,6 +270,48 @@ if ! java quality/RapportoSurefire.java "${report}" "${MENB_VERIFY_RUN_ID}" \
   echo "ERRORE: rapporto del test di integrazione non valido: ${report}" >&2
   exit 1
 fi
+
+# Test della tabella dei conti (#59): obbligatori. Per ogni classe, rapporto di questa corsa con
+# tutti i casi elencati qui per nome, eseguiti e riusciti, nessun caso saltato, fallito o in errore.
+# Una classe esclusa o non trovata da surefire (rapporto assente), un caso rinominato o tolto (caso
+# assente) o saltato fanno fallire la verifica.
+echo "== [3/7] controllo dei rapporti dei test della tabella dei conti (#59)"
+pretendi_casi() {
+  local classe="io.github.ltoscano.carddemo.parity.$1" rapporto
+  shift
+  rapporto="carddemo-parity/target/surefire-reports/TEST-${classe}.xml"
+  if [ ! -f "${rapporto}" ]; then
+    echo "ERRORE: rapporto dei test della tabella dei conti assente: ${rapporto}" >&2
+    return 1
+  fi
+  if ! java quality/RapportoSurefire.java "${rapporto}" "${MENB_VERIFY_RUN_ID}" "${classe}" "$@" </dev/null; then
+    echo "ERRORE: rapporto dei test della tabella dei conti non valido: ${rapporto}" >&2
+    return 1
+  fi
+  return 0
+}
+pretendi_casi AccountSchemaTest \
+  colonneNomiOrdineTipiPrecisioneScalaCollazioneNotNullNessunPredefinito \
+  vincoliChiavePrimariaCheckSullaChiaveELunghezzaDeiTesti \
+  soloLIndiceDellaChiavePrimaria \
+  oggettiDelloSchemaETrigger \
+  massimoEMinimoDellaPictureSiRileggonoIdentici \
+  unaCifraInteraInPiuERifiutata \
+  chiaveNegativaRifiutata \
+  chiaveDuplicataRifiutata \
+  decimaliInPiuArrotondatiDalDatabase \
+  testoPiuLungoOPiuCortoRifiutatoAncheConSoliSpazi \
+  testoDiNCaratteriRilettoIdenticoSpaziCompresi \
+  confrontiConParametroDiNCaratteri \
+  ordinamentoDeiTestiPerCodiceDelCarattere \
+  ordinePerChiaveNumericoCrescente || exit 1
+pretendi_casi AccountContrattoTest \
+  ogniCampoElementareDelContrattoHaLaSuaColonnaENessunaInPiu || exit 1
+pretendi_casi AccountMigrazioneTest \
+  migrazioneApplicataDueVolteNonCambiaNullaENonFallisce \
+  migrazioneModificataDopoLApplicazioneFaFallireLAvvio \
+  primoAvvioERiavvioBatchPoiOnlineSuDatabaseVuoto \
+  primoAvvioERiavvioOnlinePoiBatchSuDatabaseVuoto || exit 1
 
 # POM effettivi del reattore (maven-help-plugin, versione fissata): la configurazione dei plugin di
 # copertura e di analisi statica si legge da qui, come la vede Maven (ereditarieta', profili,
