@@ -159,6 +159,11 @@ class AccountMigrazioneTest {
                 "--spring.datasource.username=" + postgres.getUsername(),
                 "--spring.datasource.password=" + postgres.getPassword(),
                 "--server.port=0"));
+        if (app == BatchApplication.class) {
+            // Con due job (installationCheckJob e READACCT, issue #67) ogni avvio di batch indica il job:
+            // qui quello che questi avvii eseguivano gia'.
+            argomenti.add("--spring.batch.job.name=installationCheckJob");
+        }
         argomenti.addAll(List.of(altri));
         ConfigurableApplicationContext contesto = new SpringApplicationBuilder(app).run(argomenti.toArray(String[]::new));
         try {

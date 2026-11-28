@@ -17,7 +17,8 @@
 #                          account con 12 colonne, storico con la sola V1__account.sql riuscita: su
 #                          un database nuovo li ha creati il caricatore, primo a partire (#60);
 #                          online ha eseguito Flyway all'avvio (nel suo output: migrazione validata)
-#   5. batch-1, batch-2    docker compose run --rm batch, due volte; dopo ciascun lancio,
+#   5. batch-1, batch-2    docker compose run --rm batch --spring.batch.job.name=installationCheckJob,
+#                          due volte (con due job ogni avvio indica il job, #67); dopo ciascun lancio,
 #                          Flyway eseguito anche da batch (nel suo output: migrazione validata,
 #                          nessuna da applicare) e verifica in PostgreSQL delle esecuzioni di
 #                          installationCheckJob
@@ -60,6 +61,7 @@ SHORT_TIMEOUT=60
 # Immagine per la richiesta HTTP dall'host (verificata su Docker Hub il 27 nov 2026).
 CURL_IMAGE="curlimages/curl:8.23.0@sha256:3fb7e13e5d179a845c97d78204f3f1064d1907037f26a3ebf91710571151fd93"
 LABEL="com.docker.compose.project=${PROJECT}"
+# Con due job (installationCheckJob e READACCT, issue #67) ogni avvio di batch indica il job.
 JOB_NAME="installationCheckJob"
 STEP_NAME="installationCheckStep"
 
@@ -612,7 +614,8 @@ for n in 1 2; do
   # Output in un file della cartella privata (non in $(...): un processo figlio sopravvissuto
   # all'arresto terrebbe aperta la pipe), poi mostrato e letto.
   batch_log="${WORK}/batch-${n}.log"
-  limited "${BATCH_TIMEOUT}" "${COMPOSE[@]}" run --rm -T batch </dev/null >"${batch_log}" 2>&1 || rc=$?
+  limited "${BATCH_TIMEOUT}" "${COMPOSE[@]}" run --rm -T batch "--spring.batch.job.name=${JOB_NAME}" </dev/null \
+    >"${batch_log}" 2>&1 || rc=$?
   batch_out="$(<"${batch_log}")" || fail "lettura dell'output del runner batch fallita"
   while IFS= read -r line; do printf '   | %s\n' "${line}"; done <<EOF
 ${batch_out}
@@ -646,7 +649,8 @@ fi
 rc=0
 batch_log="${WORK}/batch-primo.log"
 limited "${BATCH_TIMEOUT}" "${COMPOSE[@]}" run --rm -T \
-  -e "SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${FIRST_DB}" batch </dev/null >"${batch_log}" 2>&1 || rc=$?
+  -e "SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${FIRST_DB}" batch "--spring.batch.job.name=${JOB_NAME}" \
+  </dev/null >"${batch_log}" 2>&1 || rc=$?
 batch_out="$(<"${batch_log}")" || fail "lettura dell'output del runner batch fallita"
 while IFS= read -r line; do printf '   | %s\n' "${line}"; done <<EOF
 ${batch_out}
@@ -765,7 +769,8 @@ loader_started="$(limited "${SHORT_TIMEOUT}" docker inspect --format '{{.State.S
   || fail "ispezione del container del caricatore fallita"
 rc=0
 batch_log="${WORK}/batch-3.log"
-limited "${BATCH_TIMEOUT}" "${COMPOSE[@]}" run --rm -T batch </dev/null >"${batch_log}" 2>&1 || rc=$?
+limited "${BATCH_TIMEOUT}" "${COMPOSE[@]}" run --rm -T batch "--spring.batch.job.name=${JOB_NAME}" </dev/null \
+  >"${batch_log}" 2>&1 || rc=$?
 batch_out="$(<"${batch_log}")" || fail "lettura dell'output del runner batch fallita"
 while IFS= read -r line; do printf '   | %s\n' "${line}"; done <<EOF
 ${batch_out}
