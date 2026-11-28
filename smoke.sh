@@ -732,26 +732,64 @@ compare_vbrc() {
   log "VBRCFILE: $((p / 2)) byte, ${r} record logici con il descrittore uguali al riferimento"
 }
 
-# compare_console STDOUT RIFERIMENTO: stesso numero di righe (2 + 15 x N); le righe di classe a uguali,
-# nella stessa posizione; le righe #OSSERVAZIONE del riferimento presenti ma non confrontate.
+# count_nul FILE: numero di byte nulli del file, in NUL_OUT. "read" di bash scarta i byte nulli senza
+# avvisare, quindi il confronto riga per riga non li vedrebbe: si contano a parte, nel container db, senza
+# pipeline (tr scrive in un file temporaneo del container, wc lo conta; set -e ferma il comando al primo
+# errore). Fallisce se il comando fallisce o se la risposta non e' un numero.
+NUL_OUT=""
+count_nul() {
+  local raw
+  NUL_OUT=""
+  if ! limited "${SHORT_TIMEOUT}" "${COMPOSE[@]}" exec -T db \
+    sh -c 'set -eu; t="$(mktemp)"; tr -cd "\000" >"${t}"; wc -c <"${t}"; rm -f "${t}"' \
+    <"$1" >"${WORK}/nul.out" 2>"${WORK}/nul.err"; then
+    err "conteggio dei byte nulli di $1 fallito: $(<"${WORK}/nul.err")"
+    return 1
+  fi
+  raw="$(<"${WORK}/nul.out")" || return 1
+  if ! [[ "${raw}" =~ ^[[:space:]]*([0-9]+)[[:space:]]*$ ]]; then
+    err "risposta non numerica del conteggio dei byte nulli: '${raw}'"
+    return 1
+  fi
+  NUL_OUT="${BASH_REMATCH[1]}"
+}
+
+# compare_console STDOUT RIFERIMENTO: lo standard output deve finire esattamente dopo l'ultima riga attesa,
+# terminata da LF; stesso numero di righe (2 + 15 x N); le righe di classe a uguali, nella stessa
+# posizione; le righe #OSSERVAZIONE del riferimento presenti ma non confrontate; nessun byte nullo. "read"
+# restituisce un errore a fine file anche quando ha letto una riga incompleta (dati senza LF finale): per
+# questo, dopo ogni lettura fallita, si controlla anche che la variabile sia rimasta vuota.
 compare_console() {
   local out="$1" ref="$2" a b i=0
   [ -f "${ref}" ] || fail "riferimento assente: ${ref}"
   exec 3<"${ref}" 4<"${out}" || fail "apertura della console o del riferimento fallita"
-  while IFS= read -r a <&3; do
+  while :; do
+    a=""
+    if ! IFS= read -r a <&3; then
+      [ -z "${a}" ] || fail "riferimento ${ref##*/}: ultima riga senza LF: «${a}»"
+      break
+    fi
     i=$((i + 1))
-    IFS= read -r b <&4 || fail "console: ${i} righe attese o piu', lo standard output finisce prima (riga ${i}: «${a}»)"
+    b=""
+    if ! IFS= read -r b <&4; then
+      [ -z "${b}" ] || fail "console riga ${i}: riga senza LF finale «${b}» (attesa «${a}» terminata da LF)"
+      fail "console: ${i} righe attese o piu', lo standard output finisce prima (riga ${i}: «${a}»)"
+    fi
     case "${a}" in
       '#OSSERVAZIONE'*) continue ;;
     esac
     [ "${a}" = "${b}" ] || fail "console riga ${i}: attesa «${a}», trovata «${b}»"
   done
+  b=""
   if IFS= read -r b <&4; then
     fail "console: riga in eccesso $((i + 1)): «${b}»"
   fi
+  [ -z "${b}" ] || fail "console: dati in eccesso dopo la riga ${i}, senza LF finale: «${b}»"
   exec 3<&- 4<&-
   [ "${i}" -eq $((2 + 15 * READACCT_N)) ] || fail "riferimento della console di ${i} righe, attese $((2 + 15 * READACCT_N))"
-  log "console: ${i} righe, quelle di classe a uguali al riferimento"
+  count_nul "${out}" || fail "conteggio dei byte nulli della console fallito"
+  [ "${NUL_OUT}" = "0" ] || fail "console: ${NUL_OUT} byte nulli nello standard output (attesi 0)"
+  log "console: ${i} righe terminate da LF e nient'altro, nessun byte nullo, quelle di classe a uguali al riferimento"
 }
 
 limited "${SHORT_TIMEOUT}" mkdir "${READACCT_DIR}" </dev/null || fail "creazione della cartella ${READACCT_DIR} fallita"
