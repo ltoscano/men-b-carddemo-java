@@ -26,6 +26,7 @@ import org.junit.platform.testkit.engine.Events;
 class FallimentoAttesoEstensioneTest {
 
     static final String CAMPIONE = "motivo-campione";
+    static final String C = "io.github.ltoscano.carddemo.parity.FallimentoAttesoEstensioneTest$Campione";
 
     @TempDir
     Path tmp;
@@ -112,10 +113,12 @@ class FallimentoAttesoEstensioneTest {
     void corpoCheFallissePerUnAltroMotivoRisultaFallitoSenzaRicevuta() throws IOException {
         Path ricevute = tmp.resolve("ricevute");
         String m = fallitoCon(esegui("fallissePerAltro", elenco(riga("fallissePerAltro", 999, CAMPIONE)), ricevute));
-        assertTrue(m.startsWith("FALLIMENTO-ATTESO-MOTIVO-DIVERSO"), m);
+        assertEquals("FALLIMENTO-ATTESO-MOTIVO-DIVERSO: " + C + "#fallissePerAltro doveva fallire per 'motivo-campione'"
+                + " ed e' fallito per un altro motivo: java.lang.IllegalStateException: errore del database simulato", m);
         m = fallitoCon(esegui("fallissePerUnAltroMotivoDichiarato",
                 elenco(riga("fallissePerUnAltroMotivoDichiarato", 999, CAMPIONE)), ricevute));
-        assertTrue(m.startsWith("FALLIMENTO-ATTESO-MOTIVO-DIVERSO"), m);
+        assertEquals("FALLIMENTO-ATTESO-MOTIVO-DIVERSO: " + C + "#fallissePerUnAltroMotivoDichiarato doveva fallire per"
+                + " 'motivo-campione' ed e' fallito per 'altro-motivo'", m);
         assertFalse(Files.exists(ricevute), "nessuna ricevuta per un motivo diverso");
     }
 
@@ -123,7 +126,8 @@ class FallimentoAttesoEstensioneTest {
     void corpoCheRiesceRisultaFallitoConLaRichiestaDiTogliereLaMarcatura() throws IOException {
         Path ricevute = tmp.resolve("ricevute");
         String m = fallitoCon(esegui("riesce", elenco(riga("riesce", 999, CAMPIONE)), ricevute));
-        assertTrue(m.startsWith("FALLIMENTO-ATTESO-RIUSCITO") && m.contains("togliere la marcatura"), m);
+        assertEquals("FALLIMENTO-ATTESO-RIUSCITO: " + C + "#riesce ora riesce: togliere la marcatura @FallimentoAtteso"
+                + " e la sua riga da quality/fallimenti-attesi.tsv (issue 999)", m);
         assertFalse(Files.exists(ricevute));
     }
 
@@ -131,11 +135,14 @@ class FallimentoAttesoEstensioneTest {
     void casoMarcatoSenzaRigaOConRigaDiversaRisultaFallito() throws IOException {
         Path ricevute = tmp.resolve("ricevute");
         String m = fallitoCon(esegui("fallisceComeDichiarato", elenco(riga("riesce", 999, CAMPIONE)), ricevute));
-        assertTrue(m.startsWith("FALLIMENTO-ATTESO-NON-IN-ELENCO"), m);
+        assertEquals("FALLIMENTO-ATTESO-NON-IN-ELENCO: " + C + "#fallisceComeDichiarato e' marcato @FallimentoAtteso"
+                + " ma non ha la sua riga in quality/fallimenti-attesi.tsv", m);
         m = fallitoCon(esegui("fallisceComeDichiarato", elenco(riga("fallisceComeDichiarato", 998, CAMPIONE)), ricevute));
-        assertTrue(m.startsWith("FALLIMENTO-ATTESO-DIVERSO-DALL-ELENCO"), m);
+        assertEquals("FALLIMENTO-ATTESO-DIVERSO-DALL-ELENCO: " + C + "#fallisceComeDichiarato: marcatura issue=999"
+                + " motivo=motivo-campione, elenco issue=998 motivo=motivo-campione", m);
         m = fallitoCon(esegui("fallisceComeDichiarato", elenco(riga("fallisceComeDichiarato", 999, "altro")), ricevute));
-        assertTrue(m.startsWith("FALLIMENTO-ATTESO-DIVERSO-DALL-ELENCO"), m);
+        assertEquals("FALLIMENTO-ATTESO-DIVERSO-DALL-ELENCO: " + C + "#fallisceComeDichiarato: marcatura issue=999"
+                + " motivo=motivo-campione, elenco issue=999 motivo=altro", m);
         assertFalse(Files.exists(ricevute));
     }
 

@@ -138,16 +138,31 @@ final class ComparatoreReadacct {
 
     static void confrontaFisso(String nome, Path file, List<Riferimento> riferimento, int lunghezza) throws IOException {
         byte[] dati = leggiUscita(nome, file);
-        if (dati.length % lunghezza != 0) {
-            throw new AssertionError("LUNGHEZZA: " + nome + " di " + dati.length + " byte, non multiplo di " + lunghezza);
-        }
-        int trovati = dati.length / lunghezza;
-        int comuni = Math.min(trovati, riferimento.size());
+        int completi = dati.length / lunghezza;
+        int resto = dati.length % lunghezza;
+        int attesi = riferimento.size();
+        int comuni = Math.min(completi, attesi);
         for (int r = 0; r < comuni; r++) {
             confrontaRecord(nome, r + 1, riferimento.get(r).byteAttesi(), dati, r * lunghezza, lunghezza);
         }
-        if (trovati != riferimento.size()) {
-            throw new AssertionError("NUMERO-DI-RECORD: " + nome + " ha " + trovati + " record, attesi " + riferimento.size());
+        if (completi < attesi) {
+            if (resto > 0) {
+                // record troncato: i suoi byte si confrontano con l'inizio del record di riferimento
+                confrontaByte(nome, completi + 1, riferimento.get(completi).byteAttesi(), dati, completi * lunghezza, resto);
+                throw new AssertionError(String.format("LUNGHEZZA: %s di %d byte: record %d troncato a %d byte su %d"
+                        + " (fine del file all'offset %d)", nome, dati.length, completi + 1, resto, lunghezza, dati.length));
+            }
+            throw new AssertionError(String.format("NUMERO-DI-RECORD: %s ha %d record, attesi %d: primo record mancante %d"
+                    + " (fine del file all'offset %d)", nome, completi, attesi, completi + 1, dati.length));
+        }
+        int fineAttesa = attesi * lunghezza;
+        if (dati.length > fineAttesa) {
+            if (resto == 0) {
+                throw new AssertionError(String.format("NUMERO-DI-RECORD: %s ha %d record, attesi %d: primo record in eccesso %d"
+                        + " all'offset %d", nome, completi, attesi, attesi + 1, fineAttesa));
+            }
+            throw new AssertionError(String.format("LUNGHEZZA: %s di %d byte: %d byte in eccesso dopo i %d record attesi,"
+                    + " dall'offset %d (record %d)", nome, dati.length, dati.length - fineAttesa, attesi, fineAttesa, attesi + 1));
         }
     }
 
@@ -156,7 +171,12 @@ final class ComparatoreReadacct {
             throw new AssertionError("LUNGHEZZA-RECORD: " + nome + " record " + record + " di " + lunghezza
                     + " byte, atteso " + atteso.length);
         }
-        for (int i = 0; i < lunghezza; i++) {
+        confrontaByte(nome, record, atteso, dati, base, lunghezza);
+    }
+
+    /** Confronta i primi {@code n} byte del record con il riferimento, saltando i byte mascherati. */
+    private static void confrontaByte(String nome, int record, int[] atteso, byte[] dati, int base, int n) {
+        for (int i = 0; i < n; i++) {
             int trovato = dati[base + i] & 0xff;
             if (atteso[i] >= 0 && atteso[i] != trovato) {
                 throw new AssertionError(String.format("BYTE-DIVERSO: %s record %d posizione %d: atteso %02x, trovato %02x",
@@ -230,8 +250,28 @@ final class ComparatoreReadacct {
             throw errore;
         }
         if (trovati.size() != riferimento.size()) {
-            throw new AssertionError("NUMERO-DI-RECORD: VBRCFILE ha " + trovati.size() + " record, attesi " + riferimento.size());
+            // offset del primo record mancante o in eccesso: somma dei record letti, ciascuno con il suo descrittore
+            int k = Math.min(trovati.size(), riferimento.size());
+            long offset = 0;
+            for (int r = 0; r < k; r++) {
+                offset += trovati.get(r).length + 4;
+            }
+            throw new AssertionError(String.format("NUMERO-DI-RECORD: VBRCFILE ha %d record, attesi %d: primo record %s %d %s %d",
+                    trovati.size(), riferimento.size(), trovati.size() < riferimento.size() ? "mancante" : "in eccesso", k + 1,
+                    trovati.size() < riferimento.size() ? "(fine del file all'offset" : "all'offset", offset)
+                    + (trovati.size() < riferimento.size() ? ")" : ""));
         }
+    }
+
+    /** Colonna (da 1) del primo carattere diverso tra due righe; se una e' l'inizio dell'altra, la lunghezza della piu' corta + 1. */
+    static int colonna(byte[] a, byte[] b) {
+        int n = Math.min(a.length, b.length);
+        for (int i = 0; i < n; i++) {
+            if (a[i] != b[i]) {
+                return i + 1;
+            }
+        }
+        return n + 1;
     }
 
     /** Righe dello standard output: ogni riga terminata da LF, nessun CR. */
@@ -268,13 +308,19 @@ final class ComparatoreReadacct {
                 continue;
             }
             if (!java.util.Arrays.equals(attese.get(i), trovate.get(i))) {
-                throw new AssertionError("CONSOLE: riga " + (i + 1) + ": attesa «" + attesa + "», trovata «"
-                        + new String(trovate.get(i), StandardCharsets.ISO_8859_1) + "»");
+                throw new AssertionError("CONSOLE: riga " + (i + 1) + " colonna " + colonna(attese.get(i), trovate.get(i))
+                        + ": attesa «" + attesa + "», trovata «" + new String(trovate.get(i), StandardCharsets.ISO_8859_1) + "»");
             }
         }
-        if (trovate.size() != attese.size()) {
+        if (trovate.size() < attese.size()) {
             throw new AssertionError("CONSOLE: " + trovate.size() + " righe sullo standard output, attese " + attese.size()
-                    + " (2 + 15 x " + n + ")");
+                    + " (2 + 15 x " + n + "): prima riga mancante " + (comuni + 1) + " «"
+                    + new String(attese.get(comuni), StandardCharsets.ISO_8859_1) + "»");
+        }
+        if (trovate.size() > attese.size()) {
+            throw new AssertionError("CONSOLE: " + trovate.size() + " righe sullo standard output, attese " + attese.size()
+                    + " (2 + 15 x " + n + "): prima riga in eccesso " + (comuni + 1) + " «"
+                    + new String(trovate.get(comuni), StandardCharsets.ISO_8859_1) + "»");
         }
     }
 }

@@ -138,6 +138,15 @@ class ComparatoreReadacctTest {
         assertTrue(e.getMessage().startsWith(diagnosi), caso + ": diagnosi inattesa: " + e.getMessage());
     }
 
+    /** Come {@link #respinto}, ma la diagnosi deve coincidere per intero. */
+    private void esatto(String caso, Consumer<Uscite> alterazione, String diagnosi) throws IOException {
+        Uscite u = fedeli("mirato");
+        alterazione.accept(u);
+        AssertionError e = assertThrows(AssertionError.class, () -> confronta("mirato", u), caso + ": non respinto");
+        System.out.println("[comparatore] " + caso + " -> " + e.getMessage());
+        assertEquals(diagnosi, e.getMessage(), caso + ": diagnosi inattesa");
+    }
+
     private static void scambia(byte[] dati, int a, int b, int lunghezza) {
         byte[] t = Arrays.copyOfRange(dati, a * lunghezza, (a + 1) * lunghezza);
         System.arraycopy(dati, b * lunghezza, dati, a * lunghezza, lunghezza);
@@ -199,14 +208,31 @@ class ComparatoreReadacctTest {
 
     @Test
     void recordInMenoInPiuEScambiati() throws IOException {
-        respinto("OUTFILE un record in meno", u -> u.outfile = Arrays.copyOf(u.outfile, u.outfile.length - 107),
-                "NUMERO-DI-RECORD: OUTFILE ha 49 record, attesi 50");
-        respinto("OUTFILE un record in piu'", u -> {
+        esatto("OUTFILE un record in meno", u -> u.outfile = Arrays.copyOf(u.outfile, u.outfile.length - 107),
+                "NUMERO-DI-RECORD: OUTFILE ha 49 record, attesi 50: primo record mancante 50 (fine del file all'offset 5243)");
+        esatto("OUTFILE un record in piu'", u -> {
             byte[] piu = Arrays.copyOf(u.outfile, u.outfile.length + 107);
             System.arraycopy(u.outfile, u.outfile.length - 107, piu, u.outfile.length, 107);
             u.outfile = piu;
-        }, "NUMERO-DI-RECORD: OUTFILE ha 51 record, attesi 50");
+        }, "NUMERO-DI-RECORD: OUTFILE ha 51 record, attesi 50: primo record in eccesso 51 all'offset 5350");
         respinto("OUTFILE record 1 e 2 scambiati", u -> scambia(u.outfile, 0, 1, 107), "BYTE-DIVERSO: OUTFILE record 1 posizione 11:");
+    }
+
+    @Test
+    void fileTroncatiParzialiOConRecordInPiuDiconoRecordEOffset() throws IOException {
+        esatto("OUTFILE troncato a meta' dell'ultimo record", u -> u.outfile = Arrays.copyOf(u.outfile, u.outfile.length - 70),
+                "LUNGHEZZA: OUTFILE di 5280 byte: record 50 troncato a 37 byte su 107 (fine del file all'offset 5280)");
+        esatto("OUTFILE con 10 byte in eccesso", u -> u.outfile = Arrays.copyOf(u.outfile, u.outfile.length + 10),
+                "LUNGHEZZA: OUTFILE di 5360 byte: 10 byte in eccesso dopo i 50 record attesi, dall'offset 5350 (record 51)");
+        esatto("ARRYFILE vuoto", u -> u.arryfile = new byte[0],
+                "NUMERO-DI-RECORD: ARRYFILE ha 0 record, attesi 50: primo record mancante 1 (fine del file all'offset 0)");
+        esatto("VBRCFILE senza l'ultimo record", u -> u.vbrcfile = Arrays.copyOf(u.vbrcfile, u.vbrcfile.length - 43),
+                "NUMERO-DI-RECORD: VBRCFILE ha 99 record, attesi 100: primo record mancante 100 (fine del file all'offset 2907)");
+        esatto("VBRCFILE con un record in piu'", u -> {
+            byte[] piu = Arrays.copyOf(u.vbrcfile, u.vbrcfile.length + 43);
+            System.arraycopy(u.vbrcfile, u.vbrcfile.length - 43, piu, u.vbrcfile.length, 43);
+            u.vbrcfile = piu;
+        }, "NUMERO-DI-RECORD: VBRCFILE ha 101 record, attesi 100: primo record in eccesso 101 all'offset 2950");
     }
 
     @Test
@@ -237,16 +263,19 @@ class ComparatoreReadacctTest {
     @Test
     void consoleAlterataRespinta() throws IOException {
         respinto("console riga 2 alterata", u -> u.console.set(1, riga("ACCT-ID                 :00000000009")),
-                "CONSOLE: riga 2:");
+                "CONSOLE: riga 2 colonna 36:");
         respinto("console riga 12 con uno spazio finale in meno", u -> {
             String r = new String(u.console.get(11), StandardCharsets.ISO_8859_1);
             assertTrue(r.endsWith(" "), "la riga 12 doveva finire con uno spazio: «" + r + "»");
             u.console.set(11, riga(r.substring(0, r.length() - 1)));
-        }, "CONSOLE: riga 12:");
+        }, "CONSOLE: riga 12 colonna 35:");
         respinto("console una riga in meno", u -> u.console.remove(u.console.size() - 1),
-                "CONSOLE: 751 righe sullo standard output, attese 752");
+                "CONSOLE: 751 righe sullo standard output, attese 752 (2 + 15 x 50): prima riga mancante 752 «");
+        respinto("console una riga in piu' in fondo", u -> u.console.add(riga("INFO fine del job READACCT")),
+                "CONSOLE: 753 righe sullo standard output, attese 752 (2 + 15 x 50): prima riga in eccesso 753"
+                        + " «INFO fine del job READACCT»");
         respinto("console una riga di log in piu'", u -> u.console.add(0, riga("INFO avvio del job READACCT")),
-                "CONSOLE: riga 1:");
+                "CONSOLE: riga 1 colonna 1:");
     }
 
     @Test

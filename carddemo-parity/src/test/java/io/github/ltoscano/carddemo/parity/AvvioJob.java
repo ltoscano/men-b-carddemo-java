@@ -16,24 +16,43 @@ import java.util.concurrent.TimeUnit;
  * Avvio del job READACCT in un processo proprio (issue #65, contratto in {@code docs/contratti.md}).
  *
  * <p>Il processo e' lanciato con il java della JVM dei test; standard output e standard error vanno
- * su due file (nessun blocco per buffer pieni) e si leggono per intero dopo la fine del processo;
- * l'attesa ha un limite di tempo, allo scadere il processo e' terminato e il test fallisce.
+ * su due file (nessun blocco per buffer pieni) e si leggono per intero dopo la fine del processo.
+ * L'attesa ha un limite di tempo: allo scadere, o se il test viene interrotto, si termina l'intero
+ * albero del processo (discendenti compresi), con attese limitate, e si verifica che nessuno sopravviva.
  */
 final class AvvioJob {
 
     /** Codice del motivo dichiarato del fallimento atteso dei casi di parita' di READACCT. */
     static final String JOB_ASSENTE = "job-readacct-assente";
 
-    /**
-     * Diagnostica nativa di Spring Boot 4.2.0 (BatchJobLauncherAutoConfiguration) per un
-     * {@code spring.batch.job.name} che non corrisponde ad alcun job: letta dall'applicazione del
-     * 28 nov 2026 (codice di uscita 1, causa {@code IllegalStateException}).
+    /*
+     * Diagnostica nativa di Spring Boot 4.2.0 per uno spring.batch.job.name che non corrisponde ad
+     * alcun job, letta dall'applicazione del 28 nov 2026 (codice di uscita 1): il bean
+     * jobLauncherApplicationRunner non si crea perche' JobLauncherApplicationRunner.afterPropertiesSet
+     * chiama Assert.state, che solleva l'IllegalStateException. La traccia, sullo standard output, e':
+     *   org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'jobLauncherApplicationRunner' ...
+     *   ...
+     *   Caused by: java.lang.IllegalStateException: No job found with name 'READACCT'
+     *   	at org.springframework.util.Assert.state(Assert.java:102) ...
+     *   	at org.springframework.boot.batch.autoconfigure.JobLauncherApplicationRunner.afterPropertiesSet(JobLauncherApplicationRunner.java:90) ...
      */
-    static final String DIAGNOSTICA_JOB_ASSENTE = "java.lang.IllegalStateException: No job found with name 'READACCT'";
+    static final String ECCEZIONE_BEAN =
+            "org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'jobLauncherApplicationRunner'";
+    static final String CAUSA = "Caused by: java.lang.IllegalStateException: No job found with name 'READACCT'";
+    static final String PRIMO_FRAME = "\tat org.springframework.util.Assert.state(";
+    static final String SECONDO_FRAME =
+            "\tat org.springframework.boot.batch.autoconfigure.JobLauncherApplicationRunner.afterPropertiesSet(";
     static final int USCITA_JOB_ASSENTE = 1;
 
-    /** Limite di tempo di un avvio del job. */
-    static final Duration LIMITE = Duration.ofMinutes(4);
+    /** Righe di Spring Batch che mostrano l'avvio di un job o di un passo: con una di queste il job esiste. */
+    static final List<String> TRACCE_DI_AVVIO = List.of("] launched with the following parameters", "Executing step: [");
+
+    /** Limite di tempo predefinito di un avvio; si cambia con la proprieta' di sistema {@value #PROPRIETA_LIMITE}. */
+    static final String PROPRIETA_LIMITE = "menb.avvio.limite";
+    static final Duration LIMITE_PREDEFINITO = Duration.ofMinutes(4);
+
+    /** Attesa limitata della fine di ogni processo dell'albero dopo la terminazione forzata. */
+    static final Duration ATTESA_TERMINAZIONE = Duration.ofSeconds(20);
 
     /** Esito di un avvio: codice di uscita, standard output e standard error per intero. */
     record Esito(int uscita, byte[] stdout, byte[] stderr) {
@@ -50,6 +69,12 @@ final class AvvioJob {
     }
 
     private AvvioJob() {
+    }
+
+    /** Limite di un avvio: {@value #PROPRIETA_LIMITE} (durata ISO-8601, per esempio PT4M) o {@link #LIMITE_PREDEFINITO}. */
+    static Duration limite() {
+        String valore = System.getProperty(PROPRIETA_LIMITE);
+        return valore == null || valore.isEmpty() ? LIMITE_PREDEFINITO : Duration.parse(valore);
     }
 
     /** Jar eseguibile di carddemo-batch di questa build (proprieta' {@code menb.batch.jar} del POM). */
@@ -99,24 +124,113 @@ final class AvvioJob {
                 .redirectInput(ProcessBuilder.Redirect.from(new java.io.File("/dev/null")));
         pb.environment().putAll(ambiente);
         Process p = pb.start();
-        if (!p.waitFor(limite.toMillis(), TimeUnit.MILLISECONDS)) {
-            p.destroyForcibly();
-            p.waitFor(30, TimeUnit.SECONDS);
-            throw new AssertionError("AVVIO-LIMITE-DI-TEMPO: il job non e' terminato entro " + limite + ": " + comando);
+        boolean terminato;
+        try {
+            terminato = p.waitFor(limite.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            terminaAlbero(p.toHandle());
+            throw e;
+        }
+        if (!terminato) {
+            List<Long> sopravvissuti = terminaAlbero(p.toHandle());
+            throw new AssertionError("AVVIO-LIMITE-DI-TEMPO: il processo non e' terminato entro " + limite + "; "
+                    + (sopravvissuti.isEmpty() ? "albero terminato, nessun processo sopravvissuto"
+                            : "processi ancora vivi dopo la terminazione: " + sopravvissuti)
+                    + "; comando: " + comando);
         }
         return new Esito(p.exitValue(), Files.readAllBytes(out), Files.readAllBytes(err));
     }
 
-    /** Vero se e solo se l'esito e' la diagnostica nativa del job READACCT inesistente. */
+    /**
+     * Termina forzatamente il processo e tutti i suoi discendenti (elenco preso prima di terminare,
+     * perche' un figlio orfano non risulta piu' discendente), attende la fine di ciascuno per al piu'
+     * {@link #ATTESA_TERMINAZIONE} e restituisce i pid di quelli ancora vivi.
+     */
+    static List<Long> terminaAlbero(ProcessHandle radice) throws InterruptedException {
+        // dalle foglie alla radice: ogni processo e' terminato mentre il suo genitore e' ancora vivo e
+        // puo' raccoglierlo; un orfano terminato dopo la morte del genitore resterebbe zombie
+        List<ProcessHandle> albero = new ArrayList<>(radice.descendants().toList());
+        albero.sort((a, b) -> Integer.compare(profondita(b, radice), profondita(a, radice)));
+        albero.add(radice);
+        long scadenza = System.nanoTime() + ATTESA_TERMINAZIONE.toNanos();
+        List<Long> vivi = new ArrayList<>();
+        for (ProcessHandle h : albero) {
+            h.destroyForcibly();
+            long resto = Math.max(0, scadenza - System.nanoTime());
+            try {
+                h.onExit().get(resto, TimeUnit.NANOSECONDS);
+            } catch (java.util.concurrent.TimeoutException | java.util.concurrent.ExecutionException e) {
+                // verificato sotto con isAlive
+            }
+        }
+        for (ProcessHandle h : albero) {
+            if (h.isAlive()) {
+                vivi.add(h.pid());
+            }
+        }
+        return vivi;
+    }
+
+    private static int profondita(ProcessHandle h, ProcessHandle radice) {
+        int d = 0;
+        for (ProcessHandle p = h; p.pid() != radice.pid() && d < 1000; d++) {
+            java.util.Optional<ProcessHandle> genitore = p.parent();
+            if (genitore.isEmpty()) {
+                break;
+            }
+            p = genitore.get();
+        }
+        return d;
+    }
+
+    /**
+     * Vero se e solo se l'esito e' la diagnostica nativa del selettore di Spring Boot per il job
+     * READACCT inesistente: codice di uscita 1; in uno stesso flusso (stdout o stderr) la riga
+     * {@link #ECCEZIONE_BEAN} e, esattamente una volta, la riga {@link #CAUSA} seguita subito da
+     * {@link #PRIMO_FRAME} e {@link #SECONDO_FRAME}; in nessuno dei due flussi una traccia di avvio di
+     * un job o di un passo ({@link #TRACCE_DI_AVVIO}). Ogni altro errore, prima o dopo la selezione, no.
+     */
     static boolean jobAssente(Esito esito) {
-        return esito.uscita() == USCITA_JOB_ASSENTE && esito.testo().contains(DIAGNOSTICA_JOB_ASSENTE);
+        if (esito.uscita() != USCITA_JOB_ASSENTE) {
+            return false;
+        }
+        String testo = esito.testo();
+        for (String traccia : TRACCE_DI_AVVIO) {
+            if (testo.contains(traccia)) {
+                return false;
+            }
+        }
+        int blocchi = 0;
+        for (byte[] flusso : List.of(esito.stdout(), esito.stderr())) {
+            String[] righe = new String(flusso, StandardCharsets.ISO_8859_1).split("\r?\n", -1);
+            boolean bean = false;
+            int qui = 0;
+            for (int i = 0; i < righe.length; i++) {
+                if (righe[i].startsWith(ECCEZIONE_BEAN)) {
+                    bean = true;
+                }
+                if (righe[i].equals(CAUSA)) {
+                    if (i + 2 >= righe.length || !righe[i + 1].startsWith(PRIMO_FRAME)
+                            || !righe[i + 2].startsWith(SECONDO_FRAME)) {
+                        return false;
+                    }
+                    qui++;
+                }
+            }
+            if (qui > 0 && !bean) {
+                return false;
+            }
+            blocchi += qui;
+        }
+        return blocchi == 1;
     }
 
     /** Lancia {@link MotivoDichiarato} se il job READACCT non esiste; altrimenti non fa nulla. */
     static void verificaJobPresente(Esito esito) {
         if (jobAssente(esito)) {
             throw new MotivoDichiarato(JOB_ASSENTE, "l'applicazione non trova un job di nome READACCT ("
-                    + DIAGNOSTICA_JOB_ASSENTE + ", codice di uscita " + esito.uscita() + ")");
+                    + "diagnostica del selettore di Spring Boot: " + CAUSA.substring("Caused by: ".length())
+                    + " da JobLauncherApplicationRunner.afterPropertiesSet, codice di uscita " + esito.uscita() + ")");
         }
     }
 }

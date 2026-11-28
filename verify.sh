@@ -377,6 +377,7 @@ pretendi_casi_caricamento ComparatoreReadacctTest \
   arryfileByteAlterato \
   arryfileByte80E99ComeLiScriveLOracleRespinti \
   recordInMenoInPiuEScambiati \
+  fileTroncatiParzialiOConRecordInPiuDiconoRecordEOffset \
   vbrcfileLunghezzaDescrittoreInversoEFormatoGnuCobolRespinti \
   consoleAlterataRespinta \
   codiceDiUscitaEFileAssenteRespinti \
@@ -392,7 +393,10 @@ pretendi_casi_caricamento FallimentoAttesoEstensioneTest \
 pretendi_casi_caricamento AvvioJobTest \
   nessunJobReadacctRiconosciutoComeMotivoDichiarato \
   jobDiNomeReadacctConAltroBeanEsisteEFallisceSuiConfrontiPoiSullaRiesecuzione \
-  erroreDelDatabaseDelSoloAvvioNonEIlMotivoDichiarato || exit 1
+  jobReadacctPresenteCheFallisceConIlTestoDelJobAssenteNonEIlMotivoDichiarato \
+  erroreConIlTestoDelJobAssentePrimaDellaSelezioneNonEIlMotivoDichiarato \
+  erroreDelDatabaseDelSoloAvvioNonEIlMotivoDichiarato \
+  alloScadereDelLimiteSiTerminaLInteroAlbero || exit 1
 pretendi_casi_caricamento ReadacctParitaTest \
   esempio \
   mirato \

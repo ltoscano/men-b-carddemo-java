@@ -286,6 +286,24 @@ Riferimento: soltanto `oracle/golden/readacct/generati/golden/<scenario>/` (#55)
 - Riesecuzione (`mirato`): dopo il primo avvio i tre file sono sostituiti da file più lunghi con contenuto sentinella (`S`); secondo avvio senza ricaricare; tutti i confronti si ripetono.
 - Ordine di lettura (`mirato`): ingresso con i record in ordine inverso, caricato così (il test verifica l'ordine fisico con `ctid`); stessi riferimenti.
 
+### Come si riconosce il job assente
+
+Diagnostica nativa letta dall'applicazione attuale (Spring Boot 4.2.0, comando del contratto): il bean `jobLauncherApplicationRunner` non si crea perché `JobLauncherApplicationRunner.afterPropertiesSet` chiama `Assert.state`, il processo esce con 1 e lo standard output contiene:
+
+```
+org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'jobLauncherApplicationRunner' defined in class path resource [...BatchJobLauncherAutoConfiguration.class]: No job found with name 'READACCT'
+...
+Caused by: java.lang.IllegalStateException: No job found with name 'READACCT'
+	at org.springframework.util.Assert.state(Assert.java:102) ...
+	at org.springframework.boot.batch.autoconfigure.JobLauncherApplicationRunner.afterPropertiesSet(JobLauncherApplicationRunner.java:90) ...
+```
+
+Il test (`AvvioJob.jobAssente`) lo riconosce solo se valgono tutte: codice di uscita 1; in uno stesso flusso (stdout o stderr) una riga che inizia con `org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'jobLauncherApplicationRunner'` e, una volta sola in tutto l'output, la riga esatta `Caused by: java.lang.IllegalStateException: No job found with name 'READACCT'` seguita subito dai due frame `Assert.state(` e `JobLauncherApplicationRunner.afterPropertiesSet(`; nessuna traccia di avvio di un job o di un passo (`] launched with the following parameters`, `Executing step: [`, righe che Spring Batch scrive davvero: `AvvioJobTest` lo verifica sull'uscita reale di un job di prova). Ogni altro esito non è il motivo dichiarato: un errore con lo stesso testo prima della selezione (frame diversi) e un job avviato che fallisce con lo stesso testo, anche stampando la stessa traccia (traccia di avvio presente), sono fallimenti ordinari (`AvvioJobTest`, due controprove obbligatorie). Limite dichiarato: un'applicazione che stampasse la traccia nativa senza avviare alcun job e senza scrivere le righe di avvio sarebbe riconosciuta come job assente; un testo contraffatto in questo modo è dello stesso genere degli strumenti che restituiscono dati falsi ma ben formati (`CLAUDE.md`).
+
+### Diagnosi del comparatore
+
+Ogni diagnosi nomina file, record e posizione da 1 (`BYTE-DIVERSO: OUTFILE record 3 posizione 20: atteso 32, trovato 33`). Le diagnosi strutturali indicano il primo record mancante o in eccesso e il suo offset in byte dall'inizio del file, contato da 0 (`NUMERO-DI-RECORD: OUTFILE ha 49 record, attesi 50: primo record mancante 50 (fine del file all'offset 5243)`; `LUNGHEZZA: OUTFILE di 5280 byte: record 50 troncato a 37 byte su 107 (fine del file all'offset 5280)`, dopo aver confrontato i byte presenti del record troncato); per la console la riga e la colonna del primo carattere diverso (`CONSOLE: riga 12 colonna 35: ...`) o la prima riga mancante o in eccesso con il suo testo.
+
 ### Che cosa il test non garantisce
 
 - I byte mascherati (`**`: byte 77-78 di `OUTFILE`) non sono confrontati: qualunque valore è accettato (controprova `controprovaByteMascheratoAccettato`).
