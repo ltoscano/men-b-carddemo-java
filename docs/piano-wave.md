@@ -248,7 +248,7 @@ Questa sezione prevale sulle precedenti dove differiscono. In particolare la con
 | 2. File dei conti caricato nell'oracle | #53 (ristretta al solo file dei conti) | chiusa (PR #58) |
 | 3. Output di riferimento di `CBACT01C` | #55 (divisa da #9) | in revisione (PR #64) |
 | 4a. Tabella dei conti in PostgreSQL | #59 | chiusa (PR #61) |
-| 4b. Caricamento dei conti in PostgreSQL | #60 | in corso |
+| 4b. Caricamento dei conti in PostgreSQL | #60 | chiusa (PR #66) |
 | 5. Test di parità di `CBACT01C` contro il golden, scritto prima della traduzione e rosso finché il Java non esiste | #65 | specifica contestata; bloccata da #55 e #60 |
 | 6. `CBACT01C` tradotto: il test del passo 5 passa, senza che l'Esecutore lo modifichi | #67 | specifica contestata; bloccata da #65 |
 

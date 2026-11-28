@@ -520,3 +520,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T07:21:27Z,pr-64,correzione-fine,opus,orologio,SHA 805b0eb; rilievi 1-4 dichiarati corretti; riferimenti invariati
 2026-11-28T07:21:34Z,pr-64,codex-inizio,codex,orologio,validazione 2 di 2 ristretta
 2026-11-28T07:24:51Z,wave2-traduzione,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
+2026-11-28T07:40:08Z,pr-66,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0
+2026-11-28T07:40:59Z,pr-66,merge,fable,orologio,squash; chiude #60
