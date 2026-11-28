@@ -1,0 +1,4 @@
+# Golden del job READACCT (issue #55): file prodotti dall'oracle confrontati byte per byte; nessuna conversione
+# di fine riga ne' altro filtro di testo, su nessuna piattaforma.
+readacct/generati/** -text
+readacct/*.tsv -text

@@ -71,7 +71,8 @@ PATH=/usr/bin:/bin sh "$ESEGUI" "$out" CBACT01C --dd "DD_ACCTFILE=$idx" \
   --dd "DD_OUTFILE=$w/OUTFILE" --dd "DD_ARRYFILE=$w/ARRYFILE" --dd "DD_VBRCFILE=$w/VBRCFILE" \
   || die "esecuzione di CBACT01C fallita (esegui.sh)"
 c="$(codice "$out/CBACT01C.txt")" || exit 1
-[ "$c" -eq 0 ] || { echo "scenario.sh: CBACT01C: codice di uscita $c, atteso 0 (rapporto in $out/CBACT01C.txt)" >&2; exit 5; }
+[ "$c" -eq 0 ] || { cat "$out/CBACT01C.txt" >&2 || die "rapporto illeggibile (cat)"
+  echo "scenario.sh: CBACT01C: codice di uscita $c, atteso 0 (rapporto in $out/CBACT01C.txt)" >&2; exit 5; }
 for f in OUTFILE ARRYFILE VBRCFILE; do [ -f "$w/$f" ] || die "uscita assente: $w/$f"; done
 r=0; sh "$ESTRAI" "$w/VBRCFILE" "$out/VBRCFILE.logici.txt" || r=$?
 case "$r" in

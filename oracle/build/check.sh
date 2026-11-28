@@ -47,7 +47,7 @@ AMB_RUN_FISSO="PATH=/usr/bin:/bin HOME=/tmp LC_ALL=C COB_LIBRARY_PATH=/oracle-bi
 # Opzioni fissate, nell'ordine (motivi in oracle/cobc.opts e oracle/README.md).
 OPZIONI_FISSE="-std=ibm -fbinary-truncate -fsingle-quote -fsign=EBCDIC -Wall -I/legacy/app/cpy"
 # Passi dei criteri di accettazione: nome e dipendenza (- = nessuna). selftest ha solo check.sh.
-PASSI="build:- avvio:build avviatore:build abend:build segno:build dialetto:build routines:build adattamenti:build dati:build selftest:-"
+PASSI="build:- avvio:build avviatore:build abend:build segno:build dialetto:build routines:build adattamenti:build dati:build golden:dati selftest:-"
 
 tmp="$(mktmp)" || exit 1
 # Volume di prova di ensure_legacy_volume (punto 6d), rimosso all'uscita: solo questo, nessuna risorsa condivisa.

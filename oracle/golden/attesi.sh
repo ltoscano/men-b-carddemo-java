@@ -6,21 +6,22 @@
 #   - i conti coperti sono quelli dovuti: nello scenario esempio almeno cinque, tra cui il primo e l'ultimo del file e il
 #     49; nello scenario mirato ogni conto della tabella delle sostituzioni (SOSTITUZIONI); per ogni conto i quattro
 #     record;
-#   - ogni byte atteso coincide con il byte del golden (OUTFILE e ARRYFILE fisici, VBRCFILE dai record logici);
-#   - le posizioni attese ND sono esattamente le posizioni escluse per quel conto (ESCLUSIONI): ne' una in piu' ne' una
-#     in meno.
+#   - ogni byte atteso coincide con il byte del golden, cioe' del riferimento di parita' (OUTFILE.riferimento.txt,
+#     ARRYFILE.riferimento.txt, VBRCFILE.riferimento.txt: correzioni dell'oracle applicate, esclusioni mascherate);
+#   - le posizioni attese ND sono esattamente le posizioni escluse per quel conto (ESCLUSIONI) e quelle mascherate (**)
+#     nel riferimento: ne' una in piu' ne' una in meno.
 # Ogni comando ha l'esito controllato; nessuna pipeline. Uscite: 0; 1 errore dello strumento; 4 differenza.
-# Uso: attesi.sh ATTESI SOSTITUZIONI ESCLUSIONI SCENARIO DIR   (DIR: OUTFILE, ARRYFILE, VBRCFILE.logici.txt)
+# Uso: attesi.sh ATTESI SOSTITUZIONI ESCLUSIONI SCENARIO DIR   (DIR: i tre *.riferimento.txt)
 set -u
-die() { echo "attesi.sh: $*" >&2; [ -z "${lav:-}" ] || rm -rf "$lav"; exit 1; }
+die() { echo "attesi.sh: $*" >&2; exit 1; }
 [ $# -eq 5 ] || die "uso: attesi.sh ATTESI SOSTITUZIONI ESCLUSIONI SCENARIO DIR"
-att="$1"; sos="$2"; esc="$3"; scen="$4"; dir="$5"; lav=""
-for f in "$att" "$sos" "$esc" "$dir/OUTFILE" "$dir/ARRYFILE" "$dir/VBRCFILE.logici.txt"; do [ -f "$f" ] || die "file assente: $f"; done
+att="$1"; sos="$2"; esc="$3"; scen="$4"; dir="$5"
+for f in "$att" "$sos" "$esc" "$dir/OUTFILE.riferimento.txt" "$dir/ARRYFILE.riferimento.txt" "$dir/VBRCFILE.riferimento.txt"; do
+  [ -f "$f" ] || die "file assente: $f"
+done
 lav="$(mktemp -d /tmp/issue55-attesi.XXXXXX)" || die "cartella temporanea non creata (mktemp)"
-od -An -v -tx1 "$dir/OUTFILE" > "$lav/o.hex" || die "lettura di OUTFILE fallita (od)"
-od -An -v -tx1 "$dir/ARRYFILE" > "$lav/a.hex" || die "lettura di ARRYFILE fallita (od)"
 r=0
-awk -F '\t' -v S="$scen" -v FA="$att" -v FS2="$sos" -v FE="$esc" -v FO="$lav/o.hex" -v FR="$lav/a.hex" -v FV="$dir/VBRCFILE.logici.txt" '
+awk -F '\t' -v S="$scen" -v FA="$att" -v FS2="$sos" -v FE="$esc" -v FO="$dir/OUTFILE.riferimento.txt" -v FR="$dir/ARRYFILE.riferimento.txt" -v FV="$dir/VBRCFILE.riferimento.txt" '
   function bv(x) { return index("0123456789abcdef", substr(x, 1, 1)) * 16 + index("0123456789abcdef", substr(x, 2, 1)) - 17 }
   function key(h,   i, s) { s = ""; for (i = 1; i <= 21; i += 2) s = s sprintf("%c", bv(substr(h, i, 2))); return s }
   BEGIN { LEN["OUTFILE"] = 107; LEN["ARRYFILE"] = 110; LEN["VBRC1"] = 12; LEN["VBRC2"] = 39
@@ -44,15 +45,12 @@ awk -F '\t' -v S="$scen" -v FA="$att" -v FS2="$sos" -v FE="$esc" -v FO="$lav/o.h
     if (NF != 7) { print "esclusioni, riga " FNR ": " NF " colonne, attese 7"; bad = 1; next }
     if ($1 != "*" && $1 != S) next
     ne++; EF[ne] = $2; EK[ne] = $3; EP[ne] = $4 + 0; EN[ne] = $5 + 0; next }
-  FILENAME == FO { m = split($0, a, " "); for (i = 1; i <= m; i++) O[++no] = a[i]; next }
-  FILENAME == FR { m = split($0, a, " "); for (i = 1; i <= m; i++) R[++nr] = a[i]; next }
-  FILENAME == FV { nv++; split($0, a, " "); V[nv] = a[3]; next }
+  FILENAME == FO { no++; GR["OUTFILE", key($0)] = $0; if (no == 1) prima = key($0); ultima = key($0); next }
+  FILENAME == FR { nr++; GR["ARRYFILE", key($0)] = $0; next }
+  FILENAME == FV { nv++; split($0, a, " "); GR[(nv % 2 ? "VBRC1" : "VBRC2"), key(a[3])] = a[3]; next }
   END {
     if (bad) exit 4
-    if (no % 107 || nr % 110) { print "OUTFILE di " no " byte o ARRYFILE di " nr " byte: non multipli del record"; exit 4 }
-    for (j = 1; j <= no / 107; j++) { s = ""; for (i = 1; i <= 107; i++) s = s O[(j - 1) * 107 + i]; GR["OUTFILE", key(s)] = s; if (j == 1) prima = key(s); ultima = key(s) }
-    for (j = 1; j <= nr / 110; j++) { s = ""; for (i = 1; i <= 110; i++) s = s R[(j - 1) * 110 + i]; GR["ARRYFILE", key(s)] = s }
-    for (j = 1; j <= nv; j++) GR[(j % 2 ? "VBRC1" : "VBRC2"), key(V[j])] = V[j]
+    if (no == 0 || nr == 0 || nv == 0) { print "riferimento vuoto"; exit 4 }
     # conti dovuti
     if (S == "esempio") { if (nk < 5) { print "scenario esempio: " nk " conti con attesi, almeno 5"; err++ }
       split(prima " " ultima " 00000000049", d, " "); for (i = 1; i <= 3; i++) if (!(d[i] in KS)) { print "scenario esempio: manca il conto " d[i]; err++ } }
@@ -65,13 +63,14 @@ awk -F '\t' -v S="$scen" -v FA="$att" -v FS2="$sos" -v FE="$esc" -v FO="$lav/o.h
       for (p = 1; p <= LEN[f]; p++) { ex = 0
         for (e = 1; e <= ne; e++) if (EF[e] == f && (EK[e] == "*" || EK[e] == k) && p >= EP[e] && p < EP[e] + EN[e]) ex = 1
         gb = substr(s, 2 * p - 1, 2)
-        if (X[g, p] == "ND") { if (!ex) { print k " " f " byte " p ": atteso ND ma la posizione non e esclusa"; err++ } ; continue }
+        if (X[g, p] == "ND") { if (!ex) { print k " " f " byte " p ": atteso ND ma la posizione non e esclusa"; err++ }
+          if (gb != "**") { print k " " f " byte " p ": atteso ND ma il riferimento non e mascherato (" gb ")"; err++ }; continue }
         if (ex) { print k " " f " byte " p ": posizione esclusa ma l atteso a mano ha un valore"; err++ }
         if (X[g, p] != gb) { print k " " f " byte " p ": atteso a mano " X[g, p] ", golden " gb; err++ } else ok++ }
       nrec++ }
     if (err) exit 4
     printf "attesi a mano: %d conti, %d record, %d byte coincidenti con il golden; posizioni ND = posizioni escluse\n", nk, nrec, ok
-  }' "$att" "$sos" "$esc" "$lav/o.hex" "$lav/a.hex" "$dir/VBRCFILE.logici.txt" > "$lav/esito" 2>&1 || r=$?
+  }' "$att" "$sos" "$esc" "$dir/OUTFILE.riferimento.txt" "$dir/ARRYFILE.riferimento.txt" "$dir/VBRCFILE.riferimento.txt" > "$lav/esito" 2>&1 || r=$?
 case "$r" in
   0) cat "$lav/esito" || die "esito non stampato (cat)" ;;
   4) cat "$lav/esito" >&2; rm -rf "$lav"; echo "attesi.sh: ATTESI A MANO DIVERSI dal golden (scenario $scen)" >&2; exit 4 ;;
