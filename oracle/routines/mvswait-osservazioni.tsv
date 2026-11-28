@@ -1,0 +1,13 @@
+# Ingressi di COBSWAIT il cui esito NON e' determinato dal sorgente (spiegazione in mvswait-osservazioni.md).
+# Cio' che si registra per questi casi e' un'osservazione di GnuCOBOL, non un atteso ricavato dal sorgente,
+# e non e' un riferimento per la migrazione. Rapporti osservati: mvswait-osservati/<caso>.txt.
+# Colonne separate da TAB:
+#   caso       nome (lettere maiuscole e cifre)
+#   programma  COBSWAIT
+#   ingresso   vuoto (file SYSIN di 0 byte) | testo:<testo> (una riga con il testo e il ritorno a capo)
+#   previsione valore che l'Esecutore prevedeva PRIMA di eseguire (decimale), o ? se non sapeva prevederlo
+caso	programma	ingresso	previsione
+O1	COBSWAIT	vuoto	0
+O2	COBSWAIT	testo:3600	3600
+O3	COBSWAIT	testo:ABCDEFGH	?
+O4	COBSWAIT	testo:0000360X	?

@@ -1,0 +1,8 @@
+== codice di uscita
+97
+== stdout
+PRIMA a5a5a5a5 80000000 a5a5a5a5
+== stderr
+Warning: program compiled against libxml 212 using older 209
+MENB-ORACLE MVSWAIT: ATTESA RICHIESTA 2147483648 (X'80000000') OLTRE X'7FFFFFFF': ABEND X'12F' DI STIMER NON RIPRODOTTO
+== file nella cartella di lavoro

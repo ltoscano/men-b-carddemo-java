@@ -1,0 +1,9 @@
+== codice di uscita
+0
+== stdout
+== stderr
+Warning: program compiled against libxml 212 using older 209
+MENB-ORACLE MVSWAIT: ATTESA RICHIESTA 0000003600 (X'00000E10') CENTESIMI DI SECONDO, NON ESEGUITA
+== file nella cartella di lavoro
+== sysin
+fornito: 81 byte, sha256 59f72f438a9238e4075a94771e25eab6332d991df50053c8c3ca83784cddb907

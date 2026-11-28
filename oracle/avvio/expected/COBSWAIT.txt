@@ -1,7 +1,7 @@
 == codice di uscita
-98
+0
 == stdout
 == stderr
 Warning: program compiled against libxml 212 using older 209
-MENB-ORACLE SEGNAPOSTO: MVSWAIT NON IMPLEMENTATO (ISSUE #24)
+MENB-ORACLE MVSWAIT: ATTESA RICHIESTA 0000000000 (X'00000000') CENTESIMI DI SECONDO, NON ESEGUITA
 == file nella cartella di lavoro

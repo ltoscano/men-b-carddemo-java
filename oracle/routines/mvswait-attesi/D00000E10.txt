@@ -1,0 +1,10 @@
+== codice di uscita
+0
+== stdout
+PRIMA a5a5a5a5 00000e10 a5a5a5a5
+RC  000000000
+DOPO  a5a5a5a5 00000e10 a5a5a5a5
+== stderr
+Warning: program compiled against libxml 212 using older 209
+MENB-ORACLE MVSWAIT: ATTESA RICHIESTA 0000003600 (X'00000E10') CENTESIMI DI SECONDO, NON ESEGUITA
+== file nella cartella di lavoro

@@ -46,7 +46,7 @@ LAUNCHER=/oracle/launcher/avvia.c
 # Tabulazione (separatore di programs.tsv): una costante, senza comandi.
 TAB='	'
 # Programmi di prova (oracle/tests/), tutti eseguibili.
-PROVE="PARMECHO ABDUSING ABDNOARG M03BCALL DTCCALL SEGNOPRB PERFPRB DATFTPRB IDXLOAD IDXDUMP"
+PROVE="PARMECHO ABDUSING ABDNOARG M03BCALL DTCCALL SEGNOPRB PERFPRB DATFTPRB IDXLOAD IDXDUMP WAITPRB"
 # Programmi del legacy compilati da una copia adattata (oracle/adattamenti/registro.md).
 ADATTATI="CBSTM03A"
 
