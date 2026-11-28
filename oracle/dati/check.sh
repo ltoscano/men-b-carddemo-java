@@ -183,6 +183,40 @@ neg ril49 "il programma di rilettura si ferma un record prima (ed esce con 0)" "
 riga="$(sed -n '4p' "$tmp/ril49/out/rilettura/IDXDUMP.txt")" || fail "rapporto della variante illeggibile"
 [ "$riga" = "IDXDUMP ACCTFILE RECORD LETTI 000049" ] || fail "prova ril49: la variante non si e' fermata a 49 record ('$riga')"
 log "   e la variante ha davvero riletto 49 record uscendo con 0"
+# Rilettura che si ferma un record prima SENZA simulare la fine del file: IDXDUMP stesso pretende lo stato 10 dopo
+# l'ultimo record ed esce con 8 (il controllo della fine del file e' nel programma, run.sh lo vede dal codice).
+cp "$ORACLE_ROOT/tests/IDXDUMP.cbl" "$tmp/IDXDUMP-49s.cbl" || fail "copia fallita"
+mutate "$tmp/IDXDUMP-49s.cbl" "s/^           PERFORM UNTIL IDX-STATUS NOT = '00'\$/           PERFORM UNTIL IDX-STATUS NOT = '00' OR WS-LETTI = 49/"
+compila_variante ril49s "$tmp/IDXDUMP-49s.cbl" IDXDUMP
+neg ril49s "la rilettura si ferma un record prima senza stato 10: IDXDUMP esce con 8" "IDXDUMP: codice di uscita 8, atteso 0" \
+  DATI_BIN_DIR="$tmp/ril49s/bin"
+riga="$(sed -n '4p' "$tmp/ril49s/out/rilettura/IDXDUMP.txt")" || fail "rapporto della variante illeggibile"
+[ "$riga" = "IDXDUMP ACCTFILE ERRORE READ 00 DOPO IL RECORD 000049" ] || fail "prova ril49s: motivo inatteso ('$riga')"
+log "   e IDXDUMP ha rifiutato la fine senza stato 10 ('$riga')"
+# Stati del caricatore provocati direttamente (IDXLOADF della build con esegui.sh): ogni ramo d'errore esce con 8 e
+# il suo messaggio. Non provocati qui: lettura con stato diverso da 00/10 e chiusure fallite (dichiarato nella PR).
+carica_diretto() { # carica_diretto ID PARM DD...: IDXLOADF in $tmp/ID; stampa codice e stdout del rapporto
+  local n="$1" parm="$2"; shift 2
+  mkdir -p "$tmp/$n" || return 2
+  cp "$REC" "$tmp/$n/ACCTFILE.rec" || return 2
+  orun -v "$tmp/$n:/d" -v "$BUILD_OUT/bin:/oracle-bin:ro" -- timeout -k 10 120 sh /oracle/esegui.sh /d IDXLOADF \
+    --parm "$parm" "$@" > "$tmp/$n.log" 2>&1 || { cat "$tmp/$n.log"; return 2; }
+  local c
+  sed -n '2,4p' "$tmp/$n/IDXLOADF.txt" || return 2
+  c="$(sed -n 2p "$tmp/$n/IDXLOADF.txt")" || return 2
+  [ "$c" = 0 ]
+}
+expect_fail "IDXLOADF: PARM sconosciuto" "IDXLOADF PARM SCONOSCIUTO: XREFFILE" \
+  carica_diretto st1 XREFFILE --dd DD_ENTRATA=/d/ACCTFILE.rec --dd DD_ACCTFILE=/d/A.dat
+expect_fail "IDXLOADF: DD_ENTRATA non impostata" "IDXLOADF DD_ENTRATA NON IMPOSTATA" \
+  carica_diretto st2 ACCTFILE --dd DD_ACCTFILE=/d/A.dat
+expect_fail "IDXLOADF: ingresso inesistente" "IDXLOADF ENTRATA ASSENTE: CBL_CHECK_FILE_EXIST" \
+  carica_diretto st3 ACCTFILE --dd DD_ENTRATA=/d/NESSUNO.rec --dd DD_ACCTFILE=/d/A.dat
+expect_fail "IDXLOADF: apertura del file indicizzato fallita (cartella inesistente)" "IDXLOADF ACCTFILE ERRORE OPEN" \
+  carica_diretto st4 ACCTFILE --dd DD_ENTRATA=/d/ACCTFILE.rec --dd DD_ACCTFILE=/d/nessuna/A.dat
+carica_diretto st5 ACCTFILE --dd DD_ENTRATA=/d/ACCTFILE.rec --dd DD_ACCTFILE=/d/A.dat > "$tmp/st5.out" 2>&1 \
+  || { cat "$tmp/st5.out" >&2; fail "IDXLOADF diretto con ingressi validi fallito"; }
+log "   controprova ok: IDXLOADF diretto con ingressi validi riesce ($(sed -n 3p "$tmp/st5.out"))"
 # Attesi alterati, uno per prova.
 k=0
 for v in "ACCTFILE.rapporto|s/^record 50\$/record 51/|ACCTFILE: rapporto diverso dall'atteso" \
