@@ -1,6 +1,11 @@
-# Stack CardDemo: database, servizio online, runner batch.
-#   docker compose up -d --wait        avvia db e online (batch non parte)
-#   docker compose run --rm batch      esegue installationCheckJob e termina
+# Stack CardDemo: database, caricatore dei conti, servizio online, runner batch.
+#   docker compose up -d --wait        avvia db, carica i conti (loader, termina), poi online
+#                                      (batch non parte); un caricamento fallito ferma l'avvio
+#   docker compose run --rm batch      rilancia il caricatore (gia' caricato: nessuna modifica),
+#                                      poi esegue installationCheckJob e termina
+# Su una tabella account gia' caricata con lo stesso file il caricatore termina con 0 senza scrivere,
+# quindi un secondo "up" sullo stesso volume riesce; con una tabella diversa dal file si ferma e
+# l'avvio fallisce. Per ricaricare si ricrea il volume: docker compose --profile batch down --volumes
 # Funziona da clone pulito senza creare file: ogni variabile ha un valore predefinito di
 # sviluppo, documentato in .env.example (copiarlo in .env solo per cambiarlo).
 
@@ -30,6 +35,20 @@ services:
       start_period: 60s
       start_interval: 1s
 
+  loader:
+    # Caricatore dei conti (issue #60): applica la migrazione con Flyway, carica il file passato come
+    # argomento (ACCTFILE.rec, nell'immagine) nella tabella account e termina con il codice
+    # dell'esito (0 riuscito o gia' caricato, 1 rifiutato, 2 errore). Nessun profilo: parte con "up".
+    build:
+      context: .
+      dockerfile: docker/loader.Dockerfile
+    command: ["/app/dati/ACCTFILE.rec"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *database-env
+
   online:
     build:
       context: .
@@ -39,6 +58,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      # Parte solo dopo un caricamento riuscito: "up --wait" attende il caricatore e un caricamento
+      # fallito ferma l'avvio.
+      loader:
+        condition: service_completed_successfully
     environment:
       <<: *database-env
     ports:
@@ -63,6 +86,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      # Come online: "docker compose run batch" rilancia il caricatore gia' terminato, che trova la
+      # tabella gia' caricata con lo stesso file e termina con 0 senza scrivere.
+      loader:
+        condition: service_completed_successfully
     environment:
       <<: *database-env
 

@@ -30,6 +30,15 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>carddemo-batch</artifactId>
     </dependency>
+    <!-- Classi di test di carddemo-domain (issue #60): l'ispezione del codice compilato di
+         NoFloatingPointBytecodeTest, riusata sulle classi di carddemo-loader. -->
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>carddemo-domain</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
@@ -105,6 +114,9 @@
             <!-- Contratto dati del record dei conti (#3), letto dal repository dal test di
                  corrispondenza tra tabella e contratto (issue #59), non copiato. -->
             <menb.contratto.account>${project.parent.basedir}/docs/legacy-map/data-contract/contratti/CVACT01Y.ACCOUNT-RECORD.tsv</menb.contratto.account>
+            <!-- File dei conti che legge l'oracle (#53), letto dal repository dai test del
+                 caricamento (issue #60), non copiato. -->
+            <menb.dati.acctfile>${project.parent.basedir}/analysis/oracle-dati/out/ACCTFILE.rec</menb.dati.acctfile>
           </systemPropertyVariables>
         </configuration>
       </plugin>

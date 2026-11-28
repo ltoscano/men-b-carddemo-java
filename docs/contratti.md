@@ -66,7 +66,7 @@ Test in `carddemo-domain/src/test/java/io/github/ltoscano/carddemo/domain/`:
 
 ## Tabella dei conti
 
-Issue #59. Prima tabella di business in PostgreSQL: `account`, una riga per record `ACCOUNT-RECORD` del file indicizzato dei conti (`AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS`, chiave `KEYS(11 0)` in `app/jcl/ACCTFILE.jcl`). La crea la migrazione versionata `carddemo-domain/src/main/resources/db/migration/V1__account.sql`, applicata da Flyway all'avvio di `online` e di `batch` (dettagli su Flyway e convivenza con Spring Batch in [`sviluppo.md`](sviluppo.md#tabella-dei-conti-e-flyway-59)). La tabella è vuota: il caricamento dei 50 conti di esempio è un'issue successiva.
+Issue #59. Prima tabella di business in PostgreSQL: `account`, una riga per record `ACCOUNT-RECORD` del file indicizzato dei conti (`AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS`, chiave `KEYS(11 0)` in `app/jcl/ACCTFILE.jcl`). La crea la migrazione versionata `carddemo-domain/src/main/resources/db/migration/V1__account.sql`, applicata da Flyway all'avvio di `online` e di `batch` (dettagli su Flyway e convivenza con Spring Batch in [`sviluppo.md`](sviluppo.md#tabella-dei-conti-e-flyway-59)). La riempie il caricatore dei conti (#60, sezione [Caricamento dei conti](#caricamento-dei-conti)).
 
 ### Colonne
 
@@ -156,4 +156,102 @@ I test stanno in `carddemo-parity/src/test/java/io/github/ltoscano/carddemo/pari
 ### Limiti dichiarati
 
 - Parità solo per ingressi canonici (decisione sopra): ciò che l'originale fa con un importo non canonico resta un'osservazione dell'oracle (#55).
-- Non esaminati qui: i caratteri oltre ASCII e la codifica del database (`UTF8`), che riguardano il caricamento.
+- Non esaminati qui: i caratteri oltre ASCII e la codifica del database (`UTF8`), che riguardano il caricamento (esaminati in #60, sezione seguente).
+
+## Caricamento dei conti
+
+Issue #60. Il modulo `carddemo-loader` carica nella tabella `account` un file di record a lunghezza fissa di 300 byte nel profilo dell'oracle, lo stesso formato che legge l'oracle GnuCOBOL. Il file di esempio è `analysis/oracle-dati/out/ACCTFILE.rec` (#53: 50 record, chiavi da 1 a 50, nell'ordine del file EBCDIC originale); lo stesso comando caricherà i file degli scenari di parità (#55), perché il file è un parametro.
+
+### Che cosa offre il codice
+
+Pacchetto `io.github.ltoscano.carddemo.loader`:
+
+| Tipo | Che cosa è |
+| --- | --- |
+| `CampoConto` | il tracciato di `ACCOUNT-RECORD`: per ogni campo elementare, `FILLER` compreso e nell'ordine del contratto, nome COBOL, offset (da 0), lunghezza, categoria e `PICTURE` normalizzata per `FieldPicture.of`, colonna di `account` (nessuna per il `FILLER`). Riporta il contratto [`CVACT01Y.ACCOUNT-RECORD.tsv`](legacy-map/data-contract/contratti/CVACT01Y.ACCOUNT-RECORD.tsv), che non si legge a run time: `docs/` è escluso dal contesto di build delle immagini (`.dockerignore`). Il test `TracciatoContoTest` li confronta riga per riga |
+| `CaricatoreConti` | `carica(Path file, Connection connessione)`: il caricamento, in una sola transazione; restituisce `EsitoCaricamento(record, giaCaricato)` |
+| `CaricamentoRifiutato` | eccezione con la diagnosi: che cosa ha fermato il caricamento e dove |
+| `CaricatoreApplication` | l'applicazione Spring Boot del servizio `loader` (vedi [`sviluppo.md`](sviluppo.md#caricamento-dei-conti-60)) |
+
+Ogni campo si decodifica con `GnuCobolFieldCodec.decode` (#54) alla posizione del tracciato; il caricatore non riscrive regole di codifica. Gli importi passano a PostgreSQL come `BigDecimal` con esattamente la scala della colonna, che è quella della `PICTURE` (2). Il caricatore lo verifica prima di ogni `setBigDecimal` e altrimenti si ferma: PostgreSQL arrotonderebbe in silenzio i decimali in più (vedi "Comportamento osservato di PostgreSQL"), quindi la sola rilettura non basterebbe. I testi passano con `setString`, esattamente n caratteri, spazi finali compresi.
+
+### Che cosa ferma il caricamento
+
+Nessuna riga scritta (transazione annullata), `CaricamentoRifiutato` con una diagnosi che dice il record (da 1), il campo e i byte (offset da 0 nel file e nel record), e in esadecimale i byte letti:
+
+| Condizione | Esempio di diagnosi (dai test) |
+| --- | --- |
+| dimensione non multipla di 300 | `1199 byte, non multiplo di 300: il record 4 e' incompleto, 299 byte dall'offset 900 del file` |
+| campo numerico non valido | `record 3 (offset 600-899 del file), campo ACCT-CASH-CREDIT-LIMIT (offset 636-647 del file, 36-47 del record): campo numerico non valido (INVALID), byte 202020202020202020202020` |
+| campo numerico non canonico (byte diversi da `encode(decode(byte))`) | zero negativo: `campo ACCT-CURR-BAL (...): rappresentazione non canonica del valore 0.00: byte 30303030303030303030307d, canonici 30303030303030303030307b`; segno alternativo (ultimo byte cifra ASCII invece della sovrapposizione): `campo ACCT-CREDIT-LIMIT (...): rappresentazione non canonica del valore 5000.00: byte 303030303030353030303030, canonici 30303030303035303030307b` |
+| `FILLER` diverso da 178 spazi | `campo FILLER (offset 722-899 del file, 122-299 del record): il FILLER deve essere di 178 spazi, all'offset 899 del file c'e' il byte 58` |
+| chiave duplicata | `campo ACCT-ID (offset 600-610 del file, 0-10 del record): chiave 1 duplicata, gia' nel record 1` |
+| byte nullo in un campo di testo | `campo ACCT-GROUP-ID (offset 712-721 del file, 112-121 del record): byte nullo X'00' all'offset 714 del file, non rappresentabile in una colonna di testo` |
+| importo con una scala diversa da quella della colonna (difesa: con la decodifica attuale non succede) | `campo ...: valore ... con scala 3, la colonna ... ha scala 2` |
+| tabella `account` non vuota e diversa dal file | `la tabella account non e' vuota (50 righe) e non contiene esattamente i 50 record del file: ... Prima differenza: chiave 1, record 1 (offset 0-299 del file), campo ACCT-CURR-BAL (offset 12-23 del file, 12-23 del record): nella tabella 195.00 (byte 30303030303030313935307b), nel file byte ...`; altre forme: `la tabella ha la chiave 51, che nel file non c'e'`, `record 50 (...): la chiave ACCT-ID del file manca nella tabella` |
+
+È la regola fissata dall'issue della tabella (#59): il sistema Java accetta solo ingressi canonici, così ogni riga corrisponde a un solo record di byte. Nulla viene normalizzato in silenzio e non esiste un elenco di "perdite accettate". I testi si verificano anche nell'altro verso (`encode(decode(byte))` uguale ai byte letti), che per un `X(n)` è l'identità: il controllo non scarta nulla oggi, rende esplicita la regola.
+
+**Ordine, transazione, concorrenza.** Prima la dimensione del file. Poi, nella transazione:
+
+1. `lock table account in exclusive mode`: il blocco esclude un altro caricatore e ogni scrittura fino alla fine della transazione, ma lascia le letture;
+2. il conteggio delle righe di `account`;
+3. con la tabella vuota, un record alla volta nell'ordine del file: decodifica e verifica di tutti i campi, controllo della chiave contro quelle già lette, verifica della scala, inserimento. Al primo errore la transazione si annulla; il caricamento conferma solo dopo l'ultimo record.
+
+Due caricatori avviati insieme non possono quindi trovare entrambi la tabella vuota: il secondo attende il blocco, poi trova la tabella piena e la confronta con il suo file (vedi sotto). Un file vuoto (0 byte) su tabella vuota è valido: 0 record, 0 righe, caricamento riuscito.
+
+**Riesecuzione** (specifica aggiornata dopo la validazione 1 della PR #66, registro voce 111). Su una tabella non vuota il caricatore non cancella e non aggiorna mai. Prima verifica tutto il file con le stesse regole, poi legge la tabella in ordine di chiave e confronta ogni riga, ricomposta con `encode` campo per campo, con il record del file che ha la stessa chiave:
+
+- se la tabella contiene **esattamente** i record del file (stesse chiavi e ogni riga uguale al suo record), termina con successo senza scrivere (`EsitoCaricamento.giaCaricato()`; nel log `CARICAMENTO RIUSCITO: già caricato: 50 record, nessuna modifica`);
+- altrimenti si ferma con la prima differenza in ordine di chiave: una riga diversa (chiave, record e campo, valore della tabella e byte del file), una chiave della tabella che il file non ha, oppure, dopo aver letto tutta la tabella, il primo record del file che manca.
+
+Così un secondo `docker compose up` sullo stesso volume riesce, e un database diverso da quello atteso è comunque segnalato. Sul mainframe `ACCTFILE.jcl` cancella e ricrea il file indicizzato (`app/jcl/ACCTFILE.jcl`: `DELETE` alla riga 25, `DEFINE CLUSTER` alla 36, poi `REPRO` alla 61); l'equivalente qui è ricreare il volume (comando in [`sviluppo.md`](sviluppo.md#caricamento-dei-conti-60)).
+
+**Caratteri oltre ASCII.** Il codec rappresenta ogni byte di un campo di testo come il carattere U+0000-U+00FF con lo stesso codice; PostgreSQL li conserva in UTF-8 (codifica del database letta nei test: `server_encoding`, `client_encoding` e codifica del database tutte `UTF8`). Il vincolo di lunghezza conta caratteri: un `X(10)` di dieci caratteri tra U+0080 e U+00FF occupa 20 byte (`octet_length`) ed è accettato. Solo U+0000 non è rappresentabile in una colonna di testo, ed è rifiutato prima di arrivare al database.
+
+**Regola sugli importi nel codice compilato.** L'ispezione del bytecode di `NoFloatingPointBytecodeTest` (#54, sezione "Codifica dei campi") copre anche le classi di produzione di `carddemo-loader`, senza eccezioni ammesse. La esegue `IspezioneBytecodeCaricatoreTest`, che riusa quella logica attraverso il jar delle classi di test di `carddemo-domain` (sotto).
+
+### Come si verifica
+
+Test in `carddemo-parity/src/test/java/io/github/ltoscano/carddemo/parity/` (più uno nel pacchetto `...domain`, sotto), contro PostgreSQL reale (Testcontainers, immagine di `compose.yaml`, migrazione con Flyway). Il contratto e il file di esempio si leggono dal repository (proprietà `menb.contratto.account` e `menb.dati.acctfile` impostate dal POM di `carddemo-parity`), senza copie.
+
+- **`ContiDiProva`** (appoggio, indipendente dal caricatore): ricava il tracciato dal contratto con una regola propria (`PICTURE` normalizzata e categoria da `pic`, `usage`, `segno`; cifre intere e decimali dalle colonne `cifre_intere` e `cifre_decimali`), non da `CampoConto`, e applica i controlli della specifica tra un file e la tabella:
+  1. righe = record; insieme delle chiavi uguale;
+  2. **ritorno al formato fisso**: ogni riga, letta con `ORDER BY acct_id`, si ricompone con `GnuCobolFieldCodec.encode` e 178 spazi di `FILLER` alle posizioni del contratto; il risultato deve essere uguale byte per byte al record del file, per tutti i record;
+  3. **totali di controllo**: la somma di ogni colonna numerica deve essere uguale (con `equals`, scala compresa) a quella calcolata dai byte del file con una lettura `DISPLAY` scritta nel test (cifre ASCII e sovrapposizione del segno, scala dalla colonna `cifre_decimali`), che non usa né il caricatore né la decodifica del codec;
+  4. la sequenza delle chiavi con `ORDER BY acct_id` deve essere quella del file;
+  6. **parametri consegnati al driver**: un intermediario (`java.lang.reflect.Proxy`) sulla connessione registra ogni `BigDecimal` passato a `setBigDecimal`; l'elenco deve essere, record per record, quello della lettura `DISPLAY` del test, con la stessa scala. Vede ciò che PostgreSQL arrotonderebbe in silenzio (un millesimo in più, una scala 3).
+- **`TracciatoContoTest`** (controllo 7): due casi, entrambi confrontati campo per campo **direttamente con le righe del TSV** (nome, offset, lunghezza, categoria da `usage`/`pic`/`segno`, `PICTURE` normalizzata dalle colonne `lunghezza`, `cifre_intere`, `cifre_decimali`, colonna; geometria del codec uguale alle stesse colonne), senza passare da altro codice dei test:
+  - `CampoConto` del caricatore;
+  - a parte, il modello `ContiDiProva.tracciato()` che usa il codificatore dei test.
+
+  Così uno scambio di offset fatto allo stesso modo nel caricatore e nel modello dei test fa fallire entrambi i casi.
+- **`CaricamentoContiTest`**: tre casi.
+  - `ACCTFILE.rec` caricato e confrontato con i controlli 1-4 e 6; primo e ultimo conto confrontati colonna per colonna con valori scritti a mano, letti dai byte del file; codifica del database dichiarata.
+  - Secondo caricamento dello stesso file: riesce come "già caricato", nessun inserimento preparato, righe e `xmin` invariati.
+  - Tabella diversa dal file: si ferma con la prima differenza, righe e `xmin` invariati. Casi provati: un importo alterato, una data alterata, una riga tolta, una riga in più, un file con un record in meno, un file vuoto.
+- **`CaricamentoContiCasiTest`**: casi costruiti in file temporanei.
+  - Rifiutati, ciascuno con la sua diagnosi e zero righe: zero negativo, segno alternativo, `FILLER` non vuoto, campo numerico con spazi, chiave duplicata, file troncato, byte nullo in un testo. Il record difettoso è il terzo di quattro, quindi una conferma anticipata lascerebbe righe.
+  - Accettati, con i controlli 1-4 e 6 e il confronto di ogni colonna con il valore di partenza: massimo e minimo della `PICTURE` (`±9999999999.99`, chiavi `0` e `99999999999`); file vuoto; tre record distinguibili campo per campo (le tre date diverse tra loro, credito e addebito di ciclo non nulli e diversi, limite di credito diverso dal limite di anticipo, gruppo non vuoto, stato diverso da `Y` e diverso da record a record, importi negativi); tre record con tutti i byte `0x80`-`0xFF` nei campi di testo (stringa letta via JDBC e ricodifica byte per byte).
+- **`CaricamentoConcorrenteTest`**: due caricatori avviati insieme su un database vuoto. Il test tiene un blocco `ACCESS EXCLUSIVE` su `account` finché `pg_locks` non mostra entrambi in attesa sulla tabella, poi lo rilascia; ogni attesa ha un limite.
+  - Con le stesse chiavi: uno scrive, l'altro termina come "già caricato".
+  - Con chiavi disgiunte: uno scrive, l'altro si ferma (`non contiene esattamente i 2 record del file`).
+
+  In entrambi i casi la tabella corrisponde al file del vincitore.
+- **`CaricatoreApplicazioneTest`**: l'applicazione avviata nel processo dei test su un database vuoto:
+  - applica la migrazione, carica e termina con 0;
+  - una seconda esecuzione termina con 0 senza scrivere (righe e `xmin` invariati);
+  - con una riga alterata termina con 1 senza scrivere;
+  - un file troncato termina con 1 e zero righe; file inesistente o argomenti sbagliati con 2.
+
+  Stesso limite di `AccountMigrazioneTest`: il classpath è quello di `carddemo-parity`; la prova con l'immagine del caricatore è nello smoke.
+- **`io.github.ltoscano.carddemo.domain.IspezioneBytecodeCaricatoreTest`** (in `carddemo-parity`, controllo 8): ispeziona le classi compilate di `carddemo-loader` (la cartella o il jar da cui le carica) con `NoFloatingPointBytecodeTest.supers` e `findings`. Le riusa attraverso il jar delle classi di test di `carddemo-domain` (`maven-jar-plugin`, obiettivo `test-jar`, esecuzione `classi-di-test` nel POM di `carddemo-domain`; dipendenza `type test-jar`, ambito `test`, nel POM di `carddemo-parity`); sta nel pacchetto `...domain` perché quei metodi sono visibili nel pacchetto. Pretende le quattro classi del caricatore e nessuna segnalazione: per il caricatore non c'è alcun restringimento ammesso.
+- **`./verify.sh`** pretende nel rapporto di questa corsa tutti i casi delle sei classi, per nome, eseguiti e non saltati (passo 3/7).
+- **`./smoke.sh`** verifica il servizio `loader` con la sua immagine (vedi [`sviluppo.md`](sviluppo.md#caricamento-dei-conti-60)).
+
+### Limiti dichiarati
+
+- Parità solo per ingressi canonici (decisione di #59): un file con un importo non canonico non si carica.
+- Il file si legge tutto in memoria (15.000 byte per l'esempio): adatto ai file di CardDemo e degli scenari, non a file di dimensioni arbitrarie.
+- Il confronto con una tabella già piena legge tutta la tabella in ordine di chiave: proporzionato a una tabella dei conti di CardDemo.
+- Il blocco `EXCLUSIVE` protegge solo dai caricatori e dalle scritture concorrenti durante la transazione; un'applicazione che scrive in `account` dopo il caricamento rende la tabella diversa dal file, e il caricatore successivo (per esempio al prossimo `up`) si ferma.
