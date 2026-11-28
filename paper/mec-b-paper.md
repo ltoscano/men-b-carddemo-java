@@ -573,7 +573,7 @@ Tre osservazioni che valgono oltre questi casi.
 
 - *"Bocciata" non significa "sbagliata".* In tutte e tre le PR il contenuto consegnato è stato confermato dal Validatore con ricostruzioni indipendenti. Il verdetto misura i controlli. Chi legge solo la riga del verdetto si fa un'idea sbagliata del lavoro.
 - *La verifica dell'Approvatore dopo la seconda validazione è stata breve*: 13 minuti per la PR #52 e 4 minuti e mezzo per la #57, contro i 16-28 di una validazione ristretta. È breve perché ha un solo scopo: rieseguire i controesempi del Validatore. Per non limitarsi a rieseguire le prove scritte dall'Esecutore, l'Approvatore ha costruito ogni volta una variante propria del controesempio.
-- *Docker è caduto due volte sotto carico* (tre validazioni e due Esecutori insieme). Due corse sono state rifatte. Il limite di tre validazioni in parallelo è prudente su una macchina sola.
+- *Docker è caduto almeno due volte*, con più validazioni ed Esecutori al lavoro sulla stessa macchina (lo riportano due Esecutori e il Validatore; il carico in quei momenti non è stato misurato). Le corse interrotte sono state rifatte. Il limite di tre validazioni in parallelo è prudente su una macchina sola.
 
 **Passo 26 — Due specifiche sul percorso, e due byte che nessuno determina.** Mentre le PR si chiudevano, il pianificatore ha scritto e fatto contestare le specifiche dei due passi successivi: il caricamento del file dei conti nell'oracle (#53) e l'output di riferimento del programma pilota (#55).
 
