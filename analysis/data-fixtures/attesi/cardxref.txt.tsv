@@ -1,0 +1,11 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+R	1	primo	30 35 30 30 30 32 34 34 35 33 37 36 35 37 34 30 30 30 30 30 30 30 30 35 30 30 30 30 30 30 30 30 30 30 35 30
+C	1	XREF-CARD-NUM	-	file	valido	testo	"0500024453765740"	latin-1, byte per byte (Alfanumerico)
+C	1	XREF-CUST-ID	-	file	valido	intero	50	cifre 0x30-0x39 '000000050' (DISPLAY senza segno)
+C	1	XREF-ACCT-ID	-	file	valido	intero	50	cifre 0x30-0x39 '00000000050' (DISPLAY senza segno)
+C	1	FILLER	-	riempimento	valido	testo	" "*14	riga di 36 byte per un record di 50: i 14 byte mancanti (offset 36-49) sono riempimento a destra con 0x20 (regola dichiarata); latin-1 (Alfanumerico)
+R	50	ultimo	39 38 30 35 35 38 33 34 30 38 39 39 36 35 38 38 30 30 30 30 30 30 30 34 30 30 30 30 30 30 30 30 30 30 34 30
+C	50	XREF-CARD-NUM	-	file	valido	testo	"9805583408996588"	latin-1, byte per byte (Alfanumerico)
+C	50	XREF-CUST-ID	-	file	valido	intero	40	cifre 0x30-0x39 '000000040' (DISPLAY senza segno)
+C	50	XREF-ACCT-ID	-	file	valido	intero	40	cifre 0x30-0x39 '00000000040' (DISPLAY senza segno)
+C	50	FILLER	-	riempimento	valido	testo	" "*14	riga di 36 byte per un record di 50: i 14 byte mancanti (offset 36-49) sono riempimento a destra con 0x20 (regola dichiarata); latin-1 (Alfanumerico)

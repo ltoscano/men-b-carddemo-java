@@ -1,0 +1,13 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+
+R	1	primo	f0 f1 f0 f0 f0 f1 d9 85 87 a4 93 81 99 40 e2 81 93 85 a2 40 c4 99 81 86 a3 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 f0 f0 f0 f0
+C	1	TRAN-TYPE-CD	-	file	valido	testo	"01"	cp037 (Pagina di codici z/OS): F0 F1
+C	1	TRAN-CAT-CD	-	file	valido	intero	1	zona F, cifre 0001 (DISPLAY senza segno, zos-ebcdic)
+C	1	TRAN-CAT-TYPE-DESC	-	file	valido	testo	"Regular Sales Draft" " "*31	cp037 (Pagina di codici z/OS): D9 85 87 A4 93 81 99 40 E2 81 93 85 A2 40 C4 99 81 86 A3, 40 x31
+C	1	FILLER	-	file	valido	testo	"0000"	cp037 (Pagina di codici z/OS): F0 x4
+
+R	18	ultimo	f0 f7 f0 f0 f0 f1 e2 81 93 85 a2 40 84 99 81 86 a3 40 83 99 85 84 89 a3 40 81 84 91 a4 a2 a3 94 85 95 a3 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 f0 f0 f0 f0
+C	18	TRAN-TYPE-CD	-	file	valido	testo	"07"	cp037 (Pagina di codici z/OS): F0 F7
+C	18	TRAN-CAT-CD	-	file	valido	intero	1	zona F, cifre 0001 (DISPLAY senza segno, zos-ebcdic)
+C	18	TRAN-CAT-TYPE-DESC	-	file	valido	testo	"Sales draft credit adjustment" " "*21	cp037 (Pagina di codici z/OS): E2 81 93 85 A2 40 84 99 81 86 A3 40 83 99 85 84 89 A3 40 81 84 91 A4 A2 A3 94 85 95 A3, 40 x21
+C	18	FILLER	-	file	valido	testo	"0000"	cp037 (Pagina di codici z/OS): F0 x4

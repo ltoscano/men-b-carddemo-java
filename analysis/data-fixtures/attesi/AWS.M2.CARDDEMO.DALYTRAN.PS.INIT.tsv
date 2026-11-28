@@ -1,0 +1,17 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+
+R	1	primo,ultimo,anomalo	00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 f0 f0 f0 f0 f0 f1 f0 f0
+C	1	TRAN-ID	-	file	valido	testo	"\u0000"*16	cp037 (Pagina di codici z/OS): 00 x16 = carattere U+0000
+C	1	TRAN-TYPE-CD	-	file	valido	testo	"\u0000"*2	cp037 (Pagina di codici z/OS): 00 x2 = carattere U+0000
+C	1	TRAN-CAT-CD	-	file	non-valido	-	-	byte 00 x4: zona 0 diversa da F (DISPLAY senza segno, zos-ebcdic)
+C	1	TRAN-SOURCE	-	file	valido	testo	"\u0000"*10	cp037 (Pagina di codici z/OS): 00 x10 = carattere U+0000
+C	1	TRAN-DESC	-	file	valido	testo	"\u0000"*100	cp037 (Pagina di codici z/OS): 00 x100 = carattere U+0000
+C	1	TRAN-AMT	-	file	non-valido	-	-	byte 00 x11: corpo con zona 0 diversa da F, ultimo byte 0x00 con zona 0 fuori tabella (DISPLAY con segno, zos-ebcdic)
+C	1	TRAN-MERCHANT-ID	-	file	non-valido	-	-	byte 00 x9: zona 0 diversa da F (DISPLAY senza segno, zos-ebcdic)
+C	1	TRAN-MERCHANT-NAME	-	file	valido	testo	"\u0000"*50	cp037 (Pagina di codici z/OS): 00 x50 = carattere U+0000
+C	1	TRAN-MERCHANT-CITY	-	file	valido	testo	"\u0000"*50	cp037 (Pagina di codici z/OS): 00 x50 = carattere U+0000
+C	1	TRAN-MERCHANT-ZIP	-	file	valido	testo	"\u0000"*10	cp037 (Pagina di codici z/OS): 00 x10 = carattere U+0000
+C	1	TRAN-CARD-NUM	-	file	valido	testo	"\u0000"*16	cp037 (Pagina di codici z/OS): 00 x16 = carattere U+0000
+C	1	TRAN-ORIG-TS	-	file	valido	testo	"\u0000"*26	cp037 (Pagina di codici z/OS): 00 x26 = carattere U+0000
+C	1	TRAN-PROC-TS	-	file	valido	testo	"\u0000"*26	cp037 (Pagina di codici z/OS): 00 x26 = carattere U+0000
+C	1	FILLER	-	file	valido	testo	"\u0000"*12 "00000100"	cp037 (Pagina di codici z/OS): 00 x12 = U+0000, poi F0 F0 F0 F0 F0 F1 F0 F0 = 00000100 (offset 342-349)

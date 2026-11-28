@@ -1,0 +1,11 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+R	1	primo	30 31 30 30 30 31 52 65 67 75 6c 61 72 20 53 61 6c 65 73 20 44 72 61 66 74 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 30 30 30 30
+C	1	TRAN-TYPE-CD	-	file	valido	testo	"01"	latin-1, byte per byte (Alfanumerico)
+C	1	TRAN-CAT-CD	-	file	valido	intero	1	cifre 0x30-0x39 '0001' (DISPLAY senza segno)
+C	1	TRAN-CAT-TYPE-DESC	-	file	valido	testo	"Regular Sales Draft" " "*31	latin-1, byte per byte, 31 byte 0x20 finali (Alfanumerico)
+C	1	FILLER	-	file	valido	testo	"0"*4	latin-1, 4 byte 0x30 (Alfanumerico)
+R	18	ultimo	30 37 30 30 30 31 53 61 6c 65 73 20 64 72 61 66 74 20 63 72 65 64 69 74 20 61 64 6a 75 73 74 6d 65 6e 74 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 30 30 30 30
+C	18	TRAN-TYPE-CD	-	file	valido	testo	"07"	latin-1, byte per byte (Alfanumerico)
+C	18	TRAN-CAT-CD	-	file	valido	intero	1	cifre 0x30-0x39 '0001' (DISPLAY senza segno)
+C	18	TRAN-CAT-TYPE-DESC	-	file	valido	testo	"Sales draft credit adjustment" " "*21	latin-1, byte per byte, 21 byte 0x20 finali (Alfanumerico)
+C	18	FILLER	-	file	valido	testo	"0"*4	latin-1, 4 byte 0x30 (Alfanumerico)

@@ -1,0 +1,4 @@
+tipo	record	campo	dettaglio
+campo-non-valido	1	TRAN-CAT-CD	00*4
+campo-non-valido	1	TRAN-AMT	00*11
+campo-non-valido	1	TRAN-MERCHANT-ID	00*9

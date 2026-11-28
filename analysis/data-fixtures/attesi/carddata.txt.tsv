@@ -1,0 +1,17 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+R	1	primo	30 35 30 30 30 32 34 34 35 33 37 36 35 37 34 30 30 30 30 30 30 30 30 30 30 35 30 37 34 37 41 6e 69 79 61 20 56 6f 6e 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 32 30 32 33 2d 30 33 2d 30 39 59 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20
+C	1	CARD-NUM	-	file	valido	testo	"0500024453765740"	latin-1, byte per byte (Alfanumerico)
+C	1	CARD-ACCT-ID	-	file	valido	intero	50	cifre 0x30-0x39 '00000000050' (DISPLAY senza segno)
+C	1	CARD-CVV-CD	-	file	valido	intero	747	cifre 0x30-0x39 '747' (DISPLAY senza segno)
+C	1	CARD-EMBOSSED-NAME	-	file	valido	testo	"Aniya Von" " "*41	latin-1, byte per byte, 41 byte 0x20 finali (Alfanumerico)
+C	1	CARD-EXPIRAION-DATE	-	file	valido	testo	"2023-03-09"	latin-1, byte per byte (Alfanumerico)
+C	1	CARD-ACTIVE-STATUS	-	file	valido	testo	"Y"	latin-1, byte 0x59 (Alfanumerico)
+C	1	FILLER	-	file	valido	testo	" "*59	latin-1, 59 byte 0x20 (Alfanumerico)
+R	50	ultimo	39 38 30 35 35 38 33 34 30 38 39 39 36 35 38 38 30 30 30 30 30 30 30 30 30 34 30 39 30 38 44 61 76 6f 6e 20 45 6d 6d 65 72 69 63 68 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 32 30 32 33 2d 31 30 2d 32 37 59 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20
+C	50	CARD-NUM	-	file	valido	testo	"9805583408996588"	latin-1, byte per byte (Alfanumerico)
+C	50	CARD-ACCT-ID	-	file	valido	intero	40	cifre 0x30-0x39 '00000000040' (DISPLAY senza segno)
+C	50	CARD-CVV-CD	-	file	valido	intero	908	cifre 0x30-0x39 '908' (DISPLAY senza segno)
+C	50	CARD-EMBOSSED-NAME	-	file	valido	testo	"Davon Emmerich" " "*36	latin-1, byte per byte, 36 byte 0x20 finali (Alfanumerico)
+C	50	CARD-EXPIRAION-DATE	-	file	valido	testo	"2023-10-27"	latin-1, byte per byte (Alfanumerico)
+C	50	CARD-ACTIVE-STATUS	-	file	valido	testo	"Y"	latin-1, byte 0x59 (Alfanumerico)
+C	50	FILLER	-	file	valido	testo	" "*59	latin-1, 59 byte 0x20 (Alfanumerico)

@@ -1,0 +1,49 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+
+R	1	primo	f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f6 f8 f3 f5 f8 f0 f0 f1 f0 f0 f0 f1 d7 d6 e2 40 e3 c5 d9 d4 40 40 d7 a4 99 83 88 81 a2 85 40 81 a3 40 c1 82 a2 88 89 99 85 60 d3 96 a6 85 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 f0 f0 f0 f0 f0 f0 f5 f0 f4 f7 c7 f8 f0 f0 f0 f0 f0 f0 f0 f0 c1 82 a2 88 89 99 85 60 d3 96 a6 85 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 d5 96 99 a3 88 40 c5 95 96 a2 88 81 a5 85 95 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 f7 f2 f1 f1 f2 40 40 40 40 40 f4 f8 f5 f9 f4 f5 f2 f6 f1 f2 f8 f7 f7 f0 f6 f5 f2 f0 f2 f2 60 f0 f6 60 f1 f0 40 f1 f9 7a f2 f7 7a f5 f3 4b f0 f0 f0 f0 f0 f0 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40
+C	1	DALYTRAN-ID	-	file	valido	testo	"0000000000683580"	cp037 (Pagina di codici z/OS): F0-F9 cifre
+C	1	DALYTRAN-TYPE-CD	-	file	valido	testo	"01"	cp037 (Pagina di codici z/OS): F0 F1
+C	1	DALYTRAN-CAT-CD	-	file	valido	intero	1	zona F, cifre 0001 (DISPLAY senza segno, zos-ebcdic)
+C	1	DALYTRAN-SOURCE	-	file	valido	testo	"POS TERM" " "*2	cp037 (Pagina di codici z/OS): D7 D6 E2 40 E3 C5 D9 D4, 40 x2
+C	1	DALYTRAN-DESC	-	file	valido	testo	"Purchase at Abshire-Lowe" " "*76	cp037 (Pagina di codici z/OS): D7 A4 99 83 88 81 A2 85 ... 60 = -, 40 x76
+C	1	DALYTRAN-AMT	-	file	valido	decimale	504.77	zona F cifre 0000005047; ultimo byte 0xC7: zona C = positivo, cifra 7 (DISPLAY con segno, zos-ebcdic)
+C	1	DALYTRAN-MERCHANT-ID	-	file	valido	intero	800000000	zona F, cifre 800000000 (DISPLAY senza segno, zos-ebcdic)
+C	1	DALYTRAN-MERCHANT-NAME	-	file	valido	testo	"Abshire-Lowe" " "*38	cp037 (Pagina di codici z/OS): C1 82 A2 88 89 99 85 60 D3 96 A6 85, 40 x38
+C	1	DALYTRAN-MERCHANT-CITY	-	file	valido	testo	"North Enoshaven" " "*35	cp037 (Pagina di codici z/OS): D5 96 99 A3 88 40 C5 95 96 A2 88 81 A5 85 95, 40 x35
+C	1	DALYTRAN-MERCHANT-ZIP	-	file	valido	testo	"72112" " "*5	cp037 (Pagina di codici z/OS): F7 F2 F1 F1 F2, 40 x5
+C	1	DALYTRAN-CARD-NUM	-	file	valido	testo	"4859452612877065"	cp037 (Pagina di codici z/OS): F0-F9 cifre
+C	1	DALYTRAN-ORIG-TS	-	file	valido	testo	"2022-06-10 19:27:53.000000"	cp037 (Pagina di codici z/OS): 60 = -, 40 spazio, 7A = :, 4B = .
+C	1	DALYTRAN-PROC-TS	-	file	valido	testo	" "*26	cp037 (Pagina di codici z/OS): 40 x26
+C	1	FILLER	-	file	valido	testo	" "*20	cp037 (Pagina di codici z/OS): 40 x20
+
+R	2	negativo	f0 f0 f0 f0 f0 f0 f0 f0 f0 f1 f7 f7 f4 f2 f6 f0 f0 f3 f0 f0 f0 f1 d6 d7 c5 d9 c1 e3 d6 d9 40 40 d9 85 a3 a4 99 95 40 89 a3 85 94 40 81 a3 40 d5 89 a3 a9 a2 83 88 85 6b 40 d5 89 83 96 93 81 a2 40 81 95 84 40 d3 96 a6 85 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 f0 f0 f0 f0 f0 f0 f9 f1 f9 f0 d0 f8 f0 f0 f0 f0 f0 f0 f0 f0 d5 89 a3 a9 a2 83 88 85 6b 40 d5 89 83 96 93 81 a2 40 81 95 84 40 d3 96 a6 85 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 c6 89 84 85 93 a2 88 89 99 85 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 f5 f3 f3 f7 f8 40 40 40 40 40 f0 f9 f2 f7 f9 f8 f7 f1 f0 f8 f6 f3 f6 f2 f3 f2 f2 f0 f2 f2 60 f0 f6 60 f1 f0 40 f1 f9 7a f2 f7 7a f5 f3 4b f0 f0 f0 f0 f0 f0 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40
+C	2	DALYTRAN-ID	-	file	valido	testo	"0000000001774260"	cp037 (Pagina di codici z/OS): F0-F9 cifre
+C	2	DALYTRAN-TYPE-CD	-	file	valido	testo	"03"	cp037 (Pagina di codici z/OS): F0 F3
+C	2	DALYTRAN-CAT-CD	-	file	valido	intero	1	zona F, cifre 0001 (DISPLAY senza segno, zos-ebcdic)
+C	2	DALYTRAN-SOURCE	-	file	valido	testo	"OPERATOR" " "*2	cp037 (Pagina di codici z/OS): D6 D7 C5 D9 C1 E3 D6 D9, 40 x2
+C	2	DALYTRAN-DESC	-	file	valido	testo	"Return item at Nitzsche, Nicolas and Lowe" " "*59	cp037 (Pagina di codici z/OS): D9 85 A3 A4 99 95 ... 6B = virgola, 40 x59
+C	2	DALYTRAN-AMT	-	file	valido	decimale	-919.00	zona F cifre 0000009190; ultimo byte 0xD0: zona D = negativo, cifra 0 (DISPLAY con segno, zos-ebcdic)
+C	2	DALYTRAN-MERCHANT-ID	-	file	valido	intero	800000000	zona F, cifre 800000000 (DISPLAY senza segno, zos-ebcdic)
+C	2	DALYTRAN-MERCHANT-NAME	-	file	valido	testo	"Nitzsche, Nicolas and Lowe" " "*24	cp037 (Pagina di codici z/OS): D5 89 A3 A9 A2 83 88 85 6B ..., 40 x24
+C	2	DALYTRAN-MERCHANT-CITY	-	file	valido	testo	"Fidelshire" " "*40	cp037 (Pagina di codici z/OS): C6 89 84 85 93 A2 88 89 99 85, 40 x40
+C	2	DALYTRAN-MERCHANT-ZIP	-	file	valido	testo	"53378" " "*5	cp037 (Pagina di codici z/OS): F5 F3 F3 F7 F8, 40 x5
+C	2	DALYTRAN-CARD-NUM	-	file	valido	testo	"0927987108636232"	cp037 (Pagina di codici z/OS): F0-F9 cifre
+C	2	DALYTRAN-ORIG-TS	-	file	valido	testo	"2022-06-10 19:27:53.000000"	cp037 (Pagina di codici z/OS): 60 = -, 40 spazio, 7A = :, 4B = .
+C	2	DALYTRAN-PROC-TS	-	file	valido	testo	" "*26	cp037 (Pagina di codici z/OS): 40 x26
+C	2	FILLER	-	file	valido	testo	" "*20	cp037 (Pagina di codici z/OS): 40 x20
+
+R	300	ultimo	f0 f0 f0 f0 f0 f0 f0 f9 f9 f6 f7 f2 f2 f7 f8 f7 f0 f1 f0 f0 f0 f1 d7 d6 e2 40 e3 c5 d9 d4 40 40 d7 a4 99 83 88 81 a2 85 40 81 a3 40 d2 89 93 82 81 83 92 40 d3 d3 c3 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 f0 f0 f0 f0 f0 f0 f6 f0 f3 f2 c2 f8 f0 f0 f0 f0 f0 f0 f0 f0 d2 89 93 82 81 83 92 40 d3 d3 c3 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 c3 a4 94 94 85 99 81 a3 81 94 96 a4 a3 88 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 f5 f3 f2 f0 f0 60 f7 f5 f2 f9 f3 f2 f6 f0 f7 f6 f3 f6 f1 f2 f3 f3 f7 f5 f6 f0 f2 f0 f2 f2 60 f0 f6 60 f1 f0 40 f1 f9 7a f2 f7 7a f5 f3 4b f0 f0 f0 f0 f0 f0 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40
+C	300	DALYTRAN-ID	-	file	valido	testo	"0000000996722787"	cp037 (Pagina di codici z/OS): F0-F9 cifre
+C	300	DALYTRAN-TYPE-CD	-	file	valido	testo	"01"	cp037 (Pagina di codici z/OS): F0 F1
+C	300	DALYTRAN-CAT-CD	-	file	valido	intero	1	zona F, cifre 0001 (DISPLAY senza segno, zos-ebcdic)
+C	300	DALYTRAN-SOURCE	-	file	valido	testo	"POS TERM" " "*2	cp037 (Pagina di codici z/OS): D7 D6 E2 40 E3 C5 D9 D4, 40 x2
+C	300	DALYTRAN-DESC	-	file	valido	testo	"Purchase at Kilback LLC" " "*77	cp037 (Pagina di codici z/OS): D7 A4 99 83 88 81 A2 85 ... D2 89 93 82 81 83 92 40 D3 D3 C3, 40 x77
+C	300	DALYTRAN-AMT	-	file	valido	decimale	603.22	zona F cifre 0000006032; ultimo byte 0xC2: zona C = positivo, cifra 2 (DISPLAY con segno, zos-ebcdic)
+C	300	DALYTRAN-MERCHANT-ID	-	file	valido	intero	800000000	zona F, cifre 800000000 (DISPLAY senza segno, zos-ebcdic)
+C	300	DALYTRAN-MERCHANT-NAME	-	file	valido	testo	"Kilback LLC" " "*39	cp037 (Pagina di codici z/OS): D2 89 93 82 81 83 92 40 D3 D3 C3, 40 x39
+C	300	DALYTRAN-MERCHANT-CITY	-	file	valido	testo	"Cummeratamouth" " "*36	cp037 (Pagina di codici z/OS): C3 A4 94 94 85 99 81 A3 81 94 96 A4 A3 88, 40 x36
+C	300	DALYTRAN-MERCHANT-ZIP	-	file	valido	testo	"53200-7529"	cp037 (Pagina di codici z/OS): F5 F3 F2 F0 F0 60 F7 F5 F2 F9
+C	300	DALYTRAN-CARD-NUM	-	file	valido	testo	"3260763612337560"	cp037 (Pagina di codici z/OS): F0-F9 cifre
+C	300	DALYTRAN-ORIG-TS	-	file	valido	testo	"2022-06-10 19:27:53.000000"	cp037 (Pagina di codici z/OS): 60 = -, 40 spazio, 7A = :, 4B = .
+C	300	DALYTRAN-PROC-TS	-	file	valido	testo	" "*26	cp037 (Pagina di codici z/OS): 40 x26
+C	300	FILLER	-	file	valido	testo	" "*20	cp037 (Pagina di codici z/OS): 40 x20

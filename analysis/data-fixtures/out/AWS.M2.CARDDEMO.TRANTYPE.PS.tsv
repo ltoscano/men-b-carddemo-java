@@ -1,0 +1,9 @@
+# fixture di app/data/EBCDIC/AWS.M2.CARDDEMO.TRANTYPE.PS (issue #5): contratto CVTRA03Y.TRAN-TYPE-RECORD, profilo zos-ebcdic, 7 record
+# colonne: record, terminatore, byte del file, byte di riempimento, vista, poi un campo per colonna: nome|stato|valore|byte originali[|origine se non dal file]
+1	-	60	0	base	TRAN-TYPE|valido|"01"|F0 F1	TRAN-TYPE-DESC|valido|"Purchase" " "*42|D7 A4 99 83 88 81 A2 85 40*42	FILLER|valido|"0"*8|F0*8
+2	-	60	0	base	TRAN-TYPE|valido|"02"|F0 F2	TRAN-TYPE-DESC|valido|"Payment" " "*43|D7 81 A8 94 85 95 A3 40*43	FILLER|valido|"0"*8|F0*8
+3	-	60	0	base	TRAN-TYPE|valido|"03"|F0 F3	TRAN-TYPE-DESC|valido|"Credit" " "*44|C3 99 85 84 89 A3 40*44	FILLER|valido|"0"*8|F0*8
+4	-	60	0	base	TRAN-TYPE|valido|"04"|F0 F4	TRAN-TYPE-DESC|valido|"Authorization" " "*37|C1 A4 A3 88 96 99 89 A9 81 A3 89 96 95 40*37	FILLER|valido|"0"*8|F0*8
+5	-	60	0	base	TRAN-TYPE|valido|"05"|F0 F5	TRAN-TYPE-DESC|valido|"Refund" " "*44|D9 85 86 A4 95 84 40*44	FILLER|valido|"0"*8|F0*8
+6	-	60	0	base	TRAN-TYPE|valido|"06"|F0 F6	TRAN-TYPE-DESC|valido|"Reversal" " "*42|D9 85 A5 85 99 A2 81 93 40*42	FILLER|valido|"0"*8|F0*8
+7	-	60	0	base	TRAN-TYPE|valido|"07"|F0 F7	TRAN-TYPE-DESC|valido|"Adjustment" " "*40|C1 84 91 A4 A2 A3 94 85 95 A3 40*40	FILLER|valido|"0"*8|F0*8

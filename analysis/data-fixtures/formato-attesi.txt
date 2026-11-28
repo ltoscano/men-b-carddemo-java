@@ -1,0 +1,19 @@
+# Attesi scritti a mano (issue #5): formato dei file attesi/<nome del file dati>.tsv. Questo file non e' un atteso.
+# Gli attesi si scrivono LEGGENDO I BYTE (xxd, od), non copiando l'uscita del decodificatore, e si committano prima
+# di eseguire la decodifica su quel file. Righe vuote e righe '#' ignorate; campi separati da tabulazione.
+#
+#   R  <n>  <motivo>  <esa>
+#       un record atteso: n = numero del record (da 1; per l'ASCII = numero di riga), motivo (primo, ultimo,
+#       negativo, anomalo, differenza-ascii-ebcdic, tipo-C, ...; piu' motivi separati da virgola), esa = i byte del
+#       file in esadecimale, coppie separate da spazio, "HH*n" per n byte uguali (per l'ASCII: la riga senza
+#       terminatore, senza i byte di riempimento)
+#   C  <n>  <campo>  <indici>  <origine>  <stato>  <tipo>  <valore>  <procedimento>
+#       un campo del record n: campo = nome nel contratto; indici = indici OCCURS separati da virgola, '-' se nessuno;
+#       origine = file | riempimento (byte aggiunti alla riga ASCII corta) ; stato = valido | non-valido | oltre-picture;
+#       tipo = testo | intero | decimale ('-' se non valido); valore = notazione dei vettori di #23 (testo fra
+#       doppi apici, con "x"*n; numeri con '-' facoltativo e tanti decimali quanti ne dichiara la PICTURE; '-' se non
+#       valido); procedimento = tabella di docs/legacy-map/data-contract/codifica.md applicata e lettura dei byte
+# Per ogni record atteso si scrivono TUTTI i campi elementari della vista decodificata (base; per EXPORT.DATA.PS i
+# campi comuni e quelli della vista del tipo di record), nessuno escluso.
+# Il numero di record di ogni file e' in fisica.tsv (scritto a mano: dalla dimensione per gli EBCDIC, dal conteggio
+# fisico delle righe per gli ASCII).

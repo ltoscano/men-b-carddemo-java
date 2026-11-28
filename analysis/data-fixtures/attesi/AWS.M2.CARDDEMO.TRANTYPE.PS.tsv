@@ -1,0 +1,11 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+
+R	1	primo	f0 f1 d7 a4 99 83 88 81 a2 85 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 f0 f0 f0 f0 f0 f0 f0 f0
+C	1	TRAN-TYPE	-	file	valido	testo	"01"	cp037 (Pagina di codici z/OS): F0 F1
+C	1	TRAN-TYPE-DESC	-	file	valido	testo	"Purchase" " "*42	cp037 (Pagina di codici z/OS): D7 A4 99 83 88 81 A2 85, 40 x42
+C	1	FILLER	-	file	valido	testo	"00000000"	cp037 (Pagina di codici z/OS): F0 x8
+
+R	7	ultimo	f0 f7 c1 84 91 a4 a2 a3 94 85 95 a3 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 f0 f0 f0 f0 f0 f0 f0 f0
+C	7	TRAN-TYPE	-	file	valido	testo	"07"	cp037 (Pagina di codici z/OS): F0 F7
+C	7	TRAN-TYPE-DESC	-	file	valido	testo	"Adjustment" " "*40	cp037 (Pagina di codici z/OS): C1 84 91 A4 A2 A3 94 85 95 A3, 40 x40
+C	7	FILLER	-	file	valido	testo	"00000000"	cp037 (Pagina di codici z/OS): F0 x8

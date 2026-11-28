@@ -1,0 +1,43 @@
+# attesi scritti a mano leggendo i byte con xxd, issue #5
+
+R	1	primo	f0 f0 f0 f0 f0 f0 f0 f0 f1 c9 94 94 81 95 a4 85 93 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 d4 81 84 85 93 89 95 85 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 d2 85 a2 a2 93 85 99 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 f6 f1 f8 40 c4 85 a2 88 81 a4 95 40 d9 96 a4 a3 85 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 c1 97 a3 4b 40 f8 f0 f2 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 c1 93 a3 85 95 a6 85 99 a3 88 a2 88 89 99 85 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 d5 c3 e4 e2 c1 f1 f2 f5 f4 f6 40 40 40 40 40 4d f9 f0 f8 5d f1 f1 f9 60 f8 f3 f1 f0 40 40 4d f3 f7 f3 5d f6 f9 f3 60 f8 f6 f8 f4 40 40 f0 f2 f0 f9 f7 f3 f8 f8 f8 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f4 f9 f3 f6 f8 f4 f3 f7 f1 f9 f6 f1 60 f0 f6 60 f0 f8 f0 f0 f5 f3 f5 f8 f1 f7 f5 f6 e8 f2 f7 f4 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40
+C	1	CUST-ID	-	file	valido	intero	1	zona F, cifre 000000001 (DISPLAY senza segno, zos-ebcdic)
+C	1	CUST-FIRST-NAME	-	file	valido	testo	"Immanuel" " "*17	cp037 (Pagina di codici z/OS): C9 94 94 81 95 A4 85 93, 40 x17
+C	1	CUST-MIDDLE-NAME	-	file	valido	testo	"Madeline" " "*17	cp037 (Pagina di codici z/OS): D4 81 84 85 93 89 95 85, 40 x17
+C	1	CUST-LAST-NAME	-	file	valido	testo	"Kessler" " "*18	cp037 (Pagina di codici z/OS): D2 85 A2 A2 93 85 99, 40 x18
+C	1	CUST-ADDR-LINE-1	-	file	valido	testo	"618 Deshaun Route" " "*33	cp037 (Pagina di codici z/OS): F6 F1 F8 40 C4 85 A2 88 81 A4 95 40 D9 96 A4 A3 85, 40 x33
+C	1	CUST-ADDR-LINE-2	-	file	valido	testo	"Apt. 802" " "*42	cp037 (Pagina di codici z/OS): C1 97 A3 4B 40 F8 F0 F2 (4B = .), 40 x42
+C	1	CUST-ADDR-LINE-3	-	file	valido	testo	"Altenwerthshire" " "*35	cp037 (Pagina di codici z/OS): C1 93 A3 85 95 A6 85 99 A3 88 A2 88 89 99 85, 40 x35
+C	1	CUST-ADDR-STATE-CD	-	file	valido	testo	"NC"	cp037 (Pagina di codici z/OS): D5 C3
+C	1	CUST-ADDR-COUNTRY-CD	-	file	valido	testo	"USA"	cp037 (Pagina di codici z/OS): E4 E2 C1
+C	1	CUST-ADDR-ZIP	-	file	valido	testo	"12546" " "*5	cp037 (Pagina di codici z/OS): F1 F2 F5 F4 F6, 40 x5
+C	1	CUST-PHONE-NUM-1	-	file	valido	testo	"(908)119-8310" " "*2	cp037 (Pagina di codici z/OS): 4D = (, 5D = ), 60 = -, 40 x2
+C	1	CUST-PHONE-NUM-2	-	file	valido	testo	"(373)693-8684" " "*2	cp037 (Pagina di codici z/OS): 4D = (, 5D = ), 60 = -, 40 x2
+C	1	CUST-SSN	-	file	valido	intero	20973888	zona F, cifre 020973888 (DISPLAY senza segno, zos-ebcdic)
+C	1	CUST-GOVT-ISSUED-ID	-	file	valido	testo	"00000000000049368437"	cp037 (Pagina di codici z/OS): F0-F9 cifre
+C	1	CUST-DOB-YYYY-MM-DD	-	file	valido	testo	"1961-06-08"	cp037 (Pagina di codici z/OS): F0-F9 cifre, 60 = -
+C	1	CUST-EFT-ACCOUNT-ID	-	file	valido	testo	"0053581756"	cp037 (Pagina di codici z/OS): F0-F9 cifre
+C	1	CUST-PRI-CARD-HOLDER-IND	-	file	valido	testo	"Y"	cp037 (Pagina di codici z/OS): E8 = Y
+C	1	CUST-FICO-CREDIT-SCORE	-	file	valido	intero	274	zona F, cifre 274 (DISPLAY senza segno, zos-ebcdic)
+C	1	FILLER	-	file	valido	testo	" "*168	cp037 (Pagina di codici z/OS): 40 x168
+
+R	50	ultimo	f0 f0 f0 f0 f0 f0 f0 f5 f0 c1 95 89 a8 81 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 c1 93 82 81 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 e5 96 95 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 f1 f5 f8 f8 40 d5 89 85 95 96 a6 40 c3 81 97 85 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 e2 a4 89 a3 85 40 f1 f8 f7 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 d5 85 a6 40 c1 99 89 83 83 88 85 a2 a3 85 99 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 d6 d9 e4 e2 c1 f0 f4 f2 f5 f7 40 40 40 40 40 4d f3 f2 f5 5d f3 f0 f1 60 f0 f8 f2 f7 40 40 4d f4 f9 f3 5d f9 f8 f5 60 f9 f2 f8 f3 40 40 f9 f3 f1 f2 f4 f8 f4 f6 f9 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f0 f3 f0 f3 f8 f7 f8 f2 f4 f1 f9 f6 f0 60 f1 f2 60 f0 f1 f0 f0 f7 f4 f8 f8 f3 f5 f7 f7 e8 f6 f2 f3 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40 40
+C	50	CUST-ID	-	file	valido	intero	50	zona F, cifre 000000050 (DISPLAY senza segno, zos-ebcdic)
+C	50	CUST-FIRST-NAME	-	file	valido	testo	"Aniya" " "*20	cp037 (Pagina di codici z/OS): C1 95 89 A8 81, 40 x20
+C	50	CUST-MIDDLE-NAME	-	file	valido	testo	"Alba" " "*21	cp037 (Pagina di codici z/OS): C1 93 82 81, 40 x21
+C	50	CUST-LAST-NAME	-	file	valido	testo	"Von" " "*22	cp037 (Pagina di codici z/OS): E5 96 95, 40 x22
+C	50	CUST-ADDR-LINE-1	-	file	valido	testo	"1588 Nienow Cape" " "*34	cp037 (Pagina di codici z/OS): F1 F5 F8 F8 40 D5 89 85 95 96 A6 40 C3 81 97 85, 40 x34
+C	50	CUST-ADDR-LINE-2	-	file	valido	testo	"Suite 187" " "*41	cp037 (Pagina di codici z/OS): E2 A4 89 A3 85 40 F1 F8 F7, 40 x41
+C	50	CUST-ADDR-LINE-3	-	file	valido	testo	"New Aricchester" " "*35	cp037 (Pagina di codici z/OS): D5 85 A6 40 C1 99 89 83 83 88 85 A2 A3 85 99, 40 x35
+C	50	CUST-ADDR-STATE-CD	-	file	valido	testo	"OR"	cp037 (Pagina di codici z/OS): D6 D9
+C	50	CUST-ADDR-COUNTRY-CD	-	file	valido	testo	"USA"	cp037 (Pagina di codici z/OS): E4 E2 C1
+C	50	CUST-ADDR-ZIP	-	file	valido	testo	"04257" " "*5	cp037 (Pagina di codici z/OS): F0 F4 F2 F5 F7, 40 x5
+C	50	CUST-PHONE-NUM-1	-	file	valido	testo	"(325)301-0827" " "*2	cp037 (Pagina di codici z/OS): 4D = (, 5D = ), 60 = -, 40 x2
+C	50	CUST-PHONE-NUM-2	-	file	valido	testo	"(493)985-9283" " "*2	cp037 (Pagina di codici z/OS): 4D = (, 5D = ), 60 = -, 40 x2
+C	50	CUST-SSN	-	file	valido	intero	931248469	zona F, cifre 931248469 (DISPLAY senza segno, zos-ebcdic)
+C	50	CUST-GOVT-ISSUED-ID	-	file	valido	testo	"00000000000030387824"	cp037 (Pagina di codici z/OS): F0-F9 cifre
+C	50	CUST-DOB-YYYY-MM-DD	-	file	valido	testo	"1960-12-01"	cp037 (Pagina di codici z/OS): F0-F9 cifre, 60 = -
+C	50	CUST-EFT-ACCOUNT-ID	-	file	valido	testo	"0074883577"	cp037 (Pagina di codici z/OS): F0-F9 cifre
+C	50	CUST-PRI-CARD-HOLDER-IND	-	file	valido	testo	"Y"	cp037 (Pagina di codici z/OS): E8 = Y
+C	50	CUST-FICO-CREDIT-SCORE	-	file	valido	intero	623	zona F, cifre 623 (DISPLAY senza segno, zos-ebcdic)
+C	50	FILLER	-	file	valido	testo	" "*168	cp037 (Pagina di codici z/OS): 40 x168
