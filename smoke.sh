@@ -9,8 +9,12 @@
 #   2. build               costruzione delle immagini online e batch
 #   3. avvio               db e online con porta host scelta da Docker; attesa dello stato sano
 #   4. salute              GET /actuator/health dall'host: HTTP 200, radice "UP", "db" "UP"
+#   4b. migrazione         (#59) tabella account e storico di Flyway con la sola V1__account.sql
+#                          riuscita: su un database nuovo li ha creati online all'avvio
 #   5. batch-1, batch-2    docker compose run --rm batch, due volte; dopo ciascun lancio,
-#                          verifica in PostgreSQL delle esecuzioni di installationCheckJob
+#                          Flyway eseguito anche da batch (nel suo output: migrazione validata,
+#                          nessuna da applicare) e verifica in PostgreSQL delle esecuzioni di
+#                          installationCheckJob
 #   6. pulizia             down con volumi, anche se un passo e' fallito; poi verifica via
 #                          etichette che non restino container (anche arrestati), reti, volumi
 # Esce con 0 solo se tutti i passi, pulizia compresa, riescono; altrimenti con 1 (o il
@@ -43,6 +47,11 @@ STEP_NAME="installationCheckStep"
 
 STEP="avvio-script"
 CLEANUP_ARMED=0
+# Cartella privata della corsa per l'output del runner batch (#59): nome unico, creata con mkdir
+# (che fallisce se esiste gia': nessun output di altre corse viene riletto), rimossa alla fine.
+TMP_BASE="${TMPDIR:-/tmp}"
+WORK="${TMP_BASE%/}/menb-smoke-$$-${RANDOM}${RANDOM}"
+WORK_CREATED=0
 
 log() { printf '== [%s] %s\n' "${STEP}" "$*"; }
 err() { printf 'ERRORE [%s]: %s\n' "${STEP}" "$*" >&2; }
@@ -260,6 +269,13 @@ on_exit() {
       fi
     fi
   fi
+  if [ "${WORK_CREATED}" -eq 1 ] && ! limited "${SHORT_TIMEOUT}" rm -rf "${WORK}" </dev/null; then
+    err "cancellazione di ${WORK} fallita"
+    if [ "${rc}" -eq 0 ]; then
+      rc=1
+      failed_step="pulizia"
+    fi
+  fi
   if [ "${rc}" -eq 0 ]; then
     echo "== SMOKE RIUSCITO"
   else
@@ -373,6 +389,8 @@ COMPOSE=(docker compose --project-name "${PROJECT}" --project-directory "${ROOT}
   --file "${ROOT}/compose.yaml" --env-file /dev/null)
 
 limited "${SHORT_TIMEOUT}" docker compose version </dev/null || fail "docker compose non disponibile"
+limited "${SHORT_TIMEOUT}" mkdir -m 700 "${WORK}" </dev/null || fail "creazione della cartella di lavoro ${WORK} fallita"
+WORK_CREATED=1
 if ! collect_project_resources; then
   fail "impossibile verificare l'assenza di risorse con l'etichetta ${LABEL}"
 fi
@@ -446,6 +464,23 @@ db_status="${verdict#*|}"
 [ "${db_status}" = "UP" ] || fail "componente db '${db_status}' (atteso presente e UP)"
 log "stato alla radice UP, componente db UP"
 
+# --- 4b. migrazione dello schema applicata da online (#59) ------------------------------
+# Il database e' nuovo (volume creato da questo smoke) e finora e' partito solo online: se la
+# tabella account e lo storico di Flyway ci sono, li ha creati online all'avvio.
+STEP="migrazione"
+if ! tables="$(psql_db -c "select coalesce(to_regclass('public.account')::text, '<assente>') || '|' || coalesce(to_regclass('public.flyway_schema_history')::text, '<assente>')" </dev/null)"; then
+  fail "interrogazione delle tabelle account e flyway_schema_history fallita"
+fi
+[ "${tables}" = "account|flyway_schema_history" ] \
+  || fail "dopo l'avvio di online: tabella account e storico di Flyway attesi, trovati '${tables}'"
+if ! history="$(psql_db -c "select installed_rank || '|' || coalesce(version, '<null>') || '|' || script || '|' || success from flyway_schema_history order by installed_rank" </dev/null)"; then
+  fail "lettura dello storico di Flyway fallita"
+fi
+printf '   %s\n' "${history}"
+[ "${history}" = "1|1|V1__account.sql|true" ] \
+  || fail "storico di Flyway inatteso: '${history}' (attesa la sola migrazione 1|1|V1__account.sql|true)"
+log "online ha applicato la migrazione: tabella account presente, storico di Flyway con V1__account.sql riuscita"
+
 # --- 5. job batch, due lanci ----------------------------------------------------------
 STEP="batch-0"
 if ! tables="$(psql_db -c "select count(*) from pg_tables where schemaname = 'public' and tablename = 'batch_job_execution'" </dev/null)"; then
@@ -461,8 +496,25 @@ for n in 1 2; do
   STEP="batch-${n}"
   log "docker compose run --rm batch (lancio ${n}, limite ${BATCH_TIMEOUT}s)"
   rc=0
-  limited "${BATCH_TIMEOUT}" "${COMPOSE[@]}" run --rm -T batch </dev/null || rc=$?
+  # Output in un file della cartella privata (non in $(...): un processo figlio sopravvissuto
+  # all'arresto terrebbe aperta la pipe), poi mostrato e letto.
+  batch_log="${WORK}/batch-${n}.log"
+  limited "${BATCH_TIMEOUT}" "${COMPOSE[@]}" run --rm -T batch </dev/null >"${batch_log}" 2>&1 || rc=$?
+  batch_out="$(<"${batch_log}")" || fail "lettura dell'output del runner batch fallita"
+  while IFS= read -r line; do printf '   | %s\n' "${line}"; done <<EOF
+${batch_out}
+EOF
   [ "${rc}" -eq 0 ] || fail "il runner batch e' terminato con codice ${rc}"
+  # Anche batch esegue Flyway all'avvio (#59): sul database gia' migrato da online valida la
+  # migrazione e non ne applica altre. Il database non cambia, quindi la prova e' nel suo output.
+  for atteso in 'Successfully validated 1 migration' 'Current version of schema "public": 1' \
+    'Schema "public" is up to date. No migration necessary.'; do
+    case "${batch_out}" in
+      *"${atteso}"*) ;;
+      *) fail "nell'output del runner batch manca '${atteso}': Flyway non e' stato eseguito all'avvio di batch" ;;
+    esac
+  done
+  log "batch ha eseguito Flyway all'avvio: 1 migrazione validata, schema alla versione 1, nessuna da applicare"
   verify_executions "${n}"
 done
 
