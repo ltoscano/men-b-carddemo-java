@@ -468,3 +468,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T01:58:23Z,pr-57,verifica-fine,fable,orologio,regressioni 26/26; mutante proprio I2S respinto; verify sano 0
 2026-11-28T01:58:23Z,pr-57,merge,fable,orologio,squash; chiude #54
 2026-11-28T01:59:38Z,paper,fine,fable,orologio,passi 24-26; tabelle 14-15; lezioni
+2026-11-28T01:59:49Z,paper,risposta-consegnata,fable,orologio,stato dopo i tre merge
+2026-11-28T02:34:14Z,issue-53,esecutore-fine,opus,orologio,PR #58 aperta; SHA 6bc58ba; criteri 1-5 e 7 dichiarati; CI in attesa; 575326 token; 212 chiamate
