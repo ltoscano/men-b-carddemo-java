@@ -1,0 +1,28 @@
+# Correzioni dell'oracle (issue #55, specifica aggiornata dopo il fermo dell'Esecutore, registro voce 106). Distinta da
+# esclusioni.tsv: qui il byte E' determinato dal sorgente e dalle regole del linguaggio, ma GnuCOBOL lo scrive diverso.
+# Un errore noto dell'oracle non diventa riferimento: il riferimento di parita' (*.riferimento.txt) porta il byte della
+# colonna "riferimento"; il file fisico dell'oracle resta versionato com'e', come osservazione.
+# La correzione e' CONDIZIONATA (oracle/golden/maschera.sh): si applica solo se nella posizione l'oracle ha scritto
+# esattamente il byte della colonna "oracle"; qualunque altro byte fa fallire il passo. Il verificatore indipendente
+# (verificatore.sh, controllo 4) non legge questa tabella: ricava il byte dalla regola del linguaggio.
+# Colonne (separate da tabulazione):
+#   scenario   * = tutti gli scenari di riferimento (esempio, mirato)
+#   file       OUTFILE, ARRYFILE, VBRC1, VBRC2
+#   chiave     ACCT-ID del record, oppure * = tutti i record
+#   posizione  byte nel record, contando da 1 (un byte per riga)
+#   oracle     byte che l'oracle scrive oggi (esadecimale)
+#   riferimento byte che danno le regole IBM, nel profilo dell'oracle (esadecimale)
+#   regola     la regola e la sua fonte
+#   riga       righe del sorgente (app/...)
+# Ricerca richiesta dalla specifica: CBACT01C ha due INITIALIZE (righe 169 e 175). Campi numerici con segno valorizzati
+# da INITIALIZE e scritti in uscita: ARR-ACCT-CURR-BAL(1)-(5) DISPLAY S9(10)V99 e ARR-ACCT-CURR-CYC-DEBIT(1)-(5) COMP-3
+# S9(10)V99 di ARR-ARRAY-REC. Le occorrenze 1-3 sono poi sovrascritte (righe 254-260); restano le 4 e 5:
+#   - ARR-ACCT-CURR-BAL(4) e (5), byte 69-80 e 88-99: GnuCOBOL scrive 30 30 ... 30 (ultimo byte 30, cifra semplice);
+#     la regola IBM da' 30 ... 30 7B (zero con segno C): corretto l'ultimo byte (righe sotto);
+#   - ARR-ACCT-CURR-CYC-DEBIT(4) e (5), byte 81-87 e 100-106: GnuCOBOL scrive 00 00 00 00 00 00 0C, la regola IBM da'
+#     lo stesso (segno preferito C per lo zero): nessuna correzione;
+#   - VBRC-REC1 (riga 175) non ha campi con segno (VB1-ACCT-ID 9(11), VB1-ACCT-ACTIVE-STATUS X): nessuna correzione.
+# Esito dichiarato anche in docs/legacy-map/golden-readacct.md. Causa in GnuCOBOL e opzioni: issue #62.
+scenario	file	chiave	posizione	oracle	riferimento	regola	riga
+*	ARRYFILE	*	80	30	7b	INITIALIZE: ZERO e' il mittente implicito dei riceventi numerici (IBM, Enterprise COBOL 6.4 Language Reference, INITIALIZE statement rules, regola 2); il ricevente S9(10)V99 riceve il segno preferito C (IBM, Enterprise COBOL 6.3 Programming Guide, Sign representation of zoned and packed-decimal data: con NUMPROC(NOPFD) the preferred sign is always generated in the receiver; con NUMPROC(PFD) when unsigned data is moved to signed data); nel profilo dell'oracle lo zero con segno C e' 7B (codifica.md)	cbl/CBACT01C.cbl:169 (ARR-ACCT-CURR-BAL(4), ultimo byte)
+*	ARRYFILE	*	99	30	7b	come la riga precedente	cbl/CBACT01C.cbl:169 (ARR-ACCT-CURR-BAL(5), ultimo byte)

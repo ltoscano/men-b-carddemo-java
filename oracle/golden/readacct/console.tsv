@@ -31,7 +31,7 @@ inizio	141	START OF EXECUTION OF PROGRAM CBACT01C	a	solo letterale
 10	210	ACCT-CURR-CYC-DEBIT     :	b	PIC S9(10)V99, come sopra
 11	211	ACCT-GROUP-ID           :	a	letterale e PIC X(10)
 12	212	-------------------------------------------------	a	solo letterale
-13	283	VBRC-REC1:	a	letterale e gruppo di 12 byte (PIC 9(11) e PIC X(01)), entro il record del dispositivo
+13	283	VBRC-REC1:	a	letterale e gruppo di 12 byte (PIC 9(11) e PIC X(01)): nessun campo con segno, entro il record del dispositivo (decisione dell'Approvatore, 28 novembre 2026)
 14	284	VBRC-REC2:	b	gruppo che contiene due PIC S9(10)V99: i loro byte di segno arrivano alla console cosi' come sono in memoria (la specifica la classifica osservazione)
 15	151	-	c	DISPLAY ACCOUNT-RECORD, gruppo di 300 byte: su z/OS un operando piu' lungo del record del dispositivo continua nel record successivo (IBM, DISPLAY statement), GnuCOBOL scrive una riga sola
 fine	158	END OF EXECUTION OF PROGRAM CBACT01C	a	solo letterale; ultima riga della corsa regolare
