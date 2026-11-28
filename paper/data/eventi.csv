@@ -437,3 +437,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-27T23:50:04Z,pr-56,correzione-inizio,opus,orologio,giro unico
 2026-11-27T23:59:01Z,issue-54,esecutore-fine,opus,orologio,PR #57 aperta; SHA 0778d45; criteri 1-5 dichiarati; CI in attesa
 2026-11-27T23:59:07Z,pr-57,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-28T00:08:22Z,pr-52,correzione-fine,opus,orologio,SHA 18b4317; 5 rilievi dichiarati corretti; 56 min 47 s; 491689 token cumulativi
+2026-11-28T00:08:26Z,pr-52,codex-inizio,codex,orologio,validazione 2 di 2 ristretta
