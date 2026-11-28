@@ -446,3 +446,5 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T00:26:15Z,pr-56,merge,fable,orologio,squash 717a4ac; chiude #5
 2026-11-28T00:26:15Z,pr-57,rinvio-esecutore,fable,orologio,6 accolti; 1 in parte
 2026-11-28T00:26:15Z,pr-57,correzione-inizio,opus,orologio,giro unico
+2026-11-28T00:28:02Z,issue-53,codex-inizio,codex,orologio,contestazione della specifica
+2026-11-28T00:31:13Z,issue-53,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0

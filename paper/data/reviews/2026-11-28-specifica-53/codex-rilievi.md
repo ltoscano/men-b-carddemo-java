@@ -1,0 +1,23 @@
+1. **Bloccante — La prova sul file residuo contraddice la rigenerazione obbligatoria.**  
+   **Evidenza:** `.contestazione/53.md:37` richiede di rigenerare l’indicizzato da zero a ogni corsa; a riga 43, invece, anche la presenza di un indicizzato precedente deve far fallire il comando. Il legacy cancella il KSDS prima di ricrearlo (`legacy/aws-mainframe-modernization-carddemo/app/jcl/ACCTFILE.jcl:22-49`); nell’oracle `clean_dir` elimina esplicitamente i risultati precedenti (`oracle/lib.sh:76-82`). Un’esecuzione corretta può quindi eliminare il residuo e riuscire.  
+   **Correzione proposta:** distinguere due casi: residuo diverso seguito da rigenerazione riuscita → successo e contenuto corretto; residuo sano seguito da caricamento corrente fallito → errore e nessun residuo utilizzabile come risultato corrente.
+
+2. **Importante — Il criterio per riusare `IDXLOAD` è insufficiente rispetto al divieto di riempimento e ai controlli degli stati.**  
+   **Evidenza:** `.contestazione/53.md:35` condiziona il nuovo programma alla rappresentabilità dei byte nel formato a righe. Ma `oracle/tests/IDXLOAD.cbl:143-154` accetta anche righe più corte della lunghezza richiesta e le riempie con spazi. Inoltre chiude `ENTRATA` senza verificarne `ENT-STATUS` (`oracle/tests/IDXLOAD.cbl:126-137`), contrariamente alla richiesta di controllare ogni chiusura (`.contestazione/53.md:36`). Nei dati presenti il `FILLER` è interamente composto da spazi: togliere uno spazio finale e lasciarlo reinserire dal caricatore produce una rilettura identica, pur violando il requisito.  
+   **Correzione proposta:** rendere il riuso subordinato anche alla verifica della lunghezza originale esatta e di tutti gli stati; altrimenti prescrivere il nuovo caricatore già ammesso. Includere una prova discriminante con una riga di 299 byte ottenuta eliminando uno spazio finale.
+
+3. **Importante — Il perimetro non comprende la registrazione del nuovo passo nel controllo di presenza dell’oracle.**  
+   **Evidenza:** `oracle/build/check.sh:48` contiene l’elenco fisso `PASSI`; `passi_presenti` controlla soltanto quell’elenco (`oracle/build/check.sh:82-94`). Il perimetro permette modifiche alle sole righe `PROVE` e `ACCESSORI` (`.contestazione/53.md:11`). Senza registrare `dati`, la cancellazione dell’intera cartella del nuovo passo non viene rilevata dal controllo di presenza: `oracle/run.sh:35-44` scopre soltanto le cartelle esistenti e la CI esegue esclusivamente `--all --check` (`.github/workflows/oracle.yml:32-36`). Inoltre #36 è descritto come “elenchi condivisi” nella specifica, mentre il piano lo identifica come routine `MVSWAIT` (`docs/piano-wave.md:256`); tali elenchi condivisi non sono presenti nel main esaminato.  
+   **Correzione proposta:** riallineare il prerequisito #36 e indicare esplicitamente dove registrare `dati` nel controllo di presenza, includendo questa precisa modifica di collegamento nel perimetro.
+
+4. **Importante — Il divieto di eseguire `CBACT01C` è incompatibile con un comando di accettazione obbligatorio.**  
+   **Evidenza:** `.contestazione/53.md:67` vieta qualsiasi esecuzione di `CBACT01C`, mentre a riga 54 impone `./oracle/run.sh --all --check`. Il passo preesistente `avvio` comprende `CBACT01C` nell’elenco dei lanci (`oracle/avvio/run.sh:13`) e lo esegue realmente (`oracle/avvio/run.sh:30-32`).  
+   **Correzione proposta:** precisare che è vietata l’esecuzione del pilota **sui conti caricati**, consentendo le prove preesistenti di avvio senza dati richieste dall’accettazione.
+
+5. **Minore — L’interfaccia DD indicata per il consumatore successivo è sbagliata.**  
+   **Evidenza:** `.contestazione/53.md:37` indica `--dd ACCTFILE=…`. L’interfaccia reale accetta esclusivamente assegnazioni `DD_<nome>=<percorso>` e rifiuta quell’argomento (`oracle/esegui.sh:34-40`). Le invocazioni esistenti usano infatti `--dd "DD_ACCTFILE=…"` (`oracle/adattamenti/scenario.sh:28-31`, con `dd=ACCTFILE`).  
+   **Correzione proposta:** sostituire l’esempio con `--dd DD_ACCTFILE=<percorso-visto-dal-container>`.
+
+6. **Minore — La selezione dei cinque attesi manuali non ne determina cinque sui dati effettivi.**  
+   **Evidenza:** `.contestazione/53.md:30` elenca primo, ultimo, record 49, un saldo negativo “se esiste” e uno a scelta. Rileggendo tutti i record EBCDIC, nessuno dei cinque campi numerici con segno contiene valori negativi: tutti i 250 byte finali hanno zona `C`. Venendo meno il caso condizionale, l’elenco determina soltanto quattro record; non impone neppure che quello a scelta sia distinto dagli altri.  
+   **Correzione proposta:** richiedere cinque chiavi distinte e prevedere un secondo record a scelta quando non esiste un saldo negativo.
