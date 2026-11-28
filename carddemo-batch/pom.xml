@@ -43,6 +43,16 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- Classi di test di carddemo-domain (issue #67): l'ispezione del codice compilato di
+         NoFloatingPointBytecodeTest, riusata sulle classi di produzione di carddemo-batch, come fa
+         carddemo-parity per carddemo-loader (#60). Solo in ambito test. -->
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>carddemo-domain</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

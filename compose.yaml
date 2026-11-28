@@ -1,8 +1,10 @@
 # Stack CardDemo: database, caricatore dei conti, servizio online, runner batch.
 #   docker compose up -d --wait        avvia db, carica i conti (loader, termina), poi online
 #                                      (batch non parte); un caricamento fallito ferma l'avvio
-#   docker compose run --rm batch      rilancia il caricatore (gia' caricato: nessuna modifica),
-#                                      poi esegue installationCheckJob e termina
+#   docker compose run --rm batch --spring.batch.job.name=installationCheckJob
+#                                      rilancia il caricatore (gia' caricato: nessuna modifica),
+#                                      poi esegue installationCheckJob e termina; con due job ogni
+#                                      avvio indica il job (READACCT: docs/sviluppo.md, #67)
 # Su una tabella account gia' caricata con lo stesso file il caricatore termina con 0 senza scrivere,
 # quindi un secondo "up" sullo stesso volume riesce; con una tabella diversa dal file si ferma e
 # l'avvio fallisce. Per ricaricare si ricrea il volume: docker compose --profile batch down --volumes
