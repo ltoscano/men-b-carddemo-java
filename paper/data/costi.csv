@@ -109,3 +109,4 @@ ora_utc,oggetto,ruolo,modello,token,tipo_contatore,fonte,note
 2026-11-28T01:27:31Z,issue-55,validatore,gpt-6.1-sol,195807,per sessione,log di Codex,contestazione della specifica
 2026-11-28T01:58:43Z,pr-57,esecutore,opus,537646,cumulativo dichiarato,contatore riportato dall'ambiente alla fine della fase,correzione mirata
 2026-11-28T02:34:14Z,issue-53,esecutore,opus,575326,cumulativo dichiarato,contatore riportato dall'ambiente alla fine della fase,212 chiamate a strumenti
+2026-11-28T02:44:01Z,wave1-conti,validatore,gpt-6.1-sol,172759,per sessione,log di Codex,contestazione di due specifiche
