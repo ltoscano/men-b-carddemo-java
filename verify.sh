@@ -6,8 +6,9 @@
 #  3. controlla che il rapporto del test dei vettori del codec (#54) e quello del test di
 #     integrazione PostgreSQL siano XML completi, di questa corsa, con i casi attesi eseguiti e
 #     riusciti, nessuno saltato (quality/RapportoSurefire.java); lo stesso per i test della
-#     tabella dei conti (#59: AccountSchemaTest, AccountContrattoTest, AccountMigrazioneTest),
-#     con tutti i casi elencati per nome;
+#     tabella dei conti (#59: AccountSchemaTest, AccountContrattoTest, AccountMigrazioneTest)
+#     e del caricamento dei conti (#60: TracciatoContoTest, CaricamentoContiTest,
+#     CaricamentoContiCasiTest, CaricatoreApplicazioneTest), con tutti i casi elencati per nome;
 #  4. controlla i rapporti di copertura (JaCoCo: rapporto aggregato e prova dell'agente in ogni
 #     modulo che esegue test) e di analisi statica (SpotBugs: un rapporto per ogni modulo di
 #     produzione) con quality/RapportiQualita.java; i plugin li producono dentro mvn verify;
@@ -312,6 +313,44 @@ pretendi_casi AccountMigrazioneTest \
   migrazioneModificataDopoLApplicazioneFaFallireLAvvio \
   primoAvvioERiavvioBatchPoiOnlineSuDatabaseVuoto \
   primoAvvioERiavvioOnlinePoiBatchSuDatabaseVuoto || exit 1
+
+# Test del caricamento dei conti (#60): obbligatori, con le stesse regole (rapporto di questa corsa,
+# tutti i casi elencati per nome, eseguiti e riusciti, nessuno saltato, fallito o in errore).
+echo "== [3/7] controllo dei rapporti dei test del caricamento dei conti (#60)"
+pretendi_casi_caricamento() {
+  local classe="io.github.ltoscano.carddemo.parity.$1" rapporto
+  shift
+  rapporto="carddemo-parity/target/surefire-reports/TEST-${classe}.xml"
+  if [ ! -f "${rapporto}" ]; then
+    echo "ERRORE: rapporto dei test del caricamento dei conti assente: ${rapporto}" >&2
+    return 1
+  fi
+  if ! java quality/RapportoSurefire.java "${rapporto}" "${MENB_VERIFY_RUN_ID}" "${classe}" "$@" </dev/null; then
+    echo "ERRORE: rapporto dei test del caricamento dei conti non valido: ${rapporto}" >&2
+    return 1
+  fi
+  return 0
+}
+pretendi_casi_caricamento TracciatoContoTest \
+  ilTracciatoDelCaricatoreCoincideRigaPerRigaConIlContratto || exit 1
+pretendi_casi_caricamento CaricamentoContiTest \
+  ilFileDiEsempioSiCaricaECorrispondeRecordPerRecord \
+  caricamentoSuTabellaNonVuotaSiFermaSenzaCambiareNulla || exit 1
+pretendi_casi_caricamento CaricamentoContiCasiTest \
+  zeroNegativoRifiutato \
+  segnoAlternativoRifiutato \
+  fillerNonVuotoRifiutato \
+  campoNumericoConSpaziRifiutato \
+  chiaveDuplicataRifiutata \
+  fileTroncatoRifiutato \
+  byteNulloInUnCampoDiTestoRifiutato \
+  importoMassimoEMinimoDellaPictureAccettati \
+  fileVuotoAccettatoZeroRighe \
+  recordDistinguibiliCampoPerCampoAccettati \
+  caratteriOltreAsciiAccettatiERicodificatiIdentici || exit 1
+pretendi_casi_caricamento CaricatoreApplicazioneTest \
+  ilCaricatoreMigraCaricaETerminaConZeroPoiRifiutaLaSecondaEsecuzione \
+  fileRifiutatoTerminaConIlCodiceDiRifiutoEZeroRighe || exit 1
 
 # POM effettivi del reattore (maven-help-plugin, versione fissata): la configurazione dei plugin di
 # copertura e di analisi statica si legge da qui, come la vede Maven (ereditarieta', profili,

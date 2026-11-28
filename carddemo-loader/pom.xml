@@ -18,6 +18,27 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>carddemo-domain</artifactId>
     </dependency>
+    <!-- Caricatore dei conti (issue #60): applicazione Spring Boot senza web che all'avvio applica
+         la migrazione con Flyway (la stessa risorsa di carddemo-domain, db/migration), carica il
+         file e termina. Versioni gestite da Spring Boot 4.2.0 (Flyway 12.11.0, driver 42.7.14). -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-flyway</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
@@ -62,6 +83,15 @@
       <plugin>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <!-- jar eseguibile come artefatto con classificatore; il jar principale resta ordinario
+               (carddemo-parity lo usa come dipendenza nei test) -->
+          <classifier>exec</classifier>
+        </configuration>
       </plugin>
     </plugins>
   </build>
