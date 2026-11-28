@@ -117,3 +117,4 @@ ora_utc,oggetto,ruolo,modello,token,tipo_contatore,fonte,note
 2026-11-28T04:07:18Z,pr-58,validatore,gpt-6.1-sol,178899,per sessione,log di Codex,validazione 2 di 2 ristretta
 2026-11-28T04:40:54Z,pr-61,esecutore,opus,489022,cumulativo dichiarato,contatore riportato dall'ambiente (ultima lettura disponibile),giro di correzione compreso il fermo
 2026-11-28T04:55:37Z,pr-61,validatore,gpt-6.1-sol,144592,per sessione,log di Codex,validazione 2 di 2 ristretta
+2026-11-28T05:40:22Z,issue-55,esecutore,opus,628869,cumulativo dichiarato,contatore riportato dall'ambiente alla fine della fase,due fasi con un fermo; 115 chiamate nella seconda
