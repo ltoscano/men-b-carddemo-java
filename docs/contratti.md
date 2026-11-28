@@ -70,72 +70,90 @@ Issue #59. Prima tabella di business in PostgreSQL: `account`, una riga per reco
 
 ### Colonne
 
-Una colonna per ogni campo elementare del contratto [`CVACT01Y.ACCOUNT-RECORD.tsv`](legacy-map/data-contract/contratti/CVACT01Y.ACCOUNT-RECORD.tsv) diverso dal `FILLER`, nell'ordine del copybook (`app/cpy/CVACT01Y.cpy`). Regola dei tipi: `X(n)` → `CHAR(n)`; `9(n)` → `NUMERIC(n,0)`; `S9(i)V9(d)` → `NUMERIC(i+d,d)`.
+Una colonna per ogni campo elementare del contratto [`CVACT01Y.ACCOUNT-RECORD.tsv`](legacy-map/data-contract/contratti/CVACT01Y.ACCOUNT-RECORD.tsv) diverso dal `FILLER`, nell'ordine del copybook (`app/cpy/CVACT01Y.cpy`). Regola dei tipi:
+
+- `X(n)` → `TEXT COLLATE "C"` con il vincolo `CHECK (char_length(colonna) = n)`; la lunghezza sta solo nel vincolo;
+- `9(n)` → `NUMERIC(n,0)`;
+- `S9(i)V9(d)` → `NUMERIC(i+d,d)`.
 
 | Campo COBOL | `PICTURE` | Colonna | Tipo |
 | --- | --- | --- | --- |
 | `ACCT-ID` | `9(11)` | `acct_id` | `NUMERIC(11,0)`, chiave primaria, `CHECK (acct_id >= 0)` |
-| `ACCT-ACTIVE-STATUS` | `X(01)` | `acct_active_status` | `CHAR(1)` |
+| `ACCT-ACTIVE-STATUS` | `X(01)` | `acct_active_status` | `TEXT COLLATE "C"`, `CHECK (char_length(acct_active_status) = 1)` |
 | `ACCT-CURR-BAL` | `S9(10)V99` | `acct_curr_bal` | `NUMERIC(12,2)` |
 | `ACCT-CREDIT-LIMIT` | `S9(10)V99` | `acct_credit_limit` | `NUMERIC(12,2)` |
 | `ACCT-CASH-CREDIT-LIMIT` | `S9(10)V99` | `acct_cash_credit_limit` | `NUMERIC(12,2)` |
-| `ACCT-OPEN-DATE` | `X(10)` | `acct_open_date` | `CHAR(10)` |
-| `ACCT-EXPIRAION-DATE` | `X(10)` | `acct_expiraion_date` | `CHAR(10)` (il refuso del copybook resta nel nome) |
-| `ACCT-REISSUE-DATE` | `X(10)` | `acct_reissue_date` | `CHAR(10)` |
+| `ACCT-OPEN-DATE` | `X(10)` | `acct_open_date` | `TEXT COLLATE "C"`, `CHECK (char_length(...) = 10)` |
+| `ACCT-EXPIRAION-DATE` | `X(10)` | `acct_expiraion_date` | `TEXT COLLATE "C"`, `CHECK (char_length(...) = 10)` (il refuso del copybook resta nel nome) |
+| `ACCT-REISSUE-DATE` | `X(10)` | `acct_reissue_date` | `TEXT COLLATE "C"`, `CHECK (char_length(...) = 10)` |
 | `ACCT-CURR-CYC-CREDIT` | `S9(10)V99` | `acct_curr_cyc_credit` | `NUMERIC(12,2)` |
 | `ACCT-CURR-CYC-DEBIT` | `S9(10)V99` | `acct_curr_cyc_debit` | `NUMERIC(12,2)` |
-| `ACCT-ADDR-ZIP` | `X(10)` | `acct_addr_zip` | `CHAR(10)` |
-| `ACCT-GROUP-ID` | `X(10)` | `acct_group_id` | `CHAR(10)` |
+| `ACCT-ADDR-ZIP` | `X(10)` | `acct_addr_zip` | `TEXT COLLATE "C"`, `CHECK (char_length(...) = 10)` |
+| `ACCT-GROUP-ID` | `X(10)` | `acct_group_id` | `TEXT COLLATE "C"`, `CHECK (char_length(...) = 10)` |
 
-Tutte le colonne sono `NOT NULL` (un record COBOL non ha campi assenti). Nessun valore predefinito, nessun altro vincolo, nessun indice oltre a quello della chiave primaria (`account_pkey`).
+Tutte le colonne sono `NOT NULL`, perché un record COBOL non ha campi assenti. Nessun valore predefinito. Gli unici vincoli sono la chiave primaria (`account_pkey`), il `CHECK` sulla chiave (`account_acct_id_check`) e la lunghezza esatta di ogni testo (`account_<colonna>_check`). L'unico indice è quello della chiave primaria.
 
-Decisioni della specifica (registro delle approvazioni, voce 100):
+Decisioni della specifica (registro delle approvazioni, voci 100, 102 e 103):
 
-- **Valori, non byte.** La tabella conserva valori; il sistema Java accetta solo record in rappresentazione canonica (la scrittura in byte che `encode` di #54 produce). Un record con un'altra rappresentazione dello stesso valore (per esempio lo zero con segno negativo) non viene caricato: il caricatore si ferma e lo segnala. La parità con l'oracle si dichiara per gli ingressi canonici; i 50 conti di esempio lo sono tutti.
-- **Le date restano testo** (`CHAR(10)`, non `DATE`): il legacy non le valida al caricamento, e convertirle cambierebbe il comportamento sui valori non validi.
+- **Valori, non byte.** La tabella conserva valori, e il sistema Java accetta solo record in rappresentazione canonica (la scrittura in byte che produce `encode` di #54). Un record che scrive lo stesso valore in un altro modo (per esempio lo zero con segno negativo) non viene caricato: il caricatore si ferma e lo segnala. La parità con l'oracle si dichiara per gli ingressi canonici; i 50 conti di esempio lo sono tutti.
+- **Un campo `X(n)` contiene sempre esattamente n caratteri, spazi finali compresi**, come nel record COBOL: gli spazi sono dati. Chi scrive fornisce n caratteri; un valore più corto è rifiutato, non riempito. Le date restano testo (non `DATE`): il legacy non le valida al caricamento, e convertirle cambierebbe il comportamento sui valori non validi.
+- **Né `CHAR(n)` né `VARCHAR(n)`.** Con `CHAR(n)` PostgreSQL toglie gli spazi finali in ogni conversione a `text`, anche implicita: `lower(colonna) = lower(?)` con un parametro di n caratteri non trova la riga (validazione 1 della PR #61), mentre in COBOL lo stesso confronto è vero (`COACTUPC.cbl:4139-4140`). Con `VARCHAR(n)` un valore più lungo la cui eccedenza è di soli spazi viene troncato a n senza errore prima del vincolo di lunghezza, quindi è accettato (osservato via JDBC il 28 nov 2026, commento sull'issue #59).
+- **Collazione `"C"`**: confronti e ordinamenti seguono i soli codici dei caratteri, non la lingua del database (che è `en_US.utf8`).
 - **Il `FILLER` non ha colonna**: un record con il `FILLER` diverso da 178 spazi non viene caricato.
 
 ### Comportamento osservato di PostgreSQL
 
-PostgreSQL 18.7 (immagine di `compose.yaml`), driver JDBC 42.7.14, inserimento parametrizzato (`setBigDecimal`, `setString`) senza cast. È ciò su cui contano i programmi tradotti; ogni riga è un caso di `AccountSchemaTest`.
+Condizioni della prova: PostgreSQL 18.7 (immagine di `compose.yaml`), driver JDBC 42.7.14, inserimento parametrizzato (`setBigDecimal`, `setString`) senza cast. I programmi tradotti contano su questo comportamento. Ogni affermazione corrisponde a un caso di `AccountSchemaTest`.
 
 Importi e chiave:
 
-- Massimo e minimo della `PICTURE` (`9999999999.99` e `-9999999999.99`; per la chiave `99999999999` e `0`) si rileggono con `getBigDecimal` identici, stessa scala (`equals`, non `compareTo`).
-- Una cifra intera in più (`10000000000.00`, `-10000000000.00`, chiave `100000000000`) è rifiutata: SQLSTATE `22003`, `numeric field overflow`.
-- `acct_id = -1` è rifiutato dal vincolo `account_acct_id_check` (SQLSTATE `23514`); una chiave duplicata da `account_pkey` (SQLSTATE `23505`).
-- **Decimali in più: arrotondati, non rifiutati.** `0.005` diventa `0.01`, `-0.005` diventa `-0.01`, `1.234` diventa `1.23` (metà lontano da zero), senza errore. Chi scrive un importo deve portarlo prima alla scala 2 con l'arrotondamento o il troncamento del COBOL, esplicito in Java; non si conta sull'arrotondamento del database.
+- Massimo e minimo della `PICTURE` si rileggono con `getBigDecimal` identici, con la stessa scala (confronto con `equals`, non `compareTo`): `9999999999.99` e `-9999999999.99` per gli importi, `99999999999` e `0` per la chiave.
+- Una cifra intera in più è rifiutata con SQLSTATE `22003` (`numeric field overflow`): `10000000000.00`, `-10000000000.00`, chiave `100000000000`.
+- `acct_id = -1` è rifiutato dal vincolo `account_acct_id_check` (SQLSTATE `23514`). Una chiave duplicata è rifiutata da `account_pkey` (SQLSTATE `23505`).
+- **Decimali in più: arrotondati, non rifiutati.** Senza errore, `0.005` diventa `0.01`, `-0.005` diventa `-0.01` e `1.234` diventa `1.23` (metà lontano da zero). **Regola:** gli importi si scrivono già alla scala della colonna, con l'arrotondamento o il troncamento del COBOL esplicito in Java; non si conta sull'arrotondamento del database.
 - `ORDER BY acct_id` è numerico: 9, 10, 100, 99999999999.
 
-Testo `CHAR(n)`:
+Testo (`TEXT COLLATE "C"`, esattamente n caratteri):
 
-| Valore scritto in un `CHAR(10)` | Esito | `getString` (JDBC) | `colonna::text` |
-| --- | --- | --- | --- |
-| più corto (`C`) | accettato, riempito di spazi a 10 caratteri | `C` seguito da 9 spazi | `C` |
-| spazi interni e iniziali (` D E`) | accettato, riempito | ` D E` seguito da 6 spazi | ` D E` |
-| più lungo, eccedenza di soli spazi | accettato, **troncato** a 10 senza errore | i primi 10 caratteri | i primi 10 caratteri |
-| più lungo, eccedenza con un carattere non spazio (`AAAAAAAAAAX`, `AAAAAAAAAA X`, 10 spazi e `X`) | **rifiutato**, SQLSTATE `22001`, `value too long for type character(10)` | — | — |
-| soli spazi, o stringa vuota | accettato, 10 spazi (non `NULL`) | 10 spazi | stringa vuota |
-
-`CHAR(1)` si comporta allo stesso modo.
-
-- **Lettura.** `getString` restituisce il valore riempito a `n` caratteri, come il campo `X(n)` del COBOL: gli spazi finali non si perdono in lettura.
-- **Confronti.** Con un parametro passato da `setString` (il driver lo invia come `varchar`) PostgreSQL confronta come `CHAR` e gli spazi finali non contano: `acct_group_id = ?` trova il valore memorizzato `G1` (riempito) con `G1`, `G1  ` e `G1` riempito a 10; non lo trova con ` G1` (lo spazio iniziale conta). È lo stesso risultato del COBOL, che nel confronto allunga con spazi l'operando più corto.
-- **Conversione a `text`.** `colonna::text` toglie gli spazi finali. Con un parametro convertito a `text` (`acct_group_id = ?::text`) il confronto avviene tra testi: `G1` trova la riga, `G1` riempito a 10 **no**. I programmi tradotti non convertono queste colonne a `text` nei confronti e non usano la forma convertita come valore del campo.
-
-Esito rispetto alla condizione di arresto della specifica ("`CHAR(n)` altera gli spazi finali in lettura o nei confronti in un modo che cambia un risultato osservabile"): in lettura JDBC e nei confronti con i parametri come li invia il driver gli spazi finali non cambiano il risultato rispetto al COBOL; li toglie solo la conversione esplicita a `text`, che è documentata qui come forma da non usare. Per questo l'issue non si è fermata.
+- **Lunghezza diversa da n: rifiutata** dal vincolo `account_<colonna>_check` (SQLSTATE `23514`), in ogni colonna. Casi provati:
+  - più lungo con un carattere non spazio in più;
+  - più lungo di un solo spazio;
+  - più lungo di 12 spazi;
+  - n+1 spazi;
+  - stringa vuota;
+  - per n = 10, anche `G` e n-1 spazi (più corti).
+- **n caratteri: riletti identici** con `getString`, spazi finali compresi, con `char_length` uguale a n. Casi provati: soli spazi, nessuno spazio, `G1` seguito da spazi, ` D E` seguito da spazi.
+- **Confronti con un parametro di n caratteri: trovano la riga.** Riga memorizzata: `G1` seguito da 8 spazi. Trovano la riga `acct_group_id = ?`, `lower(acct_group_id) = lower(?)` (con `g1` seguito da 8 spazi) e `acct_group_id::text = ?`.
+- **Lo stesso parametro senza gli spazi finali (`G1`, `g1`) non la trova in nessuna delle tre forme.** **Regola:** i programmi tradotti scrivono e confrontano sempre valori di lunghezza piena (n caratteri, come il campo COBOL).
+- **Ordinamento per codice del carattere**, sui valori riempiti a 10: spazi, `1`, `A`, `A1`, `B`, `G1`, `a`, `a1`, `b`, `g1`.
 
 ### Come si verifica
 
-Test in `carddemo-parity/src/test/java/io/github/ltoscano/carddemo/parity/`, contro PostgreSQL reale (Testcontainers, immagine e digest di `compose.yaml`):
+I test stanno in `carddemo-parity/src/test/java/io/github/ltoscano/carddemo/parity/` e girano contro PostgreSQL reale (Testcontainers, immagine e digest di `compose.yaml`).
 
-- `AccountSchemaTest` (controlli 1, 3, 4): applica la migrazione con Flyway a un database vuoto e confronta con attese scritte a mano nel test colonne (nome, ordine, tipo, lunghezza, precisione, scala, `NOT NULL`, valore predefinito) lette da `information_schema`, valori predefiniti in `pg_attrdef`, tutte le definizioni dei vincoli in `pg_constraint` (da PostgreSQL 18 anche i `NOT NULL`), indici in `pg_indexes`, oggetti dello schema `public` e trigger; poi i limiti e il comportamento descritti sopra. Ogni caso lavora in una transazione che annulla alla fine.
-- `AccountContrattoTest` (controllo 2): legge il contratto dal repository (proprietà `menb.contratto.account`, impostata dal POM di `carddemo-parity`) e, con la regola dei tipi scritta nel test e indipendente dalle attese di `AccountSchemaTest`, pretende per ogni campo elementare non `FILLER` una colonna con nome e tipo corrispondenti, nello stesso ordine, e nessuna colonna in più. Controlla anche che cifre e lunghezza del contratto concordino con la `PICTURE`; una `PICTURE` o un `USAGE` fuori dalla regola fanno fallire il test.
-- `AccountMigrazioneTest` (controllo 5): la migrazione applicata due volte non cambia schema né storico; una migrazione applicata e poi modificata fa fallire l'avvio di `online` e di `batch` con `FlywayValidateException` (`checksum mismatch`), mentre la stessa migrazione non modificata, letta dalla stessa cartella, li lascia partire; primo avvio e riavvio delle due applicazioni su un database vuoto, nei due ordini (`batch, online, batch, online` e `online, batch, online, batch`), con lo storico di Flyway che resta una sola riga e le tabelle di Spring Batch create dal loro inizializzatore.
-- `./verify.sh` pretende nel rapporto di questa corsa tutti i casi delle tre classi, per nome, eseguiti e non saltati (passo 3/7).
-- `./smoke.sh` verifica sullo stack Compose che `online` abbia creato `account` e lo storico di Flyway con la sola `V1__account.sql` riuscita, e che `batch` esegua Flyway al suo avvio.
+- **`AccountSchemaTest`** (controlli 1, 3, 4). Applica la migrazione con Flyway a un database vuoto e confronta il catalogo con attese scritte a mano nel test:
+  - le colonne lette da `information_schema`: nome, ordine, tipo, lunghezza, precisione, scala, collazione, `NOT NULL`, valore predefinito;
+  - i valori predefiniti in `pg_attrdef`;
+  - tutte le definizioni dei vincoli in `pg_constraint` (da PostgreSQL 18 anche i `NOT NULL`, oltre ai sei vincoli di lunghezza);
+  - gli indici in `pg_indexes`;
+  - gli oggetti dello schema `public` e i trigger.
+
+  Poi verifica i limiti e il comportamento descritti sopra. Ogni caso lavora in una transazione che annulla alla fine.
+- **`AccountContrattoTest`** (controllo 2). Legge il contratto dal repository, attraverso la proprietà `menb.contratto.account` impostata dal POM di `carddemo-parity`. Applica la regola dei tipi scritta nel test, indipendente dalle attese di `AccountSchemaTest`, e pretende per ogni campo elementare non `FILLER`:
+  - una colonna con nome e tipo corrispondenti, nello stesso ordine del contratto; per `X(n)`, `text` con collazione `C` e la lunghezza n letta dalla definizione del vincolo `CHECK ((char_length(colonna) = n))` nel catalogo;
+  - nessuna colonna in più.
+
+  Controlla anche che cifre e lunghezza del contratto concordino con la `PICTURE`. Una `PICTURE` o un `USAGE` fuori dalla regola fanno fallire il test.
+- **`AccountMigrazioneTest`** (controllo 5). Verifica tre cose:
+  - la migrazione applicata due volte non cambia né lo schema né lo storico;
+  - una migrazione applicata e poi modificata fa fallire l'avvio di `online` e di `batch` con `FlywayValidateException` (`checksum mismatch`), mentre la stessa migrazione non modificata, letta dalla stessa cartella, li lascia partire;
+  - primo avvio e riavvio delle due applicazioni su un database vuoto, nei due ordini (`batch, online, batch, online` e `online, batch, online, batch`): lo storico di Flyway resta una sola riga e le tabelle di Spring Batch le crea il loro inizializzatore.
+
+  Questi avvii condividono il classpath dei due moduli: la prova per singola applicazione è nello smoke (vedi [`sviluppo.md`](sviluppo.md#tabella-dei-conti-e-flyway-59)).
+- **`./verify.sh`** pretende nel rapporto di questa corsa tutti i casi delle tre classi, per nome, eseguiti e non saltati (passo 3/7).
+- **`./smoke.sh`**, con le immagini distribuite, verifica che `online` crei `account` (una tabella secondo il catalogo, con 12 colonne) e lo storico di Flyway con la sola `V1__account.sql` riuscita. Verifica poi che `batch` esegua Flyway sul database già migrato e che, come primo migratore su un database vuoto, crei da sé gli stessi oggetti.
 
 ### Limiti dichiarati
 
 - Parità solo per ingressi canonici (decisione sopra): ciò che l'originale fa con un importo non canonico resta un'osservazione dell'oracle (#55).
-- Caratteri oltre ASCII, codifica del database e ordinamento delle colonne di testo non sono esaminati qui: la tabella si ordina solo per chiave numerica; il percorso dei caratteri riguarda il caricamento.
+- Non esaminati qui: i caratteri oltre ASCII e la codifica del database (`UTF8`), che riguardano il caricamento.
