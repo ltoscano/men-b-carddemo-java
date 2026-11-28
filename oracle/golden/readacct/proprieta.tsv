@@ -1,0 +1,65 @@
+# Proprieta' richieste dalla specifica dell'issue #55, scritte a mano, verificate da oracle/golden/proprieta.sh sul
+# file indicizzato EFFETTIVAMENTE LETTO (la lettura in ordine di chiave fatta con IDXLEGGI dopo il caricamento), non
+# sul file preparato.
+# Colonne (separate da tabulazione):
+#   scenario   esempio, mirato, osservazione
+#   chiave     ACCT-ID del record, oppure * = tutti i record dello scenario
+#   campo      nome del campo in app/cpy/CVACT01Y.cpy
+#   posizione  primo byte del campo nel record di 300 byte, contando da 1
+#   lunghezza  byte del campo
+#   condizione una delle seguenti, valutate decodificando i byte con le regole di #23 (codifica.md):
+#     record-50        lo scenario ha esattamente 50 record (campo e posizione ignorati)
+#     zero             DISPLAY con segno canonico di valore zero
+#     canonico         DISPLAY con segno: corpo di cifre 30-39 e ultimo byte { A-I (positivo o zero) o J-R (negativo),
+#                      oppure } solo con valore diverso da zero (lo zero negativo non e' canonico)
+#     negativo         canonico e minore di zero
+#     positivo         canonico e maggiore di zero
+#     cifre-9          tutte le cifre 9
+#     zero-positivo    byte canonici dello zero (undici 30 e 7B)
+#     base-non-zero    nello scenario "esempio" lo stesso campo dello stesso conto ha valore diverso da zero
+#     diverso-campo    byte diversi da quelli del campo che inizia alla posizione indicata in "argomento" (stessa lunghezza)
+#     non-spazi        almeno un byte diverso da 20
+#     diverso-da       byte diversi dal testo in "argomento"
+#     data-unica       AAAA-MM-GG con anno, mese e giorno diversi tra loro (come numeri), e anno, mese e giorno
+#                      ciascuno assente dalle date di riemissione degli altri conti dello scenario e dalle date di
+#                      apertura e di scadenza dello stesso conto
+#     diverso-zero     valore diverso da zero (DISPLAY con segno canonico)
+#     zero-negativo    esattamente undici byte 30 seguiti da 7D
+#     segno-alternativo corpo di cifre e ultimo byte 30-39 (cifra semplice: positivo, non canonico)
+#     primo            il record e' il primo del file letto
+#   argomento  per diverso-campo e diverso-da
+#   motivo
+scenario	chiave	campo	posizione	lunghezza	condizione	argomento	motivo
+esempio	*	-	0	0	record-50	-	50 record di AWS.M2.CARDDEMO.ACCTDATA.PS
+esempio	*	ACCT-CURR-CYC-DEBIT	91	12	zero	-	con debito zero OUT-ACCT-CURR-CYC-DEBIT e' 2525,00 (righe 236-238): uscita determinata
+esempio	*	ACCT-CURR-BAL	13	12	canonico	-	rappresentazione canonica: il risultato del MOVE non dipende da NUMPROC
+esempio	*	ACCT-CREDIT-LIMIT	25	12	canonico	-	idem
+esempio	*	ACCT-CASH-CREDIT-LIMIT	37	12	canonico	-	idem
+esempio	*	ACCT-CURR-CYC-CREDIT	79	12	canonico	-	idem
+esempio	*	ACCT-CURR-CYC-DEBIT	91	12	canonico	-	idem
+mirato	*	-	0	0	record-50	-	gli stessi 50 conti dello scenario esempio
+mirato	*	ACCT-CURR-CYC-DEBIT	91	12	zero	-	in questo scenario il debito di ciclo resta zero in tutti i record
+mirato	*	ACCT-CURR-BAL	13	12	canonico	-	tutte le sostituzioni sono canoniche
+mirato	*	ACCT-CREDIT-LIMIT	25	12	canonico	-	idem
+mirato	*	ACCT-CASH-CREDIT-LIMIT	37	12	canonico	-	idem
+mirato	*	ACCT-CURR-CYC-CREDIT	79	12	canonico	-	idem
+mirato	*	ACCT-CURR-CYC-DEBIT	91	12	canonico	-	idem
+mirato	00000000003	ACCT-CURR-BAL	13	12	negativo	-	saldo negativo
+mirato	00000000004	ACCT-CREDIT-LIMIT	25	12	negativo	-	limite di credito negativo
+mirato	00000000005	ACCT-CASH-CREDIT-LIMIT	37	12	diverso-campo	25	limite di anticipo diverso dal limite di credito dello stesso conto
+mirato	00000000006	ACCT-CREDIT-LIMIT	25	12	cifre-9	-	importo con tutte le cifre a 9
+mirato	00000000007	ACCT-CURR-BAL	13	12	zero-positivo	-	zero positivo nel saldo
+mirato	00000000007	ACCT-CURR-BAL	13	12	base-non-zero	-	conto che nei dati di esempio ha saldo diverso da zero
+mirato	00000000008	ACCT-CURR-CYC-CREDIT	79	12	positivo	-	credito di ciclo positivo
+mirato	00000000009	ACCT-CURR-CYC-CREDIT	79	12	negativo	-	credito di ciclo negativo
+mirato	00000000010	ACCT-GROUP-ID	113	10	non-spazi	-	gruppo non vuoto
+mirato	00000000011	ACCT-ACTIVE-STATUS	12	1	diverso-da	Y	stato diverso da Y
+mirato	00000000012	ACCT-REISSUE-DATE	69	10	data-unica	-	data di riemissione con anno, mese e giorno distinti
+osservazione	*	-	0	0	record-50	-	gli stessi 50 conti
+osservazione	00000000001	ACCT-CURR-CYC-DEBIT	91	12	diverso-zero	-	debito diverso da zero nel primo record
+osservazione	00000000001	ACCT-CURR-CYC-DEBIT	91	12	primo	-	e' davvero il primo record del file letto
+osservazione	00000000020	ACCT-CURR-CYC-DEBIT	91	12	diverso-zero	-	debito diverso da zero in un record successivo
+osservazione	00000000021	ACCT-CURR-BAL	13	12	zero-negativo	-	zero negativo nel saldo
+osservazione	00000000022	ACCT-CREDIT-LIMIT	25	12	segno-alternativo	-	segno alternativo
+osservazione	00000000003	ACCT-CURR-BAL	13	12	negativo	-	le proprieta' dello scenario mirato restano (campione)
+osservazione	00000000012	ACCT-REISSUE-DATE	69	10	data-unica	-	idem

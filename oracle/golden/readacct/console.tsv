@@ -1,0 +1,37 @@
+# Classificazione della console di CBACT01C (stdout, una riga per DISPLAY), riga per riga (issue #55). Scritta a mano
+# leggendo app/cbl/CBACT01C.cbl prima della prima esecuzione sui dati. La console ha 2 + 15 x N righe: "inizio", poi per
+# ogni record letto le posizioni 1-15 del ciclo, poi "fine" (dopo lo stato 10 il programma chiude ed esce senza altre
+# emissioni). oracle/golden/maschera.sh produce console.riferimento.txt: le righe di classe a restano come sono, ogni
+# riga di classe b o c diventa "#OSSERVAZIONE <classe> <riga del sorgente>".
+# Assunzione dichiarata sul legacy: compilazione IBM con DISPSIGN(COMPAT), il valore predefinito (IBM, DISPSIGN): un
+# numerico zonato con segno e' stampato con il segno sovrapposto all'ultima cifra; GnuCOBOL con le opzioni dell'oracle
+# lo stampa con le cifre seguite dal segno (oracle/segno/expected/SEGNOPRB.txt). Il riferimento e' il testo della riga
+# prodotto da DISPLAY (caratteri, terminati da a capo); la forma dei record SYSOUT di z/OS (lunghezza, riempimento) non
+# ne fa parte.
+# Colonne (separate da tabulazione):
+#   posizione  inizio, 1-15 (posizione nel ciclo di un record), fine
+#   riga       riga del DISPLAY in app/cbl/CBACT01C.cbl
+#   prefisso   il letterale con cui la riga comincia ("-" = nessun letterale)
+#   classe     a = riferimento di parita' (soli letterali, campi alfanumerici o numerici senza segno, gruppi entro il
+#              record del dispositivo che non contengono numerici con segno)
+#              b = osservazione: contiene un numerico con segno
+#              c = osservazione: DISPLAY di un gruppo piu' lungo del record del dispositivo
+#   motivo
+posizione	riga	prefisso	classe	motivo
+inizio	141	START OF EXECUTION OF PROGRAM CBACT01C	a	solo letterale
+1	201	ACCT-ID                 :	a	letterale e ACCT-ID PIC 9(11), senza segno
+2	202	ACCT-ACTIVE-STATUS      :	a	letterale e PIC X(01)
+3	203	ACCT-CURR-BAL           :	b	PIC S9(10)V99: IBM con DISPSIGN(COMPAT) sovrappone il segno all'ultima cifra, GnuCOBOL stampa 12 cifre e il segno in coda
+4	204	ACCT-CREDIT-LIMIT       :	b	PIC S9(10)V99, come sopra
+5	205	ACCT-CASH-CREDIT-LIMIT  :	b	PIC S9(10)V99, come sopra
+6	206	ACCT-OPEN-DATE          :	a	letterale e PIC X(10)
+7	207	ACCT-EXPIRAION-DATE     :	a	letterale e PIC X(10)
+8	208	ACCT-REISSUE-DATE       :	a	letterale e PIC X(10)
+9	209	ACCT-CURR-CYC-CREDIT    :	b	PIC S9(10)V99, come sopra
+10	210	ACCT-CURR-CYC-DEBIT     :	b	PIC S9(10)V99, come sopra
+11	211	ACCT-GROUP-ID           :	a	letterale e PIC X(10)
+12	212	-------------------------------------------------	a	solo letterale
+13	283	VBRC-REC1:	a	letterale e gruppo di 12 byte (PIC 9(11) e PIC X(01)), entro il record del dispositivo
+14	284	VBRC-REC2:	b	gruppo che contiene due PIC S9(10)V99: i loro byte di segno arrivano alla console cosi' come sono in memoria (la specifica la classifica osservazione)
+15	151	-	c	DISPLAY ACCOUNT-RECORD, gruppo di 300 byte: su z/OS un operando piu' lungo del record del dispositivo continua nel record successivo (IBM, DISPLAY statement), GnuCOBOL scrive una riga sola
+fine	158	END OF EXECUTION OF PROGRAM CBACT01C	a	solo letterale; ultima riga della corsa regolare

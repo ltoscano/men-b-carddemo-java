@@ -1,0 +1,24 @@
+# Posizioni escluse dal riferimento di parita' (issue #55). Unica fonte delle maschere: i file *.riferimento.txt
+# mostrano ** al posto di ogni byte elencato qui; il verificatore indipendente (oracle/golden/verificatore.sh)
+# pretende che le posizioni che il sorgente non determina siano esattamente queste, e che nessuna posizione determinata
+# vi compaia. Scritta a mano prima della prima esecuzione di CBACT01C sui dati.
+# Colonne (separate da tabulazione):
+#   scenario   esempio, mirato, osservazione, oppure * = tutti
+#   file       OUTFILE (record di 107 byte), ARRYFILE (110), VBRC1 e VBRC2 (record logici di VBRCFILE: 12 e 39 byte)
+#   chiave     ACCT-ID del record, oppure * = tutti i record
+#   posizione  primo byte escluso nel record, contando da 1
+#   lunghezza  byte esclusi
+#   motivo     perche' il sorgente non determina quei byte (o perche' dipendono da un'opzione non fissata)
+#   riga       righe del sorgente (app/...) che lo mostrano
+# Ricerca dei casi dello stesso schema (campi delle aree di uscita non valorizzati a ogni record): esito nella sezione
+# "Campi non determinati" di docs/legacy-map/golden-readacct.md; l'unico caso negli scenari di riferimento e' il primo.
+scenario	file	chiave	posizione	lunghezza	motivo	riga
+*	OUTFILE	*	77	2	ultimi due byte di OUT-ACCT-REISSUE-DATE: CODATECN-0UT-DATE e' X(20) senza VALUE, COBDATFT (caso C4) ne scrive solo i primi 8 byte, CBACT01C non inizializza l'area e ne copia i primi 10; su z/OS il valore iniziale senza VALUE e' imprevedibile (IBM, VALUE clause), nell'oracle defaultbyte 0 da' 00 00	cpy/CODATECN.cpy:39-51; asm/COBDATFT.asm:51-53; cbl/CBACT01C.cbl:223-233
+osservazione	OUTFILE	00000000001	91	7	OUT-ACCT-CURR-CYC-DEBIT con ACCT-CURR-CYC-DEBIT diverso da zero: nessuna istruzione lo valorizza; resta il contenuto iniziale dell'area del record (primo record)	cbl/CBACT01C.cbl:236-238
+osservazione	OUTFILE	00000000020	91	7	OUT-ACCT-CURR-CYC-DEBIT con ACCT-CURR-CYC-DEBIT diverso da zero: resta cio' che l'area conteneva dopo la WRITE precedente (su z/OS non definito: IBM, Common processing facilities, INTO and FROM phrases)	cbl/CBACT01C.cbl:236-238,243
+osservazione	OUTFILE	00000000021	13	12	OUT-ACCT-CURR-BAL da uno zero negativo: il MOVE tra zonati con segno su z/OS genera il segno preferito con NUMPROC(NOPFD) e usa il segno dato con NUMPROC(PFD) (IBM, Sign representation of zoned and packed-decimal data); il repository non fissa NUMPROC	cbl/CBACT01C.cbl:218
+osservazione	ARRYFILE	00000000021	12	12	ARR-ACCT-CURR-BAL(1) da uno zero negativo: stessa riserva su NUMPROC	cbl/CBACT01C.cbl:255
+osservazione	ARRYFILE	00000000021	31	12	ARR-ACCT-CURR-BAL(2) da uno zero negativo: stessa riserva su NUMPROC	cbl/CBACT01C.cbl:257
+osservazione	VBRC2	00000000021	12	12	VB2-ACCT-CURR-BAL da uno zero negativo: stessa riserva su NUMPROC	cbl/CBACT01C.cbl:280
+osservazione	OUTFILE	00000000022	25	12	OUT-ACCT-CREDIT-LIMIT da un segno alternativo (cifra semplice, zona F su z/OS): stessa riserva su NUMPROC	cbl/CBACT01C.cbl:219
+osservazione	VBRC2	00000000022	24	12	VB2-ACCT-CREDIT-LIMIT da un segno alternativo: stessa riserva su NUMPROC	cbl/CBACT01C.cbl:281
