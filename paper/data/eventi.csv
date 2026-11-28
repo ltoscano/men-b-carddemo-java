@@ -553,3 +553,7 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T10:11:00Z,pr-69,merge,fable,orologio,PR #69 mergiata alle 10:10 UTC (fonte github); chiude #65
 2026-11-28T10:11:28Z,issue-67,esecutore-inizio,opus,orologio,traduzione di CBACT01C in Java (job READACCT)
 2026-11-28T10:12:20Z,paper,aggiornamento,fable,orologio,passi 32 e 33
+2026-11-28T11:21:38Z,issue-67,esecutore-fine,opus,orologio,PR 70; SHA f3f02fd
+2026-11-28T11:22:22Z,pr-70,codex-inizio,codex,orologio,validazione 1 di 2
+2026-11-28T11:51:10Z,pr-70,codex-fine,codex,orologio,validazione 1 di 2; codice di uscita 0
+2026-11-28T11:51:34Z,pr-70,esecutore-inizio,opus,orologio,giro di correzione dopo la validazione 1

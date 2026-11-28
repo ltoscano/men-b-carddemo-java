@@ -134,3 +134,5 @@ ora_utc,oggetto,ruolo,modello,token,tipo_contatore,fonte,note
 2026-11-28T09:47:00Z,pr-69,validatore,gpt-6.1-sol,156776,per sessione,log di Codex,validazione 2 di 2 ristretta
 2026-11-28T09:58:56Z,pr-69,esecutore,opus,354617,subagent_tokens,notifica del task,correzione mirata dopo la validazione 2; 30 chiamate; 682 s
 2026-11-28T10:11:00Z,pr-69,approvatore,fable,non misurato,-,-,verifica della correzione mirata: tre corse di verify.sh
+2026-11-28T11:21:38Z,issue-67,esecutore,opus,564583,subagent_tokens,notifica del task,traduzione di CBACT01C; 215 chiamate; 4206 s
+2026-11-28T11:51:10Z,pr-70,validatore,gpt-6.1-sol,250734,per sessione,log di Codex,validazione 1 di 2
