@@ -462,3 +462,4 @@ timestamp_utc,passo,evento,attore,fonte,note
 2026-11-28T01:25:27Z,pr-57,codex-fine,codex,orologio,validazione 2 di 2 ristretta; codice di uscita 0
 2026-11-28T01:26:22Z,pr-57,rinvio-esecutore,fable,orologio,dopo validazione 2: rilievi 2; 3 e parte dell'1
 2026-11-28T01:26:22Z,pr-57,correzione-inizio,opus,orologio,correzione mirata
+2026-11-28T01:26:23Z,issue-55,codex-fine,codex,orologio,contestazione della specifica; codice di uscita 0
