@@ -19,9 +19,10 @@ import org.springframework.context.ConfigurableApplicationContext;
  * {@link CaricatoreConti} carica il file indicato come unico argomento posizionale e l'applicazione
  * termina con il codice dell'esito:
  * <ul>
- *   <li>{@value #USCITA_RIUSCITA}: file caricato per intero;</li>
- *   <li>{@value #USCITA_RIFIUTATO}: caricamento rifiutato (file non conforme o tabella non vuota),
- *       nessuna riga scritta;</li>
+ *   <li>{@value #USCITA_RIUSCITA}: file caricato per intero, oppure tabella che conteneva gia'
+ *       esattamente i suoi record (nessuna scrittura);</li>
+ *   <li>{@value #USCITA_RIFIUTATO}: caricamento rifiutato (file non conforme, o tabella non vuota e
+ *       diversa dal file), nessuna riga scritta;</li>
  *   <li>{@value #USCITA_ERRORE}: argomenti sbagliati, file illeggibile, avvio o database falliti.</li>
  * </ul>
  * Indirizzo, utente e password del database arrivano da {@code SPRING_DATASOURCE_URL},
@@ -62,8 +63,13 @@ public class CaricatoreApplication {
         Path file = Path.of(posizionali.get(0));
         try (ConfigurableApplicationContext contesto = SpringApplication.run(CaricatoreApplication.class, args);
                 Connection connessione = contesto.getBean(DataSource.class).getConnection()) {
-            int record = CaricatoreConti.carica(file, connessione);
-            LOG.info("CARICAMENTO RIUSCITO: {} record caricati da {} nella tabella account", record, file);
+            CaricatoreConti.EsitoCaricamento esito = CaricatoreConti.carica(file, connessione);
+            if (esito.giaCaricato()) {
+                LOG.info("CARICAMENTO RIUSCITO: già caricato: {} record, nessuna modifica (la tabella account contiene"
+                        + " esattamente i record di {})", esito.record(), file);
+            } else {
+                LOG.info("CARICAMENTO RIUSCITO: {} record caricati da {} nella tabella account", esito.record(), file);
+            }
             return USCITA_RIUSCITA;
         } catch (CaricamentoRifiutato e) {
             LOG.error("CARICAMENTO RIFIUTATO: {}", e.getMessage());

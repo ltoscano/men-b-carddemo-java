@@ -8,7 +8,8 @@
 #     riusciti, nessuno saltato (quality/RapportoSurefire.java); lo stesso per i test della
 #     tabella dei conti (#59: AccountSchemaTest, AccountContrattoTest, AccountMigrazioneTest)
 #     e del caricamento dei conti (#60: TracciatoContoTest, CaricamentoContiTest,
-#     CaricamentoContiCasiTest, CaricatoreApplicazioneTest), con tutti i casi elencati per nome;
+#     CaricamentoContiCasiTest, CaricamentoConcorrenteTest, CaricatoreApplicazioneTest,
+#     IspezioneBytecodeCaricatoreTest), con tutti i casi elencati per nome;
 #  4. controlla i rapporti di copertura (JaCoCo: rapporto aggregato e prova dell'agente in ogni
 #     modulo che esegue test) e di analisi statica (SpotBugs: un rapporto per ogni modulo di
 #     produzione) con quality/RapportiQualita.java; i plugin li producono dentro mvn verify;
@@ -318,7 +319,9 @@ pretendi_casi AccountMigrazioneTest \
 # tutti i casi elencati per nome, eseguiti e riusciti, nessuno saltato, fallito o in errore).
 echo "== [3/7] controllo dei rapporti dei test del caricamento dei conti (#60)"
 pretendi_casi_caricamento() {
+  # Nome semplice: classe del pacchetto parity; nome qualificato: quello dato.
   local classe="io.github.ltoscano.carddemo.parity.$1" rapporto
+  case "$1" in *.*) classe="$1" ;; esac
   shift
   rapporto="carddemo-parity/target/surefire-reports/TEST-${classe}.xml"
   if [ ! -f "${rapporto}" ]; then
@@ -332,10 +335,17 @@ pretendi_casi_caricamento() {
   return 0
 }
 pretendi_casi_caricamento TracciatoContoTest \
-  ilTracciatoDelCaricatoreCoincideRigaPerRigaConIlContratto || exit 1
+  ilTracciatoDelCaricatoreCoincideRigaPerRigaConIlContratto \
+  ilModelloDelCodificatoreDeiTestCoincideRigaPerRigaConIlContratto || exit 1
 pretendi_casi_caricamento CaricamentoContiTest \
   ilFileDiEsempioSiCaricaECorrispondeRecordPerRecord \
-  caricamentoSuTabellaNonVuotaSiFermaSenzaCambiareNulla || exit 1
+  secondoCaricamentoDelloStessoFileRiesceSenzaScrivere \
+  tabellaDiversaDalFileSiFermaConLaPrimaDifferenzaSenzaScrivere || exit 1
+pretendi_casi_caricamento CaricamentoConcorrenteTest \
+  dueCaricatoriInsiemeConLeStesseChiavi \
+  dueCaricatoriInsiemeConChiaviDisgiunte || exit 1
+pretendi_casi_caricamento io.github.ltoscano.carddemo.domain.IspezioneBytecodeCaricatoreTest \
+  nessunaVirgolaMobileNeConversioniConPerditaNelleClassiDelCaricatore || exit 1
 pretendi_casi_caricamento CaricamentoContiCasiTest \
   zeroNegativoRifiutato \
   segnoAlternativoRifiutato \
@@ -349,7 +359,7 @@ pretendi_casi_caricamento CaricamentoContiCasiTest \
   recordDistinguibiliCampoPerCampoAccettati \
   caratteriOltreAsciiAccettatiERicodificatiIdentici || exit 1
 pretendi_casi_caricamento CaricatoreApplicazioneTest \
-  ilCaricatoreMigraCaricaETerminaConZeroPoiRifiutaLaSecondaEsecuzione \
+  ilCaricatoreMigraCaricaETerminaConZeroPoiRiesceSenzaScrivereERifiutaUnaTabellaAlterata \
   fileRifiutatoTerminaConIlCodiceDiRifiutoEZeroRighe || exit 1
 
 # POM effettivi del reattore (maven-help-plugin, versione fissata): la configurazione dei plugin di

@@ -57,6 +57,20 @@
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
       </plugin>
+      <!-- Jar delle classi di test (issue #60): carddemo-parity riusa l'ispezione del codice compilato
+           di NoFloatingPointBytecodeTest sulle classi di carddemo-loader, senza copiarla. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>classi-di-test</id>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 

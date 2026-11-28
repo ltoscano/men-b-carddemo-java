@@ -6,6 +6,7 @@ import io.github.ltoscano.carddemo.loader.CaricatoreApplication;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  * (immagine di {@code compose.yaml}), con il suo {@code application.properties} indicato
  * esplicitamente (sul classpath di {@code carddemo-parity} ce ne sono tre con lo stesso nome).
  * Applica da se' la migrazione, carica e termina con il codice dell'esito; una seconda esecuzione
- * sulla tabella piena e un file rifiutato terminano con il codice di rifiuto senza cambiare nulla.
+ * sulla tabella gia' caricata con lo stesso file termina con 0 senza scrivere; con una riga alterata,
+ * e con un file rifiutato, termina con il codice di rifiuto senza cambiare nulla.
  *
  * <p>Limite (come per {@code AccountMigrazioneTest}): il classpath e' quello di {@code carddemo-parity},
  * piu' ricco di quello distribuito; la prova con l'immagine del caricatore e' nello smoke.
@@ -29,7 +31,7 @@ class CaricatoreApplicazioneTest {
     Path cartella;
 
     @Test
-    void ilCaricatoreMigraCaricaETerminaConZeroPoiRifiutaLaSecondaEsecuzione() throws Exception {
+    void ilCaricatoreMigraCaricaETerminaConZeroPoiRiesceSenzaScrivereERifiutaUnaTabellaAlterata() throws Exception {
         Path file = ContiDiProva.fileDiEsempio();
         try (PostgreSQLContainer postgres = PostgresDiProva.avvia()) {
             try (Connection c = PostgresDiProva.connessione(postgres)) {
@@ -42,10 +44,25 @@ class CaricatoreApplicazioneTest {
                         + " script, success from flyway_schema_history order by installed_rank"), "storico di Flyway");
                 ContiDiProva.verificaCorrispondenza("ACCTFILE.rec (applicazione)", Files.readAllBytes(file), c);
             }
-            assertEquals(CaricatoreApplication.USCITA_RIFIUTATO, esegui(postgres, file.toString()),
-                    "seconda esecuzione sulla tabella piena");
+            List<String> prima;
             try (Connection c = PostgresDiProva.connessione(postgres)) {
-                ContiDiProva.verificaCorrispondenza("ACCTFILE.rec (dopo la seconda esecuzione)", Files.readAllBytes(file), c);
+                prima = PostgresDiProva.righe(c, CaricamentoContiTest.RIGHE_CON_XMIN);
+            }
+            assertEquals(CaricatoreApplication.USCITA_RIUSCITA, esegui(postgres, file.toString()),
+                    "seconda esecuzione sulla tabella gia' caricata con lo stesso file");
+            try (Connection c = PostgresDiProva.connessione(postgres)) {
+                assertEquals(prima, PostgresDiProva.righe(c, CaricamentoContiTest.RIGHE_CON_XMIN),
+                        "la seconda esecuzione ha scritto");
+                try (Statement st = c.createStatement()) {
+                    st.execute("update account set acct_group_id = 'ALTERATO  ' where acct_id = 7");
+                }
+                prima = PostgresDiProva.righe(c, CaricamentoContiTest.RIGHE_CON_XMIN);
+            }
+            assertEquals(CaricatoreApplication.USCITA_RIFIUTATO, esegui(postgres, file.toString()),
+                    "terza esecuzione su una tabella con una riga alterata");
+            try (Connection c = PostgresDiProva.connessione(postgres)) {
+                assertEquals(prima, PostgresDiProva.righe(c, CaricamentoContiTest.RIGHE_CON_XMIN),
+                        "la terza esecuzione ha scritto");
             }
         }
     }

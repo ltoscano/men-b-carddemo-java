@@ -9,6 +9,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 import io.github.ltoscano.carddemo.domain.FieldCategory;
 import io.github.ltoscano.carddemo.domain.FieldPicture;
 import io.github.ltoscano.carddemo.domain.GnuCobolFieldCodec;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -63,7 +66,8 @@ final class ContiDiProva {
     }
 
     /** Campo elementare del contratto, con geometria ricavata nel test. */
-    record Campo(String campo, int offset, int lunghezza, FieldCategory categoria, String picture, String colonna) {
+    record Campo(String campo, int offset, int lunghezza, FieldCategory categoria, String picture, String colonna,
+            int intere, int decimali) {
 
         FieldPicture geometria() {
             return FieldPicture.of(categoria, picture);
@@ -91,6 +95,8 @@ final class ContiDiProva {
         int segno = AccountContrattoTest.colonna(intestazione, "segno");
         int offset = AccountContrattoTest.colonna(intestazione, "offset");
         int lunghezza = AccountContrattoTest.colonna(intestazione, "lunghezza");
+        int intere = AccountContrattoTest.colonna(intestazione, "cifre_intere");
+        int decimali = AccountContrattoTest.colonna(intestazione, "cifre_decimali");
         List<Campo> out = new ArrayList<>();
         for (int i = 1; i < righe.size(); i++) {
             String[] v = righe.get(i).split("\t", -1);
@@ -103,7 +109,9 @@ final class ContiDiProva {
             String nome = v[campo];
             out.add(new Campo(nome, Integer.parseInt(v[offset]), Integer.parseInt(v[lunghezza]),
                     FieldCategory.valueOf(geometria[0]), geometria[1],
-                    "FILLER".equals(nome) ? null : nome.toLowerCase(Locale.ROOT).replace('-', '_')));
+                    "FILLER".equals(nome) ? null : nome.toLowerCase(Locale.ROOT).replace('-', '_'),
+                    "-".equals(v[intere]) ? 0 : Integer.parseInt(v[intere]),
+                    "-".equals(v[decimali]) ? 0 : Integer.parseInt(v[decimali])));
         }
         assertFalse(out.isEmpty(), "nessun campo elementare nel contratto");
         return out;
@@ -175,6 +183,60 @@ final class ContiDiProva {
             System.arraycopy(record[i], 0, out, i * LUNGHEZZA_RECORD, LUNGHEZZA_RECORD);
         }
         return out;
+    }
+
+    /**
+     * La connessione, con un intermediario che registra in {@code legati}, nell'ordine, ogni
+     * {@link BigDecimal} passato a {@code setBigDecimal} dei {@link PreparedStatement} che crea:
+     * i parametri effettivamente consegnati al driver, prima che PostgreSQL arrotondi.
+     */
+    static Connection registraImporti(Connection c, List<BigDecimal> legati) {
+        return (Connection) Proxy.newProxyInstance(ContiDiProva.class.getClassLoader(), new Class<?>[] {Connection.class},
+                (proxy, metodo, argomenti) -> {
+                    Object risultato = inoltra(c, metodo, argomenti);
+                    if (risultato instanceof PreparedStatement ps && "prepareStatement".equals(metodo.getName())) {
+                        return Proxy.newProxyInstance(ContiDiProva.class.getClassLoader(),
+                                new Class<?>[] {PreparedStatement.class}, (p, m, a) -> {
+                                    if ("setBigDecimal".equals(m.getName())) {
+                                        legati.add((BigDecimal) a[1]);
+                                    }
+                                    return inoltra(ps, m, a);
+                                });
+                    }
+                    return risultato;
+                });
+    }
+
+    private static Object inoltra(Object bersaglio, Method metodo, Object[] argomenti) throws Throwable {
+        try {
+            return metodo.invoke(bersaglio, argomenti);
+        } catch (InvocationTargetException e) {
+            throw e.getCause();
+        }
+    }
+
+    /**
+     * Controllo 6: gli importi e le chiavi consegnati al driver ({@link #registraImporti}) sono, record
+     * per record e nell'ordine delle colonne numeriche del contratto, i valori letti dai byte del file
+     * con la lettura scritta qui, con la stessa scala ({@code equals}, non {@code compareTo}).
+     */
+    static void verificaParametri(String nome, byte[] file, List<BigDecimal> legati) throws Exception {
+        List<BigDecimal> attesi = new ArrayList<>();
+        for (int r = 0; r < file.length / LUNGHEZZA_RECORD; r++) {
+            for (Campo campo : tracciato()) {
+                if (campo.numerico()) {
+                    attesi.add(leggiDisplay(file, r * LUNGHEZZA_RECORD, campo));
+                }
+            }
+        }
+        assertEquals(attesi.size(), legati.size(), nome + ": numero dei parametri numerici consegnati al driver");
+        for (int i = 0; i < attesi.size(); i++) {
+            BigDecimal atteso = attesi.get(i);
+            BigDecimal legato = legati.get(i);
+            assertEquals(atteso, legato, nome + ": parametro numerico " + (i + 1) + " consegnato al driver (valore e scala:"
+                    + " atteso " + atteso.toPlainString() + " scala " + atteso.scale() + ", consegnato "
+                    + (legato == null ? "null" : legato.toPlainString() + " scala " + legato.scale()) + ")");
+        }
     }
 
     static long righe(Connection c) throws Exception {
@@ -267,15 +329,16 @@ final class ContiDiProva {
             if (!campo.numerico()) {
                 continue;
             }
-            BigDecimal dalFile = BigDecimal.ZERO.setScale(campo.geometria().scale());
+            BigDecimal dalFile = BigDecimal.ZERO.setScale(campo.decimali());
             for (int k = 0; k < record; k++) {
                 dalFile = dalFile.add(leggiDisplay(file, k * LUNGHEZZA_RECORD, campo));
             }
             BigDecimal dallaTabella;
             try (Statement st = c.createStatement();
-                    ResultSet rs = st.executeQuery("select coalesce(sum(" + campo.colonna() + "), 0) from account")) {
+                    ResultSet rs = st.executeQuery("select sum(" + campo.colonna() + ") from account")) {
                 assertTrue(rs.next());
-                dallaTabella = rs.getBigDecimal(1).setScale(campo.geometria().scale());
+                // Tabella vuota: la somma e' NULL; il totale atteso e' lo zero alla scala della colonna.
+                dallaTabella = rs.getBigDecimal(1) == null ? BigDecimal.ZERO.setScale(campo.decimali()) : rs.getBigDecimal(1);
             }
             assertEquals(dalFile, dallaTabella, nome + ": totale della colonna " + campo.colonna());
         }
@@ -308,6 +371,6 @@ final class ContiDiProva {
             }
         }
         BigInteger n = new BigInteger(cifre.toString());
-        return new BigDecimal(negativo ? n.negate() : n, campo.geometria().scale());
+        return new BigDecimal(negativo ? n.negate() : n, campo.decimali());
     }
 }

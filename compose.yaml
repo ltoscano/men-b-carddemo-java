@@ -1,10 +1,11 @@
 # Stack CardDemo: database, caricatore dei conti, servizio online, runner batch.
 #   docker compose up -d --wait        avvia db, carica i conti (loader, termina), poi online
 #                                      (batch non parte); un caricamento fallito ferma l'avvio
-#   docker compose run --rm batch      esegue installationCheckJob e termina
-# Il caricatore rifiuta una tabella account non vuota: un secondo "up" (o "start") sullo stesso volume
-# lo rilancia e fallisce. Riavvio senza ricaricare: docker compose up -d --wait --no-deps db online
-# Per ricaricare si ricrea il volume: docker compose --profile batch down --volumes
+#   docker compose run --rm batch      rilancia il caricatore (gia' caricato: nessuna modifica),
+#                                      poi esegue installationCheckJob e termina
+# Su una tabella account gia' caricata con lo stesso file il caricatore termina con 0 senza scrivere,
+# quindi un secondo "up" sullo stesso volume riesce; con una tabella diversa dal file si ferma e
+# l'avvio fallisce. Per ricaricare si ricrea il volume: docker compose --profile batch down --volumes
 # Funziona da clone pulito senza creare file: ogni variabile ha un valore predefinito di
 # sviluppo, documentato in .env.example (copiarlo in .env solo per cambiarlo).
 
@@ -37,7 +38,7 @@ services:
   loader:
     # Caricatore dei conti (issue #60): applica la migrazione con Flyway, carica il file passato come
     # argomento (ACCTFILE.rec, nell'immagine) nella tabella account e termina con il codice
-    # dell'esito (0 riuscito, 1 rifiutato, 2 errore). Nessun profilo: parte con "up".
+    # dell'esito (0 riuscito o gia' caricato, 1 rifiutato, 2 errore). Nessun profilo: parte con "up".
     build:
       context: .
       dockerfile: docker/loader.Dockerfile
@@ -81,12 +82,14 @@ services:
       args:
         MODULE: batch
     # Il profilo esclude batch da "docker compose up"; "docker compose run batch" lo attiva.
-    # batch non dipende dal caricatore: "docker compose run" riavvia le dipendenze terminate, e il
-    # caricatore rilanciato su una tabella piena fallirebbe (issue #60, docs/sviluppo.md).
     profiles: ["batch"]
     depends_on:
       db:
         condition: service_healthy
+      # Come online: "docker compose run batch" rilancia il caricatore gia' terminato, che trova la
+      # tabella gia' caricata con lo stesso file e termina con 0 senza scrivere.
+      loader:
+        condition: service_completed_successfully
     environment:
       <<: *database-env
 

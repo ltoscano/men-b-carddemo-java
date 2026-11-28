@@ -30,6 +30,15 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>carddemo-batch</artifactId>
     </dependency>
+    <!-- Classi di test di carddemo-domain (issue #60): l'ispezione del codice compilato di
+         NoFloatingPointBytecodeTest, riusata sulle classi di carddemo-loader. -->
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>carddemo-domain</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>

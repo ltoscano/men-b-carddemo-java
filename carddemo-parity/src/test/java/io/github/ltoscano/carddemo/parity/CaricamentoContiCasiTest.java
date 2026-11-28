@@ -16,6 +16,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -140,7 +141,8 @@ class CaricamentoContiCasiTest {
     void fileVuotoAccettatoZeroRighe() throws Exception {
         Path file = Files.write(cartella.resolve("vuoto.rec"), new byte[0]);
         try (Connection c = PostgresDiProva.connessione(postgres)) {
-            assertEquals(0, CaricatoreConti.carica(file, c), "record caricati da un file vuoto");
+            assertEquals(new CaricatoreConti.EsitoCaricamento(0, false), CaricatoreConti.carica(file, c),
+                    "esito di un file vuoto su tabella vuota");
             assertEquals(0, ContiDiProva.righe(c), "righe dopo un file vuoto");
             ContiDiProva.verificaCorrispondenza("vuoto", new byte[0], c);
         }
@@ -285,9 +287,13 @@ class CaricamentoContiCasiTest {
 
     void accettato(String nome, byte[] dati, List<Map<String, Object>> attesi) throws Exception {
         Path file = Files.write(cartella.resolve(nome + ".rec"), dati);
+        List<BigDecimal> legati = new ArrayList<>();
         try (Connection c = PostgresDiProva.connessione(postgres)) {
-            assertEquals(attesi.size(), CaricatoreConti.carica(file, c), nome + ": record caricati");
+            CaricatoreConti.EsitoCaricamento esito = CaricatoreConti.carica(file, ContiDiProva.registraImporti(c, legati));
+            assertEquals(attesi.size(), esito.record(), nome + ": record caricati");
+            assertTrue(!esito.giaCaricato(), nome + ": tabella vuota, il caricamento scrive");
         }
+        ContiDiProva.verificaParametri(nome, dati, legati);
         try (Connection c = PostgresDiProva.connessione(postgres)) {
             ContiDiProva.verificaCorrispondenza(nome, dati, c);
             // Ogni colonna di ogni riga, letta via JDBC, uguale al valore da cui il record e' stato costruito.
