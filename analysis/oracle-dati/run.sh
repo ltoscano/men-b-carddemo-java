@@ -13,7 +13,8 @@ require_legacy
 dest="${ODT_OUT_DIR:-$ODT_DIR/out}"
 doc="${ODT_DOC_FILE:-$ODT_DOC}"
 tmp="$(mktmp)" || fail "cartella temporanea non creata"
-trap 'rm -rf "$tmp"' EXIT
+# Il fallimento della pulizia dei temporanei e' un errore e cambia l'esito (giro 1 della PR #58).
+trap 'rm -rf "$tmp" || { log "ERRORE: temporanei non rimossi"; exit 1; }' EXIT
 odt_genera "$tmp/gen"
 rm -rf "$dest" || fail "out/ precedente non rimossa"
 [ ! -e "$dest" ] || fail "out/ precedente ancora presente"

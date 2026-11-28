@@ -19,8 +19,20 @@
 require_legacy
 
 tmp="$(mktmp)" || fail "cartella temporanea non creata"
-trap 'rm -rf "$tmp"' EXIT
+# Il fallimento della pulizia dei temporanei e' un errore e cambia l'esito (giro 1 della PR #58).
+trap 'rm -rf "$tmp" || { log "ERRORE: temporanei non rimossi"; exit 1; }' EXIT
 NEG=0
+# alterato ORIGINALE ALTERATO: l'alterazione ha cambiato il file. cmp distinto: 0 (nessuna alterazione: errore della
+# prova), 1 (alterato), altro (errore operativo, mai preso per "alterato": giro 1 della PR #58).
+alterato() {
+  local r=0
+  cmp -s "$1" "$2" || r=$?
+  case "$r" in
+    1) ;;
+    0) fail "alterazione di $1 senza effetto" ;;
+    *) fail "alterazione di $1: confronto non eseguito (cmp, codice $r)" ;;
+  esac
+}
 ok_neg() { NEG=$((NEG + 1)); log "   prova negativa ok: $*"; }
 
 # presenza MODELLO FILE: 0 se una riga corrisponde, 1 se nessuna, 2 se grep non ha potuto leggere (mai preso per assenza)
@@ -72,7 +84,7 @@ log "   ok: controlli 1-5 superati; out/ e documento identici ai versionati"
 rm -rf "$tmp/vx" && mkdir -p "$tmp/vx" && cp -R "$ODT_DIR/out" "$ODT_DOC" "$tmp/vx/" || fail "copia dei versionati fallita"
 cp "$tmp/vx/out/ACCTFILE.rec" "$tmp/vx/rec.orig" || fail "copia fallita"
 printf 'Z' | dd of="$tmp/vx/out/ACCTFILE.rec" bs=1 seek=5000 conv=notrunc 2> /dev/null || fail "alterazione della copia fallita"
-! cmp -s "$tmp/vx/out/ACCTFILE.rec" "$tmp/vx/rec.orig" || fail "alterazione della copia senza effetto"
+alterato "$tmp/vx/rec.orig" "$tmp/vx/out/ACCTFILE.rec"
 rc=0; versionati "$tmp/gen" "$tmp/vx/out" "$tmp/vx/oracle-dati.md" > "$tmp/vx.log" 2>&1 || rc=$?
 pretendi "out/ACCTFILE.rec versionato alterato (un byte)" 1 "out diverso dal rigenerato" "$tmp/vx.log"
 cp "$tmp/vx/rec.orig" "$tmp/vx/out/ACCTFILE.rec" && rm "$tmp/vx/out/ACCTFILE.elenco.tsv" || fail "preparazione fallita"
@@ -125,21 +137,33 @@ copia_cart() { rm -rf "$tmp/$1"; mkdir -p "$tmp/$1/cart" && cp -R "$ODT_DIR/tabe
   || fail "copia della cartella per '$1' fallita"; }
 # scrivi_byte FILE POSIZIONE TESTO: sostituisce i byte da POSIZIONE (da 0) con TESTO, con le sole utility POSIX
 scrivi_byte() {
-  local f="$1" p="$2" s="$3" n
+  local f="$1" p="$2" s="$3" n m
   n="$(wc -c < "$f")" || fail "dimensione di $f illeggibile"
   { head -c "$p" "$f" && printf '%s' "$s" && tail -c "+$((p + ${#s} + 1))" "$f"; } > "$f.nuovo" || fail "alterazione di $f fallita"
-  cmp -s "$f" "$f.nuovo" && fail "alterazione di $f senza effetto"
+  alterato "$f" "$f.nuovo"
   mv "$f.nuovo" "$f" || fail "sostituzione di $f fallita"
-  [ "$(wc -c < "$f")" -eq "$n" ] || fail "alterazione di $f: dimensione cambiata"
+  m="$(wc -c < "$f")" || fail "dimensione di $f illeggibile dopo l'alterazione"
+  [ "$m" -eq "$n" ] || fail "alterazione di $f: dimensione cambiata"
 }
 # sostituisci_testo FILE VECCHIO NUOVO: una sola occorrenza di una riga intera o di un pezzo, con awk (verificata)
 sostituisci_testo() {
   local f="$1"
   V="$2" N="$3" awk 'BEGIN { v = ENVIRON["V"]; n = ENVIRON["N"] } !fatto && (i = index($0, v)) { $0 = substr($0, 1, i - 1) n substr($0, i + length(v)); fatto = 1 } { print }' \
     "$f" > "$f.nuovo" || fail "sostituzione in $f fallita"
-  cmp -s "$f" "$f.nuovo" && fail "sostituzione in $f senza effetto: '$2'"
+  alterato "$f" "$f.nuovo"
   mv "$f.nuovo" "$f" || fail "sostituzione di $f fallita"
 }
+# Esiti degli aiuti delle prove (giro 1 della PR #58): cmp e wc che fanno il loro lavoro e poi escono con 42.
+cp "$PROD/ACCTFILE.rec" "$tmp/aiuto.rec" || fail "copia fallita"
+rc=0; ( cmp() { command cmp "$@"; return 42; }; alterato "$tmp/aiuto.rec" "$tmp/aiuto.rec" ) > "$tmp/aiuto1.log" 2>&1 || rc=$?
+pretendi "alterato: cmp che confronta e poi esce con 42 (non e' un'alterazione)" 1 "confronto non eseguito (cmp, codice 42)" "$tmp/aiuto1.log"
+rc=0; ( cmp() { command cmp "$@"; return 42; }; scrivi_byte "$tmp/aiuto.rec" 10 X ) > "$tmp/aiuto2.log" 2>&1 || rc=$?
+pretendi "scrivi_byte: cmp che confronta e poi esce con 42" 1 "confronto non eseguito (cmp, codice 42)" "$tmp/aiuto2.log"
+rc=0; ( wc() { command wc "$@"; return 42; }; scrivi_byte "$tmp/aiuto.rec" 10 X ) > "$tmp/aiuto3.log" 2>&1 || rc=$?
+pretendi "scrivi_byte: wc che conta e poi esce con 42" 1 "dimensione di" "$tmp/aiuto3.log"
+cp "$ODT_DIR/tabella.tsv" "$tmp/aiuto.tsv" || fail "copia fallita"
+rc=0; ( cmp() { command cmp "$@"; return 42; }; sostituisci_testo "$tmp/aiuto.tsv" "ACCTFILE.rec" "ACCTFILE.dat" ) > "$tmp/aiuto4.log" 2>&1 || rc=$?
+pretendi "sostituisci_testo: cmp che confronta e poi esce con 42" 1 "confronto non eseguito (cmp, codice 42)" "$tmp/aiuto4.log"
 cpr() { # cpr NOME SOTTOSTRINGA PRODOTTO CARTELLA [opzioni docker]: la controprova deve fallire con 1 e quel difetto
   local nome="$1" ago="$2" prod="$3" cart="$4"
   shift 4
@@ -317,7 +341,7 @@ rc=0; confronta "$tmp/rs/out" "$ODT_DIR/out" "$tmp/rs.diff" || rc=$?
 conta="$(awk '{ n[$1]++ } END { printf "cp=%d rm=%d sed=%d", n["cp"], n["rm"], n["sed"] }' "$tmp/reg-host")" || fail "registro illeggibile"
 [ "$conta" = "cp=2 rm=3 sed=2" ] || fail "run.sh: invocazioni sull'host diverse da quelle attese: $conta"
 log "   controprova ok: run.sh con gli involucri in modo passa scrive uscite identiche alle versionate ($conta)"
-for v in "rm=42@1|uscite precedenti in" "rm=42@2|out/ precedente non rimossa" \
+for v in "rm=42@1|uscite precedenti in" "rm=42@2|out/ precedente non rimossa" "rm=42@3|temporanei non rimossi" \
          "cp=42@1|impossibile scrivere analysis/oracle-dati/out/" "cp=42@2|impossibile scrivere docs/legacy-map/oracle-dati.md" \
          "sed=42@1|uscita della verifica illeggibile" "sed=42@2|uscita della controprova illeggibile"; do
   m="${v%%|*}"; c="${m%%=*}"

@@ -1,0 +1,7 @@
+PATH=/usr/bin:/bin
+HOME=/tmp
+LC_ALL=C
+COB_LIBRARY_PATH=/oracle-bin
+DD_ACCTFILE=/out/ACCTFILE.dat.verifica
+DD_LETTURA=/out/lavoro/lettura.bin
+DD_CHIAVI=/out/lavoro/chiavi.bin

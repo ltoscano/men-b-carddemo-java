@@ -3,4 +3,6 @@ record 50
 byte 15000
 prima chiave 00000000001
 ultima chiave 00000000050
-sha256 rilettura 591952211bfa94397d633a6f6553cf6dda29051f978ec8c0459ed036431dd700
+sha256 lettura 591952211bfa94397d633a6f6553cf6dda29051f978ec8c0459ed036431dd700
+letture identiche: IDXLEGGI = IDXDUMP = ingresso
+letture per chiave: 00000000001=record1 00000000025=record25 00000000049=record49

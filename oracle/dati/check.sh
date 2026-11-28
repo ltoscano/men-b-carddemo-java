@@ -1,28 +1,32 @@
 #!/usr/bin/env bash
 # Controllo del passo dati (issue #53): il file dei conti nell'oracle.
-# 1. Passo rieseguito da zero in una cartella nuova (run.sh): caricamento con IDXLOADF, rilettura con IDXDUMP,
-#    rilettura identica all'ingresso, rapporto, rapporti di esegui.sh e ambienti identici agli attesi, file
-#    indicizzato al suo percorso stabile e riletto da li' in sola lettura; poi una rilettura indipendente da run.sh.
-# 2. Organizzazione, chiave e lunghezza del file nei programmi di prova (IDXLOADF, IDXDUMP) uguali al SELECT e all'FD
-#    di CBACT01C (app/cbl/CBACT01C.cbl, righe 29-33 e 52-56), letti dal sorgente.
+# 1. Passo rieseguito da zero in una cartella nuova (run.sh): caricamento con IDXLOADF, lettura indipendente con
+#    IDXLEGGI (sequenziale e per chiave), rilettura con IDXDUMP, letture identiche fra loro e all'ingresso, rapporto,
+#    rapporti di esegui.sh e ambienti identici agli attesi, ultima verifica in sola lettura, pubblicazione; poi una
+#    lettura con IDXLEGGI indipendente da run.sh.
+# 2. Organizzazione, chiave e lunghezza del file nei programmi di prova (IDXLOADF, IDXLEGGI, IDXDUMP) uguali al
+#    SELECT e all'FD di CBACT01C (app/cbl/CBACT01C.cbl, righe 29-33 e 52-56), letti dal sorgente.
 # 3. Prove negative della specifica e dei controlli propri, ciascuna con il motivo atteso (expect_fail di lib.sh) e,
 #    dopo ogni fallimento, nessun file indicizzato rimasto: ingresso alterato (record tolto, record scambiati, chiave
 #    duplicata, byte numerico e del FILLER, troncato a meta' record, ZIP ASCII, record di 299 byte), programmi
-#    alterati e ricompilati (caricatore che esce con errore, rilettura che si ferma un record prima), attesi alterati,
-#    build assente, ingresso assente.
-# 4. Residui: un file indicizzato diverso rimasto e una corsa regolare (successo, contenuto corretto); un file sano
-#    rimasto e un caricamento che fallisce (errore, nessun file utilizzabile).
+#    alterati e ricompilati (caricatore che esce con errore o che altera il FILLER, rilettura che si ferma un record
+#    prima, lettori finti che copiano l'ingresso, da soli e combinati), attesi alterati, build assente, ingresso assente.
+# 4. Residui: un file sano rimasto e ogni errore della preparazione (percorso stabile vuoto); un file indicizzato
+#    diverso rimasto e una corsa regolare (successo, contenuto corretto); un file sano rimasto e un caricamento che
+#    fallisce (errore, nessun file utilizzabile).
 # 5. Presenza del passo: la cartella oracle/dati/ cancellata e' vista dal controllo dei passi di build/check.sh.
 # 6. Esiti dei comandi: carica.sh (build/avvolgi.sh davanti nel PATH del container: ogni invocazione di ogni comando
 #    con esito 42 dopo il suo lavoro; risposte malformate con esito 0; esegui.sh che esce con 42; limite di tempo) e
-#    run.sh (cp, mv, diff, cmp, rm e i due docker sull'host).
+#    run.sh (cp, mv, diff, cmp, rm e i due docker sull'host); momento della pubblicazione (mai prima dell'ultima
+#    verifica); cmp e wc degli aiuti delle prove con esito 42.
 . "$ORACLE_ROOT/lib.sh"
 
 DIR="$ORACLE_ROOT/dati"
 EXP="$DIR/expected"
 REC="$REPO_ROOT/analysis/oracle-dati/out/ACCTFILE.rec"
 tmp="$(mktmp)" || exit 1
-trap 'rm -rf "$tmp"' EXIT
+# Il fallimento della pulizia dei temporanei e' un errore e cambia l'esito (giro 1 della PR #58).
+trap 'rm -rf "$tmp" || { log "ERRORE: temporanei non rimossi: $(rel "$tmp")"; exit 1; }' EXIT
 require_legacy
 ensure_image
 require_build
@@ -34,9 +38,10 @@ passo() {
   mkdir -p "$tmp/$n" || fail "cartella di '$n' non creata"
   env DATI_OUT_DIR="$tmp/$n/out" "$@" bash "$DIR/run.sh" > "$tmp/$n.log" 2>&1
 }
-# pulita CARTELLA-D'USCITA: nessun file indicizzato (ne' al percorso stabile ne' nella cartella di lavoro)
+# pulita CARTELLA-D'USCITA: nessun file indicizzato (ne' al percorso stabile ne' in verifica ne' nella cartella di lavoro)
 pulita() {
   [ ! -e "$1/ACCTFILE.dat" ] || { echo "resta un file indicizzato al percorso stabile: $(rel "$1")/ACCTFILE.dat"; return 1; }
+  [ ! -e "$1/ACCTFILE.dat.verifica" ] || { echo "resta il file indicizzato in verifica: $(rel "$1")/ACCTFILE.dat.verifica"; return 1; }
   [ ! -e "$1/lavoro" ] || { echo "resta la cartella di lavoro: $(rel "$1")/lavoro"; return 1; }
 }
 # neg ID DESCRIZIONE SOTTOSTRINGA [VAR=VALORE ...]: run.sh deve fallire per quel motivo; dopo, nessun file indicizzato.
@@ -46,23 +51,35 @@ neg() {
   expect_fail "$d" "$ago" env DATI_OUT_DIR="$tmp/$n/out" "$@" bash "$DIR/run.sh"
   pulita "$tmp/$n/out" > "$tmp/$n.pulita" 2>&1 || { cat "$tmp/$n.pulita" >&2; fail "PROVA NEGATIVA FALLITA ($d): dopo il fallimento"; }
 }
-# rileggi FILE-INDICIZZATO DEST: IDXDUMP della build rilegge il file in DEST/rilettura.bin, indipendentemente da
-# run.sh; ritorna 0 solo se IDXDUMP termina con 0.
+# rileggi FILE-INDICIZZATO DEST: IDXLEGGI della build (il lettore indipendente) legge il file in DEST/rilettura.bin,
+# indipendentemente da run.sh; ritorna 0 solo se IDXLEGGI termina con 0.
 rileggi() {
   local f d c
   f="$(in_container "$1")" && d="$(in_container "$2")" || return 1
   mkdir -p "$2" || return 1
-  orun -v "$BUILD_OUT/bin:/oracle-bin:ro" -v "$2:/ril" -- timeout -k 10 120 sh /oracle/esegui.sh /ril IDXDUMP \
-    --parm ACCTFILE --dd "DD_ACCTFILE=$f" --dd "DD_USCITA=/ril/rilettura.bin" > "$2.log" 2>&1 || return 1
-  c="$(sed -n 2p "$2/IDXDUMP.txt")" || return 1
+  orun -v "$BUILD_OUT/bin:/oracle-bin:ro" -v "$2:/ril" -- timeout -k 10 120 sh /oracle/esegui.sh /ril IDXLEGGI \
+    --parm ACCTFILE --dd "DD_ACCTFILE=$f" --dd "DD_LETTURA=/ril/rilettura.bin" --dd "DD_CHIAVI=/ril/chiavi.bin" \
+    > "$2.log" 2>&1 || return 1
+  c="$(sed -n 2p "$2/IDXLEGGI.txt")" || return 1
   [ "$c" = 0 ]
+}
+# alterato ORIGINALE ALTERATO: l'alterazione ha cambiato il file. cmp distinto: 0 (nessuna alterazione: errore della
+# prova), 1 (alterato), altro (errore operativo, mai preso per "alterato": giro 1 della PR #58).
+alterato() {
+  local r=0
+  cmp -s "$1" "$2" || r=$?
+  case "$r" in
+    1) ;;
+    0) fail "alterazione di $(rel "$1") senza effetto" ;;
+    *) fail "alterazione di $(rel "$1"): confronto non eseguito (cmp, codice $r)" ;;
+  esac
 }
 # scrivi_byte FILE POSIZIONE TESTO: sostituisce i byte da POSIZIONE (da 0), dimensione invariata, alterazione verificata
 scrivi_byte() {
   local f="$1" p="$2" s="$3" n m
   n="$(wc -c < "$f")" || fail "dimensione di $f illeggibile"
   { head -c "$p" "$f" && printf '%s' "$s" && tail -c "+$((p + ${#s} + 1))" "$f"; } > "$f.nuovo" || fail "alterazione di $f fallita"
-  ! cmp -s "$f" "$f.nuovo" || fail "alterazione di $(rel "$f") senza effetto"
+  alterato "$f" "$f.nuovo"
   mv "$f.nuovo" "$f" || fail "sostituzione di $f fallita"
   m="$(wc -c < "$f")" || fail "dimensione di $f illeggibile"
   [ "$m" -eq "$n" ] || fail "alterazione di $(rel "$f"): dimensione cambiata"
@@ -82,7 +99,15 @@ diff -u "$EXP/ACCTFILE.rapporto" "$tmp/obs/out/ACCTFILE.rapporto" > "$tmp/d" || 
 rileggi "$tmp/obs/out/ACCTFILE.dat" "$tmp/obs-ril" || { cat "$tmp/obs-ril.log" >&2; fail "rilettura indipendente fallita"; }
 r=0; cmp "$tmp/obs-ril/rilettura.bin" "$REC" > "$tmp/d" 2>&1 || r=$?
 [ "$r" -eq 0 ] || { indent "$tmp/d" >&2; fail "rilettura indipendente diversa dall'ingresso (cmp $r)"; }
-log "   ok: 50 record caricati e riletti in ordine di chiave, identici a $(rel "$REC"); rapporto, programmi e ambienti come gli attesi"
+log "   ok: 50 record caricati, letti da IDXLEGGI e IDXDUMP in ordine di chiave, identici a $(rel "$REC"); rapporto, programmi e ambienti come gli attesi; riletti in modo indipendente da qui con IDXLEGGI"
+# Esiti degli strumenti delle prove (giro 1 della PR #58): cmp e wc che fanno il loro lavoro e poi escono con 42.
+cp "$REC" "$tmp/aiuto.rec" || fail "copia fallita"
+expect_fail "alterato: cmp che confronta e poi esce con 42 (non e' un'alterazione)" "confronto non eseguito (cmp, codice 42)" \
+  bash -c '. "$ORACLE_ROOT/lib.sh"; cmp() { command cmp "$@"; return 42; }; '"$(declare -f alterato)"'; alterato "$1" "$1"' sh "$tmp/aiuto.rec"
+expect_fail "scrivi_byte: wc che conta e poi esce con 42" "dimensione di" \
+  bash -c '. "$ORACLE_ROOT/lib.sh"; wc() { command wc "$@"; return 42; }; '"$(declare -f alterato scrivi_byte)"'; scrivi_byte "$1" 10 X' sh "$tmp/aiuto.rec"
+expect_fail "scrivi_byte: cmp che confronta e poi esce con 42" "confronto non eseguito (cmp, codice 42)" \
+  bash -c '. "$ORACLE_ROOT/lib.sh"; cmp() { command cmp "$@"; return 42; }; '"$(declare -f alterato scrivi_byte)"'; scrivi_byte "$1" 10 X' sh "$tmp/aiuto.rec"
 
 log "2. organizzazione, chiave e lunghezza come nel SELECT e nell'FD di CBACT01C"
 # dichiarazioni FILE INIZIO-SELECT INIZIO-FD: le righe significative del SELECT (organizzazione, accesso, chiave) e i
@@ -123,7 +148,7 @@ confronta_dich() { # confronta_dich SORGENTE NOME
     *) echo "$2: confronto non eseguito (diff, codice $r)"; return 2 ;;
   esac
 }
-for p in IDXLOADF IDXDUMP; do
+for p in IDXLOADF IDXLEGGI IDXDUMP; do
   confronta_dich "$ORACLE_ROOT/tests/$p.cbl" "$p" > "$tmp/c.out" 2>&1 || { cat "$tmp/c.out" >&2; fail "dichiarazioni di $p non conformi"; }
   indent "$tmp/c.out" >&2
 done
@@ -137,16 +162,20 @@ expect_fail "organizzazione della rilettura RELATIVE invece di INDEXED" "IDXDUMP
 cp "$ORACLE_ROOT/tests/IDXLOADF.cbl" "$tmp/IDXLOADF-y.cbl" || fail "copia fallita"
 mutate "$tmp/IDXLOADF-y.cbl" 's/PIC X(289)\./PIC X(288)./'
 expect_fail "record del caricatore di 299 byte" "IDXLOADF: SELECT/FD di ACCT-FILE diversi da CBACT01C" confronta_dich "$tmp/IDXLOADF-y.cbl" IDXLOADF
+cp "$ORACLE_ROOT/tests/IDXLEGGI.cbl" "$tmp/IDXLEGGI-x.cbl" || fail "copia fallita"
+mutate "$tmp/IDXLEGGI-x.cbl" 's/RECORD KEY   IS FD-ACCT-ID/RECORD KEY   IS FD-ACCT-DATA/'
+expect_fail "lettore indipendente con un'altra chiave" "IDXLEGGI: SELECT/FD di ACCT-FILE diversi da CBACT01C" confronta_dich "$tmp/IDXLEGGI-x.cbl" IDXLEGGI
 
 log "3. prove negative"
-compila_variante() { # compila_variante ID SORGENTE PROGRAMMA: compilato davvero (compile.sh uno, opzioni della build)
-  local n="$1" src="$2" prog="$3" c
+compila_variante() { # compila_variante ID SORGENTE PROGRAMMA [ARTEFATTI-DI-BASE]: compilato davvero (compile.sh uno,
+  # opzioni della build) e messo in una copia degli artefatti (della build, o di un'altra variante per combinarle)
+  local n="$1" src="$2" prog="$3" base="${4:-$BUILD_OUT/bin}" c
   c="$(in_container "$src")" || fail "variante $n: sorgente fuori da oracle/"
   mkdir -p "$tmp/$n/build" || fail "variante $n: cartella non creata"
   orun -v "$tmp/$n/build:/out" -- timeout -k 10 "$ORACLE_TIMEOUT_COMPILE" \
     sh /oracle/build/compile.sh uno eseguibile "$c" "$prog" /out > "$tmp/$n.compila.log" 2>&1 \
     || { indent "$tmp/$n.compila.log" >&2; fail "compilazione della variante '$n' fallita"; }
-  mkdir -p "$tmp/$n/bin" && cp "$BUILD_OUT"/bin/* "$tmp/$n/bin/" && cp "$tmp/$n/build/bin/$prog" "$tmp/$n/bin/$prog" \
+  mkdir -p "$tmp/$n/bin" && cp "$base"/* "$tmp/$n/bin/" && cp "$tmp/$n/build/bin/$prog" "$tmp/$n/bin/$prog" \
     || fail "artefatti della variante '$n' non preparati"
 }
 head -c 14700 "$REC" > "$tmp/tolto.rec" || fail "ingresso senza l'ultimo record non preparato"
@@ -179,7 +208,7 @@ mutate "$tmp/IDXDUMP-49.cbl" "s/^           PERFORM UNTIL IDX-STATUS NOT = '00'\
 mutate "$tmp/IDXDUMP-49.cbl" "s/^           IF IDX-STATUS NOT = '10'\$/           MOVE '10' TO IDX-STATUS\\
            IF IDX-STATUS NOT = '10'/"
 compila_variante ril49 "$tmp/IDXDUMP-49.cbl" IDXDUMP
-neg ril49 "il programma di rilettura si ferma un record prima (ed esce con 0)" "rilettura diversa dall'ingresso" DATI_BIN_DIR="$tmp/ril49/bin"
+neg ril49 "il programma di rilettura si ferma un record prima (ed esce con 0)" "rilettura di IDXDUMP diversa dall'ingresso" DATI_BIN_DIR="$tmp/ril49/bin"
 riga="$(sed -n '4p' "$tmp/ril49/out/rilettura/IDXDUMP.txt")" || fail "rapporto della variante illeggibile"
 [ "$riga" = "IDXDUMP ACCTFILE RECORD LETTI 000049" ] || fail "prova ril49: la variante non si e' fermata a 49 record ('$riga')"
 log "   e la variante ha davvero riletto 49 record uscendo con 0"
@@ -193,6 +222,128 @@ neg ril49s "la rilettura si ferma un record prima senza stato 10: IDXDUMP esce c
 riga="$(sed -n '4p' "$tmp/ril49s/out/rilettura/IDXDUMP.txt")" || fail "rapporto della variante illeggibile"
 [ "$riga" = "IDXDUMP ACCTFILE ERRORE READ 00 DOPO IL RECORD 000049" ] || fail "prova ril49s: motivo inatteso ('$riga')"
 log "   e IDXDUMP ha rifiutato la fine senza stato 10 ('$riga')"
+# Controesempio del Validatore (giro 1 della PR #58), sostituzioni singole e combinate:
+#   A  caricatore che altera un byte del FILLER prima di scrivere (MOVE '.' TO ENT-REC (181:1));
+#   B  IDXDUMP finto che non legge l'indice ma copia l'ingresso (/in/ACCTFILE.rec) nella sua uscita, stessa riga, 0;
+#   C  IDXLEGGI finto che fa lo stesso (copia l'ingresso e i suoi record 1, 25, 49), stesse righe, 0.
+# Basta un lettore onesto: A da sola e' vista da entrambi, A+B da IDXLEGGI, A+C da IDXDUMP. B da sola con un
+# caricatore corretto non altera il risultato: e' una controprova (passo riuscito, file pubblicato corretto). C da sola
+# non e' provata a parte: il lettore finto non trova /in nella lettura finale in sola lettura e fallirebbe per quello.
+cp "$ORACLE_ROOT/tests/IDXLOADF.cbl" "$tmp/IDXLOADF-A.cbl" || fail "copia fallita"
+mutate "$tmp/IDXLOADF-A.cbl" "s/^           WRITE FD-ACCTFILE-REC FROM ENT-REC\$/           MOVE '.' TO ENT-REC (181:1)\\
+           WRITE FD-ACCTFILE-REC FROM ENT-REC/"
+compila_variante varA "$tmp/IDXLOADF-A.cbl" IDXLOADF
+# Lettori finti (sorgenti COBOL scritti qui): copiano /in/ACCTFILE.rec invece di leggere il file indicizzato.
+cat > "$tmp/IDXDUMP-B.cbl" <<'FINE' || fail "sorgente del lettore finto IDXDUMP non scritto"
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. IDXDUMP.
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT FINGRESSO ASSIGN TO '/in/ACCTFILE.rec'
+                  ORGANIZATION IS SEQUENTIAL.
+           SELECT FUSCITA ASSIGN TO USCITA
+                  ORGANIZATION IS SEQUENTIAL.
+       DATA DIVISION.
+       FILE SECTION.
+       FD  FINGRESSO RECORDING MODE IS F.
+       01  RINGRESSO              PIC X(300).
+       FD  FUSCITA RECORDING MODE IS F.
+       01  RUSCITA                PIC X(300).
+       WORKING-STORAGE SECTION.
+       01  NREC                   PIC 9(06) VALUE 0.
+       01  FINITO                 PIC X VALUE 'N'.
+       PROCEDURE DIVISION.
+           OPEN INPUT FINGRESSO OUTPUT FUSCITA
+           PERFORM UNTIL FINITO = 'S'
+             READ FINGRESSO
+               AT END MOVE 'S' TO FINITO
+               NOT AT END
+                 ADD 1 TO NREC
+                 WRITE RUSCITA FROM RINGRESSO
+             END-READ
+           END-PERFORM
+           DISPLAY 'IDXDUMP ACCTFILE RECORD LETTI ' NREC
+           CLOSE FINGRESSO FUSCITA
+           MOVE 0 TO RETURN-CODE
+           GOBACK.
+FINE
+cat > "$tmp/IDXLEGGI-C.cbl" <<'FINE' || fail "sorgente del lettore finto IDXLEGGI non scritto"
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. IDXLEGGI.
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT FINGRESSO ASSIGN TO '/in/ACCTFILE.rec'
+                  ORGANIZATION IS SEQUENTIAL.
+           SELECT FLETTURA ASSIGN TO LETTURA
+                  ORGANIZATION IS SEQUENTIAL.
+           SELECT FCHIAVI ASSIGN TO CHIAVI
+                  ORGANIZATION IS SEQUENTIAL.
+       DATA DIVISION.
+       FILE SECTION.
+       FD  FINGRESSO RECORDING MODE IS F.
+       01  RINGRESSO              PIC X(300).
+       FD  FLETTURA RECORDING MODE IS F.
+       01  RLETTURA               PIC X(300).
+       FD  FCHIAVI RECORDING MODE IS F.
+       01  RCHIAVI                PIC X(300).
+       WORKING-STORAGE SECTION.
+       01  NREC                   PIC 9(06) VALUE 0.
+       01  FINITO                 PIC X VALUE 'N'.
+       PROCEDURE DIVISION.
+           OPEN INPUT FINGRESSO OUTPUT FLETTURA FCHIAVI
+           PERFORM UNTIL FINITO = 'S'
+             READ FINGRESSO
+               AT END MOVE 'S' TO FINITO
+               NOT AT END
+                 ADD 1 TO NREC
+                 WRITE RLETTURA FROM RINGRESSO
+                 IF NREC = 1 OR NREC = 25 OR NREC = 49
+                   WRITE RCHIAVI FROM RINGRESSO
+                 END-IF
+             END-READ
+           END-PERFORM
+           DISPLAY 'IDXLEGGI ACCTFILE RECORD LETTI ' NREC
+                   ', FINE CON STATO 10'
+           DISPLAY 'IDXLEGGI ACCTFILE CHIAVE ' '00000000001'
+                   ' START 00 READ 00'
+           DISPLAY 'IDXLEGGI ACCTFILE CHIAVE ' '00000000025'
+                   ' START 00 READ 00'
+           DISPLAY 'IDXLEGGI ACCTFILE CHIAVE ' '00000000049'
+                   ' START 00 READ 00'
+           CLOSE FINGRESSO FLETTURA FCHIAVI
+           MOVE 0 TO RETURN-CODE
+           GOBACK.
+FINE
+compila_variante varB "$tmp/IDXDUMP-B.cbl" IDXDUMP
+compila_variante varAB "$tmp/IDXDUMP-B.cbl" IDXDUMP "$tmp/varA/bin"
+compila_variante varAC "$tmp/IDXLEGGI-C.cbl" IDXLEGGI "$tmp/varA/bin"
+neg varA "A: caricatore che altera un byte del FILLER" "lettura indipendente (IDXLEGGI, 15000 byte) diversa dall'ingresso" \
+  DATI_BIN_DIR="$tmp/varA/bin"
+neg varAB "A+B: caricatore che altera il FILLER e IDXDUMP che copia l'ingresso" \
+  "lettura indipendente (IDXLEGGI, 15000 byte) diversa dall'ingresso" DATI_BIN_DIR="$tmp/varAB/bin"
+neg varAC "A+C: caricatore che altera il FILLER e IDXLEGGI che copia l'ingresso" \
+  "rilettura di IDXDUMP diversa dall'ingresso" DATI_BIN_DIR="$tmp/varAC/bin"
+# Letture per chiave: IDXLEGGI che posiziona sempre sulla chiave 2 (D), prima con il suo controllo della chiave letta
+# (esce con 8), poi anche senza quel controllo (E: lo vede il confronto di carica.sh con i record dell'ingresso).
+cp "$ORACLE_ROOT/tests/IDXLEGGI.cbl" "$tmp/IDXLEGGI-D.cbl" || fail "copia fallita"
+mutate "$tmp/IDXLEGGI-D.cbl" "s/^               MOVE CHIAVE-CHIESTA TO FD-ACCTFILE-REC (1:11)\$/               MOVE '00000000002' TO FD-ACCTFILE-REC (1:11)/"
+compila_variante varD "$tmp/IDXLEGGI-D.cbl" IDXLEGGI
+neg varD "D: lettura per chiave posizionata su un'altra chiave: IDXLEGGI se ne accorge" "IDXLEGGI: codice di uscita 8, atteso 0" \
+  DATI_BIN_DIR="$tmp/varD/bin"
+cp "$tmp/IDXLEGGI-D.cbl" "$tmp/IDXLEGGI-E.cbl" || fail "copia fallita"
+mutate "$tmp/IDXLEGGI-E.cbl" "s/^               IF FD-ACCTFILE-REC (1:11) NOT = CHIAVE-CHIESTA\$/               IF FD-ACCTFILE-REC (1:11) = SPACES/"
+compila_variante varE "$tmp/IDXLEGGI-E.cbl" IDXLEGGI
+neg varE "E: come D, senza il controllo della chiave letta: lo vede il confronto con l'ingresso" \
+  "lettura per chiave 00000000001 diversa dal record 1 dell'ingresso" DATI_BIN_DIR="$tmp/varE/bin"
+for v in varB; do
+  passo "$v-ok" DATI_BIN_DIR="$tmp/$v/bin" || { cat "$tmp/$v-ok.log" >&2; fail "controprova $v: il passo con il solo lettore finto e un caricatore corretto non riesce"; }
+  rileggi "$tmp/$v-ok/out/ACCTFILE.dat" "$tmp/$v-ok-ril" || fail "controprova $v: lettura indipendente fallita"
+  r=0; cmp -s "$tmp/$v-ok-ril/rilettura.bin" "$REC" || r=$?
+  [ "$r" -eq 0 ] || fail "controprova $v: il file pubblicato non contiene ACCTFILE.rec (cmp $r)"
+  log "   controprova ok: $v da sola (lettore finto, caricatore corretto): il passo riesce e il file pubblicato e' corretto"
+done
 # Stati del caricatore provocati direttamente (IDXLOADF della build con esegui.sh): ogni ramo d'errore esce con 8 e
 # il suo messaggio. Non provocati qui: lettura con stato diverso da 00/10 e chiusure fallite (dichiarato nella PR).
 carica_diretto() { # carica_diretto ID PARM DD...: IDXLOADF in $tmp/ID; stampa codice e stdout del rapporto
@@ -223,7 +374,9 @@ for v in "ACCTFILE.rapporto|s/^record 50\$/record 51/|ACCTFILE: rapporto diverso
          "IDXLOADF.txt|s/RECORD SCRITTI 000050/RECORD SCRITTI 000051/|IDXLOADF: rapporto di esegui.sh diverso dall'atteso" \
          "IDXDUMP.txt|s/RECORD LETTI 000050/RECORD LETTI 000051/|IDXDUMP: rapporto di esegui.sh diverso dall'atteso" \
          "IDXLOADF.ambiente|s#^DD_ENTRATA=.*#DD_ENTRATA=/altro#|IDXLOADF: ambiente ricevuto diverso dall'atteso" \
-         "IDXDUMP.ambiente|/^LC_ALL=C\$/d|IDXDUMP: ambiente ricevuto diverso dall'atteso"; do
+         "IDXDUMP.ambiente|/^LC_ALL=C\$/d|IDXDUMP: ambiente ricevuto diverso dall'atteso" \
+         "IDXLEGGI.txt|s/CHIAVE 00000000025 START/CHIAVE 00000000026 START/|IDXLEGGI: rapporto di esegui.sh diverso dall'atteso" \
+         "IDXLEGGI.ambiente|s#^DD_CHIAVI=.*#DD_CHIAVI=/altro#|IDXLEGGI: ambiente ricevuto diverso dall'atteso"; do
   k=$((k + 1)); f="${v%%|*}"; resto="${v#*|}"; espr="${resto%%|*}"; ago="${resto#*|}"
   rm -rf "$tmp/att$k" && mkdir -p "$tmp/att$k" && cp "$EXP"/* "$tmp/att$k/" || fail "copia degli attesi fallita"
   mutate "$tmp/att$k/$f" "$espr"
@@ -237,15 +390,33 @@ neg nbuild "build senza impronta (interrotta o fallita)" "build assente o incomp
 neg ning "ingresso assente" "ingresso assente" DATI_INGRESSO="$tmp/nessuno.rec"
 
 log "4. residui"
+# (0) Risultato precedente invalidato come primo atto (giro 1 della PR #58): con un file SANO di una corsa riuscita al
+#     percorso stabile, ogni errore della preparazione deve lasciare il percorso stabile vuoto.
+passo sano || { cat "$tmp/sano.log" >&2; fail "corsa sana per i residui non riuscita"; }
+[ -f "$tmp/sano/out/ACCTFILE.dat" ] || fail "corsa sana senza file indicizzato"
+mkdir -p "$tmp/bin-senza-lettore" && cp "$BUILD_OUT"/bin/* "$tmp/bin-senza-lettore/" && rm "$tmp/bin-senza-lettore/IDXLEGGI" \
+  || fail "artefatti senza IDXLEGGI non preparati"
+for v in "pre-ingresso|ingresso assente|DATI_INGRESSO=$tmp/nessuno.rec" \
+         "pre-attesi|attesi assenti|DATI_ATTESI=$tmp/nessuna-cartella" \
+         "pre-build|build assente o incompleta|ORACLE_BUILD_OUT=$tmp/build-senza-impronta" \
+         "pre-binario|IDXLEGGI assente in|DATI_BIN_DIR=$tmp/bin-senza-lettore" \
+         "pre-limite|DATI_TIMEOUT non valido|DATI_TIMEOUT=tre"; do
+  n="${v%%|*}"; resto="${v#*|}"; ago="${resto%%|*}"; var="${resto#*|}"
+  rm -rf "$tmp/$n" && mkdir -p "$tmp/$n" && cp -R "$tmp/sano/out" "$tmp/$n/out" || fail "residuo sano per '$n' non preparato"
+  [ -f "$tmp/$n/out/ACCTFILE.dat" ] || fail "residuo sano per '$n' non preparato"
+  neg "$n" "residuo sano e preparazione che fallisce ($ago)" "$ago" "$var"
+done
+log "   e per ognuno il file sano della corsa precedente non e' piu' al percorso stabile"
 # (a) un file indicizzato DIVERSO rimasto da una corsa precedente (caricamento riuscito di 49 record, con attesi per
 #     49 record), poi una corsa regolare nella stessa cartella: successo, e il file contiene i 50 record giusti.
 rm -rf "$tmp/att49" && mkdir -p "$tmp/att49" && cp "$EXP"/* "$tmp/att49/" || fail "attesi per 49 record non preparati"
 s49="$(orun -v "$tmp:/t:ro" -- timeout 60 sha256sum /t/tolto.rec)" || fail "impronta dell'ingresso di 49 record non calcolata"
 s49="${s49%% *}"
 [ "${#s49}" -eq 64 ] || fail "impronta non valida: '$s49'"
-printf 'file ACCTFILE\nrecord 49\nbyte 14700\nprima chiave 00000000001\nultima chiave 00000000049\nsha256 rilettura %s\n' "$s49" \
-  > "$tmp/att49/ACCTFILE.rapporto" || fail "rapporto atteso per 49 record non scritto"
+{ printf 'file ACCTFILE\nrecord 49\nbyte 14700\nprima chiave 00000000001\nultima chiave 00000000049\nsha256 lettura %s\n' "$s49" \
+  && sed -n '7,8p' "$EXP/ACCTFILE.rapporto"; } > "$tmp/att49/ACCTFILE.rapporto" || fail "rapporto atteso per 49 record non scritto"
 mutate "$tmp/att49/IDXLOADF.txt" 's/RECORD SCRITTI 000050/RECORD SCRITTI 000049/'
+mutate "$tmp/att49/IDXLEGGI.txt" 's/RECORD LETTI 000050,/RECORD LETTI 000049,/'
 mutate "$tmp/att49/IDXDUMP.txt" 's/RECORD LETTI 000050/RECORD LETTI 000049/'
 passo resa DATI_INGRESSO="$tmp/tolto.rec" DATI_ATTESI="$tmp/att49" || { cat "$tmp/resa.log" >&2; fail "residuo (a): corsa di 49 record non riuscita"; }
 rileggi "$tmp/resa/out/ACCTFILE.dat" "$tmp/resa-prima" || fail "residuo (a): rilettura del residuo fallita"
@@ -265,12 +436,12 @@ log "   e non resta alcun file indicizzato (ne' al percorso stabile ne' nella ca
 # Prova negativa del controllo "nessun file rimasto": una copia di run.sh senza la pulizia nella trap lascia la
 # cartella di lavoro (con il file indicizzato parziale) dopo un caricamento fallito, e pulita se ne accorge.
 cp "$DIR/run.sh" "$tmp/run-senza-pulizia.sh" || fail "copia di run.sh fallita"
-mutate "$tmp/run-senza-pulizia.sh" 's#rm -rf "$out/lavoro" "$out/ACCTFILE.dat" "$out/ACCTFILE.rapporto"#true#'
+mutate "$tmp/run-senza-pulizia.sh" 's#rm -rf "$out/lavoro" "$out/ACCTFILE.dat" "$out/ACCTFILE.dat.verifica" "$out/ACCTFILE.rapporto"#true#'
 mkdir -p "$tmp/npul" || fail "cartella non creata"
 r=0; env DATI_OUT_DIR="$tmp/npul/out" DATI_INGRESSO="$tmp/scambio.rec" bash "$tmp/run-senza-pulizia.sh" > "$tmp/npul.log" 2>&1 || r=$?
 [ "$r" -ne 0 ] || fail "la copia di run.sh senza pulizia non e' fallita con l'ingresso scambiato"
-[ -f "$tmp/npul/out/lavoro/ACCTFILE.dat" ] || fail "la copia di run.sh senza pulizia non ha lasciato il file di lavoro"
-expect_fail "run.sh senza la pulizia dopo un fallimento: file indicizzato parziale rimasto" "resta la cartella di lavoro" pulita "$tmp/npul/out"
+[ -f "$tmp/npul/out/ACCTFILE.dat.verifica" ] || fail "la copia di run.sh senza pulizia non ha lasciato il file in verifica"
+expect_fail "run.sh senza la pulizia dopo un fallimento: file indicizzato parziale rimasto" "resta il file indicizzato in verifica" pulita "$tmp/npul/out"
 
 log "5. presenza del passo nel controllo di build/check.sh"
 # PASSI e passi_presenti presi dal testo di build/check.sh (non ricopiati): e' il controllo vero che si prova.
@@ -314,12 +485,29 @@ motivo() {
   case "$1@$2" in
     sed@*) echo "rapporto illeggibile" ;;
     wc@*) echo "(wc)" ;;
-    cmp@1) echo "confronto non eseguito (cmp, codice 42)" ;;
+    cmp@1) echo "confronto non eseguito: lettura indipendente (IDXLEGGI" ;;
+    cmp@2) echo "confronto non eseguito: rilettura di IDXDUMP diversa" ;;
+    cmp@3) echo "confronto non eseguito: le due letture" ;;
+    cmp@4) echo "confronto non eseguito: lettura per chiave 00000000001" ;;
+    cmp@5) echo "confronto non eseguito: lettura per chiave 00000000025" ;;
+    cmp@6) echo "confronto non eseguito: lettura per chiave 00000000049" ;;
     mkdir@1) echo "cartelle non creabili" ;;
-    head@1) echo "prima chiave illeggibile (head)" ;;
-    head@2) echo "ultima chiave illeggibile (head)" ;;
-    tail@1) echo "ultimo record illeggibile (tail)" ;;
-    sha256sum@1) echo "impronta della rilettura non calcolabile (sha256sum)" ;;
+    head@1) echo "lettura per chiave 00000000001 illeggibile (head)" ;;
+    head@2) echo "record 1 dell'ingresso illeggibile (head)" ;;
+    head@3) echo "lettura per chiave 00000000025 illeggibile (head)" ;;
+    head@4) echo "record 25 dell'ingresso illeggibile (head)" ;;
+    head@5) echo "lettura per chiave 00000000049 illeggibile (head)" ;;
+    head@6) echo "record 49 dell'ingresso illeggibile (head)" ;;
+    head@7) echo "prima chiave illeggibile (head)" ;;
+    head@8) echo "ultima chiave illeggibile (head)" ;;
+    tail@1) echo "lettura per chiave 00000000001 illeggibile (tail)" ;;
+    tail@2) echo "record 1 dell'ingresso illeggibile (tail)" ;;
+    tail@3) echo "lettura per chiave 00000000025 illeggibile (tail)" ;;
+    tail@4) echo "record 25 dell'ingresso illeggibile (tail)" ;;
+    tail@5) echo "lettura per chiave 00000000049 illeggibile (tail)" ;;
+    tail@6) echo "record 49 dell'ingresso illeggibile (tail)" ;;
+    tail@7) echo "ultimo record illeggibile (tail)" ;;
+    sha256sum@1) echo "impronta della lettura non calcolabile (sha256sum)" ;;
     rm@1) echo "temporanei non rimovibili (rm)" ;;
     *) return 1 ;;
   esac
@@ -361,16 +549,18 @@ passo hostp PATH="$H:$PATH" || { cat "$tmp/hostp.log" >&2; fail "run.sh con gli 
 cp "$tmp/reg-host" "$tmp/reg-host-passa" || fail "registro di riferimento non copiato"
 conta="$(awk '{ n[$1]++ } END { printf "cp=%d mv=%d diff=%d cmp=%d rm=%d", n["cp"], n["mv"], n["diff"], n["cmp"], n["rm"] }' "$tmp/reg-host-passa")" \
   || fail "registro illeggibile"
-# Attese: cp 1 (ingresso privato); mv 3 (file indicizzato, rapporto, rilettura); diff 5 (attesi); cmp 1 (rilettura dal
-# percorso stabile); rm 3 (clean_dir, cartella di lavoro, temporanei nella trap).
-[ "$conta" = "cp=1 mv=3 diff=5 cmp=1 rm=3" ] || fail "run.sh: invocazioni sull'host diverse da quelle attese: $conta"
+# Attese: cp 1 (ingresso privato); mv 4 (rapporto, lettura, rilettura, poi la pubblicazione); diff 7 (attesi); cmp 1
+# (lettura in sola lettura); rm 4 (invalidazione del risultato precedente, clean_dir, cartella di lavoro, temporanei).
+[ "$conta" = "cp=1 mv=4 diff=7 cmp=1 rm=4" ] || fail "run.sh: invocazioni sull'host diverse da quelle attese: $conta"
 log "   controprova ok: run.sh con gli involucri sull'host in modo passa riesce ($conta)"
-for v in "cp@1|copia privata dell'ingresso fallita" "mv@1|file indicizzato non spostato al percorso stabile" \
-         "mv@2|rapporto non spostato" "mv@3|rilettura non spostata" "diff@1|ACCTFILE: rapporto: confronto non eseguito (diff, codice 42)" \
-         "diff@2|IDXLOADF: rapporto di esegui.sh: confronto non eseguito" "diff@3|IDXDUMP: rapporto di esegui.sh: confronto non eseguito" \
-         "diff@4|IDXLOADF: ambiente ricevuto: confronto non eseguito" "diff@5|IDXDUMP: ambiente ricevuto: confronto non eseguito" \
-         "cmp@1|rilettura dal percorso stabile: confronto non eseguito (cmp, codice 42)" "rm@1|impossibile cancellare" \
-         "rm@2|cartella di lavoro non rimossa"; do
+for v in "cp@1|copia privata dell'ingresso fallita" "mv@1|rapporto non spostato" "mv@2|lettura non spostata" \
+         "mv@3|rilettura non spostata" "mv@4|file indicizzato non pubblicato al percorso stabile" \
+         "diff@1|ACCTFILE: rapporto: confronto non eseguito (diff, codice 42)" \
+         "diff@2|IDXLOADF: rapporto di esegui.sh: confronto non eseguito" "diff@3|IDXLEGGI: rapporto di esegui.sh: confronto non eseguito" \
+         "diff@4|IDXDUMP: rapporto di esegui.sh: confronto non eseguito" "diff@5|IDXLOADF: ambiente ricevuto: confronto non eseguito" \
+         "diff@6|IDXLEGGI: ambiente ricevuto: confronto non eseguito" "diff@7|IDXDUMP: ambiente ricevuto: confronto non eseguito" \
+         "cmp@1|lettura in sola lettura: confronto non eseguito (cmp, codice 42)" "rm@1|risultato precedente non invalidato" \
+         "rm@2|impossibile cancellare" "rm@3|cartella di lavoro non rimossa" "rm@4|temporanei non rimossi"; do
   m="${v%%|*}"; c="${m%@*}"; i="${m#*@}"
   rm -f "$tmp/reg-host"
   neg "host-$c-$i" "run.sh: $c, invocazione $i, esce con 42 dopo il suo lavoro" "${v#*|}" PATH="$H:$PATH" "DATI_MODO_$c=42@$i"
@@ -380,6 +570,31 @@ done
 neg host-docker1 "run.sh: docker del container di carica.sh esce con 42 dopo il suo lavoro" "carica.sh fallito (uscita 42)" \
   PATH="$H:$PATH" DATI_MODO_docker=42:/oracle/dati/carica.sh
 st="$(in_container "$tmp/host-docker2/out")" || fail "percorso fuori da oracle/"
-neg host-docker2 "run.sh: docker della rilettura dal percorso stabile esce con 42 dopo il suo lavoro" \
-  "rilettura dal percorso stabile non eseguita (uscita 42)" PATH="$H:$PATH" "DATI_MODO_docker=42:$st"
+neg host-docker2 "run.sh: docker della lettura finale in sola lettura esce con 42 dopo il suo lavoro" \
+  "lettura in sola lettura non eseguita (uscita 42)" PATH="$H:$PATH" "DATI_MODO_docker=42:$st"
+# 6c. Momento della pubblicazione (giro 1 della PR #58): un involucro di docker annota, quando parte l'ultima verifica
+#     (il container della lettura in sola lettura, riconosciuto dal suo argomento), se il file e' gia' al percorso
+#     stabile. Con l'ultima verifica che fallisce (42 dopo il lavoro) il file non deve mai esserci stato; con l'ultima
+#     verifica riuscita non deve esserci al suo inizio e deve esserci alla fine.
+P="$tmp/pubwrap"; mkdir -p "$P" || fail "cartella dell'involucro di pubblicazione non creata"
+vero="$(command -v docker)" || fail "docker non trovato"
+printf '#!/bin/sh\nm=0\nfor a in "$@"; do [ "$a" != "$PUB_MARCA" ] || m=1; done\nif [ "$m" -eq 1 ]; then if [ -e "$PUB_OUT/ACCTFILE.dat" ]; then echo presente; else echo assente; fi >> "$PUB_REG" || exit 120; fi\n\047%s\047 "$@"\nr=$?\nif [ "$m" -eq 1 ] && [ "$PUB_MODO" = 42 ]; then exit 42; fi\nexit "$r"\n' \
+  "$vero" > "$P/docker" || fail "involucro di pubblicazione non scritto"
+chmod +x "$P/docker" || fail "involucro di pubblicazione non eseguibile"
+for modo in 42 passa; do
+  n="pub-$modo"; o="$tmp/$n/out"; mkdir -p "$tmp/$n" || fail "cartella non creata"
+  rm -f "$tmp/$n.reg" || fail "annotazione precedente non rimossa"
+  marca="$(in_container "$o")" || fail "percorso fuori da oracle/"
+  if [ "$modo" = 42 ]; then
+    neg "$n" "pubblicazione: l'ultima verifica fallisce (42 dopo il lavoro): il file non compare mai al percorso stabile" \
+      "lettura in sola lettura non eseguita (uscita 42)" PATH="$P:$PATH" PUB_MARCA="$marca" PUB_OUT="$o" PUB_REG="$tmp/$n.reg" PUB_MODO=42
+  else
+    passo "$n" PATH="$P:$PATH" PUB_MARCA="$marca" PUB_OUT="$o" PUB_REG="$tmp/$n.reg" PUB_MODO=passa \
+      || { cat "$tmp/$n.log" >&2; fail "pubblicazione: corsa con l'involucro in modo passa fallita"; }
+    [ -f "$o/ACCTFILE.dat" ] || fail "pubblicazione: dopo la corsa riuscita il file non e' al percorso stabile"
+  fi
+  annot="$(cat "$tmp/$n.reg")" || fail "pubblicazione ($modo): annotazione assente: l'ultima verifica non e' stata intercettata"
+  [ "$annot" = assente ] || fail "PROVA NEGATIVA FALLITA (pubblicazione, $modo): all'inizio dell'ultima verifica il file era: '$annot'"
+done
+log "   controprova ok: all'inizio dell'ultima verifica il file non e' mai al percorso stabile; pubblicato solo dopo (corsa riuscita), mai (verifica fallita)"
 log "controllo superato"
